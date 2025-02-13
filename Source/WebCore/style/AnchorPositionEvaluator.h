@@ -38,7 +38,11 @@ namespace WebCore {
 
 class Document;
 class Element;
+class LayoutRect;
+class RenderBlock;
 class RenderBoxModelObject;
+
+enum CSSPropertyID : uint16_t;
 
 namespace Style {
 
@@ -51,13 +55,13 @@ enum class AnchorPositionResolutionStage : uint8_t {
     Positioned,
 };
 
-using AnchorElements = HashMap<AtomString, WeakRef<Element, WeakPtrImplWithEventTargetData>>;
+using AnchorElements = HashMap<AtomString, WeakPtr<Element, WeakPtrImplWithEventTargetData>>;
 
 struct AnchorPositionedState {
     WTF_MAKE_TZONE_ALLOCATED(AnchorPositionedState);
 public:
     AnchorElements anchorElements;
-    HashSet<AtomString> anchorNames;
+    UncheckedKeyHashSet<AtomString> anchorNames;
     AnchorPositionResolutionStage stage;
 };
 
@@ -93,15 +97,23 @@ public:
     static RefPtr<Element> findAnchorAndAttemptResolution(const BuilderState&, std::optional<ScopedName> elementName);
 
     using Side = std::variant<CSSValueID, double>;
+    static bool propertyAllowsAnchorFunction(CSSPropertyID);
     static std::optional<double> evaluate(const BuilderState&, std::optional<ScopedName> elementName, Side);
+
+    static bool propertyAllowsAnchorSizeFunction(CSSPropertyID);
     static std::optional<double> evaluateSize(const BuilderState&, std::optional<ScopedName> elementName, std::optional<AnchorSizeDimension>);
 
     static void updateAnchorPositioningStatesAfterInterleavedLayout(const Document&);
     static void cleanupAnchorPositionedState(Element&);
     static void updateSnapshottedScrollOffsets(Document&);
 
+    static LayoutRect computeAnchorRectRelativeToContainingBlock(CheckedRef<const RenderBoxModelObject> anchorBox, const RenderBlock& containingBlock);
+
+    using AnchorToAnchorPositionedMap = SingleThreadWeakHashMap<const RenderBoxModelObject, Vector<Ref<Element>>>;
+    static AnchorToAnchorPositionedMap makeAnchorPositionedForAnchorMap(Document&);
+
 private:
-    static AnchorElements findAnchorsForAnchorPositionedElement(const Element&, const HashSet<AtomString>& anchorNames, const AnchorsForAnchorName&);
+    static AnchorElements findAnchorsForAnchorPositionedElement(const Element&, const UncheckedKeyHashSet<AtomString>& anchorNames, const AnchorsForAnchorName&);
 };
 
 } // namespace Style

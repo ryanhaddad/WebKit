@@ -39,10 +39,11 @@
 #import "WebFullScreenManagerProxy.h"
 #import "WebPageProxy.h"
 #import "WebPreferences.h"
+#import <WebCore/FloatConversion.h>
 #import <WebCore/LocalizedStrings.h>
-#import <WebCore/PlaybackSessionInterfaceAVKit.h>
+#import <WebCore/PlaybackSessionInterfaceAVKitLegacy.h>
 #import <WebCore/PlaybackSessionInterfaceTVOS.h>
-#import <WebCore/VideoPresentationInterfaceAVKit.h>
+#import <WebCore/VideoPresentationInterfaceAVKitLegacy.h>
 #import <WebCore/VideoPresentationInterfaceTVOS.h>
 #import <pal/spi/cocoa/AVKitSPI.h>
 #import <wtf/CheckedRef.h>
@@ -948,7 +949,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     ASSERT(_valid);
     auto safeAreaInsets = self.view.safeAreaInsets;
-    WebCore::FloatBoxExtent insets { safeAreaInsets.top, safeAreaInsets.right, safeAreaInsets.bottom, safeAreaInsets.left };
+    WebCore::FloatBoxExtent insets { WebCore::narrowPrecisionToFloatFromCGFloat(safeAreaInsets.top), WebCore::narrowPrecisionToFloatFromCGFloat(safeAreaInsets.right), WebCore::narrowPrecisionToFloatFromCGFloat(safeAreaInsets.bottom), WebCore::narrowPrecisionToFloatFromCGFloat(safeAreaInsets.left) };
 
     CGRect cancelFrame = _cancelButton.get().frame;
     CGPoint maxXY = CGPointMake(CGRectGetMaxX(cancelFrame), CGRectGetMaxY(cancelFrame));

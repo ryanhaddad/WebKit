@@ -108,7 +108,7 @@ void EndowmentStateTracker::registerMonitorIfNecessary()
         [config setStateDescriptor:stateDescriptor];
 
         [config setUpdateHandler:[this] (RBSProcessMonitor * _Nonnull monitor, RBSProcessHandle * _Nonnull process, RBSProcessStateUpdate * _Nonnull update) mutable {
-            RunLoop::main().dispatch([this, state = stateFromEndowments(update.state.endowmentNamespaces)]() mutable {
+            RunLoop::protectedMain()->dispatch([this, state = stateFromEndowments(update.state.endowmentNamespaces)]() mutable {
                 setState(WTFMove(state));
             });
         }];
@@ -144,12 +144,12 @@ void EndowmentStateTracker::setState(State&& state)
 
     RELEASE_LOG(ViewState, "%p - EndowmentStateTracker::setState() isUserFacing: %{public}s isVisible: %{public}s", this, m_state->isUserFacing ? "true" : "false", m_state->isVisible ? "true" : "false");
 
-    for (auto& client : copyToVector(m_clients)) {
-        if (isUserFacingChanged && client)
-            client->isUserFacingChanged(m_state->isUserFacing);
-        if (isVisibleChanged && client)
-            client->isVisibleChanged(m_state->isVisible);
-    }
+    m_clients.forEach([&](auto& client) {
+        if (isUserFacingChanged)
+            Ref { client }->isUserFacingChanged(m_state->isUserFacing);
+        if (isVisibleChanged)
+            Ref { client }->isVisibleChanged(m_state->isVisible);
+    });
 }
 
 }

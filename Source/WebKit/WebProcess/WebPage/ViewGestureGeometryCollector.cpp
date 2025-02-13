@@ -29,7 +29,6 @@
 #include "Logging.h"
 #include "MessageSenderInlines.h"
 #include "ViewGestureGeometryCollectorMessages.h"
-#include "WebCoreArgumentCoders.h"
 #include "WebFrame.h"
 #include "WebPage.h"
 #include "WebProcess.h"
@@ -253,7 +252,15 @@ void ViewGestureGeometryCollector::computeZoomInformationForNode(Node& node, Flo
             }
             isReplaced = true;
         }
+    }  else {
+#if ENABLE(PDF_PLUGIN)
+        if (RefPtr pluginView = m_webPage->mainFramePlugIn()) {
+            absoluteBoundingRect = pluginView->absoluteBoundingRectForSmartMagnificationAtPoint(origin);
+            isReplaced = false;
+        }
+#endif
     }
+
     computeMinimumAndMaximumViewportScales(viewportMinimumScale, viewportMaximumScale);
 }
 

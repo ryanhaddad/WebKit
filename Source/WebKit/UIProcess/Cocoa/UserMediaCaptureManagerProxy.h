@@ -56,7 +56,7 @@ namespace WebKit {
 class WebProcessProxy;
 class UserMediaCaptureManagerProxySourceProxy;
 
-class UserMediaCaptureManagerProxy : public IPC::MessageReceiver {
+class UserMediaCaptureManagerProxy : public IPC::MessageReceiver, public RefCounted<UserMediaCaptureManagerProxy> {
     WTF_MAKE_TZONE_ALLOCATED(UserMediaCaptureManagerProxy);
 public:
     class ConnectionProxy {
@@ -66,7 +66,7 @@ public:
         virtual void removeMessageReceiver(IPC::ReceiverName) = 0;
         virtual IPC::Connection& connection() = 0;
         Ref<IPC::Connection> protectedConnection() { return connection(); }
-        virtual bool willStartCapture(WebCore::CaptureDevice::DeviceType) const = 0;
+        virtual bool willStartCapture(WebCore::CaptureDevice::DeviceType, WebCore::PageIdentifier) const = 0;
         virtual Logger& logger() = 0;
         Ref<Logger> protectedLogger() { return logger(); };
         virtual bool setCaptureAttributionString() { return true; }
@@ -82,9 +82,13 @@ public:
 
         virtual void startMonitoringCaptureDeviceRotation(WebCore::PageIdentifier, const String&) { }
         virtual void stopMonitoringCaptureDeviceRotation(WebCore::PageIdentifier, const String&) { }
+        virtual std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const = 0;
     };
-    explicit UserMediaCaptureManagerProxy(UniqueRef<ConnectionProxy>&&);
+    static Ref<UserMediaCaptureManagerProxy> create(UniqueRef<ConnectionProxy>&&);
     ~UserMediaCaptureManagerProxy();
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void close();
     void clear();
@@ -97,7 +101,11 @@ public:
 
     bool hasSourceProxies() const;
 
+    std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
+
 private:
+    explicit UserMediaCaptureManagerProxy(UniqueRef<ConnectionProxy>&&);
+
     // IPC::MessageReceiver
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
 

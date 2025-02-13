@@ -39,14 +39,14 @@
 
 namespace WebKit {
 
-RTCDataChannelRemoteManager& RTCDataChannelRemoteManager::sharedManager()
+RTCDataChannelRemoteManager& RTCDataChannelRemoteManager::singleton()
 {
-    static RTCDataChannelRemoteManager* sharedManager = [] {
-        auto instance = new RTCDataChannelRemoteManager;
+    static NeverDestroyed<Ref<RTCDataChannelRemoteManager>> sharedManager = [] {
+        Ref instance = adoptRef(*new RTCDataChannelRemoteManager);
         instance->initialize();
         return instance;
     }();
-    return *sharedManager;
+    return sharedManager.get();
 }
 
 RTCDataChannelRemoteManager::RTCDataChannelRemoteManager()
@@ -184,10 +184,10 @@ RTCDataChannelRemoteManager::RemoteHandlerConnection::RemoteHandlerConnection(Re
 void RTCDataChannelRemoteManager::RemoteHandlerConnection::connectToSource(WebCore::RTCDataChannelRemoteHandler& handler, std::optional<WebCore::ScriptExecutionContextIdentifier> contextIdentifier, WebCore::RTCDataChannelIdentifier localIdentifier, WebCore::RTCDataChannelIdentifier remoteIdentifier)
 {
     m_queue->dispatch([handler = WeakPtr { handler }, contextIdentifier, localIdentifier]() mutable {
-        RTCDataChannelRemoteManager::sharedManager().m_handlers.add(localIdentifier.object(), RemoteHandler { WTFMove(handler), *contextIdentifier });
+        RTCDataChannelRemoteManager::singleton().m_handlers.add(localIdentifier.object(), RemoteHandler { WTFMove(handler), *contextIdentifier });
     });
     m_connection->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::ConnectToRTCDataChannelRemoteSource { localIdentifier, remoteIdentifier }, [localIdentifier](auto&& result) {
-        RTCDataChannelRemoteManager::sharedManager().postTaskToHandler(localIdentifier, [result](auto& handler) {
+        RTCDataChannelRemoteManager::singleton().postTaskToHandler(localIdentifier, [result](auto& handler) {
             if (!result || !*result) {
                 handler.didDetectError(WebCore::RTCError::create(WebCore::RTCErrorDetailType::DataChannelFailure, "Unable to find data channel"_s));
                 return;
@@ -226,7 +226,7 @@ void RTCDataChannelRemoteManager::RemoteSourceConnection::didChangeReadyState(We
 void RTCDataChannelRemoteManager::RemoteSourceConnection::didReceiveStringData(WebCore::RTCDataChannelIdentifier identifier, const String& string)
 {
     auto text = string.utf8();
-    m_connection->send(Messages::RTCDataChannelRemoteManagerProxy::ReceiveData { identifier, false, text.span() }, 0);
+    m_connection->send(Messages::RTCDataChannelRemoteManagerProxy::ReceiveData { identifier, false, byteCast<uint8_t>(text.span()) }, 0);
 }
 
 void RTCDataChannelRemoteManager::RemoteSourceConnection::didReceiveRawData(WebCore::RTCDataChannelIdentifier identifier, std::span<const uint8_t> data)

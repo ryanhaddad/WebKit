@@ -30,17 +30,18 @@
 
 #include "GPUConnectionToWebProcess.h"
 #include "GPUProcess.h"
+#include "Logging.h"
 #include "RemoteMediaPlayerConfiguration.h"
 #include "RemoteMediaPlayerManagerProxyMessages.h"
 #include "RemoteMediaPlayerProxy.h"
 #include "RemoteMediaPlayerProxyConfiguration.h"
 #include "RemoteVideoFrameObjectHeap.h"
 #include "ScopedRenderingResourcesRequest.h"
-#include "WebCoreArgumentCoders.h"
+#include "SharedPreferencesForWebProcess.h"
 #include <WebCore/GraphicsContext.h>
 #include <WebCore/MediaPlayer.h>
 #include <WebCore/MediaPlayerPrivate.h>
-#include <wtf/Logger.h>
+#include <wtf/LoggerHelper.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/UniqueRef.h>
@@ -57,6 +58,10 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteMediaPlayerManagerProxy);
 
 RemoteMediaPlayerManagerProxy::RemoteMediaPlayerManagerProxy(GPUConnectionToWebProcess& connection)
     : m_gpuConnectionToWebProcess(connection)
+#if !RELEASE_LOG_DISABLED
+    , m_logIdentifier { LoggerHelper::uniqueLogIdentifier() }
+    , m_logger { connection.logger() }
+#endif
 {
 }
 
@@ -101,7 +106,7 @@ void RemoteMediaPlayerManagerProxy::deleteMediaPlayer(MediaPlayerIdentifier iden
         return;
 
     if (!hasOutstandingRenderingResourceUsage())
-        connection->gpuProcess().tryExitIfUnusedAndUnderMemoryPressure();
+        connection->protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
 }
 
 void RemoteMediaPlayerManagerProxy::getSupportedTypes(MediaPlayerEnums::MediaEngineIdentifier engineIdentifier, CompletionHandler<void(Vector<String>&&)>&& completionHandler)
@@ -179,15 +184,9 @@ RefPtr<MediaPlayer> RemoteMediaPlayerManagerProxy::mediaPlayer(std::optional<Med
 }
 
 #if !RELEASE_LOG_DISABLED
-Logger& RemoteMediaPlayerManagerProxy::logger()
+WTFLogChannel& RemoteMediaPlayerManagerProxy::logChannel() const
 {
-    if (!m_logger) {
-        m_logger = Logger::create(this);
-        RefPtr connection { m_gpuConnectionToWebProcess.get() };
-        m_logger->setEnabled(this, connection && connection->isAlwaysOnLoggingAllowed());
-    }
-
-    return *m_logger;
+    return WebKit2LogMedia;
 }
 #endif
 
@@ -242,6 +241,13 @@ RefPtr<RemoteMediaSourceProxy> RemoteMediaPlayerManagerProxy::pendingMediaSource
     return iterator->value;
 }
 #endif
+
+std::optional<SharedPreferencesForWebProcess> RemoteMediaPlayerManagerProxy::sharedPreferencesForWebProcess() const
+{
+    if (RefPtr connection = m_gpuConnectionToWebProcess.get())
+        return connection->sharedPreferencesForWebProcess();
+    return std::nullopt;
+}
 
 } // namespace WebKit
 

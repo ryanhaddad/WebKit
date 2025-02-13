@@ -60,11 +60,9 @@ public:
     void resumeAllThreads();
 
     enum State { NotKnown, Compiling, Compiled };
-    State compilationState(JITCompilationKey);
+    State compilationState(VM&, JITCompilationKey);
 
     State completeAllReadyPlansForVM(VM&, JITCompilationKey = JITCompilationKey());
-
-    void waitUntilAllPlansForVMAreReady(VM&);
 
     // This is equivalent to:
     // worklist->waitUntilAllPlansForVMAreReady(vm);
@@ -83,7 +81,7 @@ public:
     void visitWeakReferences(Visitor&);
 
     template<typename Visitor>
-    void iterateCodeBlocksForGC(Visitor&, VM&, const Function<void(CodeBlock*)>&);
+    void iterateCodeBlocksForGC(Visitor&, VM&, NOESCAPE const Function<void(CodeBlock*)>&);
 
     void dump(PrintStream&) const;
 
@@ -91,6 +89,8 @@ private:
     JITWorklist();
 
     size_t queueLength(const AbstractLocker&) const;
+
+    void waitUntilAllPlansForVMAreReady(VM&);
 
     template<typename MatchFunction>
     void removeMatchingPlansForVM(VM&, const MatchFunction&);

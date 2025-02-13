@@ -30,15 +30,7 @@
 namespace WebCore {
 namespace CSS {
 
-using Contain        = Constant<CSSValueContain>;
-
-using ClosestCorner  = Constant<CSSValueClosestCorner>;
-using ClosestSide    = Constant<CSSValueClosestSide>;
-using FarthestCorner = Constant<CSSValueFarthestCorner>;
-using FarthestSide   = Constant<CSSValueFarthestSide>;
-using Sides          = Constant<CSSValueSides>;
-
-using RaySize        = std::variant<ClosestCorner, ClosestSide, FarthestCorner, FarthestSide, Sides>;
+using RaySize = std::variant<Keyword::ClosestCorner, Keyword::ClosestSide, Keyword::FarthestCorner, Keyword::FarthestSide, Keyword::Sides>;
 
 // ray() = ray( <angle> && <ray-size>? && contain? && [at <position>]? )
 // <ray-size> = closest-side | closest-corner | farthest-side | farthest-corner | sides
@@ -46,7 +38,7 @@ using RaySize        = std::variant<ClosestCorner, ClosestSide, FarthestCorner, 
 struct Ray {
     Angle<> angle;
     RaySize size;
-    std::optional<Contain> contain;
+    std::optional<Keyword::Contain> contain;
     std::optional<Position> position;
 
     bool operator==(const Ray&) const = default;
@@ -65,9 +57,9 @@ template<size_t I> const auto& get(const Ray& value)
         return value.position;
 }
 
-template<> struct Serialize<Ray> { void operator()(StringBuilder&, const Ray&); };
+template<> struct Serialize<Ray> { void operator()(StringBuilder&, const SerializationContext&, const Ray&); };
 
 } // namespace CSS
 } // namespace WebCore
 
-CSS_TUPLE_LIKE_CONFORMANCE(Ray, 4)
+DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::CSS::Ray, 4)

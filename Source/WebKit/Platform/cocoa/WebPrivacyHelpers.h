@@ -27,12 +27,14 @@
 
 #import "ScriptTelemetry.h"
 #import <wtf/CompletionHandler.h>
+#import <wtf/ContinuousApproximateTime.h>
 #import <wtf/Function.h>
 #import <wtf/Ref.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/Vector.h>
 #import <wtf/WeakHashSet.h>
 #import <wtf/text/WTFString.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
 #import <WebCore/LinkDecorationFilteringData.h>
@@ -44,6 +46,7 @@
 
 OBJC_CLASS WKWebPrivacyNotificationListener;
 OBJC_CLASS NSURLSession;
+OBJC_CLASS WKContentRuleList;
 
 namespace WebKit {
 
@@ -52,9 +55,10 @@ namespace WebKit {
 enum class RestrictedOpenerType : uint8_t;
 
 void configureForAdvancedPrivacyProtections(NSURLSession *);
+bool isKnownTrackerAddressOrDomain(StringView host);
 void requestLinkDecorationFilteringData(CompletionHandler<void(Vector<WebCore::LinkDecorationFilteringData>&&)>&&);
 
-class ListDataObserver : public RefCounted<ListDataObserver>, public CanMakeWeakPtr<ListDataObserver> {
+class ListDataObserver : public RefCountedAndCanMakeWeakPtr<ListDataObserver> {
 public:
     static Ref<ListDataObserver> create(Function<void()>&& callback)
     {
@@ -74,7 +78,7 @@ private:
     Function<void()> m_callback;
 };
 
-class ListDataControllerBase : public RefCounted<ListDataControllerBase>, public CanMakeWeakPtr<ListDataControllerBase> {
+class ListDataControllerBase : public RefCountedAndCanMakeWeakPtr<ListDataControllerBase> {
 public:
     virtual ~ListDataControllerBase() = default;
 
@@ -174,12 +178,23 @@ public:
 private:
     friend class NeverDestroyed<RestrictedOpenerDomainsController, MainThreadAccessTraits>;
     RestrictedOpenerDomainsController();
-    void scheduleNextUpdate(uint64_t);
+    void scheduleNextUpdate(ContinuousApproximateTime);
     void update();
 
     RetainPtr<WKWebPrivacyNotificationListener> m_notificationListener;
     HashMap<WebCore::RegistrableDomain, RestrictedOpenerType> m_restrictedOpenerTypes;
-    uint64_t m_nextScheduledUpdateTime { 0 };
+    ContinuousApproximateTime m_nextScheduledUpdateTime;
+};
+
+class ResourceMonitorURLsController {
+public:
+    static ResourceMonitorURLsController& singleton();
+
+    void prepare(CompletionHandler<void(WKContentRuleList *, bool)>&&);
+
+private:
+    friend class NeverDestroyed<ResourceMonitorURLsController, MainThreadAccessTraits>;
+    ResourceMonitorURLsController() = default;
 };
 
 #endif // ENABLE(ADVANCED_PRIVACY_PROTECTIONS)

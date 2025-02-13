@@ -1022,6 +1022,27 @@ window.UIHelper = class UIHelper {
         return true;
     }
 
+    static async selectionBounds()
+    {
+        const rects = await this.getUISelectionViewRects();
+        if (!rects?.length)
+            return null;
+
+        let minTop = Infinity;
+        let minLeft = Infinity;
+        let maxTop = -Infinity;
+        let maxLeft = -Infinity;
+
+        for (const rect of rects) {
+            minTop = Math.min(minTop, rect.top);
+            minLeft = Math.min(minLeft, rect.left);
+            maxTop = Math.max(maxTop, rect.top + rect.height);
+            maxLeft = Math.max(maxLeft, rect.left + rect.width);
+        }
+
+        return { left: minLeft, top: minTop, width: maxLeft - minLeft, height: maxTop - minTop };
+    }
+
     static getSelectionStartGrabberViewRect()
     {
         if (!this.isWebKit2() || !this.isIOSFamily())
@@ -1254,6 +1275,15 @@ window.UIHelper = class UIHelper {
             testRunner.runUIScript(`(() => {
                 uiController.uiScriptComplete(uiController.isShowingDataListSuggestions);
             })()`, result => resolve(result === "true"));
+        });
+    }
+
+    static waitForDataListSuggestionsToChangeVisibility(visible)
+    {
+        return new Promise(async resolve => {
+            while (visible != await this.isShowingDataListSuggestions())
+                continue;
+            resolve();
         });
     }
 
@@ -2248,6 +2278,34 @@ window.UIHelper = class UIHelper {
         const pdfFadeInDelay = 250;
         await new Promise(resolve => setTimeout(resolve, pdfFadeInDelay));
         await new Promise(requestAnimationFrame);
+    }
+
+    static async frontmostViewAtPoint(x, y) {
+        if (!this.isWebKit2())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`uiController.frontmostViewAtPoint(${x}, ${y})`, resolve);
+        });
+    }
+
+    static async keyboardUpdateForChangedSelectionCount() {
+        if (!this.isWebKit2())
+            return 0;
+
+        return new Promise(resolve => {
+            testRunner.runUIScript("uiController.keyboardUpdateForChangedSelectionCount", resolve);
+        });
+    }
+
+    static async typeCharacters(stringToType, waitForEvent = "input", eventTarget = null) {
+        for (let character of [...stringToType]) {
+            await UIHelper.callFunctionAndWaitForEvent(async () => {
+                if (window.testRunner)
+                    await UIHelper.typeCharacter(character);
+                await UIHelper.ensurePresentationUpdate();
+            }, eventTarget || document.activeElement, waitForEvent);
+        }
     }
 }
 

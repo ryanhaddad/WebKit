@@ -33,8 +33,6 @@
 #endif
 #include <wtf/text/Base64.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WebCore {
 
 static const unsigned char InitialOctetEC = 0x04; // Per Section 2.3.3 of http://www.secg.org/sec1-v2.pdf
@@ -304,13 +302,13 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportSpki(CryptoAlgorithmIdentifier id
     index += bytesUsedToEncodedLength(keyData[index]); // Read length
     if (keyData.size() < index + sizeof(IdEcPublicKey))
         return nullptr;
-    if (!equalSpans(keyData.subspan(index, sizeof(IdEcPublicKey)), std::span { IdEcPublicKey }))
+    if (!spanHasPrefix(keyData.subspan(index), std::span { IdEcPublicKey }))
         return nullptr;
     index += std::size(IdEcPublicKey); // Read id-ecPublicKey
     auto oid = getOID(curve);
     if (keyData.size() < index + oid.size())
         return nullptr;
-    if (!equalSpans(keyData.subspan(index, oid.size()), oid))
+    if (!spanHasPrefix(keyData.subspan(index), oid))
         return nullptr;
     index += oid.size() + 1; // Read named curve OID, BIT STRING
     if (keyData.size() < index + 1)
@@ -327,7 +325,8 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportSpki(CryptoAlgorithmIdentifier id
 #else
     ++index;
     CCECCryptorRef ccPublicKey = nullptr;
-    if (CCECCryptorImportKey(kCCImportKeyCompact, keyData.data() + index, keyData.size() - index, ccECKeyPublic, &ccPublicKey))
+    auto dataAfterIndex = keyData.subspan(index);
+    if (CCECCryptorImportKey(kCCImportKeyCompact, dataAfterIndex.data(), dataAfterIndex.size(), ccECKeyPublic, &ccPublicKey))
         return nullptr;
     return create(identifier, curve, CryptoKeyType::Public, PlatformECKeyContainer(ccPublicKey), extractable, usages);
 #endif
@@ -393,13 +392,13 @@ RefPtr<CryptoKeyEC> CryptoKeyEC::platformImportPkcs8(CryptoAlgorithmIdentifier i
     index += bytesUsedToEncodedLength(keyData[index]); // Read length
     if (keyData.size() < index + sizeof(IdEcPublicKey))
         return nullptr;
-    if (!equalSpans(keyData.subspan(index, sizeof(IdEcPublicKey)), std::span { IdEcPublicKey }))
+    if (!spanHasPrefix(keyData.subspan(index), std::span { IdEcPublicKey }))
         return nullptr;
     index += std::size(IdEcPublicKey); // Read id-ecPublicKey
     auto oid = getOID(curve);
     if (keyData.size() < index + oid.size())
         return nullptr;
-    if (!equalSpans(keyData.subspan(index, oid.size()), oid))
+    if (!spanHasPrefix(keyData.subspan(index), oid))
         return nullptr;
     index += oid.size() + 1; // Read named curve OID, OCTET STRING
     if (keyData.size() < index + 1)
@@ -503,5 +502,3 @@ Vector<uint8_t> CryptoKeyEC::platformExportPkcs8() const
 }
 
 } // namespace WebCore
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

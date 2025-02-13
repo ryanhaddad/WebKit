@@ -35,6 +35,7 @@
 #include "CSSSelectorParser.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "CloseWatcherManager.h"
 #include "ComposedTreeIterator.h"
 #include "ContentExtensionActions.h"
 #include "ContentExtensionRule.h"
@@ -67,6 +68,7 @@
 #include "FrameLoadRequest.h"
 #include "FrameLoader.h"
 #include "FrameTree.h"
+#include "HTMLFrameOwnerElement.h"
 #include "HTTPParsers.h"
 #include "History.h"
 #include "IdleRequestOptions.h"
@@ -75,6 +77,7 @@
 #include "JSDOMPromiseDeferred.h"
 #include "JSDOMWindowBase.h"
 #include "JSExecState.h"
+#include "JSPushSubscription.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
 #include "LocalFrameView.h"
@@ -94,6 +97,8 @@
 #include "Performance.h"
 #include "PerformanceNavigationTiming.h"
 #include "PermissionsPolicy.h"
+#include "PlatformStrategies.h"
+#include "PushStrategy.h"
 #include "Quirks.h"
 #include "RemoteFrame.h"
 #include "RequestAnimationFrameCallback.h"
@@ -172,7 +177,7 @@ static WeakHashSet<LocalDOMWindow, WeakPtrImplWithEventTargetData>& windowsInter
     return set;
 }
 
-void LocalDOMWindow::forEachWindowInterestedInStorageEvents(const Function<void(LocalDOMWindow&)>& apply)
+void LocalDOMWindow::forEachWindowInterestedInStorageEvents(NOESCAPE const Function<void(LocalDOMWindow&)>& apply)
 {
     for (auto& window : copyToVectorOf<Ref<LocalDOMWindow>>(windowsInterestedInStorageEvents()))
         apply(window);
@@ -415,6 +420,9 @@ void LocalDOMWindow::setCanShowModalDialogOverride(bool allow)
 LocalDOMWindow::LocalDOMWindow(Document& document)
     : DOMWindow(GlobalWindowIdentifier { Process::identifier(), WindowIdentifier::generate() }, DOMWindowType::Local)
     , ContextDestructionObserver(&document)
+#if ENABLE(DECLARATIVE_WEB_PUSH)
+    , m_pushManager(*this)
+#endif
 {
     ASSERT(frame());
     addLanguageChangeObserver(this, &languagesChangedCallback);
@@ -612,7 +620,7 @@ CustomElementRegistry& LocalDOMWindow::ensureCustomElementRegistry()
     if (!m_customElementRegistry) {
         m_customElementRegistry = CustomElementRegistry::create(*scriptExecutionContext(), *this);
         for (Ref shadowRoot : document()->inDocumentShadowRoots()) {
-            if (shadowRoot->mode() == ShadowRootMode::UserAgent)
+            if (shadowRoot->mode() == ShadowRootMode::UserAgent || shadowRoot->hasScopedCustomElementRegistry())
                 continue;
             const_cast<ShadowRoot&>(shadowRoot.get()).setCustomElementRegistry(*m_customElementRegistry);
         }
@@ -1064,6 +1072,10 @@ void LocalDOMWindow::focus(bool allowFocus)
     if (!frame)
         return;
 
+    RefPtr document = frame->protectedDocument();
+    if (!document)
+        return;
+
     RefPtr page = frame->page();
     if (!page)
         return;
@@ -1074,7 +1086,7 @@ void LocalDOMWindow::focus(bool allowFocus)
     if (frame->isMainFrame() && allowFocus)
         page->chrome().focus();
 
-    if (!frame->hasHadUserInteraction() && !isSameSecurityOriginAsMainFrame())
+    if (!document->hasHadUserInteraction() && !isSameSecurityOriginAsMainFrame())
         return;
 
     // Clear the current frame's focused node if a new frame is about to be focused.
@@ -1580,6 +1592,8 @@ void LocalDOMWindow::notifyActivated(MonotonicTime activationTime)
     setLastActivationTimestamp(activationTime);
     if (!frame())
         return;
+    if (frame()->settings().closeWatcherEnabled())
+        closeWatcherManager().notifyAboutUserActivation();
 
     for (RefPtr ancestor = frame() ? frame()->tree().parent() : nullptr; ancestor; ancestor = ancestor->tree().parent()) {
         RefPtr localAncestor = dynamicDowncast<LocalFrame>(ancestor.get());
@@ -1810,7 +1824,7 @@ void LocalDOMWindow::moveTo(int x, int y) const
 
     RefPtr page = frame()->page();
     auto update = page->chrome().windowRect();
-    RefPtr localMainFrame = dynamicDowncast<LocalFrame>(page->mainFrame());
+    RefPtr localMainFrame = page->localMainFrame();
     if (!localMainFrame)
         return;
 
@@ -1950,7 +1964,7 @@ bool LocalDOMWindow::isSecureContext() const
 
 bool LocalDOMWindow::crossOriginIsolated() const
 {
-    ASSERT(ScriptExecutionContext::crossOriginMode() == CrossOriginMode::Shared || !document() || document()->topDocument().crossOriginOpenerPolicy().value == CrossOriginOpenerPolicyValue::SameOriginPlusCOEP);
+    ASSERT(ScriptExecutionContext::crossOriginMode() == CrossOriginMode::Shared || !document() || !document()->mainFrameDocument() || document()->mainFrameDocument()->crossOriginOpenerPolicy().value == CrossOriginOpenerPolicyValue::SameOriginPlusCOEP);
     return ScriptExecutionContext::crossOriginMode() == CrossOriginMode::Isolated;
 }
 
@@ -2217,7 +2231,7 @@ void LocalDOMWindow::failedToRegisterDeviceMotionEventListener()
 void LocalDOMWindow::incrementScrollEventListenersCount()
 {
     RefPtr document = this->document();
-    if (++m_scrollEventListenerCount == 1 && document == &document->topDocument()) {
+    if (++m_scrollEventListenerCount == 1 && document->isTopDocument()) {
         if (RefPtr frame = this->frame(); frame && frame->page())
             frame->protectedPage()->chrome().client().setNeedsScrollNotifications(*frame, true);
     }
@@ -2226,7 +2240,7 @@ void LocalDOMWindow::incrementScrollEventListenersCount()
 void LocalDOMWindow::decrementScrollEventListenersCount()
 {
     RefPtr document = this->document();
-    if (!--m_scrollEventListenerCount && document == &document->topDocument()) {
+    if (!--m_scrollEventListenerCount && document->isTopDocument()) {
         RefPtr frame = this->frame();
         if (frame && frame->page() && document->backForwardCacheState() == Document::NotInBackForwardCache)
             frame->protectedPage()->chrome().client().setNeedsScrollNotifications(*frame, false);
@@ -2380,7 +2394,7 @@ void LocalDOMWindow::dispatchEvent(Event& event, EventTarget* target)
         protectedFrame = frame();
         hasListenersForEvent = hasEventListeners(event.type());
         if (hasListenersForEvent)
-            InspectorInstrumentation::willDispatchEventOnWindow(protectedFrame.get(), event, *this);
+            InspectorInstrumentation::willDispatchEventOnWindow(protectedFrame.get(), event);
     }
 
     // FIXME: We should use EventDispatcher everywhere.
@@ -2446,8 +2460,9 @@ void LocalDOMWindow::finishedLoading()
     }
 }
 
-void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& completedURL, NavigationHistoryBehavior historyHandling, SetLocationLocking locking)
+void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& completedURL, NavigationHistoryBehavior historyHandling, SetLocationLocking locking, CanNavigateState navigationState)
 {
+    ASSERT(navigationState != CanNavigateState::Unchecked);
     if (!isCurrentlyDisplayedInFrame())
         return;
 
@@ -2456,7 +2471,9 @@ void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& comple
         return;
 
     RefPtr frame = this->frame();
-    if (!activeDocument->canNavigate(frame.get(), completedURL))
+    if (UNLIKELY(navigationState != CanNavigateState::Able))
+        navigationState = activeDocument->canNavigate(frame.get(), completedURL);
+    if (navigationState == CanNavigateState::Unable)
         return;
 
     if (isInsecureScriptAccess(activeWindow, completedURL.string()))
@@ -2566,7 +2583,7 @@ bool LocalDOMWindow::isInsecureScriptAccess(LocalDOMWindow& activeWindow, const 
     return true;
 }
 
-ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString, const AtomString& frameName, const WindowFeatures& initialWindowFeatures, LocalDOMWindow& activeWindow, LocalFrame& firstFrame, LocalFrame& openerFrame, const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
+ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString, const AtomString& frameName, const WindowFeatures& initialWindowFeatures, LocalDOMWindow& activeWindow, LocalFrame& firstFrame, LocalFrame& openerFrame, NOESCAPE const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
 {
     RefPtr activeFrame = activeWindow.frame();
     if (!activeFrame)
@@ -2614,8 +2631,12 @@ ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString,
         newFrame->page()->setOpenedByDOMWithOpener(true);
     }
 
-    if (created == CreatedNewPage::Yes)
-        newFrame->protectedPage()->setOpenedByDOM();
+    if (created == CreatedNewPage::Yes) {
+        RefPtr page = newFrame->page();
+        page->setOpenedByDOM();
+        if (RefPtr openerDocument = openerFrame.document())
+            page->setOpenedByScriptDomain(RegistrableDomain { openerDocument->currentSourceURL(ScriptExecutionContext::CallStackPosition::TopMost) });
+    }
 
     RefPtr localNewFrame = dynamicDowncast<LocalFrame>(newFrame);
     if (localNewFrame && localNewFrame->document()->protectedWindow()->isInsecureScriptAccess(activeWindow, completedURL.string()))
@@ -2698,7 +2719,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
             targetFrame = frame;
     }
     if (targetFrame) {
-        if (!activeDocument->canNavigate(targetFrame.get()))
+        if (activeDocument->canNavigate(targetFrame.get()) != CanNavigateState::Able)
             return RefPtr<WindowProxy> { nullptr };
 
         URL completedURL = firstFrame->protectedDocument()->completeURL(urlString);
@@ -2726,7 +2747,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
     return newFrame ? &newFrame->windowProxy() : RefPtr<WindowProxy> { nullptr };
 }
 
-void LocalDOMWindow::showModalDialog(const String& urlString, const String& dialogFeaturesString, LocalDOMWindow& activeWindow, LocalDOMWindow& firstWindow, const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
+void LocalDOMWindow::showModalDialog(const String& urlString, const String& dialogFeaturesString, LocalDOMWindow& activeWindow, LocalDOMWindow& firstWindow, NOESCAPE const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
 {
     if (RefPtr document = this->document())
         document->addConsoleMessage(MessageSource::JS, MessageLevel::Warning, "showModalDialog() is deprecated and will be removed. Please use the <dialog> element instead."_s);
@@ -2798,5 +2819,86 @@ CookieStore& LocalDOMWindow::cookieStore()
         m_cookieStore = CookieStore::create(protectedDocument().get());
     return *m_cookieStore;
 }
+
+CloseWatcherManager& LocalDOMWindow::closeWatcherManager()
+{
+    if (!m_closeWatcherManager)
+        m_closeWatcherManager = adoptRef(*new CloseWatcherManager());
+    return *m_closeWatcherManager;
+}
+
+#if ENABLE(DECLARATIVE_WEB_PUSH)
+PushManager& LocalDOMWindow::pushManager()
+{
+    return m_pushManager;
+}
+
+static URL toScope(LocalDOMWindow& window)
+{
+    if (auto* frame = window.frame()) {
+        if (auto* document = frame->document())
+            return URL { document->url().protocolHostAndPort() };
+    }
+
+    return { };
+}
+
+void LocalDOMWindow::subscribeToPushService(const Vector<uint8_t>& applicationServerKey, DOMPromiseDeferred<IDLInterface<PushSubscription>>&& promise)
+{
+    LOG(Push, "LocalDOMWindow::subscribeToPushService");
+
+    platformStrategies()->pushStrategy()->windowSubscribeToPushService(toScope(*this), applicationServerKey, [protectedThis = Ref { *this }, promise = WTFMove(promise)](auto&& result) mutable {
+        LOG(Push, "LocalDOMWindow::subscribeToPushService completed");
+        if (result.hasException()) {
+            promise.reject(result.releaseException());
+            return;
+        }
+
+        promise.resolve(PushSubscription::create(result.releaseReturnValue(), protectedThis.ptr()));
+    });
+}
+
+void LocalDOMWindow::unsubscribeFromPushService(std::optional<PushSubscriptionIdentifier> subscriptionIdentifier, DOMPromiseDeferred<IDLBoolean>&& promise)
+{
+    LOG(Push, "LocalDOMWindow::unsubscribeFromPushService");
+
+    platformStrategies()->pushStrategy()->windowUnsubscribeFromPushService(toScope(*this), subscriptionIdentifier, [promise = WTFMove(promise)](auto&& result) mutable {
+        LOG(Push, "LocalDOMWindow::unsubscribeFromPushService completed");
+        promise.settle(WTFMove(result));
+    });
+}
+
+void LocalDOMWindow::getPushSubscription(DOMPromiseDeferred<IDLNullable<IDLInterface<PushSubscription>>>&& promise)
+{
+    LOG(Push, "LocalDOMWindow::getPushSubscription");
+
+    platformStrategies()->pushStrategy()->windowGetPushSubscription(toScope(*this), [protectedThis = Ref { *this }, promise = WTFMove(promise)](auto&& result) mutable {
+        LOG(Push, "LocalDOMWindow::getPushSubscription completed");
+        if (result.hasException()) {
+            promise.reject(result.releaseException());
+            return;
+        }
+
+        auto optionalPushSubscriptionData = result.releaseReturnValue();
+        if (!optionalPushSubscriptionData) {
+            promise.resolve(nullptr);
+            return;
+        }
+
+        promise.resolve(PushSubscription::create(WTFMove(*optionalPushSubscriptionData), protectedThis.ptr()).ptr());
+    });
+}
+
+void LocalDOMWindow::getPushPermissionState(DOMPromiseDeferred<IDLEnumeration<PushPermissionState>>&& promise)
+{
+    LOG(Push, "LocalDOMWindow::getPushPermissionState");
+
+    platformStrategies()->pushStrategy()->windowGetPushPermissionState(toScope(*this), [promise = WTFMove(promise)](auto&& result) mutable {
+        LOG(Push, "LocalDOMWindow::getPushPermissionState completed");
+        promise.settle(WTFMove(result));
+    });
+}
+
+#endif // #if ENABLE(DECLARATIVE_WEB_PUSH)
 
 } // namespace WebCore

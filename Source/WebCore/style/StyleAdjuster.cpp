@@ -42,6 +42,7 @@
 #include "HTMLDialogElement.h"
 #include "HTMLDivElement.h"
 #include "HTMLInputElement.h"
+#include "HTMLLabelElement.h"
 #include "HTMLMarqueeElement.h"
 #include "HTMLNames.h"
 #include "HTMLSlotElement.h"
@@ -548,6 +549,9 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
             || style.boxReflect()
             || style.hasFilter()
             || style.hasBackdropFilter()
+#if HAVE(CORE_MATERIAL)
+            || style.hasAppleVisualEffect()
+#endif
             || style.hasBlendMode()
             || style.hasIsolation()
             || style.position() == PositionType::Sticky
@@ -598,7 +602,7 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
     else
         style.setTextDecorationsInEffect(style.textDecorationLine());
 
-    bool overflowIsClipOrVisible = isOverflowClipOrVisible(style.overflowX()) && isOverflowClipOrVisible(style.overflowX());
+    bool overflowIsClipOrVisible = isOverflowClipOrVisible(style.overflowY()) && isOverflowClipOrVisible(style.overflowX());
 
     if (!overflowIsClipOrVisible && (style.display() == DisplayType::Table || style.display() == DisplayType::InlineTable)) {
         // Tables only support overflow:hidden and overflow:visible and ignore anything else,
@@ -692,6 +696,9 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
             || style.hasIsolation()
             || style.hasMask()
             || style.hasBackdropFilter()
+#if HAVE(CORE_MATERIAL)
+            || style.hasAppleVisualEffect()
+#endif
             || style.hasBlendMode()
             || !style.viewTransitionName().isNone();
         if (RefPtr element = m_element) {
@@ -708,6 +715,13 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
     // 'center'), 'legacy' computes to the the inherited value. Otherwise, 'auto' computes to 'normal'.
     if (m_parentBoxStyle.justifyItems().positionType() == ItemPositionType::Legacy && style.justifyItems().position() == ItemPosition::Legacy)
         style.setJustifyItems(m_parentBoxStyle.justifyItems());
+
+#if HAVE(CORE_MATERIAL)
+    if (appleVisualEffectNeedsBackdrop(style.appleVisualEffect()))
+        style.setUsedAppleVisualEffectForSubtree(style.appleVisualEffect());
+    else
+        style.setUsedAppleVisualEffectForSubtree(m_parentStyle.usedAppleVisualEffectForSubtree());
+#endif
 
     style.setUsedTouchActions(computeUsedTouchActions(style, m_parentStyle.usedTouchActions()));
 
@@ -754,12 +768,7 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
     }
 
     if (m_parentStyle.contentVisibility() != ContentVisibility::Hidden) {
-        auto isSkippedContentRoot = [&] {
-            if (style.contentVisibility() == ContentVisibility::Visible || !doesSizeContainmentApplyByDisplayType(style))
-                return false;
-            return style.contentVisibility() == ContentVisibility::Hidden || (m_element && !m_element->isRelevantToUser());
-        };
-        if (isSkippedContentRoot())
+        if (m_element && isSkippedContentRoot(style, *m_element))
             style.setUsedContentVisibility(style.contentVisibility());
     }
     if (style.contentVisibility() == ContentVisibility::Auto) {
@@ -923,7 +932,7 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
     if (!m_element)
         return;
 
-    if (is<HTMLBodyElement>(m_element) && m_document->quirks().needsBodyScrollbarWidthNoneDisabledQuirk()) {
+    if (is<HTMLBodyElement>(*m_element) && m_document->quirks().needsBodyScrollbarWidthNoneDisabledQuirk()) {
         if (style.scrollbarWidth() == ScrollbarWidth::None)
             style.setScrollbarWidth(ScrollbarWidth::Auto);
     }
@@ -937,8 +946,8 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
     if (m_document->quirks().needsIPadSkypeOverflowScrollQuirk()) {
         // This makes the layout scrollable and makes visible the buttons hidden outside of the viewport.
         // static MainThreadNeverDestroyed<const AtomString> selectorValue(".app-container .noFocusOutline > div"_s);
-        if (RefPtr div = dynamicDowncast<HTMLDivElement>(m_element)) {
-            auto matchesNoFocus = div->matches(".app-container .noFocusOutline > div"_s);
+        if (is<HTMLDivElement>(*m_element)) {
+            auto matchesNoFocus = m_element->matches(".app-container .noFocusOutline > div"_s);
             if (matchesNoFocus.hasException())
                 return;
             if (matchesNoFocus.returnValue()) {
@@ -963,8 +972,8 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
             && style.flexShrink() == 1
             && (flexBasis.isPercent() || flexBasis.isFixed())
             && flexBasis.value() == 0
-            && const_cast<Element*>(m_element.get())->classList().contains(class1)
-            && const_cast<Element*>(m_element.get())->classList().contains(class2))
+            && m_element->hasClassName(class1)
+            && m_element->hasClassName(class2))
             style.setMinHeight(WebCore::Length(0, LengthType::Fixed));
     }
     if (m_document->quirks().needsPrimeVideoUserSelectNoneQuirk()) {
@@ -973,22 +982,34 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
             style.setUserSelect(UserSelect::None);
     }
 
+#if PLATFORM(MAC)
+    if (m_document->quirks().needsZomatoEmailLoginLabelQuirk()) {
+        static MainThreadNeverDestroyed<const AtomString> class1("eNjKGZ"_s);
+        if (is<HTMLLabelElement>(*m_element)
+            && m_element->hasClassName(class1)
+            && style.backgroundColor() == Color { WebCore::Color::white })
+            style.setBackgroundColor({ WebCore::Color::transparentBlack });
+    }
+#endif
+
 #if PLATFORM(IOS_FAMILY)
     if (m_document->quirks().needsGoogleMapsScrollingQuirk()) {
         static MainThreadNeverDestroyed<const AtomString> className("PUtLdf"_s);
         if (is<HTMLBodyElement>(*m_element) && m_element->hasClassName(className))
             style.setUsedTouchActions({ TouchAction::Auto });
     }
-#endif
+    if (m_document->quirks().needsFacebookStoriesCreationFormQuirk(*m_element, style))
+        style.setEffectiveDisplay(DisplayType::Flex);
+#endif // PLATFORM(IOS_FAMILY)
 
 #if ENABLE(VIDEO)
     if (m_document->quirks().needsFullscreenDisplayNoneQuirk()) {
-        if (RefPtr div = dynamicDowncast<HTMLDivElement>(m_element); div && style.display() == DisplayType::None) {
+        if (is<HTMLDivElement>(*m_element) && style.display() == DisplayType::None) {
             static MainThreadNeverDestroyed<const AtomString> instreamNativeVideoDivClass("instream-native-video--mobile"_s);
             static MainThreadNeverDestroyed<const AtomString> videoElementID("vjs_video_3_html5_api"_s);
 
-            if (div->hasClassName(instreamNativeVideoDivClass)) {
-                RefPtr video = dynamicDowncast<HTMLVideoElement>(div->treeScope().getElementById(videoElementID));
+            if (m_element->hasClassName(instreamNativeVideoDivClass)) {
+                RefPtr video = dynamicDowncast<HTMLVideoElement>(m_element->treeScope().getElementById(videoElementID));
                 if (video && video->isFullscreen())
                     style.setEffectiveDisplay(DisplayType::Block);
             }
@@ -998,12 +1019,32 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
     if (CheckedPtr fullscreenManager = m_document->fullscreenManagerIfExists(); fullscreenManager && m_document->quirks().needsFullscreenObjectFitQuirk()) {
         static MainThreadNeverDestroyed<const AtomString> playerClassName("top-player-video-element"_s);
         bool isFullscreen = fullscreenManager->isFullscreen();
-        RefPtr video = dynamicDowncast<HTMLVideoElement>(m_element);
-        if (video && isFullscreen && video->hasClassName(playerClassName) && style.objectFit() == ObjectFit::Fill)
+        if (is<HTMLVideoElement>(*m_element) && isFullscreen && m_element->hasClassName(playerClassName) && style.objectFit() == ObjectFit::Fill)
             style.setObjectFit(ObjectFit::Contain);
     }
 #endif
 #endif
+
+    if (m_document->quirks().needsHotelsAnimationQuirk(*m_element, style)) {
+        // We need to reset animation styles that are mistakenly overridden:
+        //     animation-delay: 0s, 0.06s;
+        //     animation-duration: 0.18s, 0.06s;
+        //     animation-fill-mode: none, forwards;
+        //     animation-name: menu-grow-left, menu-fade-in;
+        auto menuGrowLeftAnimation = Animation::create();
+        menuGrowLeftAnimation->setDuration(.18);
+        menuGrowLeftAnimation->setName({ "menu-grow-left"_s });
+
+        auto menuFadeInAnimation = Animation::create();
+        menuFadeInAnimation->setDelay(.06);
+        menuFadeInAnimation->setDuration(.06);
+        menuFadeInAnimation->setFillMode(AnimationFillMode::Forwards);
+        menuFadeInAnimation->setName({ "menu-fade-in"_s });
+
+        auto& animations = style.ensureAnimations();
+        animations.append(WTFMove(menuGrowLeftAnimation));
+        animations.append(WTFMove(menuFadeInAnimation));
+    }
 }
 
 void Adjuster::propagateToDocumentElementAndInitialContainingBlock(Update& update, const Document& document)
@@ -1148,14 +1189,13 @@ auto Adjuster::adjustmentForTextAutosizing(const RenderStyle& style, const Eleme
     return adjustmentForTextAutosizing;
 }
 
-bool Adjuster::adjustForTextAutosizing(RenderStyle& style, const Element& element, AdjustmentForTextAutosizing adjustment)
+bool Adjuster::adjustForTextAutosizing(RenderStyle& style, AdjustmentForTextAutosizing adjustment)
 {
     AutosizeStatus::updateStatus(style);
     if (auto newFontSize = adjustment.newFontSize) {
         auto fontDescription = style.fontDescription();
         fontDescription.setComputedSize(*newFontSize);
         style.setFontDescription(WTFMove(fontDescription));
-        style.fontCascade().update(&element.document().fontSelector());
     }
     if (auto newLineHeight = adjustment.newLineHeight)
         style.setLineHeight({ *newLineHeight, LengthType::Fixed });
@@ -1166,7 +1206,7 @@ bool Adjuster::adjustForTextAutosizing(RenderStyle& style, const Element& elemen
 
 bool Adjuster::adjustForTextAutosizing(RenderStyle& style, const Element& element)
 {
-    return adjustForTextAutosizing(style, element, adjustmentForTextAutosizing(style, element));
+    return adjustForTextAutosizing(style, adjustmentForTextAutosizing(style, element));
 }
 #endif
 

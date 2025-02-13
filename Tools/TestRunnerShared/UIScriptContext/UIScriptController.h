@@ -28,6 +28,7 @@
 #include "JSWrappable.h"
 #include <JavaScriptCore/JSRetainPtr.h>
 #include <wtf/Ref.h>
+#include <wtf/WeakPtr.h>
 
 OBJC_CLASS NSUndoManager;
 OBJC_CLASS NSView;
@@ -71,7 +72,6 @@ public:
 
     void notImplemented() const { RELEASE_ASSERT_NOT_REACHED(); }
 
-    void contextDestroyed();
     virtual void waitForOutstandingCallbacks() { /* notImplemented(); */ }
 
     void makeWindowObject(JSContextRef);
@@ -208,6 +208,12 @@ public:
     {
         notImplemented();
         return false;
+    }
+
+    virtual unsigned keyboardUpdateForChangedSelectionCount() const
+    {
+        notImplemented();
+        return 0;
     }
 
     virtual bool isAnimatingDragCancel() const
@@ -423,10 +429,12 @@ public:
     virtual void adjustVisibilityForFrontmostTarget(int, int, JSValueRef) { notImplemented(); }
     virtual void resetVisibilityAdjustments(JSValueRef) { notImplemented(); }
 
+    virtual JSRetainPtr<JSStringRef> frontmostViewAtPoint(int, int) { notImplemented(); return { }; }
+
 protected:
     explicit UIScriptController(UIScriptContext&);
     
-    UIScriptContext* context() { return m_context; }
+    UIScriptContext* context();
 
     virtual void clearAllCallbacks() { /* notImplemented(); */ }
 
@@ -445,7 +453,7 @@ protected:
 
     JSObjectRef objectFromRect(const WebCore::FloatRect&) const;
 
-    UIScriptContext* m_context;
+    WeakPtr<UIScriptContext> m_context;
 
 #if PLATFORM(COCOA)
     bool m_capsLockOn { false };

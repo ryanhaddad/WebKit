@@ -800,9 +800,11 @@ sub printTypeHelpersHeaderFile
     print F "#pragma once\n\n";
     print F "#include \"".$parameters{namespace}."Names.h\"\n\n";
 
-    # FIXME: Remove `if` condition below once HTMLElementTypeHeaders.h is made inline.
+    # FIXME: Remove `if` condition below once HTMLElementTypeHelpers.h is made inline.
     if ($parameters{namespace} eq "SVG") {
-        print F "#include \"".$parameters{namespace}."ElementInlines.h\"\n\n";
+        print F "#include \"SVGElementInlines.h\"\n\n";
+    } elsif ($parameters{namespace} eq "MathML") {
+        print F "#include \"MathMLElement.h\"\n\n";
     }
     printTypeHelpers($F, \%allElements);
 
@@ -817,6 +819,7 @@ sub printNamesHeaderFile
 
     printLicenseHeader($F);
     printHeaderHead($F, "DOM", $parameters{namespace}, <<END, "class $parameters{namespace}QualifiedName : public QualifiedName { };\n\n");
+#include <span>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/AtomString.h>
 #include "QualifiedName.h"
@@ -840,12 +843,12 @@ END
     print F "\n";
 
     if (keys %allElements) {
-        print F "const unsigned $parameters{namespace}TagsCount = ", scalar(keys %allElements), ";\n";
-        print F "const WebCore::$parameters{namespace}QualifiedName* const* get$parameters{namespace}Tags();\n";
+        print F "constexpr unsigned $parameters{namespace}TagsCount = ", scalar(keys %allElements), ";\n";
+        print F "std::span<const WebCore::$parameters{namespace}QualifiedName* const, $parameters{namespace}TagsCount> get$parameters{namespace}Tags();\n";
     }
 
     if (keys %allAttrs) {
-        print F "const unsigned $parameters{namespace}AttrsCount = ", scalar(keys %allAttrs), ";\n";
+        print F "constexpr unsigned $parameters{namespace}AttrsCount = ", scalar(keys %allAttrs), ";\n";
     }
 
     printInit($F, 1);
@@ -1395,7 +1398,7 @@ sub generateFindNameForLength
                     }
                     print F ")) {\n";
                 } else {
-                    print F "${indent}if (WTF::equal($bufferStart, \"". substr($string, $currentIndex, $length - $currentIndex) . "\"_span)) {\n";
+                    print F "${indent}if (WTF::equal($bufferStart, \"". substr($string, $currentIndex, $length - $currentIndex) . "\"_span8)) {\n";
                 }
             }
             print F "$indent    return ${enumClass}::$enumValue;\n";
@@ -1477,6 +1480,7 @@ sub printNamesCppFile
     printCppHead($F, "DOM", $parameters{namespace}, <<END, "WebCore");
 #include "Namespace.h"
 #include "NodeName.h"
+#include <array>
 END
 
     my $lowercaseNamespacePrefix = lc($parameters{namespacePrefix});
@@ -1499,8 +1503,8 @@ END
             print F "WEBCORE_EXPORT LazyNeverDestroyed<const $parameters{namespace}QualifiedName> $allElements{$elementKey}{identifier}Tag;\n";
         }
 
-        print F "\n\nconst WebCore::$parameters{namespace}QualifiedName* const* get$parameters{namespace}Tags()\n";
-        print F "{\n    static const WebCore::$parameters{namespace}QualifiedName* const $parameters{namespace}Tags[] = {\n";
+        print F "\n\nstd::span<const WebCore::$parameters{namespace}QualifiedName* const, $parameters{namespace}TagsCount> get$parameters{namespace}Tags()\n";
+        print F "{\n    static const std::array<const WebCore::$parameters{namespace}QualifiedName*, $parameters{namespace}TagsCount> $parameters{namespace}Tags {\n";
         for my $elementKey (sort keys %allElements) {
             print F "        &$allElements{$elementKey}{identifier}Tag.get(),\n";
         }

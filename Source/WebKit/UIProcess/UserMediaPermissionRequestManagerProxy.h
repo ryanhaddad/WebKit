@@ -83,8 +83,9 @@ public:
     void disconnectFromPage();
 
 #if ENABLE(MEDIA_STREAM)
-    static void forEach(const WTF::Function<void(UserMediaPermissionRequestManagerProxy&)>&);
+    static void forEach(NOESCAPE const WTF::Function<void(UserMediaPermissionRequestManagerProxy&)>&);
 #if HAVE(AVCAPTUREDEVICEROTATIONCOORDINATOR)
+    bool isMonitoringCaptureDeviceRotation(const String&);
     void startMonitoringCaptureDeviceRotation(const String&);
     void stopMonitoringCaptureDeviceRotation(const String&);
     void rotationAngleForCaptureDeviceChanged(const String&, WebCore::VideoFrameRotation);
@@ -95,7 +96,7 @@ public:
 
     void invalidatePendingRequests();
 
-    void requestUserMediaPermissionForFrame(WebCore::UserMediaRequestIdentifier, WebCore::FrameIdentifier, Ref<WebCore::SecurityOrigin>&&  userMediaDocumentOrigin, Ref<WebCore::SecurityOrigin>&& topLevelDocumentOrigin, WebCore::MediaStreamRequest&&);
+    void requestUserMediaPermissionForFrame(WebCore::UserMediaRequestIdentifier, FrameInfoData&&, Ref<WebCore::SecurityOrigin>&&  userMediaDocumentOrigin, Ref<WebCore::SecurityOrigin>&& topLevelDocumentOrigin, WebCore::MediaStreamRequest&&);
 
     void resetAccess(WebFrameProxy* = nullptr);
     void didCommitLoadForFrame(WebCore::FrameIdentifier);
@@ -127,7 +128,7 @@ public:
     void setMockCaptureDevicesEnabledOverride(std::optional<bool>);
     bool hasPendingCapture() const { return m_hasPendingCapture; }
 
-    void checkUserMediaPermissionForSpeechRecognition(WebCore::FrameIdentifier, const WebCore::SecurityOrigin&, const WebCore::SecurityOrigin&, const WebCore::CaptureDevice&, CompletionHandler<void(bool)>&&);
+    void checkUserMediaPermissionForSpeechRecognition(WebCore::FrameIdentifier mainFrameIdentifier, FrameInfoData&&, const WebCore::SecurityOrigin&, const WebCore::SecurityOrigin&, const WebCore::CaptureDevice&, CompletionHandler<void(bool)>&&);
 
     struct DeniedRequest {
         WebCore::FrameIdentifier mainFrameID;
@@ -173,8 +174,10 @@ private:
     RequestAction getRequestAction(const UserMediaPermissionRequestProxy&);
 
     bool wasGrantedVideoOrAudioAccess(WebCore::FrameIdentifier);
+    bool wasGrantedAudioAccess(WebCore::FrameIdentifier);
+    bool wasGrantedVideoAccess(WebCore::FrameIdentifier);
 
-    void computeFilteredDeviceList(bool revealIdsAndLabels, CompletionHandler<void(Vector<WebCore::CaptureDeviceWithCapabilities>&&)>&&);
+    void computeFilteredDeviceList(WebCore::FrameIdentifier, bool revealIdsAndLabels, CompletionHandler<void(Vector<WebCore::CaptureDeviceWithCapabilities>&&)>&&);
     void platformGetMediaStreamDevices(bool revealIdsAndLabels, CompletionHandler<void(Vector<WebCore::CaptureDeviceWithCapabilities>&&)>&&);
 
     void processUserMediaPermissionRequest();
@@ -219,13 +222,13 @@ private:
     Ref<const Logger> m_logger;
     const uint64_t m_logIdentifier;
 #endif
-    bool m_hasFilteredDeviceList { false };
 #if PLATFORM(COCOA)
     bool m_hasCreatedSandboxExtensionForTCCD { false };
 #endif
     uint64_t m_hasPendingCapture { 0 };
     std::optional<bool> m_mockDevicesEnabledOverride;
-    HashSet<WebCore::FrameIdentifier> m_grantedFrames;
+    HashSet<WebCore::FrameIdentifier> m_grantedAudioFrames;
+    HashSet<WebCore::FrameIdentifier> m_grantedVideoFrames;
 #if PLATFORM(COCOA)
     HashCountedSet<String> m_monitoredDeviceIds;
     RetainPtr<WKRotationCoordinatorObserver> m_objcObserver;

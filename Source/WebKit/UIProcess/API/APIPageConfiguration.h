@@ -123,13 +123,14 @@ public:
     const WTF::String& openedMainFrameName() const;
     void setOpenedMainFrameName(const WTF::String&);
 
-    WebCore::SandboxFlags initialSandboxFlags() const;
+    WebCore::SandboxFlags initialSandboxFlags() const { return m_data.initialSandboxFlags; }
     void setInitialSandboxFlags(WebCore::SandboxFlags);
 
     const std::optional<WebCore::WindowFeatures>& windowFeatures() const;
     void setWindowFeatures(WebCore::WindowFeatures&&);
 
     WebKit::WebProcessPool& processPool() const;
+    Ref<WebKit::WebProcessPool> protectedProcessPool() const;
     void setProcessPool(RefPtr<WebKit::WebProcessPool>&&);
 
     WebKit::WebUserContentControllerProxy& userContentController() const;
@@ -170,6 +171,7 @@ public:
     void setWebsiteDataStore(RefPtr<WebKit::WebsiteDataStore>&&);
 
     WebsitePolicies& defaultWebsitePolicies() const;
+    Ref<WebsitePolicies> protectedDefaultWebsitePolicies() const;
     void setDefaultWebsitePolicies(RefPtr<WebsitePolicies>&&);
 
 #if PLATFORM(IOS_FAMILY)
@@ -386,6 +388,9 @@ public:
     bool incompleteImageBorderEnabled() const { return m_data.incompleteImageBorderEnabled; }
     void setIncompleteImageBorderEnabled(bool enabled) { m_data.incompleteImageBorderEnabled = enabled; }
 
+    bool showsSystemScreenTimeBlockingView() const { return m_data.showsSystemScreenTimeBlockingView; }
+    void setShowsSystemScreenTimeBlockingView(bool shows) { m_data.showsSystemScreenTimeBlockingView = shows; }
+
     bool shouldDeferAsynchronousScriptsUntilAfterDocumentLoad() const { return m_data.shouldDeferAsynchronousScriptsUntilAfterDocumentLoad; }
     void setShouldDeferAsynchronousScriptsUntilAfterDocumentLoad(bool defer) { m_data.shouldDeferAsynchronousScriptsUntilAfterDocumentLoad = defer; }
 
@@ -451,10 +456,6 @@ public:
     void setGamepadAccessRequiresExplicitConsent(WebCore::ShouldRequireExplicitConsentForGamepadAccess value) { m_data.gamepadAccessRequiresExplicitConsent = value; }
 #endif // ENABLE(GAMEPAD)
 
-#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-    bool overlayRegionsEnabled() const { return m_data.overlayRegionsEnabled; }
-    void setOverlayRegionsEnabled(bool value) { m_data.overlayRegionsEnabled = value; }
-#endif // ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
     bool cssTransformStyleSeparatedEnabled() const { return m_data.cssTransformStyleSeparatedEnabled; }
     void setCSSTransformStyleSeparatedEnabled(bool value) { m_data.cssTransformStyleSeparatedEnabled = value; }
@@ -629,15 +630,13 @@ private:
         bool allowsInlinePredictions { false };
         bool scrollToTextFragmentIndicatorEnabled { true };
         bool scrollToTextFragmentMarkingEnabled { true };
+        bool showsSystemScreenTimeBlockingView { true };
 #if PLATFORM(VISION)
 
 #if ENABLE(GAMEPAD)
         WebCore::ShouldRequireExplicitConsentForGamepadAccess gamepadAccessRequiresExplicitConsent { WebCore::ShouldRequireExplicitConsentForGamepadAccess::No };
 #endif // ENABLE(GAMEPAD)
 
-#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-        bool overlayRegionsEnabled { false };
-#endif
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
         bool cssTransformStyleSeparatedEnabled { false };
 #endif

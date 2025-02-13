@@ -29,14 +29,13 @@
 #include "CommonCryptoDERUtilities.h"
 #include "JsonWebKey.h"
 #include "Logging.h"
+#include <wtf/StdLibExtras.h>
 #include <wtf/text/Base64.h>
 
 #if HAVE(SWIFT_CPP_INTEROP)
 #include <pal/PALSwift.h>
 #endif
 #include <pal/spi/cocoa/CoreCryptoSPI.h>
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WebCore {
 
@@ -160,7 +159,7 @@ bool CryptoKeyOKP::platformCheckPairedKeys(CryptoAlgorithmIdentifier identifier,
         ASSERT_NOT_REACHED();
         return false;
     }
-    return !std::memcmp(ccPublicKey, publicKey.data(), sizeof(ccPublicKey));
+    return equalSpans(asByteSpan(ccPublicKey), publicKey.span());
 #else // HAVE(SWIFT_CPP_INTEROP)
     switch (identifier) {
     case CryptoAlgorithmIdentifier::Ed25519:
@@ -475,5 +474,3 @@ Vector<uint8_t> CryptoKeyOKP::platformExportRaw() const
 }
 
 } // namespace WebCore
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

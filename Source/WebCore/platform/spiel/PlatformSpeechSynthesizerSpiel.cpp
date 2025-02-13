@@ -33,6 +33,7 @@
 #include "PlatformSpeechSynthesisVoice.h"
 #include "WebKitAudioSinkGStreamer.h"
 #include <spiel/spiel.h>
+#include <wtf/glib/GSpanExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 
@@ -150,7 +151,7 @@ SpielSpeechWrapper::~SpielSpeechWrapper()
 String SpielSpeechWrapper::generateVoiceURI(const GRefPtr<SpielVoice>& voice, const String& language)
 {
     auto provider = adoptGRef(spiel_voice_get_provider(voice.get()));
-    return makeString(URI_PREFIX, span(spiel_provider_get_well_known_name(provider.get())), '#', span(spiel_voice_get_identifier(voice.get())), '#', language);
+    return makeString(URI_PREFIX, unsafeSpan(spiel_provider_get_well_known_name(provider.get())), '#', unsafeSpan(spiel_voice_get_identifier(voice.get())), '#', language);
 }
 
 Vector<RefPtr<PlatformSpeechSynthesisVoice>> SpielSpeechWrapper::initializeVoiceList()
@@ -161,16 +162,15 @@ Vector<RefPtr<PlatformSpeechSynthesisVoice>> SpielSpeechWrapper::initializeVoice
     m_voices.clear();
     while (auto item = g_list_model_get_item(voices, position++)) {
         auto voice = SPIEL_VOICE(item);
-        auto name = makeString(span(spiel_voice_get_name(voice)));
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
-        const char* const* languages = spiel_voice_get_languages(voice);
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
-        for (unsigned i = 0; i < G_N_ELEMENTS(languages); i++) {
-            auto language = makeString(span(languages[i]));
-            bool isDefault = !i;
-            auto uri = generateVoiceURI(voice, language);
-            platformVoices.append(PlatformSpeechSynthesisVoice::create(uri, name, language, false, isDefault));
+        auto name = makeString(unsafeSpan(spiel_voice_get_name(voice)));
+        auto isDefault = true;
+        const auto languages = span(const_cast<char**>(spiel_voice_get_languages(voice)));
+        for (const auto language : languages) {
+            auto languageString = makeString(unsafeSpan(language));
+            auto uri = generateVoiceURI(voice, languageString);
+            platformVoices.append(PlatformSpeechSynthesisVoice::create(uri, name, languageString, false, isDefault));
             m_voices.add(uri, GRefPtr(voice));
+            isDefault = false;
         }
     }
     return platformVoices;

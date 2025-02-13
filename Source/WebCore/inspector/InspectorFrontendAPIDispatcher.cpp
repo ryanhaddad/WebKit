@@ -83,7 +83,7 @@ void InspectorFrontendAPIDispatcher::suspend(UnsuspendSoon unsuspendSoon)
     m_suspended = true;
 
     if (unsuspendSoon == UnsuspendSoon::Yes) {
-        RunLoop::main().dispatch([protectedThis = Ref { *this }] {
+        RunLoop::protectedMain()->dispatch([protectedThis = Ref { *this }] {
             // If the frontend page has been deallocated, there's nothing to do.
             if (!protectedThis->m_frontendPage)
                 return;
@@ -109,7 +109,7 @@ JSDOMGlobalObject* InspectorFrontendAPIDispatcher::frontendGlobalObject()
     if (!m_frontendPage)
         return nullptr;
 
-    auto* localMainFrame = dynamicDowncast<LocalFrame>(m_frontendPage->mainFrame());
+    RefPtr localMainFrame = m_frontendPage->localMainFrame();
     if (!localMainFrame)
         return nullptr;
     
@@ -266,7 +266,7 @@ ValueOrException InspectorFrontendAPIDispatcher::evaluateExpression(const String
 
     JSC::SuspendExceptionScope scope(m_frontendPage->inspectorController().vm());
 
-    auto* localMainFrame = dynamicDowncast<LocalFrame>(m_frontendPage->mainFrame());
+    RefPtr localMainFrame = m_frontendPage->localMainFrame();
     return localMainFrame->script().evaluateInWorld(ScriptSourceCode(expression, JSC::SourceTaintedOrigin::Untainted), mainThreadNormalWorld());
 }
 

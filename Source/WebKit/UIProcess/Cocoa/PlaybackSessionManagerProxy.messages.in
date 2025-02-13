@@ -21,6 +21,11 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
+[
+    EnabledBy=VideoPresentationManagerEnabled || VideoPresentationModeAPIEnabled,
+    DispatchedFrom=WebContent,
+    DispatchedTo=UI
+]
 messages -> PlaybackSessionManagerProxy {
     CurrentTimeChanged(WebKit::PlaybackSessionContextIdentifier contextId, double currentTime, double hostTime)
     BufferedTimeChanged(WebKit::PlaybackSessionContextIdentifier contextId, double bufferedTime)
@@ -42,6 +47,7 @@ messages -> PlaybackSessionManagerProxy {
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     SupportsLinearMediaPlayerChanged(WebKit::PlaybackSessionContextIdentifier contextId, bool supportsLinearMediaPlayer)
     SpatialVideoMetadataChanged(WebKit::PlaybackSessionContextIdentifier contextId, std::optional<WebCore::SpatialVideoMetadata> metadata);
+    IsImmersiveVideoChanged(WebKit::PlaybackSessionContextIdentifier contextId, bool value);
 #endif
     SetUpPlaybackControlsManagerWithID(WebKit::PlaybackSessionContextIdentifier contextId, bool isVideo)
     ClearPlaybackControlsManager()

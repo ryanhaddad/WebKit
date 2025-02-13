@@ -50,7 +50,6 @@
 #include "RenderListMarker.h"
 #include "RenderStyleInlines.h"
 #include "RenderView.h"
-#include "RenderViewTransitionRoot.h"
 #include "StyleCustomPropertyData.h"
 #include "StyleOriginatedAnimation.h"
 #include "StylePropertyShorthand.h"
@@ -133,22 +132,18 @@ RenderElement* Styleable::renderer() const
         }
         break;
     case PseudoId::ViewTransition:
-        if (element.renderer())
+        if (element.renderer() && element.renderer()->isDocumentElementRenderer())
             return element.renderer()->view().viewTransitionRoot().get();
         break;
     case PseudoId::ViewTransitionGroup:
     case PseudoId::ViewTransitionImagePair:
     case PseudoId::ViewTransitionNew:
     case PseudoId::ViewTransitionOld: {
-        if (!element.renderer())
-            return nullptr;
-
-        WeakPtr viewTransitionRoot = element.renderer()->view().viewTransitionRoot();
-        if (!viewTransitionRoot)
+        if (!element.renderer() || !element.renderer()->isDocumentElementRenderer())
             return nullptr;
 
         // Find the right ::view-transition-group().
-        CheckedPtr correctGroup = viewTransitionRoot->childGroupForName(pseudoElementIdentifier->nameArgument);
+        CheckedPtr correctGroup = element.renderer()->view().viewTransitionGroupForName(pseudoElementIdentifier->nameArgument);
         if (!correctGroup)
             return nullptr;
 
@@ -244,8 +239,18 @@ bool Styleable::isRunningAcceleratedTransformAnimation() const
 
 bool Styleable::hasRunningAcceleratedAnimations() const
 {
-    if (auto* effectStack = keyframeEffectStack())
-        return effectStack->hasAcceleratedEffects(element.document().settings());
+    if (auto* effectStack = keyframeEffectStack()) {
+        if (effectStack->hasAcceleratedEffects(element.document().settings()))
+            return true;
+    }
+
+    for (RefPtr animation : WebAnimation::instances()) {
+        if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
+            if (keyframeEffect->isRunningAccelerated() && keyframeEffect->targetStyleable() == *this)
+                return true;
+        }
+    }
+
     return false;
 }
 
@@ -289,6 +294,8 @@ void Styleable::animationWasRemoved(WebAnimation& animation) const
 void Styleable::elementWasRemoved() const
 {
     cancelStyleOriginatedAnimations();
+    if (CheckedPtr timelinesController = element.protectedDocument()->timelinesController())
+        timelinesController->styleableWasRemoved(*this);
 }
 
 void Styleable::willChangeRenderer() const
@@ -299,9 +306,16 @@ void Styleable::willChangeRenderer() const
     }
 }
 
+OptionSet<AnimationImpact> Styleable::applyKeyframeEffects(RenderStyle& targetStyle, UncheckedKeyHashSet<AnimatableCSSProperty>& affectedProperties, const RenderStyle* previousLastStyleChangeEventStyle, const Style::ResolutionContext& resolutionContext) const
+{
+    return element.ensureKeyframeEffectStack(pseudoElementIdentifier).applyKeyframeEffects(targetStyle, affectedProperties, previousLastStyleChangeEventStyle, resolutionContext);
+}
+
 void Styleable::cancelStyleOriginatedAnimations() const
 {
     cancelStyleOriginatedAnimations({ });
+    if (CheckedPtr timelinesController = element.protectedDocument()->timelinesController())
+        timelinesController->unregisterNamedTimelinesAssociatedWithElement(*this);
 }
 
 void Styleable::cancelStyleOriginatedAnimations(const WeakStyleOriginatedAnimations& animationsToCancelSilently) const
@@ -491,7 +505,7 @@ static bool transitionMatchesProperty(const Animation& transition, const Animata
     return false;
 }
 
-static void compileTransitionPropertiesInStyle(const RenderStyle& style, CSSPropertiesBitSet& transitionProperties, HashSet<AtomString>& transitionCustomProperties, bool& transitionPropertiesContainAll)
+static void compileTransitionPropertiesInStyle(const RenderStyle& style, CSSPropertiesBitSet& transitionProperties, UncheckedKeyHashSet<AtomString>& transitionCustomProperties, bool& transitionPropertiesContainAll)
 {
     auto* transitions = style.transitions();
     if (!transitions) {
@@ -777,7 +791,7 @@ void Styleable::updateCSSTransitions(const RenderStyle& currentStyle, const Rend
     // First, let's compile the list of all CSS properties found in the current style and the after-change style.
     bool transitionPropertiesContainAll = false;
     CSSPropertiesBitSet transitionProperties;
-    HashSet<AtomString> transitionCustomProperties;
+    UncheckedKeyHashSet<AtomString> transitionCustomProperties;
     compileTransitionPropertiesInStyle(currentStyle, transitionProperties, transitionCustomProperties, transitionPropertiesContainAll);
     compileTransitionPropertiesInStyle(newStyle, transitionProperties, transitionCustomProperties, transitionPropertiesContainAll);
 
@@ -867,7 +881,7 @@ void Styleable::updateCSSScrollTimelines(const RenderStyle* currentStyle, const 
     };
 
     auto updateNamedScrollTimelines = [&]() {
-        if (currentStyle && currentStyle->scrollTimelineNames() == afterChangeStyle.scrollTimelineNames())
+        if (currentStyle && currentStyle->scrollTimelineNames() == afterChangeStyle.scrollTimelineNames() && currentStyle->scrollTimelineAxes() == afterChangeStyle.scrollTimelineAxes())
             return;
 
         CheckedRef timelinesController = element.protectedDocument()->ensureTimelinesController();
@@ -878,7 +892,7 @@ void Styleable::updateCSSScrollTimelines(const RenderStyle* currentStyle, const 
         for (size_t i = 0; i < currentTimelineNames.size(); ++i) {
             auto& name = currentTimelineNames[i];
             auto axis = numberOfAxes ? currentTimelineAxes[i % numberOfAxes] : ScrollAxis::Block;
-            timelinesController->registerNamedScrollTimeline(name, element, axis);
+            timelinesController->registerNamedScrollTimeline(name, *this, axis);
         }
 
         if (!currentStyle)
@@ -886,7 +900,7 @@ void Styleable::updateCSSScrollTimelines(const RenderStyle* currentStyle, const 
 
         for (auto& previousTimelineName : currentStyle->scrollTimelineNames()) {
             if (!currentTimelineNames.contains(previousTimelineName))
-                timelinesController->unregisterNamedTimeline(previousTimelineName, element);
+                timelinesController->unregisterNamedTimeline(previousTimelineName, *this);
         }
     };
 
@@ -914,7 +928,7 @@ void Styleable::updateCSSViewTimelines(const RenderStyle* currentStyle, const Re
     };
 
     auto updateNamedViewTimelines = [&]() {
-        if (currentStyle && currentStyle->viewTimelineNames() == afterChangeStyle.viewTimelineNames())
+        if ((currentStyle && currentStyle->viewTimelineNames() == afterChangeStyle.viewTimelineNames()) && (currentStyle && currentStyle->viewTimelineAxes() == afterChangeStyle.viewTimelineAxes()) && (currentStyle && currentStyle->viewTimelineInsets() == afterChangeStyle.viewTimelineInsets()))
             return;
 
         CheckedRef timelinesController = element.protectedDocument()->ensureTimelinesController();
@@ -928,7 +942,7 @@ void Styleable::updateCSSViewTimelines(const RenderStyle* currentStyle, const Re
             auto& name = currentTimelineNames[i];
             auto axis = numberOfAxes ? currentTimelineAxes[i % numberOfAxes] : ScrollAxis::Block;
             auto insets = numberOfInsets ? ViewTimelineInsets(currentTimelineInsets[i % numberOfInsets]) : ViewTimelineInsets();
-            timelinesController->registerNamedViewTimeline(name, element, axis, WTFMove(insets));
+            timelinesController->registerNamedViewTimeline(name, *this, axis, WTFMove(insets));
         }
 
         if (!currentStyle)
@@ -936,7 +950,7 @@ void Styleable::updateCSSViewTimelines(const RenderStyle* currentStyle, const Re
 
         for (auto& previousTimelineName : currentStyle->viewTimelineNames()) {
             if (!currentTimelineNames.contains(previousTimelineName))
-                timelinesController->unregisterNamedTimeline(previousTimelineName, element);
+                timelinesController->unregisterNamedTimeline(previousTimelineName, *this);
         }
     };
 
@@ -972,6 +986,18 @@ void Styleable::setCapturedInViewTransition(AtomString captureName)
         if (changed)
             element.invalidateStyleAndLayerComposition();
     }
+}
+
+WTF::TextStream& operator<<(WTF::TextStream& ts, const Styleable& styleable)
+{
+    ts << styleable.element << ", " << styleable.pseudoElementIdentifier;
+    return ts;
+}
+
+WTF::TextStream& operator<<(WTF::TextStream& ts, const WeakStyleable& styleable)
+{
+    ts << styleable.element() << ", " << styleable.pseudoElementIdentifier();
+    return ts;
 }
 
 

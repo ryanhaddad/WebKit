@@ -24,38 +24,30 @@
 
 #pragma once
 
+#include "CSSPrimitiveNumericTypes+Canonicalization.h"
 #include "CSSPropertyParserConsumer+MetaConsumerDefinitions.h"
 
 namespace WebCore {
 namespace CSSPropertyParserHelpers {
 
 struct ResolutionValidator {
-    static constexpr bool isValid(CSSUnitType unitType, CSSPropertyParserOptions)
+    static constexpr std::optional<CSS::ResolutionUnit> validate(CSSUnitType unitType, CSSPropertyParserOptions)
     {
-        switch (unitType) {
-        case CSSUnitType::CSS_DPPX:
-        case CSSUnitType::CSS_X:
-        case CSSUnitType::CSS_DPI:
-        case CSSUnitType::CSS_DPCM:
-            return true;
-
-        default:
-            return false;
-        }
+        return CSS::UnitTraits<CSS::ResolutionUnit>::validate(unitType);
     }
 
-    template<auto R> static bool isValid(CSS::ResolutionRaw<R> raw, CSSPropertyParserOptions)
+    template<auto R, typename V> static bool isValid(CSS::ResolutionRaw<R, V> raw, CSSPropertyParserOptions)
     {
         return isValidDimensionValue(raw, [&] {
-            auto canonicalValue = CSS::canonicalizeResolution(raw.value, raw.type);
+            auto canonicalValue = CSS::canonicalize(raw);
             return canonicalValue >= raw.range.min && canonicalValue <= raw.range.max;
         });
     }
 };
 
-template<auto R> struct ConsumerDefinition<CSS::Resolution<R>> {
-    using FunctionToken = FunctionConsumerForCalcValues<CSS::Resolution<R>>;
-    using DimensionToken = DimensionConsumer<CSS::Resolution<R>, ResolutionValidator>;
+template<auto R, typename V> struct ConsumerDefinition<CSS::Resolution<R, V>> {
+    using FunctionToken = FunctionConsumerForCalcValues<CSS::Resolution<R, V>>;
+    using DimensionToken = DimensionConsumer<CSS::Resolution<R, V>, ResolutionValidator>;
 };
 
 } // namespace CSSPropertyParserHelpers

@@ -33,19 +33,23 @@
 #import "Chrome.h"
 #import "ChromeClient.h"
 #import "DataTransfer.h"
+#import "DocumentInlines.h"
 #import "DragState.h"
 #import "EventNames.h"
 #import "FocusController.h"
+#import "FrameLoader.h"
 #import "HandleUserInputEventResult.h"
 #import "KeyboardEvent.h"
 #import "LocalFrame.h"
 #import "LocalFrameView.h"
+#import "MouseEventTypes.h"
 #import "MouseEventWithHitTestResults.h"
 #import "Page.h"
 #import "Pasteboard.h"
 #import "PlatformEventFactoryIOS.h"
 #import "PlatformKeyboardEvent.h"
 #import "RenderWidget.h"
+#import "ScrollingCoordinatorTypes.h"
 #import "WAKView.h"
 #import "WAKWindow.h"
 #import "WebEvent.h"
@@ -121,9 +125,9 @@ bool EventHandler::wheelEvent(WebEvent *event)
             processingSteps = { WheelEventProcessingSteps::SynchronousScrolling, WheelEventProcessingSteps::NonBlockingDOMEventDispatch };
     }
 
-    bool eventWasHandled = handleWheelEvent(wheelEvent, processingSteps).wasHandled();
-    event.wasHandled = eventWasHandled;
-    return eventWasHandled;
+    auto [result, _] = handleWheelEvent(wheelEvent, processingSteps);
+    event.wasHandled = result.wasHandled();
+    return event.wasHandled;
 }
 
 #if ENABLE(IOS_TOUCH_EVENTS)
@@ -142,30 +146,6 @@ void EventHandler::touchEvent(WebEvent *event)
     event.wasHandled = handleTouchEvent(PlatformEventFactory::createPlatformTouchEvent(event)).wasHandled();
 }
 #endif
-
-bool EventHandler::tabsToAllFormControls(KeyboardEvent* event) const
-{
-    RefPtr page = m_frame->page();
-    if (!page)
-        return false;
-
-    KeyboardUIMode keyboardUIMode = page->chrome().client().keyboardUIMode();
-    bool handlingOptionTab = event && isKeyboardOptionTab(*event);
-
-    // If tab-to-links is off, option-tab always highlights all controls.
-    if ((keyboardUIMode & KeyboardAccessTabsToLinks) == 0 && handlingOptionTab)
-        return true;
-
-    // If system preferences say to include all controls, we always include all controls.
-    if (keyboardUIMode & KeyboardAccessFull)
-        return true;
-
-    // Otherwise tab-to-links includes all controls, unless the sense is flipped via option-tab.
-    if (keyboardUIMode & KeyboardAccessTabsToLinks)
-        return !handlingOptionTab;
-
-    return handlingOptionTab;
-}
 
 bool EventHandler::keyEvent(WebEvent *event)
 {
@@ -433,14 +413,18 @@ bool EventHandler::passSubframeEventToSubframe(MouseEventWithHitTestResults& eve
     return false;
 }
 
-bool EventHandler::passWheelEventToWidget(const PlatformWheelEvent&, Widget& widget, OptionSet<WheelEventProcessingSteps>)
+bool EventHandler::passWheelEventToWidget(const PlatformWheelEvent& wheelEvent, Widget& widget, OptionSet<WheelEventProcessingSteps> processingSteps)
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
 
     NSView* nodeView = widget.platformWidget();
     if (!nodeView) {
-        // WK2 code path. No wheel events on iOS anyway.
-        return false;
+        // WebKit2 code path.
+        RefPtr frameView = dynamicDowncast<LocalFrameView>(widget);
+        if (!frameView)
+            return false;
+        auto [result, _] = frameView->frame().eventHandler().handleWheelEvent(wheelEvent, processingSteps);
+        return result.wasHandled();
     }
 
     if (currentEvent().type != WebEventScrollWheel || m_sendingEventToSubview)

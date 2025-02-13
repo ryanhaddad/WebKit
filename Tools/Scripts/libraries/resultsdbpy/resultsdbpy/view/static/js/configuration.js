@@ -115,7 +115,7 @@ class Configuration {
             return '';
         if (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].includes(match[2]))
             return match[2];
-        if (['J', 'N', 'R'].includes(match[2])) {
+        if (['J', 'R'].includes(match[2])) {
             const count = parseInt(match[3]);
             if (count < 500)
                 return 'A';
@@ -125,11 +125,21 @@ class Configuration {
                 return 'C';
             return 'D';
         }
+        if (['N'].includes(match[2])) {
+            const count = parseInt(match[3]);
+            if (count < 500)
+                return 'A';
+            if (count < 700)
+                return 'B';
+            if (count <= 800 || count >= 840 && count < 870)
+                return 'C';
+            return 'D';
+        }
         if (['K'].includes(match[2])) {
             const count = parseInt(match[3]);
             if (count < 200)
                 return 'B';
-            if (count < 500)
+            if (count < 510)
                 return 'C';
             return 'D';
         }

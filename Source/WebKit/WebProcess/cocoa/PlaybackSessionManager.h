@@ -102,6 +102,7 @@ private:
     void isInWindowFullscreenActiveChanged(bool) final;
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     void spatialVideoMetadataChanged(const std::optional<WebCore::SpatialVideoMetadata>&) final;
+    void isImmersiveVideoChanged(bool) final;
 #endif
 
     PlaybackSessionInterfaceContext(PlaybackSessionManager&, PlaybackSessionContextIdentifier);
@@ -116,6 +117,9 @@ class PlaybackSessionManager : public RefCounted<PlaybackSessionManager>, privat
 public:
     static Ref<PlaybackSessionManager> create(WebPage&);
     virtual ~PlaybackSessionManager();
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void invalidate();
 
@@ -166,6 +170,7 @@ private:
     void isPictureInPictureSupportedChanged(PlaybackSessionContextIdentifier, bool);
     void isInWindowFullscreenActiveChanged(PlaybackSessionContextIdentifier, bool);
     void spatialVideoMetadataChanged(PlaybackSessionContextIdentifier, const std::optional<WebCore::SpatialVideoMetadata>&);
+    void isImmersiveVideoChanged(PlaybackSessionContextIdentifier, bool);
 
     // Messages from PlaybackSessionManagerProxy
     void play(PlaybackSessionContextIdentifier);

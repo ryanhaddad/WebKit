@@ -30,6 +30,8 @@
 #import "config.h"
 #import "CocoaHelpers.h"
 
+#if ENABLE(WK_WEB_EXTENSIONS)
+
 #import "APIData.h"
 #import "JSWebExtensionWrapper.h"
 #import "Logging.h"
@@ -503,9 +505,9 @@ HashSet<String> toImpl(NSSet *set)
     return result;
 }
 
-HashMap<String, Ref<API::Data>> toDataMap(NSDictionary *dictionary)
+DataMap toDataMap(NSDictionary *dictionary)
 {
-    HashMap<String, Ref<API::Data>> result;
+    DataMap result;
     result.reserveInitialCapacity(dictionary.count);
 
     for (id key in dictionary) {
@@ -517,7 +519,7 @@ HashMap<String, Ref<API::Data>> toDataMap(NSDictionary *dictionary)
 
         id value = dictionary[key];
         if (auto *valueString = dynamic_objc_cast<NSString>(value)) {
-            result.add(keyString, API::Data::create(String(valueString).utf8().span()));
+            result.add(keyString, valueString);
             continue;
         }
 
@@ -528,11 +530,11 @@ HashMap<String, Ref<API::Data>> toDataMap(NSDictionary *dictionary)
 
         if (isValidJSONObject(value, JSONOptions::FragmentsAllowed)) {
             NSError *error;
-            auto *jsonData = encodeJSONData(value, JSONOptions::FragmentsAllowed, &error);
-            if (!jsonData || error)
+            auto *jsonString = encodeJSONString(value, JSONOptions::FragmentsAllowed, &error);
+            if (!jsonString || error)
                 continue;
 
-            result.add(keyString, API::Data::createWithoutCopying(jsonData));
+            result.add(keyString, jsonString);
             continue;
         }
 
@@ -543,3 +545,5 @@ HashMap<String, Ref<API::Data>> toDataMap(NSDictionary *dictionary)
 }
 
 } // namespace WebKit
+
+#endif // ENABLE(WK_WEB_EXTENSIONS)

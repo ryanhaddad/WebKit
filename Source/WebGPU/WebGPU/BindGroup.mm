@@ -439,6 +439,7 @@ Device::ExternalTextureData Device::createExternalTextureFromPixelBuffer(CVPixel
         return [texture newTextureViewWithPixelFormat:texture.pixelFormat textureType:texture.textureType levels:NSMakeRange(0, texture.mipmapLevelCount) slices:NSMakeRange(0, texture.arrayLength) swizzle:alphaFirst ? MTLTextureSwizzleChannelsMake(MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha, MTLTextureSwizzleZero, MTLTextureSwizzleZero) : MTLTextureSwizzleChannelsMake(MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleZero, MTLTextureSwizzleZero)];
     };
 
+    CVMetalTextureCacheFlush(m_coreVideoTextureCache.get(), 0);
     const bool supportsExtendedFormats = [m_device supportsFamily:MTLGPUFamilyApple4];
     IOSurfaceRef ioSurface = CVPixelBufferGetIOSurface(pixelBuffer);
     if (!ioSurface || isIntel()) {
@@ -994,7 +995,13 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
                 }
                 Ref apiBuffer = WebGPU::protectedFromAPI(entry.buffer);
                 id<MTLBuffer> buffer = apiBuffer->buffer();
-                auto entryOffset = apiBuffer->isDestroyed() ? 0 : entry.offset;
+                bool isDestroyed = apiBuffer->isDestroyed();
+                if (isDestroyed && stage != ShaderStage::Undefined) {
+                    argumentEncoder[stage] = nil;
+                    argumentBuffer[stage] = nil;
+                }
+
+                auto entryOffset = isDestroyed ? 0 : entry.offset;
                 auto bufferLengthMinusOffset = buffer.length > entryOffset ? (buffer.length - entryOffset) : 0;
                 auto entrySize = entry.size == WGPU_WHOLE_MAP_SIZE ? bufferLengthMinusOffset : entry.size;
                 if (layoutBinding->hasDynamicOffset && !appendedBufferToDynamicBuffers) {
@@ -1003,7 +1010,7 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
                 }
 
                 if (!apiBuffer->isValid() || &apiBuffer->device() != this) {
-                    if (!apiBuffer->isDestroyed())
+                    if (!isDestroyed)
                         VALIDATION_ERROR(@"Buffer is invalid or created from a different device");
                     return BindGroup::createInvalid(*this);
                 }
@@ -1048,7 +1055,8 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
                     [argumentEncoder[stage] setBuffer:buffer offset:entryOffset atIndex:index];
                     if (bufferSizeArgumentBufferIndex) {
                         argumentIndices[stage].remove(*bufferSizeArgumentBufferIndex);
-                        *(uint32_t*)[argumentEncoder[stage] constantDataAtIndex:*bufferSizeArgumentBufferIndex] = std::min<uint32_t>(entrySize, buffer.length);
+                        if (auto* lengthAddress = (uint32_t*)[argumentEncoder[stage] constantDataAtIndex:*bufferSizeArgumentBufferIndex])
+                            *lengthAddress = std::min<uint32_t>(entrySize, buffer.length);
                     }
                 }
                 if (buffer) {
@@ -1132,6 +1140,9 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
                         VALIDATION_ERROR(@"Can not create bind group with filterable 32bpp floating point texture as float32-filterable feature is not enabled");
                         return BindGroup::createInvalid(*this);
                     }
+                } else if (stage != ShaderStage::Undefined) {
+                    argumentEncoder[stage] = nil;
+                    argumentBuffer[stage] = nil;
                 }
 
                 if (stage != ShaderStage::Undefined) {
@@ -1169,18 +1180,19 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
 
                 if (stage != ShaderStage::Undefined) {
                     argumentIndices[stage].remove(index);
+                    externalTexture->updateExternalTextures(texture0, texture1);
                     [argumentEncoder[stage] setTexture:texture0 atIndex:index++];
 
                     argumentIndices[stage].remove(index);
                     [argumentEncoder[stage] setTexture:texture1 atIndex:index++];
 
                     argumentIndices[stage].remove(index);
-                    auto* uvRemapAddress = static_cast<simd::float3x2*>([argumentEncoder[stage] constantDataAtIndex:index++]);
-                    *uvRemapAddress = textureData.uvRemappingMatrix;
+                    if (auto* uvRemapAddress = static_cast<simd::float3x2*>([argumentEncoder[stage] constantDataAtIndex:index++]))
+                        *uvRemapAddress = textureData.uvRemappingMatrix;
 
                     argumentIndices[stage].remove(index);
-                    auto* cscMatrixAddress = static_cast<simd::float4x3*>([argumentEncoder[stage] constantDataAtIndex:index++]);
-                    *cscMatrixAddress = textureData.colorSpaceConversionMatrix;
+                    if (auto* cscMatrixAddress = static_cast<simd::float4x3*>([argumentEncoder[stage] constantDataAtIndex:index++]))
+                        *cscMatrixAddress = textureData.colorSpaceConversionMatrix;
                 }
             }
         }
@@ -1219,6 +1231,9 @@ Ref<BindGroup> Device::createBindGroup(const WGPUBindGroupDescriptor& descriptor
     argumentBuffer[ShaderStage::Fragment].label = bindGroupLayout->fragmentArgumentEncoder().label;
     argumentBuffer[ShaderStage::Compute].label = bindGroupLayout->computeArgumentEncoder().label;
 
+    std::sort(dynamicBuffers.begin(), dynamicBuffers.end(), [](const BindGroup::BufferAndType& a, const BindGroup::BufferAndType& b) {
+        return a.bindingIndex < b.bindingIndex;
+    });
     return BindGroup::create(argumentBuffer[ShaderStage::Vertex], argumentBuffer[ShaderStage::Fragment], argumentBuffer[ShaderStage::Compute], WTFMove(resources), bindGroupLayout, WTFMove(dynamicBuffers), WTFMove(samplersSet), WTFMove(externalTextureIndices), *this);
 #undef VALIDATION_ERROR
 #undef INTERNAL_ERROR_STRING
@@ -1325,6 +1340,15 @@ uint64_t BindGroup::makeEntryMapKey(uint32_t baseMipLevel, uint32_t baseArrayLay
     return (static_cast<uint64_t>(aspect) - 1) | (static_cast<uint64_t>(baseMipLevel) << 1) | (static_cast<uint64_t>(baseArrayLayer) << 32);
 }
 
+static bool WARN_UNUSED_RETURN setArgumentBuffer(id<MTLArgumentEncoder> encoder, id<MTLBuffer> buffer)
+{
+    if (!encoder || !buffer)
+        return false;
+
+    [encoder setArgumentBuffer:buffer offset:0];
+    return true;
+}
+
 void BindGroup::rebindSamplersIfNeeded() const
 {
     if (!m_bindGroupLayout)
@@ -1338,22 +1362,18 @@ void BindGroup::rebindSamplersIfNeeded() const
 
         WTFLogAlways("Rebinding of samplers required, if this occurs frequently the application is using too many unique samplers");
         id<MTLSamplerState> samplerState = sampler->samplerState();
-        if (shaderStageArray[ShaderStage::Vertex].has_value()) {
-            [m_bindGroupLayout->vertexArgumentEncoder() setArgumentBuffer:vertexArgumentBuffer() offset:0];
+        if (shaderStageArray[ShaderStage::Vertex].has_value() && setArgumentBuffer(m_bindGroupLayout->vertexArgumentEncoder(), vertexArgumentBuffer()))
             [m_bindGroupLayout->vertexArgumentEncoder() setSamplerState:samplerState atIndex:*shaderStageArray[ShaderStage::Vertex]];
-        }
-        if (shaderStageArray[ShaderStage::Fragment].has_value()) {
-            [m_bindGroupLayout->fragmentArgumentEncoder() setArgumentBuffer:fragmentArgumentBuffer() offset:0];
+
+        if (shaderStageArray[ShaderStage::Fragment].has_value() && setArgumentBuffer(m_bindGroupLayout->fragmentArgumentEncoder(), fragmentArgumentBuffer()))
             [m_bindGroupLayout->fragmentArgumentEncoder() setSamplerState:samplerState atIndex:*shaderStageArray[ShaderStage::Fragment]];
-        }
-        if (shaderStageArray[ShaderStage::Compute].has_value()) {
-            [m_bindGroupLayout->computeArgumentEncoder() setArgumentBuffer:computeArgumentBuffer() offset:0];
+
+        if (shaderStageArray[ShaderStage::Compute].has_value() && setArgumentBuffer(m_bindGroupLayout->computeArgumentEncoder(), computeArgumentBuffer()))
             [m_bindGroupLayout->computeArgumentEncoder() setSamplerState:samplerState atIndex:*shaderStageArray[ShaderStage::Compute]];
-        }
     }
 }
 
-bool BindGroup::updateExternalTextures(const ExternalTexture& externalTexture)
+bool BindGroup::updateExternalTextures(ExternalTexture& externalTexture)
 {
     if (!m_bindGroupLayout || externalTexture.openCommandEncoderCount())
         return false;
@@ -1362,6 +1382,7 @@ bool BindGroup::updateExternalTextures(const ExternalTexture& externalTexture)
     auto textureData = device->createExternalTextureFromPixelBuffer(externalTexture.pixelBuffer(), externalTexture.colorSpace());
     id<MTLTexture> texture0 = textureData.texture0 ?: device->placeholderTexture(WGPUTextureFormat_BGRA8Unorm);
     id<MTLTexture> texture1 = textureData.texture1 ?: device->placeholderTexture(WGPUTextureFormat_BGRA8Unorm);
+    externalTexture.updateExternalTextures(texture0, texture1);
     if (!texture0 || !texture1)
         return false;
 
@@ -1379,16 +1400,40 @@ bool BindGroup::updateExternalTextures(const ExternalTexture& externalTexture)
         m_resources[containerIndex].mtlResources[resourceIndex + 1] = texture1;
 
         id<MTLArgumentEncoder> argumentEncoder = argumentEncoders[stage];
-        [argumentEncoder setArgumentBuffer:argumentBuffers[stage] offset:0];
+        if (!setArgumentBuffer(argumentEncoder, argumentBuffers[stage]))
+            continue;
 
         [argumentEncoder setTexture:texture0 atIndex:index++];
         [argumentEncoder setTexture:texture1 atIndex:index++];
 
-        auto* uvRemapAddress = static_cast<simd::float3x2*>([argumentEncoder constantDataAtIndex:index++]);
-        *uvRemapAddress = textureData.uvRemappingMatrix;
+        if (auto* uvRemapAddress = static_cast<simd::float3x2*>([argumentEncoder constantDataAtIndex:index++]))
+            *uvRemapAddress = textureData.uvRemappingMatrix;
 
-        auto* cscMatrixAddress = static_cast<simd::float4x3*>([argumentEncoder constantDataAtIndex:index++]);
-        *cscMatrixAddress = textureData.colorSpaceConversionMatrix;
+        if (auto* cscMatrixAddress = static_cast<simd::float4x3*>([argumentEncoder constantDataAtIndex:index++]))
+            *cscMatrixAddress = textureData.colorSpaceConversionMatrix;
+    }
+
+    return true;
+}
+
+bool BindGroup::makeSubmitInvalid(ShaderStage stage, const BindGroupLayout* pipelineLayout) const
+{
+    if (!pipelineLayout)
+        return false;
+
+    if (!m_bindGroupLayout)
+        return true;
+
+    Ref pipelineBindGroupLayout = Ref { *pipelineLayout };
+    switch (stage) {
+    case ShaderStage::Vertex:
+        return m_vertexArgumentBuffer.length != pipelineBindGroupLayout->encodedLength(stage);
+    case ShaderStage::Fragment:
+        return m_fragmentArgumentBuffer.length != pipelineBindGroupLayout->encodedLength(stage);
+    case ShaderStage::Compute:
+        return m_computeArgumentBuffer.length != pipelineBindGroupLayout->encodedLength(stage);
+    case ShaderStage::Undefined:
+        return true;
     }
 
     return true;

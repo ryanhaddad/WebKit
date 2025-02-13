@@ -28,8 +28,6 @@
 
 #include "vulkan/vulkan_core.h"
 
-#include "spirv-tools/libspirv.h"
-
 #include "spirv/unified1/NonSemanticClspvReflection.h"
 
 namespace rx
@@ -116,6 +114,7 @@ class CLProgramVk : public CLProgramImpl
         VkPushConstantRange pushConstRange{};
         cl_build_status buildStatus{CL_BUILD_NONE};
         cl_program_binary_type binaryType{CL_PROGRAM_BINARY_TYPE_NONE};
+        spv_target_env spirvVersion;
 
         size_t numKernels() const { return reflectionData.kernelArgsMap.size(); }
 
@@ -331,7 +330,7 @@ class CLProgramVk : public CLProgramImpl
     const DeviceProgramData *getDeviceProgramData(const char *kernelName) const;
     const DeviceProgramData *getDeviceProgramData(const _cl_device_id *device) const;
     CLPlatformVk *getPlatform() { return mContext->getPlatform(); }
-    vk::RefCounted<vk::ShaderModule> *getShaderModule() { return &mShader; }
+    const vk::ShaderModulePtr &getShaderModule() const { return mShader; }
 
     bool buildInternal(const cl::DevicePtrs &devices,
                        std::string options,
@@ -340,28 +339,8 @@ class CLProgramVk : public CLProgramImpl
                        const LinkProgramsList &LinkProgramsList);
     angle::spirv::Blob stripReflection(const DeviceProgramData *deviceProgramData);
 
-    angle::Result allocateDescriptorSet(const DescriptorSetIndex setIndex,
-                                        const vk::DescriptorSetLayout &descriptorSetLayout,
-                                        vk::CommandBufferHelperCommon *commandBuffer,
-                                        vk::DescriptorSetPointer *descriptorSetOut);
-
     // Sets the status for given associated device programs
     void setBuildStatus(const cl::DevicePtrs &devices, cl_build_status status);
-
-    vk::DescriptorPoolPointer &getDescriptorPoolPointer(DescriptorSetIndex index)
-    {
-        return mDescriptorPools[index];
-    }
-
-    vk::MetaDescriptorPool &getMetaDescriptorPool(DescriptorSetIndex index)
-    {
-        return mMetaDescriptorPools[index];
-    }
-
-    vk::DynamicDescriptorPoolPointer &getDynamicDescriptorPoolPointer(DescriptorSetIndex index)
-    {
-        return mDynamicDescriptorPools[index];
-    }
 
     const angle::HashMap<uint32_t, ClspvPrintfInfo> *getPrintfDescriptors(
         const std::string &kernelName) const;
@@ -369,12 +348,11 @@ class CLProgramVk : public CLProgramImpl
   private:
     CLContextVk *mContext;
     std::string mProgramOpts;
-    vk::RefCounted<vk::ShaderModule> mShader;
+    vk::ShaderModulePtr mShader;
     DevicePrograms mAssociatedDevicePrograms;
-    vk::DescriptorSetArray<vk::MetaDescriptorPool> mMetaDescriptorPools;
-    vk::DescriptorSetArray<vk::DynamicDescriptorPoolPointer> mDynamicDescriptorPools;
-    vk::DescriptorSetArray<vk::DescriptorPoolPointer> mDescriptorPools;
     angle::SimpleMutex mProgramMutex;
+
+    std::shared_ptr<angle::WaitableEvent> mAsyncBuildEvent;
 };
 
 class CLAsyncBuildTask : public angle::Closure

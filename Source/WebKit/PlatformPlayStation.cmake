@@ -130,27 +130,14 @@ if (ENABLE_WEBDRIVER AND USE_WPE_BACKEND_PLAYSTATION)
 endif ()
 
 if (USE_CAIRO)
+    include(Platform/Cairo.cmake)
+
     list(APPEND WebKit_SOURCES
-        Shared/API/c/cairo/WKImageCairo.cpp
-
-        Shared/freetype/WebCoreArgumentCodersFreeType.cpp
-
-        UIProcess/Automation/cairo/WebAutomationSessionCairo.cpp
-
         UIProcess/cairo/BackingStoreCairo.cpp
     )
 
-    list(APPEND WebKit_PRIVATE_INCLUDE_DIRECTORIES
-        "${WEBKIT_DIR}/UIProcess/API/C/cairo"
-    )
-
     list(APPEND WebKit_LIBRARIES
-        Cairo::Cairo
         Freetype::Freetype
-    )
-
-    list(APPEND WebKit_PUBLIC_FRAMEWORK_HEADERS
-        Shared/API/c/cairo/WKImageCairo.h
     )
 elseif (USE_SKIA)
     include(Platform/Skia.cmake)
@@ -163,7 +150,7 @@ endif ()
 if (USE_COORDINATED_GRAPHICS)
     list(APPEND WebKit_SOURCES
         WebProcess/WebPage/CoordinatedGraphics/CompositingRunLoop.cpp
-        WebProcess/WebPage/CoordinatedGraphics/CoordinatedGraphicsScene.cpp
+        WebProcess/WebPage/CoordinatedGraphics/CoordinatedSceneState.cpp
         WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
         WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
         WebProcess/WebPage/CoordinatedGraphics/ThreadedDisplayRefreshMonitor.cpp

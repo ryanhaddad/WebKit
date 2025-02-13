@@ -93,6 +93,7 @@
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MIMETypeRegistry.h>
+#import <WebCore/MouseEventTypes.h>
 #import <WebCore/MutableStyleProperties.h>
 #import <WebCore/OriginAccessPatterns.h>
 #import <WebCore/Page.h>
@@ -491,7 +492,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if (!frame)
             continue;
         if (auto* document = frame->document())
-            document->markers().removeMarkers(WebCore::DocumentMarker::Type::Grammar);
+            document->markers().removeMarkers(WebCore::DocumentMarkerType::Grammar);
     }
 }
 
@@ -504,7 +505,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if (!frame)
             continue;
         if (auto* document = frame->document())
-            document->markers().removeMarkers(WebCore::DocumentMarker::Type::Spelling);
+            document->markers().removeMarkers(WebCore::DocumentMarkerType::Spelling);
     }
 #endif
 }
@@ -1239,7 +1240,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 {
     ASSERT(!WebThreadIsEnabled() || WebThreadIsLocked());
     auto& frameLoader = _private->coreFrame->loader();
-    auto* item = _private->coreFrame->history().currentItem();
+    auto* item = frameLoader.history().currentItem();
     if (item)
         frameLoader.client().saveViewStateToItem(*item);
 }
@@ -1712,7 +1713,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     for (WebCore::Node* node = root; node; node = WebCore::NodeTraversal::next(*node)) {
         auto markers = document->markers().markersFor(*node);
         for (auto& marker : markers) {
-            if (marker->type() != WebCore::DocumentMarker::Type::DictationResult)
+            if (marker->type() != WebCore::DocumentMarkerType::DictationResult)
                 continue;
 
             id metadata = std::get<RetainPtr<id>>(marker->data()).get();
@@ -1753,7 +1754,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     if (!range)
         return nil;
 
-    auto markers = core(self)->document()->markers().markersInRange(makeSimpleRange(*core(range)), WebCore::DocumentMarker::Type::DictationResult);
+    auto markers = core(self)->document()->markers().markersInRange(makeSimpleRange(*core(range)), WebCore::DocumentMarkerType::DictationResult);
 
     // UIKit should only ever give us a DOMRange for a phrase with alternatives, which should not be part of more than one result.
     ASSERT(markers.size() <= 1);
@@ -1830,7 +1831,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 {
     ASSERT(WebThreadIsLockedOrDisabled());
     if (auto* view = _private->coreFrame->view())
-        view->setWasScrolledByUser(true);
+        view->setLastUserScrollType(WebCore::LocalFrameView::UserScrollType::Explicit);
 }
 
 - (NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)string forceUserGesture:(BOOL)forceUserGesture
@@ -2149,7 +2150,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     if (!_private->coreFrame || !_private->coreFrame->document())
         return;
     
-    auto* rootObject = _private->coreFrame->document()->axObjectCache()->rootObject();
+    auto* rootObject = _private->coreFrame->document()->axObjectCache()->rootObjectForFrame(*_private->coreFrame);
     if (rootObject)
         rootObject->setAccessibleName(AtomString { name });
 }
@@ -2191,14 +2192,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!document || !document->axObjectCache())
         return nil;
     
-    auto* rootObject = document->axObjectCache()->rootObjectForFrame(_private->coreFrame);
+    auto* rootObject = document->axObjectCache()->rootObjectForFrame(*_private->coreFrame);
     if (!rootObject)
         return nil;
     
     // The root object will be a WebCore scroll view object. In WK1, scroll views are handled
     // by the system and the root object should be the web area (instead of the scroll view).
-    if (rootObject->isAttachment() && rootObject->firstChild())
-        return rootObject->firstChild()->wrapper();
+    auto* rootAccessibilityObject = dynamicDowncast<WebCore::AccessibilityObject>(rootObject);
+    if (rootAccessibilityObject && rootAccessibilityObject->isAttachment() && rootAccessibilityObject->firstChild())
+        return rootAccessibilityObject->firstChild()->wrapper();
     
     return rootObject->wrapper();
 }

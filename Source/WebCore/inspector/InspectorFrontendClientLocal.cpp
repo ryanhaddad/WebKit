@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010 Google Inc. All rights reserved.
- * Copyright (C) 2015-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -65,7 +65,7 @@ namespace WebCore {
 
 using namespace Inspector;
 WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorFrontendClientLocal);
-WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(InspectorFrontendClientLocalSettings, InspectorFrontendClientLocal::Settings);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorFrontendClientLocal::Settings);
 
 static constexpr ASCIILiteral inspectorAttachedHeightSetting = "inspectorAttachedHeight"_s;
 static const unsigned defaultAttachedHeight = 300;
@@ -75,7 +75,7 @@ static const float minimumAttachedWidth = 500.0f;
 static const float minimumAttachedInspectedWidth = 320.0f;
 
 class InspectorBackendDispatchTask : public RefCounted<InspectorBackendDispatchTask> {
-    WTF_MAKE_TZONE_ALLOCATED_INLINE(InspectorBackendDispatchTask);
+    WTF_MAKE_TZONE_ALLOCATED(InspectorBackendDispatchTask);
 public:
     static Ref<InspectorBackendDispatchTask> create(InspectorController* inspectedPageController)
     {
@@ -111,7 +111,7 @@ private:
 
         // The frontend can be closed and destroy the owning frontend client before or in the
         // process of dispatching the task, so keep a protector reference here.
-        RunLoop::current().dispatch([this, protectedThis = Ref { *this }] {
+        RunLoop::protectedCurrent()->dispatch([this, protectedThis = Ref { *this }] {
             m_hasScheduledTask = false;
             dispatchOneMessage();
         });
@@ -136,6 +136,8 @@ private:
     Deque<String> m_messages;
     bool m_hasScheduledTask { false };
 };
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorBackendDispatchTask);
 
 String InspectorFrontendClientLocal::Settings::getProperty(const String&)
 {
@@ -281,7 +283,7 @@ void InspectorFrontendClientLocal::changeSheetRect(const FloatRect& rect)
 
 void InspectorFrontendClientLocal::openURLExternally(const String& url)
 {
-    auto* localMainFrame = dynamicDowncast<LocalFrame>(protectedInspectedPageController()->inspectedPage().mainFrame());
+    RefPtr localMainFrame = protectedInspectedPageController()->inspectedPage().localMainFrame();
     if (!localMainFrame)
         return;
     Ref mainFrame = *localMainFrame;

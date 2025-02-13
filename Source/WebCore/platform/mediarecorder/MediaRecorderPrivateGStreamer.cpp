@@ -134,8 +134,12 @@ MediaRecorderPrivateBackend::MediaRecorderPrivateBackend(MediaStreamPrivate& str
         }
     } else {
         containerType = selectedTracks.videoTrack ? "video/mp4"_s : "audio/mp4"_s;
-        if (codecs.isEmpty() && selectedTracks.audioTrack && !selectedTracks.videoTrack)
-            codecs.append("mp4a"_s);
+        if (codecs.isEmpty()) {
+            if (selectedTracks.videoTrack)
+                codecs.append("avc1.4d002a"_s);
+            if (selectedTracks.audioTrack)
+                codecs.append("mp4a"_s);
+        }
     }
 
     StringBuilder builder;
@@ -173,9 +177,9 @@ void MediaRecorderPrivateBackend::stopRecording(CompletionHandler<void()>&& comp
     GST_DEBUG_OBJECT(m_transcoder.get(), "Stop requested, pushing EOS event");
 
     auto scopeExit = makeScopeExit([this, completionHandler = WTFMove(completionHandler)]() mutable {
+        GST_DEBUG_OBJECT(m_transcoder.get(), "Tearing down pipeline");
         unregisterPipeline(m_pipeline);
         m_pipeline.clear();
-        GST_DEBUG_OBJECT(m_transcoder.get(), "Stopping");
         m_transcoder.clear();
         completionHandler();
     });
@@ -185,7 +189,13 @@ void MediaRecorderPrivateBackend::stopRecording(CompletionHandler<void()>&& comp
         m_eos = true;
         return;
     }
-    webkitMediaStreamSrcSignalEndOfStream(WEBKIT_MEDIA_STREAM_SRC(m_src.get()));
+
+    GST_DEBUG_OBJECT(m_transcoder.get(), "Emitting EOS event(s)");
+    if (!webkitMediaStreamSrcSignalEndOfStream(WEBKIT_MEDIA_STREAM_SRC(m_src.get()))) {
+        GST_DEBUG_OBJECT(m_transcoder.get(), "EOS event(s) un-successfully sent, not expecting them on the sink");
+        m_eos = true;
+        return;
+    }
 
     bool isEOS = false;
     while (!isEOS) {
@@ -197,6 +207,7 @@ void MediaRecorderPrivateBackend::stopRecording(CompletionHandler<void()>&& comp
         });
         isEOS = m_eos;
     }
+    GST_DEBUG_OBJECT(m_transcoder.get(), "EOS event received on sink");
 }
 
 void MediaRecorderPrivateBackend::fetchData(MediaRecorderPrivate::FetchDataCallback&& completionHandler)
@@ -264,20 +275,34 @@ GRefPtr<GstEncodingContainerProfile> MediaRecorderPrivateBackend::containerProfi
     if (scanner.isContentTypeSupported(GStreamerRegistryScanner::Configuration::Encoding, contentType, { }) == MediaPlayerEnums::SupportsType::IsNotSupported)
         return nullptr;
 
-    const char* containerCapsDescription = "";
+    auto mp4Variant = isGStreamerPluginAvailable("fmp4") ? "iso-fragmented"_s : "iso"_s;
+    StringBuilder containerCapsDescriptionBuilder;
     auto containerType = contentType.containerType();
     if (containerType.endsWith("mp4"_s))
-        containerCapsDescription = "video/quicktime, variant=iso";
+        containerCapsDescriptionBuilder.append("video/quicktime, variant="_s, mp4Variant);
     else if (containerType.endsWith("webm"_s))
-        containerCapsDescription = selectedTracks.videoTrack ? "video/webm"_s : "audio/webm"_s;
+        containerCapsDescriptionBuilder.append(selectedTracks.videoTrack ? "video/webm"_s : "audio/webm"_s);
     else
-        containerCapsDescription = containerType.utf8().data();
+        containerCapsDescriptionBuilder.append(containerType);
 
-    auto containerCaps = adoptGRef(gst_caps_from_string(containerCapsDescription));
+    auto containerCapsDescription = containerCapsDescriptionBuilder.toString();
+    auto containerCaps = adoptGRef(gst_caps_from_string(containerCapsDescription.ascii().data()));
+    GST_DEBUG("Creating container profile for caps %" GST_PTR_FORMAT, containerCaps.get());
     auto profile = adoptGRef(gst_encoding_container_profile_new(nullptr, nullptr, containerCaps.get(), nullptr));
 
-    if (containerType.endsWith("mp4"_s))
-        gst_encoding_profile_set_element_properties(GST_ENCODING_PROFILE(profile.get()), gst_structure_from_string("element-properties-map, map={[mp4mux,fragment-duration=1000,fragment-mode=0,streamable=0,force-create-timecode-trak=1]}", nullptr));
+    if (containerType.endsWith("mp4"_s)) {
+        StringBuilder propertiesBuilder;
+        propertiesBuilder.append("element-properties-map, map={["_s);
+        if (mp4Variant == "iso-fragmented"_s)
+            propertiesBuilder.append("isofmp4mux,fragment-duration=1000000000,write-mfra=1"_s);
+        else {
+            GST_WARNING("isofmp4mux (shipped by gst-plugins-rs) is not available, falling back to mp4mux, duration on resulting file will be invalid");
+            propertiesBuilder.append("mp4mux,fragment-duration=1000,fragment-mode=0,streamable=0,force-create-timecode-trak=1"_s);
+        }
+        propertiesBuilder.append("]}"_s);
+        auto properties = propertiesBuilder.toString();
+        gst_encoding_profile_set_element_properties(GST_ENCODING_PROFILE(profile.get()), gst_structure_from_string(properties.ascii().data(), nullptr));
+    }
 
     auto codecs = contentType.codecs();
     if (selectedTracks.videoTrack) {
@@ -319,6 +344,19 @@ GRefPtr<GstEncodingContainerProfile> MediaRecorderPrivateBackend::containerProfi
         auto audioCaps = adoptGRef(gst_caps_from_string(audioCapsName.utf8().data()));
         GST_DEBUG("Creating audio encoding profile for caps %" GST_PTR_FORMAT, audioCaps.get());
         m_audioEncodingProfile = adoptGRef(GST_ENCODING_PROFILE(gst_encoding_audio_profile_new(audioCaps.get(), nullptr, nullptr, 1)));
+
+        auto& settings = selectedTracks.audioTrack->settings();
+        if (settings.supportsSampleRate()) {
+            // opusenc doesn't support the default 44.1 kHz sample rate, so fallback to 48 kHz. This
+            // appears to be an unexpected behaviour from the encoding profile "restriction" API.
+            // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/issues/4054
+            auto sampleRate = audioCapsName == "audio/x-opus"_s ? 48000 : settings.sampleRate();
+
+            auto restrictionCaps = adoptGRef(gst_caps_new_simple("audio/x-raw", "rate", G_TYPE_INT, sampleRate, nullptr));
+            GST_DEBUG("Setting audio restriction caps to %" GST_PTR_FORMAT, restrictionCaps.get());
+            gst_encoding_profile_set_restriction(m_audioEncodingProfile.get(), restrictionCaps.leakRef());
+        }
+
         gst_encoding_container_profile_add_profile(profile.get(), m_audioEncodingProfile.get());
     }
 
@@ -434,7 +472,7 @@ bool MediaRecorderPrivateBackend::preparePipeline()
             return;
         }
 
-        String elementClass = WTF::span(gst_element_get_metadata(element, GST_ELEMENT_METADATA_KLASS));
+        String elementClass = unsafeSpan(gst_element_get_metadata(element, GST_ELEMENT_METADATA_KLASS));
         auto classifiers = elementClass.split('/');
         if (classifiers.contains("Audio"_s) && classifiers.contains("Codec"_s) && classifiers.contains("Encoder"_s))
             recorder->configureAudioEncoder(element);
@@ -463,7 +501,7 @@ void MediaRecorderPrivateBackend::processSample(GRefPtr<GstSample>&& sample)
     Locker locker { m_dataLock };
 
     GST_LOG_OBJECT(m_transcoder.get(), "Queueing %zu bytes of encoded data, caps: %" GST_PTR_FORMAT, buffer.size(), gst_sample_get_caps(sample.get()));
-    m_data.append(std::span<const uint8_t> { buffer.data(), buffer.size() });
+    m_data.append(buffer.span<uint8_t>());
 }
 
 void MediaRecorderPrivateBackend::notifyPosition(GstClockTime position)

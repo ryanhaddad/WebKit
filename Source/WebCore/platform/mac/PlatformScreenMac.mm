@@ -29,11 +29,12 @@
 #if PLATFORM(MAC)
 
 #import "ContentsFormat.h"
+#import "FloatPoint.h"
 #import "FloatRect.h"
 #import "HostWindow.h"
 #import "LocalFrameView.h"
-#import "PlatformCALayerClient.h"
 #import "ScreenProperties.h"
+#import "ThermalMitigationNotifier.h"
 #import <ColorSync/ColorSync.h>
 #import <pal/cocoa/OpenGLSoftLinkCocoa.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
@@ -120,20 +121,6 @@ static DynamicRangeMode convertAVVideoRangeToEnum(NSString* range)
 }
 #endif
 
-static ContentsFormat screenContentsFormat(NSScreen *screen)
-{
-#if HAVE(IOSURFACE_RGB10)
-    ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-
-    if ([screen canRepresentDisplayGamut:NSDisplayGamutP3])
-        return ContentsFormat::RGBA10;
-#else
-    UNUSED_PARAM(screen);
-#endif
-
-    return ContentsFormat::RGBA8;
-}
-
 ScreenProperties collectScreenProperties()
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
@@ -160,6 +147,9 @@ ScreenProperties collectScreenProperties()
         if (!supportsHighDynamicRange && dynamicRangeMode > DynamicRangeMode::Standard)
             dynamicRangeMode = DynamicRangeMode::Standard;
 
+        if (supportsHighDynamicRange && WebCore::ThermalMitigationNotifier::isThermalMitigationEnabled())
+            supportsHighDynamicRange = false;
+
         return supportsHighDynamicRange;
     };
 
@@ -175,7 +165,7 @@ ScreenProperties collectScreenProperties()
         screenData.colorSpace = DestinationColorSpace { screen.colorSpace.CGColorSpace };
         screenData.screenDepth = NSBitsPerPixelFromDepth(screen.depth);
         screenData.screenDepthPerComponent = NSBitsPerSampleFromDepth(screen.depth);
-        screenData.screenContentsFormat = screenContentsFormat(screen);
+        screenData.screenSupportsExtendedColor = [screen canRepresentDisplayGamut:NSDisplayGamutP3];
         screenData.screenHasInvertedColors = screenHasInvertedColors;
         screenData.screenIsMonochrome = CGDisplayUsesForceToGray();
         screenData.displayMask = CGDisplayIDToOpenGLDisplayMask(displayID);
@@ -374,26 +364,31 @@ DestinationColorSpace screenColorSpace(Widget* widget)
     return DestinationColorSpace { screen(widget).colorSpace.CGColorSpace };
 }
 
-ContentsFormat screenContentsFormat(Widget* widget, PlatformCALayerClient* client)
+OptionSet<ContentsFormat> screenContentsFormats(Widget* widget)
 {
-#if HAVE(HDR_SUPPORT)
-    if (client && client->hdrForImagesEnabled() && screenSupportsHighDynamicRange(widget))
-        return ContentsFormat::RGBA16F;
-#else
-    UNUSED_PARAM(client);
+    OptionSet<ContentsFormat> contentsFormats = { ContentsFormat::RGBA8 };
+
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+    if (screenSupportsHighDynamicRange(widget))
+        contentsFormats.add(ContentsFormat::RGBA16F);
 #endif
 
+#if ENABLE(PIXEL_FORMAT_RGB10)
+    if (screenSupportsExtendedColor(widget))
+        contentsFormats.add(ContentsFormat::RGBA10);
+#endif
+
+    UNUSED_PARAM(widget);
+    return contentsFormats;
+}
+
+bool screenSupportsExtendedColor(Widget* widget)
+{
     if (auto data = screenProperties(widget))
-        return data->screenContentsFormat;
+        return data->screenSupportsExtendedColor;
 
-#if HAVE(IOSURFACE_RGB10)
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-
-    if ([screen(widget) canRepresentDisplayGamut:NSDisplayGamutP3])
-        return ContentsFormat::RGBA10;
-#endif
-
-    return ContentsFormat::RGBA8;
+    return [screen(widget) canRepresentDisplayGamut:NSDisplayGamutP3];
 }
 
 bool screenSupportsHighDynamicRange(Widget* widget)
@@ -439,6 +434,13 @@ FloatRect toUserSpaceForPrimaryScreen(const NSRect& rect)
     FloatRect userRect = rect;
     userRect.setY(NSMaxY(screenRectForDisplay(primaryScreenDisplayID())) - (userRect.y() + userRect.height())); // flip
     return userRect;
+}
+
+FloatPoint toUserSpaceForPrimaryScreen(const NSPoint& point)
+{
+    FloatPoint userPoint = point;
+    userPoint.setY(NSMaxY(screenRectForDisplay(primaryScreenDisplayID())) - userPoint.y()); // flip
+    return userPoint;
 }
 
 NSRect toDeviceSpace(const FloatRect& rect, NSWindow *source)

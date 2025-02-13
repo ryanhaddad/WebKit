@@ -44,6 +44,11 @@
 #import <wtf/text/AtomStringHash.h>
 #import "LocalizedDateCache.h"
 
+#if PLATFORM(IOS_FAMILY)
+#import <UIKit/UIKit.h>
+#import <pal/ios/UIKitSoftLink.h>
+#endif
+
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(LocaleCocoa);
@@ -86,7 +91,6 @@ RetainPtr<NSDateFormatter> LocaleCocoa::shortDateFormatter()
     return createDateTimeFormatter(m_locale.get(), m_gregorianCalendar.get(), NSDateFormatterShortStyle, NSDateFormatterNoStyle);
 }
 
-#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
 String LocaleCocoa::formatDateTime(const DateComponents& dateComponents, FormatType)
 {
     double msec = dateComponents.millisecondsSinceEpoch();
@@ -143,6 +147,18 @@ RetainPtr<NSDateFormatter> LocaleCocoa::dateTimeFormatterWithSeconds()
 RetainPtr<NSDateFormatter> LocaleCocoa::dateTimeFormatterWithoutSeconds()
 {
     return createDateTimeFormatter(m_locale.get(), m_gregorianCalendar.get(), NSDateFormatterShortStyle, NSDateFormatterShortStyle);
+}
+
+Locale::WritingDirection LocaleCocoa::defaultWritingDirection() const
+{
+    switch ([PlatformNSParagraphStyle defaultWritingDirectionForLanguage:m_locale.get().languageCode]) {
+    case NSWritingDirectionLeftToRight:
+        return WritingDirection::LeftToRight;
+    case NSWritingDirectionRightToLeft:
+        return WritingDirection::RightToLeft;
+    default:
+        return WritingDirection::Default;
+    }
 }
 
 String LocaleCocoa::dateFormat()
@@ -251,8 +267,6 @@ const Vector<String>& LocaleCocoa::timeAMPMLabels()
     m_timeAMPMLabels = { String([formatter AMSymbol]), String([formatter PMSymbol]) };
     return m_timeAMPMLabels;
 }
-
-#endif
 
 using CanonicalLocaleMap = UncheckedKeyHashMap<AtomString, RetainPtr<CFStringRef>>;
 

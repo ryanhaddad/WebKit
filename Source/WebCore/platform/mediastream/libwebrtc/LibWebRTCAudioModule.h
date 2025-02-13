@@ -33,15 +33,11 @@
 #include <wtf/MonotonicTime.h>
 #include <wtf/WorkQueue.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-ALLOW_UNUSED_PARAMETERS_BEGIN
-ALLOW_COMMA_BEGIN
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 
 #include <webrtc/modules/audio_device/include/audio_device.h>
 
-ALLOW_UNUSED_PARAMETERS_END
-ALLOW_COMMA_END
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
 namespace WebCore {
 class BaseAudioMediaStreamTrackRendererUnit;
@@ -54,7 +50,6 @@ public:
     ~LibWebRTCAudioModule();
 
     static constexpr unsigned PollSamplesCount = 1;
-    void stop() { Terminate(); }
 
 #if PLATFORM(COCOA)
     void startIncomingAudioRendering() { ++m_isRenderingIncomingAudioCounter; }
@@ -88,7 +83,7 @@ private:
 
     int32_t ActiveAudioLayer(AudioLayer*) const final { return shouldNotBeCalled(-1); }
     int32_t Init() final { return 0; }
-    int32_t Terminate() final;
+    int32_t Terminate() final { return 0; }
     bool Initialized() const final { return true; }
     int16_t PlayoutDevices() final { return 0; }
     int16_t RecordingDevices() final { return 0; }
@@ -158,7 +153,7 @@ private:
     bool m_isPlaying { false };
     webrtc::AudioTransport* m_audioTransport { nullptr };
     MonotonicTime m_pollingTime;
-    std::unique_ptr<Timer> m_logTimer;
+    Timer m_logTimer;
     int m_timeSpent { 0 };
 
 #if PLATFORM(COCOA)

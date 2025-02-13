@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,11 +134,14 @@ public:
         UniqueRef<ContextMenuClient>&&,
 #endif
 #if ENABLE(APPLE_PAY)
-        UniqueRef<PaymentCoordinatorClient>&&,
+        Ref<PaymentCoordinatorClient>&&,
 #endif
         UniqueRef<ChromeClient>&&,
         UniqueRef<CryptoClient>&&,
         UniqueRef<ProcessSyncClient>&&
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+        , UniqueRef<CredentialRequestCoordinatorClient>&&
+#endif
     );
     WEBCORE_EXPORT ~PageConfiguration();
     PageConfiguration(PageConfiguration&&);
@@ -155,12 +158,11 @@ public:
     std::unique_ptr<DragClient> dragClient;
     std::unique_ptr<InspectorClient> inspectorClient;
 #if ENABLE(APPLE_PAY)
-    UniqueRef<PaymentCoordinatorClient> paymentCoordinatorClient;
+    Ref<PaymentCoordinatorClient> paymentCoordinatorClient;
 #endif
 
 #if ENABLE(WEB_AUTHN)
     std::unique_ptr<AuthenticatorCoordinatorClient> authenticatorCoordinatorClient;
-    std::unique_ptr<CredentialRequestCoordinatorClient> credentialRequestCoordinatorClient;
 #endif
 
 #if ENABLE(APPLICATION_MANIFEST)
@@ -230,6 +232,18 @@ public:
 
 #if PLATFORM(VISION) && ENABLE(GAMEPAD)
     ShouldRequireExplicitConsentForGamepadAccess gamepadAccessRequiresExplicitConsent { ShouldRequireExplicitConsentForGamepadAccess::No };
+#endif
+
+#if HAVE(AUDIT_TOKEN)
+    std::optional<audit_token_t> presentingApplicationAuditToken;
+#endif
+
+#if PLATFORM(COCOA)
+    String presentingApplicationBundleIdentifier;
+#endif
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+    UniqueRef<CredentialRequestCoordinatorClient> credentialRequestCoordinatorClient;
 #endif
 };
 

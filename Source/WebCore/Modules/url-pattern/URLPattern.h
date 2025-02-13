@@ -26,6 +26,8 @@
 #pragma once
 
 #include "ExceptionOr.h"
+#include "URLPatternComponent.h"
+#include "URLPatternInit.h"
 #include <wtf/Forward.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
@@ -34,48 +36,56 @@
 
 namespace WebCore {
 
-struct URLPatternInit;
+class ScriptExecutionContext;
 struct URLPatternOptions;
 struct URLPatternResult;
 enum class BaseURLStringType : bool { Pattern, URL };
+
+namespace URLPatternUtilities {
+class URLPatternComponent;
+}
 
 class URLPattern final : public RefCounted<URLPattern> {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(URLPattern);
 public:
     using URLPatternInput = std::variant<String, URLPatternInit>;
 
-    static ExceptionOr<Ref<URLPattern>> create(URLPatternInput&&, String&& baseURL, URLPatternOptions&&);
-    static ExceptionOr<Ref<URLPattern>> create(std::optional<URLPatternInput>&&, URLPatternOptions&&);
+    static ExceptionOr<Ref<URLPattern>> create(ScriptExecutionContext&, URLPatternInput&&, String&& baseURL, URLPatternOptions&&);
+    static ExceptionOr<Ref<URLPattern>> create(ScriptExecutionContext&, std::optional<URLPatternInput>&&, URLPatternOptions&&);
+
+    using Compatible = std::variant<String, URLPatternInit, RefPtr<URLPattern>>;
+    static ExceptionOr<Ref<URLPattern>> create(ScriptExecutionContext&, Compatible&&, const String&);
+
     ~URLPattern();
 
-    ExceptionOr<bool> test(std::optional<URLPatternInput>&&, String&& baseURL) const;
+    ExceptionOr<bool> test(ScriptExecutionContext&, std::optional<URLPatternInput>&&, String&& baseURL) const;
 
-    ExceptionOr<std::optional<URLPatternResult>> exec(std::optional<URLPatternInput>&&, String&& baseURL) const;
+    ExceptionOr<std::optional<URLPatternResult>> exec(ScriptExecutionContext&, std::optional<URLPatternInput>&&, String&& baseURL) const;
 
-    const String& protocol() const { return m_protocol; }
-    const String& username() const { return m_username; }
-    const String& password() const { return m_password; }
-    const String& hostname() const { return m_hostname; }
-    const String& port() const { return m_port; }
-    const String& pathname() const { return m_pathname; }
-    const String& search() const { return m_search; }
-    const String& hash() const { return m_hash; }
+    const String& protocol() const { return m_protocolComponent.patternString(); }
+    const String& username() const { return m_usernameComponent.patternString(); }
+    const String& password() const { return m_passwordComponent.patternString(); }
+    const String& hostname() const { return m_hostnameComponent.patternString(); }
+    const String& port() const { return m_portComponent.patternString(); }
+    const String& pathname() const { return m_pathnameComponent.patternString(); }
+    const String& search() const { return m_searchComponent.patternString(); }
+    const String& hash() const { return m_hashComponent.patternString(); }
 
-    bool hasRegExpGroups() const { return m_hasRegExpGroups; }
+    bool hasRegExpGroups() const;
 
 private:
-    explicit URLPattern(URLPatternInit&& initInput);
+    URLPattern();
+    ExceptionOr<void> compileAllComponents(ScriptExecutionContext&, URLPatternInit&&, const URLPatternOptions&);
+    ExceptionOr<std::optional<URLPatternResult>> match(ScriptExecutionContext&, std::variant<URL, URLPatternInput>&&, String&& baseURLString) const;
 
-    String m_protocol;
-    String m_username;
-    String m_password;
-    String m_hostname;
-    String m_port;
-    String m_pathname;
-    String m_search;
-    String m_hash;
-
-    bool m_hasRegExpGroups { false };
+    URLPatternUtilities::URLPatternComponent m_protocolComponent;
+    URLPatternUtilities::URLPatternComponent m_usernameComponent;
+    URLPatternUtilities::URLPatternComponent m_passwordComponent;
+    URLPatternUtilities::URLPatternComponent m_hostnameComponent;
+    URLPatternUtilities::URLPatternComponent m_pathnameComponent;
+    URLPatternUtilities::URLPatternComponent m_portComponent;
+    URLPatternUtilities::URLPatternComponent m_searchComponent;
+    URLPatternUtilities::URLPatternComponent m_hashComponent;
 };
 
 }

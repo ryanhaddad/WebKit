@@ -680,6 +680,13 @@ public:
         m_assembler.sllInsn(dest, src, shiftAmount);
     }
 
+    void lshift64(TrustedImm32 imm, RegisterID shiftAmount, RegisterID dest)
+    {
+        auto temp = temps<Data>();
+        move(imm, temp.data());
+        lshift64(temp.data(), shiftAmount, dest);
+    }
+
     void lshift64(TrustedImm32 shiftAmount, RegisterID dest)
     {
         lshift64(dest, shiftAmount, dest);
@@ -3398,6 +3405,16 @@ public:
     void floorDouble(FPRegisterID src, FPRegisterID dest)
     {
         roundFP<64, RISCV64Assembler::FPRoundingMode::RDN>(src, dest);
+    }
+
+    void truncDouble(FPRegisterID src, FPRegisterID dst)
+    {
+        roundTowardZeroDouble(src, dst);
+    }
+
+    void truncFloat(FPRegisterID src, FPRegisterID dst)
+    {
+        roundTowardZeroFloat(src, dst);
     }
 
     void roundTowardNearestIntFloat(FPRegisterID src, FPRegisterID dest)

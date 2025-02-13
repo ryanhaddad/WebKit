@@ -24,36 +24,30 @@
 
 #pragma once
 
+#include "CSSPrimitiveNumericTypes+Canonicalization.h"
 #include "CSSPropertyParserConsumer+MetaConsumerDefinitions.h"
 
 namespace WebCore {
 namespace CSSPropertyParserHelpers {
 
 struct TimeValidator {
-    static constexpr bool isValid(CSSUnitType unitType, CSSPropertyParserOptions)
+    static constexpr std::optional<CSS::TimeUnit> validate(CSSUnitType unitType, CSSPropertyParserOptions)
     {
-        switch (unitType) {
-        case CSSUnitType::CSS_MS:
-        case CSSUnitType::CSS_S:
-            return true;
-
-        default:
-            return false;
-        }
+        return CSS::UnitTraits<CSS::TimeUnit>::validate(unitType);
     }
 
-    template<auto R> static bool isValid(CSS::TimeRaw<R> raw, CSSPropertyParserOptions)
+    template<auto R, typename V> static bool isValid(CSS::TimeRaw<R, V> raw, CSSPropertyParserOptions)
     {
         return isValidDimensionValue(raw, [&] {
-            auto canonicalValue = CSS::canonicalizeTime(raw.value, raw.type);
+            auto canonicalValue = CSS::canonicalize(raw);
             return canonicalValue >= raw.range.min && canonicalValue <= raw.range.max;
         });
     }
 };
 
-template<auto R> struct ConsumerDefinition<CSS::Time<R>> {
-    using FunctionToken = FunctionConsumerForCalcValues<CSS::Time<R>>;
-    using DimensionToken = DimensionConsumer<CSS::Time<R>, TimeValidator>;
+template<auto R, typename V> struct ConsumerDefinition<CSS::Time<R, V>> {
+    using FunctionToken = FunctionConsumerForCalcValues<CSS::Time<R, V>>;
+    using DimensionToken = DimensionConsumer<CSS::Time<R, V>, TimeValidator>;
 };
 
 } // namespace CSSPropertyParserHelpers

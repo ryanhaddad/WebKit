@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(SWContextManagerServiceWorkerTerminationRequest, SWContextManager::ServiceWorkerTerminationRequest);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SWContextManager::ServiceWorkerTerminationRequest);
 
 SWContextManager& SWContextManager::singleton()
 {
@@ -224,7 +224,7 @@ void SWContextManager::stopWorker(ServiceWorkerThreadProxy& serviceWorker, Secon
     });
 }
 
-void SWContextManager::forEachServiceWorker(const Function<Function<void(ScriptExecutionContext&)>()>& createTask)
+void SWContextManager::forEachServiceWorker(NOESCAPE const Function<Function<void(ScriptExecutionContext&)>()>& createTask)
 {
     Locker locker { m_workerMapLock };
     for (auto& worker : m_workerMap.values())

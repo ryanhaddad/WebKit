@@ -25,6 +25,7 @@
 #include "config.h"
 #include "StyleShapeFunction.h"
 
+#include "FloatConversion.h"
 #include "FloatRect.h"
 #include "GeometryUtilities.h"
 #include "Path.h"
@@ -38,33 +39,6 @@
 
 namespace WebCore {
 namespace Style {
-
-// MARK: - Offset Point Evaluation
-
-static FloatPoint evaluate(const ByCoordinatePair& value, const FloatSize& boxSize)
-{
-    return evaluate(value.offset, boxSize);
-}
-
-static FloatPoint evaluate(const ToPosition& value, const FloatSize& boxSize)
-{
-    return evaluate(value.offset, boxSize);
-}
-
-static FloatPoint evaluate(const std::variant<ToPosition, ByCoordinatePair>& value, const FloatSize& boxSize)
-{
-    return WTF::switchOn(value, [&](const auto& value) -> FloatPoint { return evaluate(value, boxSize); });
-}
-
-static float evaluate(const std::variant<HLineCommand::To, HLineCommand::By>& value, float width)
-{
-    return WTF::switchOn(value, [&](const auto& value) -> float { return evaluate(value.offset, width); });
-}
-
-static float evaluate(const std::variant<VLineCommand::To, VLineCommand::By>& value, float height)
-{
-    return WTF::switchOn(value, [&](const auto& value) -> float { return evaluate(value.offset, height); });
-}
 
 // MARK: - Control Point Evaluation
 
@@ -84,24 +58,24 @@ template<typename ControlPoint> static FloatPoint resolveControlPoint(CommandAff
 {
     auto controlPointOffset = evaluateControlPointOffset(controlPoint, boxSize);
 
-    auto defaultAnchor = (std::holds_alternative<By>(affinity)) ? RelativeControlPoint::defaultAnchor : AbsoluteControlPoint::defaultAnchor;
+    auto defaultAnchor = (std::holds_alternative<CSS::Keyword::By>(affinity)) ? RelativeControlPoint::defaultAnchor : AbsoluteControlPoint::defaultAnchor;
     auto controlPointAnchoring = evaluateControlPointAnchoring(controlPoint, defaultAnchor);
 
     auto absoluteControlPoint = WTF::switchOn(controlPointAnchoring,
-        [&](Style::Start) {
+        [&](CSS::Keyword::Start) {
             auto absoluteStartPoint = currentPosition;
             return absoluteStartPoint + controlPointOffset;
         },
-        [&](Style::End) {
-            auto absoluteEndPoint = (std::holds_alternative<By>(affinity)) ? currentPosition + toFloatSize(segmentOffset) : segmentOffset;
+        [&](CSS::Keyword::End) {
+            auto absoluteEndPoint = (std::holds_alternative<CSS::Keyword::By>(affinity)) ? currentPosition + toFloatSize(segmentOffset) : segmentOffset;
             return absoluteEndPoint + controlPointOffset;
         },
-        [&](Style::Origin) {
+        [&](CSS::Keyword::Origin) {
             return controlPointOffset;
         }
     );
 
-    if (std::holds_alternative<By>(affinity))
+    if (std::holds_alternative<CSS::Keyword::By>(affinity))
         return absoluteControlPoint - toFloatSize(currentPosition);
     return absoluteControlPoint;
 }
@@ -239,9 +213,9 @@ private:
         return ArcToSegment {
             .rx = radius.width(),
             .ry = radius.height(),
-            .angle = arcCommand.rotation.value,
-            .largeArc = std::holds_alternative<Large>(arcCommand.arcSize),
-            .sweep = std::holds_alternative<Cw>(arcCommand.arcSweep),
+            .angle = narrowPrecisionToFloat(arcCommand.rotation.value),
+            .largeArc = std::holds_alternative<CSS::Keyword::Large>(arcCommand.arcSize),
+            .sweep = std::holds_alternative<CSS::Keyword::Cw>(arcCommand.arcSweep),
             .targetPoint = evaluate(arcCommand.toBy, m_boxSize)
         };
     }
@@ -268,8 +242,8 @@ private:
                 return WTF::switchOn(command.toBy,
                     [](const auto& value) {
                         if (value.controlPoint2)
-                            return std::holds_alternative<To>(value.affinity) ? SVGPathSegType::CurveToCubicAbs : SVGPathSegType::CurveToCubicRel;
-                        return std::holds_alternative<To>(value.affinity) ? SVGPathSegType::CurveToQuadraticAbs : SVGPathSegType::CurveToQuadraticRel;
+                            return std::holds_alternative<CSS::Keyword::To>(value.affinity) ? SVGPathSegType::CurveToCubicAbs : SVGPathSegType::CurveToCubicRel;
+                        return std::holds_alternative<CSS::Keyword::To>(value.affinity) ? SVGPathSegType::CurveToQuadraticAbs : SVGPathSegType::CurveToQuadraticRel;
                     }
                 );
             },
@@ -277,8 +251,8 @@ private:
                 return WTF::switchOn(command.toBy,
                     [](const auto& value) {
                         if (value.controlPoint)
-                            return std::holds_alternative<To>(value.affinity) ? SVGPathSegType::CurveToCubicSmoothAbs : SVGPathSegType::CurveToCubicSmoothRel;
-                        return std::holds_alternative<To>(value.affinity) ? SVGPathSegType::CurveToQuadraticSmoothAbs : SVGPathSegType::CurveToQuadraticSmoothRel;
+                            return std::holds_alternative<CSS::Keyword::To>(value.affinity) ? SVGPathSegType::CurveToCubicSmoothAbs : SVGPathSegType::CurveToCubicSmoothRel;
+                        return std::holds_alternative<CSS::Keyword::To>(value.affinity) ? SVGPathSegType::CurveToQuadraticSmoothAbs : SVGPathSegType::CurveToQuadraticSmoothRel;
                     }
                 );
             },
@@ -353,9 +327,9 @@ private:
     {
         switch (mode) {
         case AbsoluteCoordinates:
-            return typename Command::To { .offset = { LengthPercentage<> { Length<> { offset } } } };
+            return typename Command::To { .offset = { LengthPercentage<>::Dimension { offset } } };
         case RelativeCoordinates:
-            return typename Command::By { .offset = LengthPercentage<> { Length<> { offset } } };
+            return typename Command::By { .offset = LengthPercentage<>::Dimension { offset } };
         }
         RELEASE_ASSERT_NOT_REACHED();
     }
@@ -533,9 +507,9 @@ private:
         m_commands.append(
             ArcCommand {
                 .toBy = fromOffsetPoint(offsetPoint, mode),
-                .size = { Length<> { r1 }, Length<> { r2 } },
-                .arcSweep = sweepFlag ? ArcSweep { Cw { } } : ArcSweep { Ccw { } },
-                .arcSize = largeArcFlag ? ArcSize { Large { } } : ArcSize { Small { } },
+                .size = { LengthPercentage<>::Dimension { r1 }, LengthPercentage<>::Dimension { r2 } },
+                .arcSweep = sweepFlag ? ArcSweep { CSS::Keyword::Cw { } } : ArcSweep { CSS::Keyword::Ccw { } },
+                .arcSize = largeArcFlag ? ArcSize { CSS::Keyword::Large { } } : ArcSize { CSS::Keyword::Small { } },
                 .rotation = { angle },
             }
         );
@@ -608,8 +582,8 @@ auto Blending<ArcCommand>::blend(const ArcCommand& a, const ArcCommand& b, const
     return {
         .toBy = WebCore::Style::blend(a.toBy, b.toBy, context),
         .size = WebCore::Style::blend(a.size, b.size, context),
-        .arcSweep = blendWithPreferredValue(a.arcSweep, b.arcSweep, ArcSweep { Cw { } }, context),
-        .arcSize = blendWithPreferredValue(a.arcSize, b.arcSize, ArcSize { Large { } }, context),
+        .arcSweep = blendWithPreferredValue(a.arcSweep, b.arcSweep, ArcSweep { CSS::Keyword::Cw { } }, context),
+        .arcSize = blendWithPreferredValue(a.arcSize, b.arcSize, ArcSize { CSS::Keyword::Large { } }, context),
         .rotation = WebCore::Style::blend(a.rotation, b.rotation, context),
     };
 }
@@ -634,7 +608,7 @@ WebCore::Path PathComputation<Shape>::operator()(const Shape& value, const Float
 
 WebCore::WindRule WindRuleComputation<Shape>::operator()(const Shape& value)
 {
-    return (!value.fillRule || std::holds_alternative<Nonzero>(*value.fillRule)) ? WindRule::NonZero : WindRule::EvenOdd;
+    return (!value.fillRule || std::holds_alternative<CSS::Keyword::Nonzero>(*value.fillRule)) ? WindRule::NonZero : WindRule::EvenOdd;
 }
 
 // MARK: - Shape (blending)
@@ -684,7 +658,7 @@ std::optional<Shape> makeShapeFromPath(const Path& path)
 
     return Shape {
         .fillRule = path.fillRule,
-        .startingPoint = converter.initialMove().value_or(Position { LengthPercentage<> { Length<> { 0 } }, LengthPercentage<> { Length<> { 0 } } }),
+        .startingPoint = converter.initialMove().value_or(Position { LengthPercentage<>::Dimension { 0 }, LengthPercentage<>::Dimension { 0 } }),
         .commands = { WTFMove(shapeCommands) }
     };
 }

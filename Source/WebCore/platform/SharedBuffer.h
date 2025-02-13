@@ -52,8 +52,6 @@ typedef struct _GBytes GBytes;
 #include "GStreamerCommon.h"
 #endif
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 #if USE(FOUNDATION)
 OBJC_CLASS NSArray;
 OBJC_CLASS NSData;
@@ -111,9 +109,9 @@ public:
     WEBCORE_EXPORT bool containsMappedFileData() const;
 
 private:
-    void iterate(const Function<void(std::span<const uint8_t>)>& apply) const;
+    void iterate(NOESCAPE const Function<void(std::span<const uint8_t>)>& apply) const;
 #if USE(FOUNDATION)
-    void iterate(CFDataRef, const Function<void(std::span<const uint8_t>)>& apply) const;
+    void iterate(CFDataRef, NOESCAPE const Function<void(std::span<const uint8_t>)>& apply) const;
 #endif
 
     explicit DataSegment(Vector<uint8_t>&& data)
@@ -207,9 +205,9 @@ public:
     WEBCORE_EXPORT void copyTo(std::span<uint8_t> destination) const;
     WEBCORE_EXPORT void copyTo(std::span<uint8_t> destination, size_t offset) const;
 
-    WEBCORE_EXPORT void forEachSegment(const Function<void(std::span<const uint8_t>)>&) const;
+    WEBCORE_EXPORT void forEachSegment(NOESCAPE const Function<void(std::span<const uint8_t>)>&) const;
     WEBCORE_EXPORT bool startsWith(std::span<const uint8_t> prefix) const;
-    WEBCORE_EXPORT void forEachSegmentAsSharedBuffer(const Function<void(Ref<SharedBuffer>&&)>&) const;
+    WEBCORE_EXPORT void forEachSegmentAsSharedBuffer(NOESCAPE const Function<void(Ref<SharedBuffer>&&)>&) const;
 
     using DataSegment = WebCore::DataSegment; // To keep backward compatibility when using FragmentedSharedBuffer::DataSegment
 
@@ -278,7 +276,7 @@ private:
 
     // Combines all the segments into a Vector and returns that vector after clearing the FragmentedSharedBuffer.
     WEBCORE_EXPORT Vector<uint8_t> takeData();
-    const DataSegmentVectorEntry* getSegmentForPosition(size_t position) const;
+    std::span<const DataSegmentVectorEntry> segmentForPosition(size_t position) const;
 
 #if ASSERT_ENABLED
     bool internallyConsistent() const;
@@ -428,5 +426,3 @@ RefPtr<SharedBuffer> utf8Buffer(const String&);
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::SharedBuffer)
     static bool isType(const WebCore::FragmentedSharedBuffer& buffer) { return buffer.isContiguous(); }
 SPECIALIZE_TYPE_TRAITS_END()
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

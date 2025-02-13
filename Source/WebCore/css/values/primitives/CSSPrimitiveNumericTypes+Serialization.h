@@ -31,25 +31,44 @@ namespace CSS {
 
 // MARK: - Serialization
 
-// Type-erased helper to allow for shared code.
-void rawNumericSerialization(StringBuilder&, double, CSSUnitType);
+struct SerializableNumber {
+    double value;
+    ASCIILiteral suffix;
+};
 
-template<RawNumeric RawType> struct Serialize<RawType> {
-    inline void operator()(StringBuilder& builder, const RawType& value)
+void formatNonfiniteCSSNumberValue(StringBuilder&, const SerializableNumber&);
+String formatNonfiniteCSSNumberValue(const SerializableNumber&);
+
+void formatCSSNumberValue(StringBuilder&, const SerializableNumber&);
+String formatCSSNumberValue(const SerializableNumber&);
+
+template<> struct Serialize<SerializableNumber> {
+    void operator()(StringBuilder&, const SerializationContext&, const SerializableNumber&);
+};
+
+template<NumericRaw RawType> struct Serialize<RawType> {
+    void operator()(StringBuilder& builder, const SerializationContext& context, const RawType& value)
     {
-        rawNumericSerialization(builder, value.value, value.type);
+        serializationForCSS(builder, context, SerializableNumber { value.value, unitString(value.unit) });
     }
 };
 
-template<RawNumeric RawType> struct Serialize<PrimitiveNumeric<RawType>> {
-    inline void operator()(StringBuilder& builder, const PrimitiveNumeric<RawType>& value)
+template<auto nR, auto pR, typename V> struct Serialize<NumberOrPercentageResolvedToNumber<nR, pR, V>> {
+    void operator()(StringBuilder& builder, const SerializationContext& context, const NumberOrPercentageResolvedToNumber<nR, pR, V>& value)
     {
-        serializationForCSS(builder, value.value);
+        WTF::switchOn(value,
+            [&](const typename NumberOrPercentageResolvedToNumber<nR, pR, V>::Number& number) {
+                serializationForCSS(builder, context, number);
+            },
+            [&](const typename NumberOrPercentageResolvedToNumber<nR, pR, V>::Percentage& percentage) {
+                if (auto raw = percentage.raw())
+                    serializationForCSS(builder, context, NumberRaw<nR, V> { raw->value / 100.0 });
+                else
+                    serializationForCSS(builder, context, percentage);
+            }
+        );
     }
 };
-
-template<> struct Serialize<SymbolRaw> { void operator()(StringBuilder&, const SymbolRaw&); };
-template<> struct Serialize<Symbol> { void operator()(StringBuilder&, const Symbol&); };
 
 } // namespace CSS
 } // namespace WebCore

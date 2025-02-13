@@ -26,7 +26,6 @@
 #include "config.h"
 #include "NetworkResourceLoadParameters.h"
 
-#include "WebCoreArgumentCoders.h"
 
 namespace WebKit {
 using namespace WebCore;
@@ -66,6 +65,7 @@ NetworkResourceLoadParameters::NetworkResourceLoadParameters(
     , std::optional<WebCore::ServiceWorkerRegistrationIdentifier> serviceWorkerRegistrationIdentifier
     , OptionSet<WebCore::HTTPHeadersToKeepFromCleaning> httpHeadersToKeep
     , std::optional<WebCore::FetchIdentifier> navigationPreloadIdentifier
+    , std::optional<WebCore::SharedWorkerIdentifier> workerIdentifier
 #if ENABLE(CONTENT_EXTENSIONS)
     , URL&& mainDocumentURL
     , std::optional<UserContentControllerIdentifier> userContentControllerIdentifier
@@ -106,6 +106,7 @@ NetworkResourceLoadParameters::NetworkResourceLoadParameters(
         , serviceWorkerRegistrationIdentifier(serviceWorkerRegistrationIdentifier)
         , httpHeadersToKeep(httpHeadersToKeep)
         , navigationPreloadIdentifier(navigationPreloadIdentifier)
+        , workerIdentifier(workerIdentifier)
 #if ENABLE(CONTENT_EXTENSIONS)
         , mainDocumentURL(WTFMove(mainDocumentURL))
         , userContentControllerIdentifier(userContentControllerIdentifier)

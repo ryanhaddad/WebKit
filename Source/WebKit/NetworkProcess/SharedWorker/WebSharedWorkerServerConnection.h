@@ -61,6 +61,9 @@ public:
 
     ~WebSharedWorkerServerConnection();
 
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     WebSharedWorkerServer* server();
     const WebSharedWorkerServer* server() const;
 
@@ -72,6 +75,7 @@ public:
     void fetchScriptInClient(const WebSharedWorker&, WebCore::SharedWorkerObjectIdentifier, CompletionHandler<void(WebCore::WorkerFetchResult&&, WebCore::WorkerInitializationData&&)>&&);
     void notifyWorkerObjectOfLoadCompletion(WebCore::SharedWorkerObjectIdentifier, const WebCore::ResourceError&);
     void postErrorToWorkerObject(WebCore::SharedWorkerObjectIdentifier, const String& errorMessage, int lineNumber, int columnNumber, const String& sourceURL, bool isErrorEvent);
+    void reportNetworkUsageToWorkerObject(WebCore::SharedWorkerObjectIdentifier, size_t bytesTransferredOverNetworkDelta);
 
 private:
     WebSharedWorkerServerConnection(NetworkProcess&, WebSharedWorkerServer&, IPC::Connection&, WebCore::ProcessIdentifier);

@@ -330,7 +330,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'extract-test-results',
             'set-permissions',
         ],
-        'Apple-Sequoia-Debug-WK2-Site-Isolation-Tree-Tests': [
+        'Apple-Sequoia-Release-WK2-Site-Isolation-Tree-Tests': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -348,6 +348,32 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'upload',
             'extract-test-results',
             'set-permissions',
+        ],
+        'Apple-Sequoia-Release-World-Leaks-Tests': [
+            'configure-build',
+            'configuration',
+            'clean-and-update-working-directory',
+            'checkout-specific-revision',
+            'show-identifier',
+            'kill-old-processes',
+            'delete-WebKitBuild-directory',
+            'delete-stale-build-files',
+            'prune-coresymbolicationd-cache-if-too-large',
+            'download-built-product',
+            'extract-built-product',
+            'wait-for-crash-collection',
+            'world-leaks-tests',
+            'dashboard-tests',
+            'archive-test-results',
+            'upload',
+            'extract-test-results',
+            'set-permissions',
+            'lldb-webkit-test',
+            'webkitpy-test',
+            'webkitperl-test',
+            'bindings-generation-tests',
+            'builtins-generator-tests',
+            'trigger-crash-log-submission'
         ],
         'Apple-Sonoma-Release-Build': [
             'configure-build',
@@ -906,7 +932,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'extract-built-product',
             'jscore-test'
         ],
-        'Apple-iOS-17-Release-Build': [
+        'Apple-iOS-18-Release-Build': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -917,7 +943,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'delete-stale-build-files',
             'compile-webkit'
         ],
-        'Apple-iOS-17-Simulator-Release-Build': [
+        'Apple-iOS-18-Simulator-Release-Build': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -929,7 +955,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'compile-webkit',
             'trigger'
         ],
-        'Apple-iOS-17-Simulator-Debug-Build': [
+        'Apple-iOS-18-Simulator-Debug-Build': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -941,7 +967,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'compile-webkit',
             'trigger'
         ],
-        'Apple-iOS-17-Simulator-Release-WK2-Tests': [
+        'Apple-iOS-18-Simulator-Release-WK2-Tests': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -966,7 +992,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'builtins-generator-tests',
             'trigger-crash-log-submission'
         ],
-        'Apple-iOS-17-Simulator-Debug-WK2-Tests': [
+        'Apple-iOS-18-Simulator-Debug-WK2-Tests': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -991,7 +1017,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'builtins-generator-tests',
             'trigger-crash-log-submission'
         ],
-        'Apple-iPadOS-17-Simulator-Release-WK2-Tests': [
+        'Apple-iPadOS-18-Simulator-Release-WK2-Tests': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -1016,7 +1042,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'builtins-generator-tests',
             'trigger-crash-log-submission'
         ],
-        'Apple-iPadOS-17-Simulator-Debug-WK2-Tests': [
+        'Apple-iPadOS-18-Simulator-Debug-WK2-Tests': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -1353,18 +1379,6 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'API-tests',
             'webdriver-test'
         ],
-        'GTK-Linux-64-bit-Release-Debian-11-Build': [
-            'configure-build',
-            'configuration',
-            'clean-and-update-working-directory',
-            'checkout-specific-revision',
-            'show-identifier',
-            'kill-old-processes',
-            'delete-WebKitBuild-directory',
-            'delete-stale-build-files',
-            'jhbuild',
-            'compile-webkit'
-        ],
         'GTK-Linux-64-bit-Release-Debian-Stable-Build': [
             'configure-build',
             'configuration',
@@ -1424,7 +1438,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'compile-webkit',
             'generate-minibrowser-bundle'
         ],
-        'GTK-Linux-64-bit-Release-GTK3-Tests': [
+        'GTK-Linux-64-bit-Release-GTK3-Build': [
             'configure-build',
             'configuration',
             'clean-and-update-working-directory',
@@ -1434,21 +1448,7 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'delete-WebKitBuild-directory',
             'delete-stale-build-files',
             'jhbuild',
-            'compile-webkit',
-            'layout-test',
-            'dashboard-tests',
-            'archive-test-results',
-            'upload',
-            'extract-test-results',
-            'set-permissions',
-            'webkitpy-test',
-            'webkitperl-test',
-            'bindings-generation-tests',
-            'builtins-generator-tests',
-            'API-tests',
-            'archive-built-product',
-            'upload-built-product',
-            'webdriver-test'
+            'compile-webkit'
         ],
         'GTK-Linux-64-bit-Release-SDK-Container': [
             'configure-build',
@@ -1508,6 +1508,20 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'install-built-product',
             'archive-built-product',
             'upload-built-product-via-sftp'
+        ],
+        'GTK-Linux-64-bit-Release-MVT-Tests': [
+            'configure-build',
+            'configuration',
+            'clean-and-update-working-directory',
+            'checkout-specific-revision',
+            'show-identifier',
+            'kill-old-processes',
+            'delete-WebKitBuild-directory',
+            'delete-stale-build-files',
+            'jhbuild',
+            'download-built-product',
+            'extract-built-product',
+            'MVT-tests'
         ],
         'Windows-64-bit-Release-Build': [
             'configure-build',
@@ -1926,6 +1940,20 @@ class TestExpectedBuildSteps(unittest.TestCase):
             'API-tests',
             'archive-built-product',
             'upload-built-product'
+        ],
+        'WPE-Linux-64-bit-Release-MVT-Tests': [
+            'configure-build',
+            'configuration',
+            'clean-and-update-working-directory',
+            'checkout-specific-revision',
+            'show-identifier',
+            'kill-old-processes',
+            'delete-WebKitBuild-directory',
+            'delete-stale-build-files',
+            'jhbuild',
+            'download-built-product',
+            'extract-built-product',
+            'MVT-tests'
         ],
     }
 

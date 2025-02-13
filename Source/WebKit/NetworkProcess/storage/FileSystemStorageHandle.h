@@ -29,6 +29,7 @@
 #include "FileSystemSyncAccessHandleInfo.h"
 #include <WebCore/FileSystemHandleIdentifier.h>
 #include <WebCore/FileSystemSyncAccessHandleIdentifier.h>
+#include <WebCore/FileSystemWritableFileStreamIdentifier.h>
 #include <wtf/Identified.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -36,6 +37,11 @@
 
 namespace IPC {
 class SharedFileHandle;
+}
+
+namespace WebCore {
+enum class FileSystemWriteCloseReason : bool;
+enum class FileSystemWriteCommandType : uint8_t;
 }
 
 namespace WebKit {
@@ -68,10 +74,15 @@ public:
     std::optional<FileSystemStorageError> closeSyncAccessHandle(WebCore::FileSystemSyncAccessHandleIdentifier);
     std::optional<WebCore::FileSystemSyncAccessHandleIdentifier> activeSyncAccessHandle();
 
+    Expected<WebCore::FileSystemWritableFileStreamIdentifier, FileSystemStorageError> createWritable(bool keepExistingData);
+    std::optional<FileSystemStorageError> closeWritable(WebCore::FileSystemWritableFileStreamIdentifier, WebCore::FileSystemWriteCloseReason);
+    std::optional<FileSystemStorageError> executeCommandForWritable(WebCore::FileSystemWritableFileStreamIdentifier, WebCore::FileSystemWriteCommandType, std::optional<uint64_t> position, std::optional<uint64_t> size, std::span<const uint8_t> dataBytes, bool hasDataError);
+
 private:
     FileSystemStorageHandle(FileSystemStorageManager&, Type, String&& path, String&& name);
     Expected<WebCore::FileSystemHandleIdentifier, FileSystemStorageError> requestCreateHandle(IPC::Connection::UniqueID, Type, String&& name, bool createIfNecessary);
     bool isActiveSyncAccessHandle(WebCore::FileSystemSyncAccessHandleIdentifier);
+    std::optional<FileSystemStorageError> executeCommandForWritableInternal(WebCore::FileSystemWritableFileStreamIdentifier, WebCore::FileSystemWriteCommandType, std::optional<uint64_t> position, std::optional<uint64_t> size, std::span<const uint8_t> dataBytes, bool hasDataError);
 
     WeakPtr<FileSystemStorageManager> m_manager;
     Type m_type;
@@ -82,6 +93,7 @@ private:
         uint64_t capacity { 0 };
     };
     std::optional<SyncAccessHandleInfo> m_activeSyncAccessHandle;
+    HashMap<WebCore::FileSystemWritableFileStreamIdentifier, WebCore::FileHandle> m_activeWritableFiles;
 };
 
 } // namespace WebKit

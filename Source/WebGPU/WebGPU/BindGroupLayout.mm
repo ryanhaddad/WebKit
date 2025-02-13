@@ -180,6 +180,7 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
     BindGroupLayout::ShaderStageArray<uint32_t> samplersPerStage;
     BindGroupLayout::ShaderStageArray<uint32_t> texturesPerStage;
     BindGroupLayout::ShaderStageArray<uint32_t> storageTexturesPerStage;
+    BindGroupLayout::ShaderStageArray<uint32_t> maxIndices;
     constexpr auto stages = std::to_array<ShaderStage>({ ShaderStage::Vertex, ShaderStage::Fragment, ShaderStage::Compute });
     for (uint32_t i = 0; i < stageCount; ++i) {
         ShaderStage shaderStage = stages[i];
@@ -189,6 +190,7 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
         samplersPerStage[shaderStage] = 0;
         texturesPerStage[shaderStage] = 0;
         storageTexturesPerStage[shaderStage] = 0;
+        maxIndices[shaderStage] = 0;
     }
 
     Vector<WGPUBindGroupLayoutEntry> descriptorEntries(descriptor.entriesSpan());
@@ -201,7 +203,7 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
     std::array<size_t, stageCount> sizeOfDynamicOffsets { };
     std::array<uint32_t, stageCount> bindingOffset { };
     std::array<uint32_t, stageCount> bufferCounts { };
-    HashMap<uint32_t, uint64_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> slotForEntry;
+    std::array<HashMap<uint32_t, std::pair<std::array<uint32_t, stageCount>, WGPUShaderStageFlags>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>, stageCount> slotForEntry;
     const auto maxBindingIndex = limits().maxBindingsPerBindGroup;
     HashSet<uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> usedBindingSlots;
     uint32_t dynamicUniformBuffers = 0;
@@ -237,12 +239,13 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
         constexpr int maxGeneratedDescriptors = 4;
         std::array<RetainPtr<MTLArgumentDescriptor>, maxGeneratedDescriptors> descriptors { };
         BindGroupLayout::Entry::BindingLayout bindingLayout;
+        Ref protectedThis = *this;
         auto processBindingLayout = [&](const auto& type) {
             if (!BindGroupLayout::isPresent(type))
                 return true;
             if (descriptors[0])
                 return false;
-            descriptors[0] = createArgumentDescriptor(type, *this, entry);
+            descriptors[0] = createArgumentDescriptor(type, protectedThis.get(), entry);
             if (!descriptors[0])
                 return false;
             bindingLayout = type;
@@ -265,7 +268,10 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
             descriptors[3] = createArgumentDescriptor(bufferLayout, *this, entry);
             bindingLayout = WGPUExternalTextureBindingLayout();
         } else if (entry.buffer.type == static_cast<WGPUBufferBindingType>(WGPUBufferBindingType_ArrayLength)) {
-            slotForEntry.set(entry.buffer.bufferSizeForBinding, entry.binding);
+            for (uint32_t stage = 0; stage < stageCount; ++stage) {
+                if (containsStage(entry.visibility, stage))
+                    slotForEntry[stage].set(entry.buffer.bufferSizeForBinding, std::make_pair(entry.metalBinding, entry.visibility));
+            }
             continue;
         } else {
             if (!processBindingLayout(entry.buffer)) {
@@ -340,14 +346,16 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
                     }
 
                     for (int descriptorIndex = 0; descriptorIndex < maxGeneratedDescriptors; ++descriptorIndex) {
-                        if (MTLArgumentDescriptor *descriptor = descriptors[descriptorIndex].get())
-                            addDescriptor(arguments[stage].get(), descriptor, *argumentBufferIndices[renderStage] + descriptorIndex);
-                        else
+                        if (MTLArgumentDescriptor *descriptor = descriptors[descriptorIndex].get()) {
+                            auto newIndex = *argumentBufferIndices[renderStage] + descriptorIndex;
+                            maxIndices[renderStage] = std::max(maxIndices[renderStage], newIndex);
+                            addDescriptor(arguments[stage].get(), descriptor, newIndex);
+                        } else
                             break;
                     }
 
                     if (isExternalTexture)
-                        bindingOffset[stage] += maxGeneratedDescriptors;
+                        bindingOffset[stage] += (maxGeneratedDescriptors - 1);
                 }
             }
         }
@@ -391,7 +399,7 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
     std::array<id<MTLArgumentEncoder>, stageCount> argumentEncoders;
     for (size_t stage = 0; stage < stageCount; ++stage) {
         auto renderStage = stages[stage];
-        if (auto bufferCountPerStage = bufferCounts[stage]) {
+        if (bufferCounts[stage]) {
             auto descriptor = [MTLArgumentDescriptor new];
             descriptor.dataType = MTLDataTypeInt;
             descriptor.access = BindGroupLayout::BindingAccessReadOnly;
@@ -399,13 +407,13 @@ Ref<BindGroupLayout> Device::createBindGroupLayout(const WGPUBindGroupLayoutDesc
                 addDescriptor(arguments[stage].get(), descriptor, index);
             };
 
-            NSUInteger maxIndex = [arguments[stage].get() objectAtIndex:arguments[stage].get().count - 1].index;
+            NSUInteger maxIndex = maxIndices[renderStage];
             for (auto& entry : bindGroupLayoutEntries) {
                 if (entry.value.bufferSizeArgumentBufferIndices[renderStage]) {
                     if (!isAutoGenerated)
                         *entry.value.bufferSizeArgumentBufferIndices[renderStage] += maxIndex;
-                    else if (auto it = slotForEntry.find(entry.value.binding); it != slotForEntry.end())
-                        *entry.value.bufferSizeArgumentBufferIndices[renderStage] += maxIndex;
+                    else if (auto it = slotForEntry[stage].find(entry.value.binding); it != slotForEntry[stage].end() && containsStage(it->value.second, stage))
+                        entry.value.bufferSizeArgumentBufferIndices[renderStage] = it->value.first[stage];
                     else {
                         entry.value.bufferSizeArgumentBufferIndices[renderStage] = std::nullopt;
                         continue;

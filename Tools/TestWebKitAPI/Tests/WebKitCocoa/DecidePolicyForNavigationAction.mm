@@ -50,6 +50,7 @@ static BlockPtr<void(WKNavigationActionPolicy)> delayedDecision;
 
 static NSString *firstURL = @"data:text/html,First";
 static NSString *secondURL = @"data:text/html,Second";
+static NSString *thirdURL = @"data:text/html,Third";
 
 @interface DecidePolicyForNavigationActionController : NSObject <WKNavigationDelegate, WKUIDelegate>
 @end
@@ -261,6 +262,30 @@ TEST(WebKit, DecidePolicyForNavigationActionCancelAndGoBack)
     action = nullptr;
 }
 
+TEST(WebKit, DecidePolicyForNavigationActionCancelAfterDiscardingForwardItems)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:firstURL]]];
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:secondURL]]];
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:thirdURL]]];
+    [webView synchronouslyGoBack];
+    [webView synchronouslyGoBack];
+    [webView synchronouslyLoadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:secondURL]]];
+
+    RetainPtr controller = adoptNS([[DecidePolicyForNavigationActionController alloc] init]);
+    [webView setNavigationDelegate:controller.get()];
+
+    shouldCancelNavigation = true;
+    decidedPolicy = false;
+    [webView goBack];
+    TestWebKitAPI::Util::run(&decidedPolicy);
+    [webView waitForNextPresentationUpdate];
+    [[webView backForwardList] currentItem];
+
+    newWebView = nullptr;
+    action = nullptr;
+}
+
 TEST(WebKit, DecidePolicyForNavigationActionOpenNewWindowAndDeallocSourceWebView)
 {
     auto controller = adoptNS([[DecidePolicyForNavigationActionController alloc] init]);
@@ -300,7 +325,7 @@ TEST(WebKit, DecidePolicyForNewWindowAction)
     TestWebKitAPI::PlatformWebView webView(context.get());
 
     WKPagePolicyClientV1 policyClient;
-    memset(&policyClient, 0, sizeof(policyClient));
+    zeroBytes(policyClient);
     policyClient.base.version = 1;
     policyClient.decidePolicyForNewWindowAction = [] (WKPageRef page, WKFrameRef frame, WKFrameNavigationType navigationType, WKEventModifiers modifiers, WKEventMouseButton mouseButton, WKURLRequestRef request, WKStringRef frameName, WKFramePolicyListenerRef listener, WKTypeRef userData, const void* clientInfo) {
         EXPECT_TRUE(WKStringIsEqualToUTF8CString(adoptWK(WKURLCopyString(adoptWK(WKURLRequestCopyURL(request)).get())).get(), "https://webkit.org/"));

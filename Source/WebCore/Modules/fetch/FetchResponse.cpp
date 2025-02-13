@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Canon Inc.
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted, provided that the following conditions
@@ -41,8 +41,11 @@
 #include "ScriptExecutionContext.h"
 #include <JavaScriptCore/JSONObject.h>
 #include <wtf/text/MakeString.h>
+#include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(FetchResponseBodyLoader);
 
 // https://fetch.spec.whatwg.org/#null-body-status
 static inline bool isNullBodyStatus(int status)
@@ -272,7 +275,21 @@ void FetchResponse::fetch(ScriptExecutionContext& context, FetchRequest& request
         return;
     }
 
-    auto response = createFetchResponse(context, request, WTFMove(responseCallback));
+    if (request.hasReadableStreamBody()) {
+        request.body().convertReadableStreamToArrayBuffer(request, [context = Ref { context }, weakRequest = WeakPtr { request }, responseCallback = WTFMove(responseCallback), initiator](auto&& exception) mutable {
+            if (!!exception) {
+                responseCallback(WTFMove(*exception));
+                return;
+            }
+
+            Ref protectedRequest = *weakRequest;
+            Ref response = createFetchResponse(context.get(), protectedRequest.get(), WTFMove(responseCallback));
+            response->startLoader(context.get(), protectedRequest.get(), initiator);
+        });
+        return;
+    }
+
+    Ref response = createFetchResponse(context, request, WTFMove(responseCallback));
     response->startLoader(context, request, initiator);
 }
 
@@ -301,7 +318,7 @@ const ResourceResponse& FetchResponse::filteredResponse() const
     return m_internalResponse;
 }
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL_NESTED(FetchResponseLoader, FetchResponse::Loader);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(FetchResponse::Loader);
 
 void FetchResponse::Loader::didSucceed(const NetworkLoadMetrics& metrics)
 {

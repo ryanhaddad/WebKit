@@ -1109,6 +1109,8 @@ void WriteInitReplayCall(bool compression,
 
     for (ResourceIDType resourceID : AllEnums<ResourceIDType>())
     {
+        // Sanity check for catching e.g. uninitialized memory reads like b/380296979
+        ASSERT(maxIDs[resourceID] < 1000000);
         out << ", " << maxIDs[resourceID];
     }
 
@@ -5419,14 +5421,14 @@ void CaptureMidExecutionSetup(const gl::Context *context,
             if (currentDrawFramebuffer != stateDrawFramebuffer)
             {
                 cap(framebufferFuncs.bindFramebuffer(replayState, true, GL_DRAW_FRAMEBUFFER,
-                                                     currentDrawFramebuffer));
+                                                     stateDrawFramebuffer));
                 currentDrawFramebuffer = stateDrawFramebuffer;
             }
 
             if (currentReadFramebuffer != stateReadFramebuffer)
             {
                 cap(framebufferFuncs.bindFramebuffer(replayState, true, GL_READ_FRAMEBUFFER,
-                                                     replayState.getReadFramebuffer()->id()));
+                                                     stateReadFramebuffer));
                 currentReadFramebuffer = stateReadFramebuffer;
             }
         }
@@ -7284,6 +7286,8 @@ void FrameCaptureShared::updateCopyImageSubData(CallCapture &call)
         case GL_TEXTURE_3D:
         case GL_TEXTURE_CUBE_MAP:
         case GL_TEXTURE_EXTERNAL_OES:
+        case GL_TEXTURE_2D_MULTISAMPLE:
+        case GL_TEXTURE_2D_MULTISAMPLE_ARRAY_OES:
         {
             // Convert the GLuint to TextureID
             gl::TextureID srcTextureID = {static_cast<GLuint>(srcName)};
@@ -7314,6 +7318,8 @@ void FrameCaptureShared::updateCopyImageSubData(CallCapture &call)
         case GL_TEXTURE_3D:
         case GL_TEXTURE_CUBE_MAP:
         case GL_TEXTURE_EXTERNAL_OES:
+        case GL_TEXTURE_2D_MULTISAMPLE:
+        case GL_TEXTURE_2D_MULTISAMPLE_ARRAY_OES:
         {
             // Convert the GLuint to TextureID
             gl::TextureID dstTextureID = {static_cast<GLuint>(dstName)};

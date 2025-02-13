@@ -1175,6 +1175,8 @@ void RenderLayerScrollableArea::computeHasCompositedScrollableOverflow(LayoutUpT
     if (hasCompositedScrollableOverflow == m_hasCompositedScrollableOverflow)
         return;
 
+    m_layer.setSelfAndDescendantsNeedPositionUpdate();
+
     // Whether this layer does composited scrolling affects the configuration of descendant sticky layers. We have to
     // dirty from the enclosing stacking context because overflow scroll doesn't create stacking context so those
     // containing block descendants may not be paint-order descendants, and the compositing dirty bits on RenderLayer act in paint order.
@@ -1310,7 +1312,7 @@ void RenderLayerScrollableArea::updateScrollbarsAfterLayout()
                 renderer.setNeedsLayout(MarkOnlyThis);
                 if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
                     block->scrollbarsChanged(autoHorizontalScrollBarChanged, autoVerticalScrollBarChanged);
-                    block->layoutBlock(true);
+                    block->layoutBlock(RelayoutChildren::Yes);
                 } else
                     renderer.layout();
             }

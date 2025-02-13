@@ -61,17 +61,17 @@ public:
     void removeEntriesForPageAndProcess(WebPageProxy&, WebProcessProxy&);
     void removeEntriesForSession(PAL::SessionID);
 
-    void addEntry(WebBackForwardListItem&, std::unique_ptr<SuspendedPageProxy>&&);
+    void addEntry(WebBackForwardListItem&, Ref<SuspendedPageProxy>&&);
     void addEntry(WebBackForwardListItem&, WebCore::ProcessIdentifier);
     void removeEntry(WebBackForwardListItem&);
     void removeEntry(SuspendedPageProxy&);
-    std::unique_ptr<SuspendedPageProxy> takeSuspendedPage(WebBackForwardListItem&);
+    Ref<SuspendedPageProxy> takeSuspendedPage(WebBackForwardListItem&);
 
 private:
     Ref<WebProcessPool> protectedProcessPool() const;
 
     void removeOldestEntry();
-    void removeEntriesMatching(const Function<bool(WebBackForwardListItem&)>&);
+    void removeEntriesMatching(NOESCAPE const Function<bool(WebBackForwardListItem&)>&);
     void addEntry(WebBackForwardListItem&, Ref<WebBackForwardCacheEntry>&&);
 
     WeakRef<WebProcessPool> m_processPool;

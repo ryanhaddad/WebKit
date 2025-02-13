@@ -288,6 +288,15 @@ static void ensureDebugCategoryInitialized()
     });
 }
 
+enum class NextSDPField {
+    None,
+    Typ,
+    Raddr,
+    Rport,
+    TcpType,
+    Ufrag
+};
+
 std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
 {
     ensureDebugCategoryInitialized();
@@ -308,67 +317,83 @@ std::optional<RTCIceCandidate::Fields> parseIceCandidateSDP(const String& sdp)
     String relatedAddress;
     guint16 relatedPort = 0;
     String usernameFragment;
-    auto tokens = sdp.convertToASCIILowercase().substring(10).split(' ');
+    String lowercasedSDP = sdp.convertToASCIILowercase();
+    StringView view = StringView(lowercasedSDP).substring(10);
+    unsigned i = 0;
+    NextSDPField nextSdpField { NextSDPField::None };
 
-    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port
-    for (auto it = tokens.begin(); it != tokens.end(); ++it) {
-        auto i = std::distance(tokens.begin(), it);
-        auto token = *it;
+    for (auto token : view.split(' ')) {
+        auto tokenString = token.toStringWithoutCopying();
         switch (i) {
         case 0:
-            foundation = token;
+            foundation = tokenString;
             break;
         case 1:
             if (auto value = parseInteger<unsigned>(token))
                 componentId = *value;
             else {
-                GST_WARNING("Invalid SDP candidate component ID: %s", token.ascii().data());
+                GST_WARNING("Invalid SDP candidate component ID: %s", tokenString.utf8().data());
                 return { };
             }
             break;
         case 2:
-            transport = token;
+            transport = tokenString;
             break;
         case 3:
             if (auto value = parseInteger<unsigned>(token))
                 priority = *value;
             else {
-                GST_WARNING("Invalid SDP candidate priority: %s", token.ascii().data());
+                GST_WARNING("Invalid SDP candidate priority: %s", tokenString.utf8().data());
                 return { };
             }
             break;
         case 4:
-            address = token;
+            address = tokenString;
             break;
         case 5:
             if (auto value = parseInteger<unsigned>(token))
                 port = *value;
             else {
-                GST_WARNING("Invalid SDP candidate port: %s", token.ascii().data());
+                GST_WARNING("Invalid SDP candidate port: %s", tokenString.utf8().data());
                 return { };
             }
             break;
         default:
-            if (it + 1 == tokens.end()) {
-                GST_WARNING("Incomplete SDP candidate");
-                return { };
-            }
-
-            it++;
             if (token == "typ"_s)
-                type = *it;
+                nextSdpField = NextSDPField::Typ;
             else if (token == "raddr"_s)
-                relatedAddress = *it;
+                nextSdpField = NextSDPField::Raddr;
             else if (token == "rport"_s)
-                relatedPort = parseInteger<unsigned>(*it).value_or(0);
+                nextSdpField = NextSDPField::Rport;
             else if (token == "tcptype"_s)
-                tcptype = *it;
+                nextSdpField = NextSDPField::TcpType;
             else if (token == "ufrag"_s)
-                usernameFragment = *it;
+                nextSdpField = NextSDPField::Ufrag;
+            else {
+                switch (nextSdpField) {
+                case NextSDPField::None:
+                    break;
+                case NextSDPField::Typ:
+                    type = tokenString;
+                    break;
+                case NextSDPField::Raddr:
+                    relatedAddress = tokenString;
+                    break;
+                case NextSDPField::Rport:
+                    relatedPort = parseInteger<unsigned>(token).value_or(0);
+                    break;
+                case NextSDPField::TcpType:
+                    tcptype = tokenString;
+                    break;
+                case NextSDPField::Ufrag:
+                    usernameFragment = tokenString;
+                    break;
+                }
+            }
             break;
         }
+        i++;
     }
-    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     if (type.isEmpty()) {
         GST_WARNING("Unable to parse candidate type");
@@ -403,13 +428,12 @@ static String x509Serialize(X509* x509)
     if (!PEM_write_bio_X509(bio.get(), x509))
         return { };
 
-    Vector<char> buffer;
-    buffer.reserveCapacity(4096);
-    int length = BIO_read(bio.get(), buffer.data(), 4096);
-    if (!length)
+    uint8_t* data { nullptr };
+    auto length = BIO_get_mem_data(bio.get(), &data);
+    if (length <= 0)
         return { };
 
-    return buffer.subspan(0, length);
+    return String::fromUTF8(unsafeMakeSpan(data, length));
 }
 
 static String privateKeySerialize(EVP_PKEY* privateKey)
@@ -421,13 +445,12 @@ static String privateKeySerialize(EVP_PKEY* privateKey)
     if (!PEM_write_bio_PrivateKey(bio.get(), privateKey, nullptr, nullptr, 0, nullptr, nullptr))
         return { };
 
-    Vector<char> buffer;
-    buffer.reserveCapacity(4096);
-    int length = BIO_read(bio.get(), buffer.data(), 4096);
-    if (!length)
+    uint8_t* data { nullptr };
+    auto length = BIO_get_mem_data(bio.get(), &data);
+    if (length <= 0)
         return { };
 
-    return buffer.subspan(0, length);
+    return String::fromUTF8(unsafeMakeSpan(data, length));
 }
 
 std::optional<Ref<RTCCertificate>> generateCertificate(Ref<SecurityOrigin>&& origin, const PeerConnectionBackend::CertificateInformation& info)
@@ -690,7 +713,7 @@ void setSsrcAudioLevelVadOn(GstStructure* structure)
 {
     unsigned totalFields = gst_structure_n_fields(structure);
     for (unsigned i = 0; i < totalFields; i++) {
-        String fieldName = WTF::span(gst_structure_nth_field_name(structure, i));
+        String fieldName = unsafeSpan(gst_structure_nth_field_name(structure, i));
         if (!fieldName.startsWith("extmap-"_s))
             continue;
 
@@ -733,6 +756,24 @@ Seconds StatsTimestampConverter::convertFromMonotonicTime(Seconds value) const
     auto monotonicOffset = value - m_initialMonotonicTime;
     auto newTimestamp = m_epoch.secondsSinceEpoch() + monotonicOffset;
     return Performance::reduceTimeResolution(newTimestamp.secondsSinceEpoch());
+}
+
+void forEachTransceiver(const GRefPtr<GstElement>& webrtcBin, Function<bool(GRefPtr<GstWebRTCRTPTransceiver>&&)>&& function)
+{
+    GRefPtr<GArray> transceivers;
+    g_signal_emit_by_name(webrtcBin.get(), "get-transceivers", &transceivers.outPtr());
+
+    if (!transceivers || !transceivers->len)
+        return;
+
+    for (unsigned index = 0; index < transceivers->len; index++) {
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN; // GLib port
+        GRefPtr current = g_array_index(transceivers.get(), GstWebRTCRTPTransceiver*, index);
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END;
+
+        if (function(WTFMove(current)))
+            break;
+    }
 }
 
 #undef GST_CAT_DEFAULT

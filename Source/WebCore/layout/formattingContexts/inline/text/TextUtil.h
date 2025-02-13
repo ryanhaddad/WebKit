@@ -65,7 +65,8 @@ public:
         InlineLayoutUnit ascent { 0.f };
         InlineLayoutUnit descent { 0.f };
     };
-    static EnclosingAscentDescent enclosingGlyphBoundsForText(StringView, const RenderStyle&);
+    enum class ShouldUseSimpleGlyphOverflowCodePath : bool { No, Yes };
+    static EnclosingAscentDescent enclosingGlyphBoundsForText(StringView, const RenderStyle&, ShouldUseSimpleGlyphOverflowCodePath);
 
     struct WordBreakLeft {
         size_t length { 0 };
@@ -108,6 +109,10 @@ public:
 
     static bool canUseSimplifiedTextMeasuring(StringView, const FontCascade&, bool whitespaceIsCollapsed, const RenderStyle* firstLineStyle);
     static bool hasPositionDependentContentWidth(StringView);
+
+
+    static char32_t baseCharacterFromGraphemeCluster(StringView graphemeCluster);
+    static char32_t lastBaseCharacterFromText(StringView);
 };
 
 } // namespace Layout

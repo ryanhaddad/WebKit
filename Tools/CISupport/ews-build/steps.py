@@ -272,13 +272,13 @@ class GitHubMixin(object):
             except Exception as e:
                 yield self._addToLog('stdio', 'Failed to retrieve number of PRs.\n')
 
-            if attempt > retry:
+            if attempt >= retry:
                 return defer.returnValue(None)
             wait_for = (attempt + 1) * 15
-            yield self._addToLog('stdio', 'Backing off for {} seconds before retrying.\n'.format(wait_for))
+            yield self._addToLog('stdio', f'\nBacking off for {wait_for} seconds before retrying.\n')
             yield task.deferLater(reactor, wait_for, lambda: None)
 
-        yield self._addToLog('stdio', 'There are {} PR(s) in safe-merge-queue.\n'.format(num_prs))
+        yield self._addToLog('stdio', f'There are {num_prs} PR(s) in safe-merge-queue.\n')
         defer.returnValue(num_prs)
 
     @defer.inlineCallbacks
@@ -287,7 +287,7 @@ class GitHubMixin(object):
         if not api_url:
             return defer.returnValue(None)
 
-        pr_url = '{}/pulls/{}'.format(api_url, pr_number)
+        pr_url = f'{api_url}/pulls/{pr_number}'
         content = yield self.fetch_data_from_url_with_authentication_github(pr_url)
         if not content:
             return defer.returnValue(content)
@@ -298,13 +298,13 @@ class GitHubMixin(object):
                 if pr_json and len(pr_json):
                     return defer.returnValue(pr_json)
             except Exception as e:
-                yield self._addToLog('stdio', 'Failed to get pull request data from {}, error: {}'.format(pr_url, e))
+                yield self._addToLog('stdio', f'Failed to get pull request data from {pr_url}, error: {e}')
 
-            yield self._addToLog('stdio', 'Unable to fetch pull request {}.\n'.format(pr_number))
-            if attempt > retry:
+            yield self._addToLog('stdio', f'Unable to fetch pull request {pr_number}.\n')
+            if attempt >= retry:
                 return defer.returnValue(None)
             wait_for = (attempt + 1) * 15
-            yield self._addToLog('stdio', 'Backing off for {} seconds before retrying.\n'.format(wait_for))
+            yield self._addToLog('stdio', f'\nBacking off for {wait_for} seconds before retrying.\n')
             yield task.deferLater(reactor, wait_for, lambda: None)
 
         return defer.returnValue(None)
@@ -551,7 +551,7 @@ class GitHubMixin(object):
 
 
 class ShellMixin(object):
-    WINDOWS_SHELL_PLATFORMS = ['win']
+    WINDOWS_SHELL_PLATFORMS = ['win', 'playstation']
 
     def has_windows_shell(self):
         return self.getProperty('platform', '*') in self.WINDOWS_SHELL_PLATFORMS
@@ -1195,7 +1195,7 @@ class CheckOutPullRequest(steps.ShellSequence, ShellMixin):
             ['git', 'remote', 'set-url', remote, '{}{}.git'.format(GITHUB_URL, project)],
             ['git', 'fetch', remote, pr_branch],
             ['git', 'checkout', '-b', pr_branch],
-            ['git', 'cherry-pick', 'HEAD..remotes/{}/{}'.format(remote, pr_branch)],
+            ['git', 'cherry-pick', '--allow-empty', 'HEAD..remotes/{}/{}'.format(remote, pr_branch)],
         ]
         for command in commands:
             self.commands.append(util.ShellArg(command=command, logname='stdio', haltOnFailure=True))
@@ -1304,8 +1304,14 @@ class CheckChangeRelevance(AnalyzeChange):
     ]
 
     safer_cpp_path_regexes = [
-        re.compile(rb'Source/WebKit', re.IGNORECASE),
         re.compile(rb'Source/WebCore', re.IGNORECASE),
+        re.compile(rb'Source/WebDriver', re.IGNORECASE),
+        re.compile(rb'Source/WebGPU', re.IGNORECASE),
+        re.compile(rb'Source/WebInspectorUI', re.IGNORECASE),
+        re.compile(rb'Source/WebKit', re.IGNORECASE),
+        re.compile(rb'Source/WebKitLegacy', re.IGNORECASE),
+        re.compile(rb'Source/WTF', re.IGNORECASE),
+        re.compile(rb'Source/JavaScriptCore', re.IGNORECASE),
         re.compile(rb'Tools/Scripts/build-and-analyze', re.IGNORECASE),
         re.compile(rb'Tools/Scripts/generate-dirty-files', re.IGNORECASE),
         re.compile(rb'Tools/Scripts/compare-static-analysis-results', re.IGNORECASE),
@@ -2039,6 +2045,54 @@ class ValidateChange(buildstep.BuildStep, BugzillaMixin, GitHubMixin):
         return defer.returnValue(None)
 
 
+class ValidateUserForQueue(buildstep.BuildStep, AddToLogMixin):
+    name = 'validate-user-for-queue'
+    description = ['validate-user-for-queue running']
+    descriptionDone = ['Validated user for queue']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.contributors = {}
+
+    def getResultSummary(self):
+        if self.results == [FAILURE, SKIPPED]:
+            return {'step': self.descriptionDone}
+        return buildstep.BuildStep.getResultSummary(self)
+
+    def is_committer(self, email):
+        contributor = self.contributors.get(email.lower())
+        return contributor and contributor['status'] in ['reviewer', 'committer']
+
+    @defer.inlineCallbacks
+    def run(self):
+        self.contributors, errors = yield Contributors.load(use_network=True)
+        for error in errors:
+            yield self._addToLog('stdio', error)
+
+        if not self.contributors:
+            self.descriptionDone = 'Failed to get contributors information'
+            self.build.buildFinished(['Failed to get contributors information'], FAILURE)
+            defer.returnValue(FAILURE)
+            return
+
+        pr_number = self.getProperty('github.number', '')
+        if pr_number:
+            committer = (self.getProperty('owners', []) or [''])[0]
+        else:
+            committer = self.getProperty('patch_committer', '').lower()
+
+        if not self.is_committer(committer):
+            yield self._addToLog('stdio', f'{committer} does not have committer status.\n')
+            self.descriptionDone = f'Skipping queue, as {committer} lacks committer status'
+            self.build.results = SKIPPED
+            self.build.buildFinished([f'Skipping queue, as {committer} lacks committer status'], SKIPPED)
+            defer.returnValue(FAILURE)
+            return
+
+        yield self._addToLog('stdio', f'{committer} has committer status.\n')
+        defer.returnValue(SUCCESS)
+
+
 class ValidateCommitterAndReviewer(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
     name = 'validate-committer-and-reviewer'
     descriptionDone = ['Validated committer and reviewer']
@@ -2502,7 +2556,7 @@ class RetrievePRDataFromLabel(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
         self.setProperty('failed_status_check', [])
         self.setProperty('pending_prs', [])
 
-        retrieved_pr_data = yield self.getAllPRData(num_prs, self.label)
+        retrieved_pr_data = yield self.getAllPRData(num_prs, self.label, 3)
         if retrieved_pr_data:
             self.build.addStepsAfterCurrentStep([DetermineLabelOwner()])
 
@@ -2516,25 +2570,40 @@ class RetrievePRDataFromLabel(buildstep.BuildStep, GitHubMixin, AddToLogMixin):
         return buildstep.BuildStep.getResultSummary(self)
 
     @defer.inlineCallbacks
-    def getAllPRData(self, limit, label):
+    def getAllPRData(self, limit, label, retry=0):
         project = self.getProperty('project') or GITHUB_PROJECTS[0]
         owner, name = project.split('/', 1)
         query_body = '{repository(owner:"%s", name:"%s") { pullRequests(labels: "%s", last: %s) { edges { node { title number commits(last: 3) { nodes { commit { commitUrl status { state contexts { context state } } } } } } } } } }' % (owner, name, label, limit)
         query = {'query': query_body}
 
-        yield self._addToLog('stdio', "Fetching all PRs with label {}...\n".format(label))
+        yield self._addToLog('stdio', f"Fetching all PRs with label {label}...\n")
 
         response = yield self.query_graph_ql(query)
         if not response:
             yield self._addToLog('stderr', 'Failed to retrieve list of PRs.\n')
             return defer.returnValue(None)
 
-        all_pr_data = response['data']['repository']['pullRequests']['edges']
-        list_of_prs = [pr_data['node']['number'] for pr_data in all_pr_data]
+        for attempt in range(retry + 1):
+            try:
+                response = yield self.query_graph_ql(query)
+                if 'errors' in response:
+                    yield self._addToLog('stdio', response['errors'][0]['message'])
+                else:
+                    all_pr_data = response['data']['repository']['pullRequests']['edges']
+                    break
+            except Exception as e:
+                yield self._addToLog('stdio', 'Failed to retrieve PR data.\n')
 
+            if attempt >= retry:
+                return defer.returnValue(None)
+            wait_for = (attempt + 1) * 15
+            yield self._addToLog('stdio', f'\nBacking off for {wait_for} seconds before retrying.\n')
+            yield task.deferLater(reactor, wait_for, lambda: None)
+
+        list_of_prs = [pr_data['node']['number'] for pr_data in all_pr_data]
         self.setProperty('list_of_prs', list_of_prs)
         self.setProperty('all_pr_data', all_pr_data)
-        yield self._addToLog('stdio', 'All PRs in safe-merge-queue: {}\n'.format(list_of_prs))
+        yield self._addToLog('stdio', f'All PRs in safe-merge-queue: {list_of_prs}\n')
         yield self._addToLog('stdio', 'Done!\n')
 
         defer.returnValue(True)
@@ -3225,6 +3294,7 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
     def __init__(self, skipUpload=False, **kwargs):
         self.skipUpload = skipUpload
         self.cancelled_due_to_huge_logs = False
+        self.build_failed = False
         super().__init__(timeout=60 * 60, logEnviron=False, **kwargs)
 
     def doStepIf(self, step):
@@ -3276,6 +3346,8 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
         return shell.Compile.start(self)
 
     def errorReceived(self, error):
+        # Temporary workaround for catching silent failures: https://bugs.webkit.org/show_bug.cgi?id=276081
+        self.build_failed = True
         self._addToLog('errors', error + '\n')
 
     def handleExcessiveLogging(self):
@@ -3291,6 +3363,7 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
                 GenerateS3URL(
                     f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                     extension='txt',
+                    additions=f'{self.build.number}',
                     content_type='text/plain',
                 ), UploadFileToS3(
                     'build-log.txt',
@@ -3340,6 +3413,8 @@ class CompileWebKit(shell.Compile, AddToLogMixin, ShellMixin):
         return super().evaluateCommand(cmd)
 
     def getResultSummary(self):
+        if self.build_failed:
+            self.results = FAILURE
         if self.results == FAILURE:
             return {'step': 'Failed to compile WebKit'}
         if self.results == SKIPPED:
@@ -3655,6 +3730,7 @@ class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4145,6 +4221,7 @@ class RunWebKitTests(shell.Test, AddToLogMixin, ShellMixin):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4240,6 +4317,7 @@ class RunWebKitTestsInStressMode(RunWebKitTests):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4293,6 +4371,7 @@ class ReRunWebKitTests(RunWebKitTests):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4412,6 +4491,7 @@ class RunWebKitTestsWithoutChange(RunWebKitTests):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4774,6 +4854,7 @@ class RunWebKitTestsRedTree(RunWebKitTests):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4843,6 +4924,7 @@ class RunWebKitTestsRepeatFailuresRedTree(RunWebKitTestsRedTree):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4924,6 +5006,7 @@ class RunWebKitTestsRepeatFailuresWithoutChangeRedTree(RunWebKitTestsRedTree):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -4965,6 +5048,7 @@ class RunWebKitTestsWithoutChangeRedTree(RunWebKitTestsWithoutChange):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -5242,9 +5326,10 @@ class GenerateS3URL(master.MasterShellCommandNewStyle):
     haltOnFailure = False
     flunkOnFailure = False
 
-    def __init__(self, identifier, extension='zip', content_type=None, **kwargs):
+    def __init__(self, identifier, extension='zip', additions=None, content_type=None, **kwargs):
         self.identifier = identifier
         self.extension = extension
+        self.additions = additions
         kwargs['command'] = [
             'python3', '../Shared/generate-s3-url',
             '--change-id', WithProperties('%(change_id)s'),
@@ -5252,6 +5337,8 @@ class GenerateS3URL(master.MasterShellCommandNewStyle):
         ]
         if extension:
             kwargs['command'] += ['--extension', extension]
+        if additions:
+            kwargs['command'] += ['--additions', additions]
         if content_type:
             kwargs['command'] += ['--content-type', content_type]
         super().__init__(logEnviron=False, **kwargs)
@@ -5274,7 +5361,7 @@ class GenerateS3URL(master.MasterShellCommandNewStyle):
         build_url = f'{self.master.config.buildbotURL}#/builders/{self.build._builderid}/builds/{self.build.number}'
         if match:
             self.build.s3url = match.group('url')
-            self.build.s3_archives.append(S3URL + f"{S3_BUCKET}/{self.identifier}/{self.getProperty('change_id')}.{self.extension}")
+            self.build.s3_archives.append(S3URL + f"{S3_BUCKET}/{self.identifier}/{self.getProperty('change_id')}{f'-{self.additions}' if self.additions else ''}.{self.extension}")
             defer.returnValue(rc)
         else:
             print(f'build: {build_url}, logs for GenerateS3URL:\n{log_text}')
@@ -5445,6 +5532,12 @@ class RunAPITests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
                            '--json-output={0}'.format(self.jsonFileName)]
         else:
             self.command = self.command + customBuildFlag(platform, self.getProperty('fullPlatform'))
+        if self.name == RunAPITestsWithoutChange.name:
+            first_results_failing_tests = set(self.getProperty('first_run_failures', set()))
+            second_results_failing_tests = set(self.getProperty('second_run_failures', set()))
+            list_failed_tests_with_change = sorted(first_results_failing_tests.union(second_results_failing_tests))
+            if list_failed_tests_with_change:
+                self.command = self.command + list_failed_tests_with_change
         self.command = self.shell_command(' '.join(self.command) + ' > logs.txt 2>&1 ; grep "Ran " logs.txt')
 
         rc = yield super().run()
@@ -5458,6 +5551,7 @@ class RunAPITests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
             GenerateS3URL(
                 f"{self.getProperty('fullPlatform')}-{self.getProperty('architecture')}-{self.getProperty('configuration')}-{self.name}",
                 extension='txt',
+                additions=f'{self.build.number}',
                 content_type='text/plain',
             ), UploadFileToS3(
                 'logs.txt',
@@ -6508,10 +6602,21 @@ class AddReviewerToCommitMessage(shell.ShellCommand, AddReviewerMixin):
     haltOnFailure = True
 
     def __init__(self, **kwargs):
+        self.skip_reason = ''
         super().__init__(logEnviron=False, timeout=60, **kwargs)
 
     @defer.inlineCallbacks
     def run(self, BufferLogObserverClass=logobserver.BufferLogObserver):
+        classification = self.getProperty('classification', [])
+        if not isinstance(classification, list):
+            classification = []
+        if ['Cherry-pick'] == classification:
+            self.skip_reason = 'commit is a cherry-pick'
+            defer.returnValue(SKIPPED)
+        if not self.getProperty('valid_reviewers'):
+            self.skip_reason = 'there are no valid reviewers'
+            defer.returnValue(SKIPPED)
+
         base_ref = self.getProperty('github.base.ref', f'{DEFAULT_REMOTE}/{DEFAULT_BRANCH}')
         head_ref = self.getProperty('github.head.ref', 'HEAD')
 
@@ -6534,18 +6639,11 @@ class AddReviewerToCommitMessage(shell.ShellCommand, AddReviewerMixin):
     def getResultSummary(self):
         if self.results == FAILURE:
             return {'step': 'Failed to apply reviewers'}
+        if self.results == SKIPPED:
+            return {'step': f'Skipped because {self.skip_reason}'}
         if self.results == SUCCESS:
             return {'step': f'Reviewed by {self.reviewers()}'}
         return super().getResultSummary()
-
-    def doStepIf(self, step):
-        classification = self.getProperty('classification', [])
-        if not isinstance(classification, list):
-            classification = []
-        return self.getProperty('valid_reviewers') and ['Cherry-pick'] != classification
-
-    def hideStepIf(self, results, step):
-        return not self.doStepIf(step)
 
 
 class ValidateCommitMessage(steps.ShellSequence, ShellMixin, AddToLogMixin):
@@ -6966,7 +7064,7 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
         defer.returnValue(rc)
 
     def addResultsSteps(self):
-        return [ParseStaticAnalyzerResults(), FindUnexpectedStaticAnalyzerResults(expectations=True)]
+        return [ParseStaticAnalyzerResults(), FindUnexpectedStaticAnalyzerResults(use_expectations=True)]
 
     def getResultSummary(self):
         status = ''
@@ -6982,7 +7080,7 @@ class ScanBuildWithoutChange(ScanBuild):
     output_directory = SCAN_BUILD_OUTPUT_DIR + '-baseline'
 
     def addResultsSteps(self):
-        return [ParseStaticAnalyzerResultsWithoutChange(), FindUnexpectedStaticAnalyzerResults(expectations=False)]
+        return [ParseStaticAnalyzerResultsWithoutChange(), FindUnexpectedStaticAnalyzerResults(use_expectations=False)]
 
 
 class ParseStaticAnalyzerResults(shell.ShellCommandNewStyle):
@@ -7040,15 +7138,23 @@ class ParseStaticAnalyzerResultsWithoutChange(ParseStaticAnalyzerResults):
     scan_build_output = SCAN_BUILD_OUTPUT_DIR + '-baseline'
 
 
-class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
+class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle, AddToLogMixin):
     name = 'find-unexpected-static-analyzer-results'
     description = ['finding unexpected static analyzer results']
     descriptionDone = ['found unexpected static analyzer results']
     result_message = ''
+    results_db_log_name = 'results-db'
+    jsonFileName = f'{SCAN_BUILD_OUTPUT_DIR}/unexpected_results.json'
+    logfiles = {'json': jsonFileName}
+    suite = 'safer-cpp-checks'
 
-    def __init__(self, expectations=False, **kwargs):
-        self.expectations = expectations  # If true, results will be compared against checked-in expectations. Otherwise, they're compared against a previous run.
+    def __init__(self, use_expectations=True, was_filtered=False, **kwargs):
+        self.use_expectations = use_expectations  # If true, results will be compared against checked-in expectations. Otherwise, they're compared against a previous run.
         super().__init__(logEnviron=False, **kwargs)
+        self.unexpected_results_filtered = {}
+        self.unexpected_failures_filtered = set()
+        self.unexpected_passes_filtered = set()
+        self.was_filtered = was_filtered  # Allow the unit test to override was_filtered
 
     @defer.inlineCallbacks
     def run(self):
@@ -7056,15 +7162,15 @@ class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
         if api_key:
             self.env[RESULTS_SERVER_API_KEY] = api_key
         else:
-            self._addToLog('stdio', 'No API key for {} found'.format(RESULTS_DB_URL))
+            yield self._addToLog('stdio', 'No API key for {} found'.format(RESULTS_DB_URL))
 
         self.command = ['python3', 'Tools/Scripts/compare-static-analysis-results', os.path.join(self.getProperty('builddir'), 'build/new')]
         self.command += ['--build-output', SCAN_BUILD_OUTPUT_DIR]
-        if not self.expectations:
+        if not self.use_expectations:
             self.command += ['--archived-dir', os.path.join(self.getProperty('builddir'), 'build/baseline')]
             self.command += ['--scan-build-path', '../llvm-project/clang/tools/scan-build/bin/scan-build']  # Only generate results page on the second comparison
             self.command += ['--delete-results']
-            if CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES and self.getProperty('github.base.ref', DEFAULT_BRANCH) == DEFAULT_BRANCH:
+            if CURRENT_HOSTNAME in EWS_BUILD_HOSTNAMES + TESTING_ENVIRONMENT_HOSTNAMES and self.getProperty('github.base.ref', DEFAULT_BRANCH) == DEFAULT_BRANCH:
                 self.command += [
                     '--builder-name', self.getProperty('buildername', ''),
                     '--build-number', self.getProperty('buildnumber', ''),
@@ -7084,43 +7190,171 @@ class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
         self.log_observer = logobserver.BufferLogObserver()
         self.addLogObserver('stdio', self.log_observer)
 
+        self.log_observer_json = logobserver.BufferLogObserver()
+        self.addLogObserver('json', self.log_observer_json)
+
         rc = yield super().run()
         if rc != SUCCESS:
             return defer.returnValue(rc)
 
-        self.createResultMessage()
+        self.find_unexpected_results()
+        num_unexpected_results = self.getProperty('num_failing_files', 0) or self.getProperty('num_unexpected_issues', 0) or self.getProperty('num_passing_files', 0)
+        unexpected_results_after_filter = None
+        if self.use_expectations and num_unexpected_results:  # Only consult results database on the first run
+            logTextJson = self.log_observer_json.getStdout()
+            yield self._addToLog('stdio', f'Checking results database for unexpected results...\n')
+            successful_filter = yield self.filter_results_using_results_db(logTextJson)
+            unexpected_results_after_filter = self.getProperty('num_failing_files', 0) or self.getProperty('num_unexpected_issues', 0) or self.getProperty('num_passing_files', 0)
+            if successful_filter and self.was_filtered and unexpected_results_after_filter:  # If there are unexpected results
+                yield self._addToLog('stdio', f'\nSuccessfully filtered results! Updating unexpected_results.json on disk.\n')
+                self.write_unexpected_results_file_to_master()
+            if not successful_filter:
+                yield self._addToLog('stdio', f'\nFailed to consult results database. Falling back to tip-of-tree...\n')
+                # If results db failed, rebuild without changes to verify causation
+                self.build.addStepsAfterCurrentStep([ValidateChange(verifyBugClosed=False, addURLs=False), RevertAppliedChanges(exclude=['new*', 'scan-build-output*']), ScanBuildWithoutChange()])
+                self.result_message = self.createResultMessage()
+                return defer.returnValue(rc)
 
-        unexpected_results = self.getProperty('unexpected_failing_files', 0) or self.getProperty('unexpected_new_issues', 0) or self.getProperty('unexpected_passing_files', 0)
-        if self.expectations and unexpected_results:
-            # If there are unexpected results, rebuild without changes to verify causation
-            self.build.addStepsAfterCurrentStep([ValidateChange(verifyBugClosed=False, addURLs=False), RevertAppliedChanges(exclude=['new*', 'scan-build-output*']), ScanBuildWithoutChange()])
-        elif unexpected_results:
-            # Only save the results if there are failures and it is not the first run
+        # Only save the results if there are unexpected results
+        if self.use_expectations:
+            if not unexpected_results_after_filter:
+                yield self._addToLog('stdio', f'Found no unexpected results after filtering through results database!\n')
+            else:
+                yield self._addToLog('stdio', f'Found unexpected results after filtering through results database!\n')
+                steps_to_add = [DownloadUnexpectedResultsFromMaster(), DeleteStaticAnalyzerResults(results_dir='StaticAnalyzerUnexpectedRegressions')] if self.was_filtered else []
+                steps_to_add += [GenerateSaferCPPResultsIndex(), DeleteStaticAnalyzerResults(), ArchiveStaticAnalyzerResults(), UploadStaticAnalyzerResults(), ExtractStaticAnalyzerTestResults(), DisplaySaferCPPResults()]
+                self.build.addStepsAfterCurrentStep(steps_to_add)
+        elif num_unexpected_results:
             self.build.addStepsAfterCurrentStep([ArchiveStaticAnalyzerResults(), UploadStaticAnalyzerResults(), ExtractStaticAnalyzerTestResults(), DisplaySaferCPPResults()])
+
+        self.result_message = self.createResultMessage()
+
         return defer.returnValue(rc)
 
-    def createResultMessage(self):
+    def write_unexpected_results_file_to_master(self):
+        resultDirectory = f"public_html/results/{self.getProperty('buildername')}/{self.getProperty('change_id')}-{self.getProperty('buildnumber')}"
+        results_data_file = os.path.join(resultDirectory, 'unexpected_results.json')
+        os.makedirs(os.path.dirname(results_data_file), exist_ok=True)
+        with open(results_data_file, "w") as f:
+            results_data_obj = json.dumps(self.unexpected_results_filtered, indent=4)
+            f.write(results_data_obj)
+
+    @defer.inlineCallbacks
+    def filter_results_using_results_db(self, string):
+        if not string:
+            return defer.returnValue(False)
+
+        content_string = LayoutTestFailures._strip_json_wrapper(string.strip())
+        # Workaround for https://github.com/buildbot/buildbot/issues/4906
+        content_string = ''.join(content_string.splitlines())
+        try:
+            results_json = json.loads(content_string)
+        except json.JSONDecodeError:
+            yield self._addToLog(self.results_db_log_name, f'Failed to decode JSON, retrying with workaround\n')
+            content_string += '}'  # Workaround for getStdout() removing the last bracket
+            try:
+                results_json = json.loads(content_string)
+            except json.JSONDecodeError:
+                yield self._addToLog(self.results_db_log_name, f'Failed to decode JSON\n')
+                return defer.returnValue(False)
+
+        self.unexpected_results_filtered = results_json
+
+        identifier = self.getProperty('identifier', None)
+        platform = self.getProperty('platform', None)
+        configuration = {}
+        if platform:
+            configuration['platform'] = platform
+        style = self.getProperty('configuration', None)
+        if style and style in ['debug', 'release']:
+            configuration['style'] = style
+
+        yield self._addToLog(self.results_db_log_name, f'Checking Results database for unexpected results. Identifier: {identifier}, configuration: {configuration}\n')
+        has_commit = False
+        if identifier:
+            has_commit = yield ResultsDatabase.has_commit(commit=identifier)
+            if not has_commit:
+                yield self._addToLog(self.results_db_log_name, f"'{identifier}' could not be found on the results database, falling back to tip-of-tree\n")
+                return defer.returnValue(False)
+
+        has_results = yield ResultsDatabase.get_results(self.suite, commit=identifier, configuration=configuration)
+        if not has_results:
+            yield self._addToLog(self.results_db_log_name, f"{self.suite} results for '{identifier}' could not be found on the results database, falling back to tip-of-tree\n")
+            return defer.returnValue(False)
+
+        filtered_failures = yield self.check_results_db(results_json.get('failures'), 'failures', configuration, identifier)
+        filtered_passes = yield self.check_results_db(results_json.get('passes'), 'passes', configuration, identifier)
+        if filtered_failures is not None:
+            if self.was_filtered:
+                self.setProperty('num_unexpected_issues', 0)
+            self.setProperty('unexpected_failures', list(filtered_failures))
+            self.setProperty('num_failing_files', len(filtered_failures))
+        if filtered_passes is not None:
+            self.setProperty('unexpected_passes', list(filtered_passes))
+            self.setProperty('num_passing_files', len(filtered_passes))
+        successful_filter = filtered_failures is not None or filtered_passes is not None
+        return defer.returnValue(successful_filter)
+
+    @defer.inlineCallbacks
+    def check_results_db(self, results_json, result_type, configuration, identifier):
+        yield self._addToLog(self.results_db_log_name, f'\nChecking for unexpected {result_type}...\n')
+        filtered_results = set()
+        for project, checkers in results_json.items():
+            for checker, files in checkers.items():
+                files_per_checker = list(files)
+                for file in files_per_checker:
+                    test_name = f'{project}/{file}/{checker}'
+                    data = yield ResultsDatabase.does_result_match(
+                        test_name, result_type='FAIL' if result_type == 'failures' else 'PASS',
+                        configuration=configuration,
+                        commit=identifier,
+                        suite=self.suite,
+                        default='PASS'
+                    )
+                    if not data:
+                        yield self._addToLog(self.results_db_log_name, f"Failed to match results for {test_name}, falling back to tip-of-tree\n")
+                        return defer.returnValue(None)
+                    self._addToLog(self.results_db_log_name, f"\n{test_name}: pre-existing={data['does_result_match']}\nResponse from results-db: {data}\n{data['logs']}")
+                    if data['does_result_match']:
+                        yield self._addToLog('stdio', f'Removing {test_name} from unexpected {result_type}.\n')
+                        self.was_filtered = True
+                        self.unexpected_results_filtered[result_type][project][checker].remove(file)
+                    else:
+                        yield self._addToLog('stdio', f'Adding {file} to unexpected {result_type}.\n')
+                        filtered_results.add(file)
+        return defer.returnValue(filtered_results)
+
+    def find_unexpected_results(self):
         log_text = self.log_observer.getStdout()
         match = re.search(r'^Total (new issues|unexpected issues): (\d+)', log_text, re.MULTILINE)
         if match:
-            self.result_message += f"{match.group(2)} new issue{'s' if int(match.group(2)) > 1 else ''} "
-            self.setProperty('unexpected_new_issues', int(match.group(2)))
+            self.setProperty('num_unexpected_issues', int(match.group(2)))
         else:
-            self.setProperty('unexpected_new_issues', 0)
+            self.setProperty('num_unexpected_issues', 0)
 
         match = re.search(r'^Total (new files|unexpected failing files): (\d+)', log_text, re.MULTILINE)
         if match:
-            self.result_message += f"{match.group(2)} failing file{'s' if int(match.group(2)) > 1 else ''} "
-            self.setProperty('unexpected_failing_files', int(match.group(2)))
+            self.setProperty('num_failing_files', int(match.group(2)))
         else:
-            self.setProperty('unexpected_failing_files', 0)
+            self.setProperty('num_failing_files', 0)
 
         match = re.search(r'^Total (fixed files|unexpected passing files): (\d+)', log_text, re.MULTILINE)
         if match:
-            self.result_message += f"{match.group(2)} fixed file{'s' if int(match.group(2)) > 1 else ''}"
-            self.setProperty('unexpected_passing_files', int(match.group(2)))
+            self.setProperty('num_passing_files', int(match.group(2)))
         else:
-            self.setProperty('unexpected_passing_files', 0)
+            self.setProperty('num_passing_files', 0)
+
+    def createResultMessage(self):
+        new_issues = self.getProperty('num_unexpected_issues', 0)
+        failing_files = self.getProperty('num_failing_files', 0)
+        fixed_files = self.getProperty('num_passing_files', 0)
+        result_message = ''
+
+        if not self.was_filtered:
+            result_message += f"{new_issues} new issue{'s' if new_issues > 1 else ''} " if new_issues else ''
+        result_message += f"{failing_files} failing file{'s' if failing_files > 1 else ''} " if failing_files else ''
+        result_message += f"{fixed_files} fixed file{'s' if fixed_files > 1 else ''}" if fixed_files else ''
+        return result_message
 
     def getResultSummary(self):
         status = ''
@@ -7132,6 +7366,88 @@ class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
             status += f' ({Results[self.results]})'
 
         return {u'step': status}
+
+
+class DownloadUnexpectedResultsFromMaster(transfer.FileDownload):
+    mastersrc = WithProperties('public_html/results/%(buildername)s/%(change_id)s-%(buildnumber)s/unexpected_results.json')
+    workerdest = SCAN_BUILD_OUTPUT_DIR + '/unexpected_results.json'
+    name = 'download-unexpected-results-from-master'
+    description = ['downloading unexpected results from buildbot master']
+    descriptionDone = ['Downloaded unexpected results']
+    haltOnFailure = True
+    flunkOnFailure = True
+    test = False
+
+    def __init__(self, **kwargs):
+        # Allow the unit test to override mastersrc
+        if 'mastersrc' not in kwargs:
+            kwargs['mastersrc'] = self.mastersrc
+        kwargs['workerdest'] = self.workerdest
+        kwargs['mode'] = 0o0644
+        kwargs['blocksize'] = 1024 * 256
+        super().__init__(**kwargs)
+
+    def getResultSummary(self):
+        if self.results != SUCCESS:
+            return {'step': 'Failed to download unexpected results from build master'}
+        return super().getResultSummary()
+
+
+class DeleteStaticAnalyzerResults(shell.ShellCommandNewStyle, AddToLogMixin):
+    name = 'delete-static-analyzer-results'
+    description = ['deleting static analyzer results']
+    descriptionDone = ['deleted static analyzer results']
+    haltOnFailure = False
+    flunkOnFailure = False
+
+    def __init__(self, results_dir='StaticAnalyzer', **kwargs):
+        super().__init__(logEnviron=False, **kwargs)
+        self.results_dir = results_dir
+
+    @defer.inlineCallbacks
+    def run(self):
+        yield self._addToLog('stdio', f'Removing {SCAN_BUILD_OUTPUT_DIR}/{self.results_dir}...\n')
+        self.command = ['rm', '-r', os.path.join(self.getProperty('builddir'), f'build/{SCAN_BUILD_OUTPUT_DIR}/{self.results_dir}')]
+        rc = yield super().run()
+        return defer.returnValue(rc)
+
+
+class GenerateSaferCPPResultsIndex(shell.ShellCommandNewStyle):
+    name = 'generate-safer-cpp-results'
+    description = ['generating safer cpp results']
+    descriptionDone = ['generated safer cpp results']
+    output_dir = 'new'
+    scan_build_output = SCAN_BUILD_OUTPUT_DIR
+
+    def __init__(self, **kwargs):
+        super().__init__(logEnviron=False, **kwargs)
+
+    @defer.inlineCallbacks
+    def run(self):
+        self.command = ['python3', 'Tools/Scripts/compare-static-analysis-results', os.path.join(self.getProperty('builddir'), 'build/new')]
+        self.command += ['--build-output', SCAN_BUILD_OUTPUT_DIR]
+        self.command += ['--scan-build-path', '../llvm-project/clang/tools/scan-build/bin/scan-build']
+        self.command += ['--generate-results-only']
+
+        self.log_observer = logobserver.BufferLogObserver()
+        self.addLogObserver('stdio', self.log_observer)
+
+        rc = yield super().run()
+        if rc != SUCCESS:
+            return defer.returnValue(rc)
+
+        logText = self.log_observer.getStdout()
+        match = re.search(r'scan-build: (\d+) bugs? found', logText, re.MULTILINE)
+        if match:
+            num_issues = match.group(1)
+            self.setProperty('num_unexpected_issues', int(num_issues))
+        return defer.returnValue(rc)
+
+    def evaluateCommand(self, cmd):
+        if cmd.rc != 0:
+            self.commandFailed = True
+            return FAILURE
+        return SUCCESS
 
 
 class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
@@ -7147,7 +7463,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
     @defer.inlineCallbacks
     def run(self):
         commands_for_comment = set()
-        num_issues = self.getProperty('unexpected_new_issues', 0)
+        num_issues = self.getProperty('num_unexpected_issues', 0)
         self.resultDirectory = f"public_html/results/{self.getProperty('buildername')}/{self.getProperty('change_id')}-{self.getProperty('buildnumber')}"
         unexpected_results_data = self.loadResultsData(os.path.join(self.resultDirectory, SCAN_BUILD_OUTPUT_DIR, 'unexpected_results.json'))
         is_log = yield self.getFilesPerProject(unexpected_results_data, 'passes', commands_for_comment)
@@ -7158,7 +7474,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
                 yield self._addToLog('stdio', f'Ignored {num_issues} pre-existing failure{pluralSuffix}')
             self.addURL("View failures", self.resultDirectoryURL() + SCAN_BUILD_OUTPUT_DIR + "/new-results.html")
         self.createComment(commands_for_comment)
-        if self.getProperty('unexpected_failing_files', 0):
+        if self.getProperty('num_failing_files', 0):
             return defer.returnValue(FAILURE)
         return defer.returnValue(SUCCESS)
 
@@ -7177,7 +7493,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
             for checker, files in data.items():
                 if files:
                     total_file_list.update(files)
-                    file_str = '\n'.join(files)
+                    file_str = '\n'.join((sorted(files)))
                     log_content += f'=> {checker}\n\n{file_str}\n\n'
                     command += ' ' + self.CHECKER_ARGS.format(checker=checker, files=' '.join(files))
             if log_content:
@@ -7189,17 +7505,18 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
         return defer.returnValue(is_log)
 
     def createComment(self, commands_for_comment):
-        num_failures = self.getProperty('unexpected_failing_files', 0)
-        num_passes = self.getProperty('unexpected_passing_files', 0)
-        num_issues = self.getProperty('unexpected_new_issues', 0)
+        num_failures = self.getProperty('num_failing_files', 0)
+        num_passes = self.getProperty('num_passing_files', 0)
+        num_issues = self.getProperty('num_unexpected_issues', 0)
 
         if not num_failures and not num_passes:
             return
 
+        commit_url = GitHub.commit_url(self.getProperty('github.head.sha'), self.getProperty('repository', ''))
         results_link = self.resultDirectoryURL() + SCAN_BUILD_OUTPUT_DIR + "/new-results.html"
         build_link = f'{self.master.config.buildbotURL}#/builders/{self.build._builderid}/builds/{self.build.number}'
         formatted_build_link = f'[#{self.getProperty("buildnumber", "")}]({build_link})'
-        comment = f'### Safer C++ Build {formatted_build_link}\n'
+        comment = f'### Safer C++ Build {formatted_build_link} ({commit_url})\n'
 
         if num_failures:
             pluralSuffix = 's' if num_issues > 1 else ''
@@ -7208,7 +7525,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
         if num_passes:
             pluralSuffix = 's' if num_passes > 1 else ''
             pluralCommand = 's' if len(commands_for_comment) > 1 else ''
-            comment += f'\n:warning: Found {num_passes} fixed file{pluralSuffix}! Please update expectations in `Source/[WebKit/WebCore]/SaferCPPExpectations` by running the following command{pluralCommand} and update your {self.change_type}:\n'
+            comment += f'\n:warning: Found {num_passes} fixed file{pluralSuffix}! Please update expectations in `Source/[Project]/SaferCPPExpectations` by running the following command{pluralCommand} and update your {self.change_type}:\n'
             comment += '\n'.join([f"- `{c}`" for c in commands_for_comment])
 
         self.setProperty('comment_text', comment)
@@ -7222,7 +7539,7 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
         return 'patch'
 
     def doStepIf(self, step):
-        return self.getProperty('unexpected_failing_files', 0) or self.getProperty('unexpected_passing_files', 0) or self.getProperty('unexpected_new_issues', 0)
+        return self.getProperty('num_failing_files', 0) or self.getProperty('num_passing_files', 0) or self.getProperty('num_unexpected_issues', 0)
 
     def hideStepIf(self, results, step):
         return not self.doStepIf(step)
@@ -7231,9 +7548,9 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
         return f"{S3_RESULTS_URL}{self.resultDirectory.replace('public_html/results/', '') + '/'}"
 
     def getResultSummary(self):
-        num_failures = self.getProperty('unexpected_failing_files', 0)
-        num_passes = self.getProperty('unexpected_passing_files', 0)
-        num_issues = self.getProperty('unexpected_new_issues', 0)
+        num_failures = self.getProperty('num_failing_files', 0)
+        num_passes = self.getProperty('num_passing_files', 0)
+        num_issues = self.getProperty('num_unexpected_issues', 0)
         failing_files = (", ").join(self.getProperty('failures', [])[:self.NUM_TO_DISPLAY])
         passing_files = (", ").join(self.getProperty('passes', [])[:self.NUM_TO_DISPLAY])
         results_summary = ''

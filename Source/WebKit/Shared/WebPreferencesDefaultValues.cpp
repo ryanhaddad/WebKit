@@ -49,6 +49,10 @@
 #include <WebKitAdditions/WebPreferencesDefaultValuesAdditions.h>
 #endif
 
+#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/DeprecatedGlobalSettingsAdditions.cpp>)
+#include <WebKitAdditions/DeprecatedGlobalSettingsAdditions.cpp>
+#endif
+
 namespace WebKit {
 
 #if PLATFORM(IOS_FAMILY)
@@ -69,11 +73,6 @@ bool defaultShouldPrintBackgrounds()
 {
     static bool result = !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::DefaultsToExcludingBackgroundsWhenPrinting);
     return result;
-}
-
-bool defaultAlternateFormControlDesignEnabled()
-{
-    return PAL::currentUserInterfaceIdiomIsVision();
 }
 
 #endif
@@ -110,30 +109,6 @@ bool defaultWheelEventGesturesBecomeNonBlocking()
     static bool result = linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::AllowsWheelEventGesturesToBecomeNonBlocking);
     return result;
 }
-
-#endif
-
-#if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
-
-bool defaultDisallowSyncXHRDuringPageDismissalEnabled()
-{
-#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
-    if (CFPreferencesGetAppBooleanValue(CFSTR("allowDeprecatedSynchronousXMLHttpRequestDuringUnload"), CFSTR("com.apple.WebKit"), nullptr)) {
-        WTFLogAlways("Allowing synchronous XHR during page unload due to managed preference");
-        return false;
-    }
-#elif PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST) && !PLATFORM(WATCHOS)
-    if (allowsDeprecatedSynchronousXMLHttpRequestDuringUnload()) {
-        WTFLogAlways("Allowing synchronous XHR during page unload due to managed preference");
-        return false;
-    }
-#endif
-    return true;
-}
-
-#endif
-
-#if PLATFORM(MAC)
 
 bool defaultAppleMailPaginationQuirkEnabled()
 {
@@ -333,6 +308,40 @@ bool defaultUseGPUProcessForDOMRenderingEnabled()
 #endif
 
     return false;
+}
+
+#if ENABLE(WEB_PUSH_NOTIFICATIONS)
+bool defaultBuiltInNotificationsEnabled()
+{
+#if defined(DEPRECATED_GLOBAL_SETTINGS_BUILT_IN_NOTIFICATIONS_ENABLED_ADDITIONS)
+    DEPRECATED_GLOBAL_SETTINGS_BUILT_IN_NOTIFICATIONS_ENABLED_ADDITIONS;
+#endif
+
+#if defined(WEB_PREFERENCES_BUILT_IN_NOTIFICATIONS_ENABLED_ADDITIONS)
+    WEB_PREFERENCES_BUILT_IN_NOTIFICATIONS_ENABLED_ADDITIONS;
+#endif
+
+    return false;
+}
+#endif
+
+bool defaultRequiresPageVisibilityForVideoToBeNowPlaying()
+{
+#if USE(APPLE_INTERNAL_SDK)
+    if (requiresPageVisibilityForVideoToBeNowPlayingFromAdditions())
+        return true;
+#endif
+
+    return false;
+}
+
+bool defaultCookieStoreAPIEnabled()
+{
+#if ENABLE(COOKIE_STORE_API_BY_DEFAULT)
+    return true;
+#else
+    return false;
+#endif
 }
 
 } // namespace WebKit

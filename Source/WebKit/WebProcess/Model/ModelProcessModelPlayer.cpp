@@ -34,6 +34,7 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/Page.h>
 #include <WebCore/TransformationMatrix.h>
 
 namespace WebKit {
@@ -80,6 +81,8 @@ bool ModelProcessModelPlayer::modelProcessEnabled() const
 void ModelProcessModelPlayer::didCreateLayer(WebCore::LayerHostingContextIdentifier identifier)
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer obtained new layerHostingContextIdentifier id=%" PRIu64, this, m_id.toUInt64());
+    RELEASE_ASSERT(modelProcessEnabled());
+
     m_layerHostingContextIdentifier = identifier;
     m_client->didUpdateLayerHostingContextIdentifier(*this, identifier);
 }
@@ -87,6 +90,8 @@ void ModelProcessModelPlayer::didCreateLayer(WebCore::LayerHostingContextIdentif
 void ModelProcessModelPlayer::didFinishLoading(const WebCore::FloatPoint3D& boundingBoxCenter, const WebCore::FloatPoint3D& boundingBoxExtents)
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer didFinishLoading id=%" PRIu64, this, m_id.toUInt64());
+    RELEASE_ASSERT(modelProcessEnabled());
+
     m_client->didFinishLoading(*this);
     m_client->didUpdateBoundingBox(*this, boundingBoxCenter, boundingBoxExtents);
 }
@@ -95,11 +100,15 @@ void ModelProcessModelPlayer::didFinishLoading(const WebCore::FloatPoint3D& boun
 /// Not to be confused with setEntityTransform().
 void ModelProcessModelPlayer::didUpdateEntityTransform(const WebCore::TransformationMatrix& transform)
 {
+    RELEASE_ASSERT(modelProcessEnabled());
+
     m_client->didUpdateEntityTransform(*this, transform);
 }
 
 void ModelProcessModelPlayer::didUpdateAnimationPlaybackState(bool isPaused, double playbackRate, Seconds duration, Seconds currentTime, MonotonicTime clockTimestamp)
 {
+    RELEASE_ASSERT(modelProcessEnabled());
+
     m_paused = isPaused;
     m_effectivePlaybackRate = fmax(playbackRate, 0);
     m_duration = duration;
@@ -109,6 +118,8 @@ void ModelProcessModelPlayer::didUpdateAnimationPlaybackState(bool isPaused, dou
 
 void ModelProcessModelPlayer::didFinishEnvironmentMapLoading(bool succeeded)
 {
+    RELEASE_ASSERT(modelProcessEnabled());
+
     m_client->didFinishEnvironmentMapLoading(succeeded);
 }
 
@@ -145,11 +156,6 @@ void ModelProcessModelPlayer::handleMouseUp(const WebCore::LayoutPoint&, Monoton
 
 void ModelProcessModelPlayer::enterFullscreen()
 {
-}
-
-void ModelProcessModelPlayer::setBackgroundColor(WebCore::Color color)
-{
-    send(Messages::ModelProcessModelPlayerProxy::SetBackgroundColor(color));
 }
 
 /// This comes from JS side, so we need to tell Model Process about it. Not to be confused with didUpdateEntityTransform().
@@ -320,6 +326,24 @@ void ModelProcessModelPlayer::setCurrentTime(Seconds currentTime, CompletionHand
 void ModelProcessModelPlayer::setEnvironmentMap(Ref<WebCore::SharedBuffer>&& data)
 {
     send(Messages::ModelProcessModelPlayerProxy::SetEnvironmentMap(WTFMove(data)));
+}
+
+void ModelProcessModelPlayer::setHasPortal(bool hasPortal)
+{
+    if (m_hasPortal == hasPortal)
+        return;
+
+    m_hasPortal = hasPortal;
+    send(Messages::ModelProcessModelPlayerProxy::SetHasPortal(m_hasPortal));
+}
+
+void ModelProcessModelPlayer::setStageMode(WebCore::StageModeOperation stagemodeOp)
+{
+    if (m_stageModeOperation == stagemodeOp)
+        return;
+
+    m_stageModeOperation = stagemodeOp;
+    send(Messages::ModelProcessModelPlayerProxy::SetStageMode(m_stageModeOperation));
 }
 
 }

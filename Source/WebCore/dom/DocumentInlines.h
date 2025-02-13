@@ -34,9 +34,7 @@
 #include "ExtensionStyleSheets.h"
 #include "FocusOptions.h"
 #include "FrameDestructionObserverInlines.h"
-#include "FullscreenManager.h"
 #include "LocalDOMWindow.h"
-#include "MediaProducer.h"
 #include "NodeIterator.h"
 #include "ReportingScope.h"
 #include "SecurityOrigin.h"
@@ -154,11 +152,6 @@ inline void Document::invalidateAccessKeyCache()
         invalidateAccessKeyCacheSlowCase();
 }
 
-inline bool Document::isCapturing() const
-{
-    return MediaProducer::isCapturing(m_mediaState);
-}
-
 inline bool Document::hasMutationObserversOfType(MutationObserverOptionType type) const
 {
     return m_mutationObserverTypes.containsAny(type);
@@ -166,7 +159,7 @@ inline bool Document::hasMutationObserversOfType(MutationObserverOptionType type
 
 inline ClientOrigin Document::clientOrigin() const { return { topOrigin().data(), securityOrigin().data() }; }
 
-inline bool Document::isSameOriginAsTopDocument() const { return securityOrigin().isSameOriginAs(topOrigin()); }
+inline bool Document::isSameOriginAsTopDocument() const { return protectedSecurityOrigin()->isSameOriginAs(topOrigin()); }
 
 inline bool Document::shouldMaskURLForBindings(const URL& urlToMask) const
 {
@@ -299,31 +292,5 @@ inline Ref<SecurityOrigin> Document::protectedSecurityOrigin() const
 {
     return SecurityContext::protectedSecurityOrigin().releaseNonNull();
 }
-
-#if ENABLE(FULLSCREEN_API)
-inline FullscreenManager& Document::fullscreenManager()
-{
-    if (!m_fullscreenManager)
-        return ensureFullscreenManager();
-    return *m_fullscreenManager;
-}
-
-inline const FullscreenManager& Document::fullscreenManager() const
-{
-    if (!m_fullscreenManager)
-        return const_cast<Document&>(*this).ensureFullscreenManager();
-    return *m_fullscreenManager;
-}
-
-inline CheckedRef<FullscreenManager> Document::checkedFullscreenManager()
-{
-    return fullscreenManager();
-}
-
-inline CheckedRef<const FullscreenManager> Document::checkedFullscreenManager() const
-{
-    return fullscreenManager();
-}
-#endif
 
 } // namespace WebCore

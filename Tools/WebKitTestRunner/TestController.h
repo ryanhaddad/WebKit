@@ -196,6 +196,19 @@ public:
     void setPluginSupportedMode(const String&);
 
     void dumpPolicyDelegateCallbacks() { m_dumpPolicyDelegateCallbacks = true; }
+    void dumpFullScreenCallbacks() { m_dumpFullScreenCallbacks = true; }
+    void waitBeforeFinishingFullscreenExit() { m_waitBeforeFinishingFullscreenExit = true; }
+    void finishFullscreenExit(WKPageRef);
+    void requestExitFullscreenFromUIProcess(WKPageRef);
+
+    static bool willEnterFullScreen(WKPageRef, const void*);
+    bool willEnterFullScreen(WKPageRef);
+    static void beganEnterFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame, const void*);
+    void beganEnterFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame);
+    static void exitFullScreen(WKPageRef, const void*);
+    void exitFullScreen(WKPageRef);
+    static void beganExitFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame, const void*);
+    void beganExitFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame);
 
     void setShouldLogHistoryClientCallbacks(bool shouldLog) { m_shouldLogHistoryClientCallbacks = shouldLog; }
     void setShouldLogCanAuthenticateAgainstProtectionSpace(bool shouldLog) { m_shouldLogCanAuthenticateAgainstProtectionSpace = shouldLog; }
@@ -206,6 +219,7 @@ public:
 
     bool isCurrentInvocation(TestInvocation* invocation) const { return invocation == m_currentInvocation.get(); }
     TestInvocation* currentInvocation() { return m_currentInvocation.get(); }
+    RefPtr<TestInvocation> protectedCurrentInvocation();
 
     void setShouldDecideNavigationPolicyAfterDelay(bool value) { m_shouldDecideNavigationPolicyAfterDelay = value; }
     void setShouldDecideResponsePolicyAfterDelay(bool value) { m_shouldDecideResponsePolicyAfterDelay = value; }
@@ -268,7 +282,8 @@ public:
     void setStatisticsCacheMaxAgeCap(double seconds);
     bool hasStatisticsIsolatedSession(WKStringRef hostName);
     void setStatisticsShouldDowngradeReferrer(bool value, CompletionHandler<void(WKTypeRef)>&&);
-    void setStatisticsShouldBlockThirdPartyCookies(bool value, bool onlyOnSitesWithoutUserInteraction, CompletionHandler<void(WKTypeRef)>&&);
+    enum class ThirdPartyCookieBlockingPolicy { All, AllOnlyOnSitesWithoutUserInteraction, AllExceptPartitioned };
+    void setStatisticsShouldBlockThirdPartyCookies(bool value, ThirdPartyCookieBlockingPolicy, CompletionHandler<void(WKTypeRef)>&&);
     void setStatisticsFirstPartyWebsiteDataRemovalMode(bool value, CompletionHandler<void(WKTypeRef)>&&);
     void setStatisticsToSameSiteStrictCookies(WKStringRef hostName, CompletionHandler<void(WKTypeRef)>&&);
     void setStatisticsFirstPartyHostCNAMEDomain(WKStringRef firstPartyURLString, WKStringRef cnameURLString, CompletionHandler<void(WKTypeRef)>&&);
@@ -290,6 +305,7 @@ public:
     bool didLoadNonAppInitiatedRequest();
 
     void setPageScaleFactor(float scaleFactor, int x, int y, CompletionHandler<void(WKTypeRef)>&&);
+    void updatePresentation(CompletionHandler<void(WKTypeRef)>&&);
 
     void reloadFromOrigin();
 
@@ -340,7 +356,7 @@ public:
     void removeMockMediaDevice(WKStringRef persistentID);
     void setMockMediaDeviceIsEphemeral(WKStringRef, bool);
     void resetMockMediaDevices();
-    void setMockCameraOrientation(uint64_t);
+    void setMockCameraOrientation(uint64_t, WKStringRef);
     bool isMockRealtimeMediaSourceCenterEnabled() const;
     void setMockCaptureDevicesInterrupted(bool isCameraInterrupted, bool isMicrophoneInterrupted);
     void triggerMockCaptureConfigurationChange(bool forMicrophone, bool forDisplay);
@@ -355,6 +371,8 @@ public:
     void cleanUpKeychain(const String& attrLabel, const String& applicationLabelBase64);
     bool keyExistsInKeychain(const String& attrLabel, const String& applicationLabelBase64);
 
+    void setResourceMonitorList(WKStringRef rulesText, CompletionHandler<void(WKTypeRef)>&&);
+
 #if PLATFORM(COCOA)
     NSString *overriddenCalendarIdentifier() const;
     NSString *overriddenCalendarLocaleIdentifier() const;
@@ -366,6 +384,7 @@ public:
     UIKeyboardInputMode *overriddenKeyboardInputMode() const { return m_overriddenKeyboardInputMode.get(); }
     void setIsInHardwareKeyboardMode(bool value) { m_isInHardwareKeyboardMode = value; }
     bool isInHardwareKeyboardMode() const { return m_isInHardwareKeyboardMode; }
+    unsigned keyboardUpdateForChangedSelectionCount() const;
 #endif
 
     void setAllowedMenuActions(const Vector<String>&);
@@ -450,12 +469,12 @@ private:
     void runTestingServerLoop();
     bool runTest(const char* pathOrURL);
 
-    WKURLRef createTestURL(const char* pathOrURL);
+    WKURLRef createTestURL(std::span<const char> pathOrURL);
 
     // Returns false if timed out.
     bool waitForCompletion(const WTF::Function<void ()>&, WTF::Seconds timeout);
 
-    bool handleControlCommand(const char* command);
+    bool handleControlCommand(std::span<const char> command);
 
     void platformInitialize(const Options&);
     void platformInitializeDataStore(WKPageConfigurationRef, const TestOptions&);
@@ -631,7 +650,7 @@ private:
     void setTracksRepaints(bool);
 
     WKRetainPtr<WKURLRef> m_mainResourceURL;
-    std::unique_ptr<TestInvocation> m_currentInvocation;
+    RefPtr<TestInvocation> m_currentInvocation;
 #if PLATFORM(COCOA)
     std::unique_ptr<ClassMethodSwizzler> m_calendarSwizzler;
     std::pair<RetainPtr<NSString>, RetainPtr<NSString>> m_overriddenCalendarAndLocaleIdentifiers;
@@ -790,6 +809,8 @@ private:
     size_t m_downloadIndex { 0 };
     bool m_shouldDownloadContentDispositionAttachments { true };
     bool m_dumpPolicyDelegateCallbacks { false };
+    bool m_dumpFullScreenCallbacks { false };
+    bool m_waitBeforeFinishingFullscreenExit { false };
 
 #if PLATFORM(WPE)
     bool m_useWPEPlatformAPI { false };

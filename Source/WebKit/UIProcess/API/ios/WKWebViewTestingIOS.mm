@@ -170,18 +170,12 @@ static void dumpSeparatedLayerProperties(TextStream&, CALayer *) { }
 
 - (void)_selectDataListOption:(int)optionIndex
 {
-#if ENABLE(DATALIST_ELEMENT)
     [_contentView _selectDataListOption:optionIndex];
-#endif
 }
 
 - (BOOL)_isShowingDataListSuggestions
 {
-#if ENABLE(DATALIST_ELEMENT)
     return [_contentView isShowingDataListSuggestions];
-#else
-    return NO;
-#endif
 }
 
 - (NSString *)textContentTypeForTesting
@@ -202,19 +196,20 @@ static void dumpSeparatedLayerProperties(TextStream&, CALayer *) { }
 static String allowListedClassToString(UIView *view)
 {
     static constexpr ComparableASCIILiteral allowedClassesArray[] = {
-        "UIView",
-        "WKBackdropView",
-        "WKCompositingView",
-        "WKContentView",
-        "WKModelView",
-        "WKScrollView",
-        "WKSeparatedModelView",
-        "WKShapeView",
-        "WKSimpleBackdropView",
-        "WKTransformView",
-        "WKUIRemoteView",
-        "WKWebView",
-        "_UILayerHostView",
+        "UIView"_s,
+        "WKBackdropView"_s,
+        "WKCompositingView"_s,
+        "WKContentView"_s,
+        "WKModelView"_s,
+        "WKScrollView"_s,
+        "WKSeparatedImageView"_s,
+        "WKSeparatedModelView"_s,
+        "WKShapeView"_s,
+        "WKSimpleBackdropView"_s,
+        "WKTransformView"_s,
+        "WKUIRemoteView"_s,
+        "WKWebView"_s,
+        "_UILayerHostView"_s,
     };
     static constexpr SortedArraySet allowedClasses { allowedClassesArray };
 
@@ -224,6 +219,23 @@ static String allowListedClassToString(UIView *view)
 
     return "<class not in allowed list of classes>"_s;
 }
+
+#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
+static bool shouldDumpSeparatedDetails(UIView *view)
+{
+    static constexpr ComparableASCIILiteral deniedClassesArray[] = {
+        "WKCompositingView"_s,
+        "WKSeparatedImageView"_s,
+    };
+    static constexpr SortedArraySet deniedClasses { deniedClassesArray };
+
+    String classString { NSStringFromClass(view.class) };
+    if (deniedClasses.contains(classString))
+        return false;
+
+    return true;
+}
+#endif
 
 static void dumpUIView(TextStream& ts, UIView *view)
 {
@@ -267,11 +279,15 @@ static void dumpUIView(TextStream& ts, UIView *view)
     if (view.layer.anchorPointZ != 0)
         ts.dumpProperty("layer anchorPointZ", makeString(view.layer.anchorPointZ));
 
+    if (view.layer.cornerRadius != 0.0)
+        ts.dumpProperty("layer cornerRadius", makeString(view.layer.cornerRadius));
+
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
     if (view.layer.separated) {
         TextStream::GroupScope scope(ts);
         ts << "separated";
-        dumpSeparatedLayerProperties(ts, view.layer);
+        if (shouldDumpSeparatedDetails(view))
+            dumpSeparatedLayerProperties(ts, view.layer);
     }
 #endif
 

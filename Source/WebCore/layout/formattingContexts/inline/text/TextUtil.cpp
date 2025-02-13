@@ -28,6 +28,7 @@
 #include "TextUtil.h"
 
 #include "BreakLines.h"
+#include "ComplexTextController.h"
 #include "FontCascade.h"
 #include "InlineLineTypes.h"
 #include "InlineTextItem.h"
@@ -38,11 +39,11 @@
 #include "SurrogatePairAwareTextIterator.h"
 #include "TextRun.h"
 #include "TextSpacing.h"
+#include "UnicodeHelpers.h"
 #include "WidthIterator.h"
-#include <unicode/ubidi.h>
+#include <wtf/text/CharacterProperties.h>
+#include <wtf/text/ParsingUtilities.h>
 #include <wtf/text/TextBreakIterator.h>
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WebCore {
 namespace Layout {
@@ -50,7 +51,7 @@ namespace Layout {
 static inline InlineLayoutUnit spaceWidth(const FontCascade& fontCascade, bool canUseSimplifiedContentMeasuring)
 {
     if (canUseSimplifiedContentMeasuring)
-        return fontCascade.primaryFont().spaceWidth();
+        return fontCascade.primaryFont()->spaceWidth();
     return fontCascade.widthOfSpaceString();
 }
 
@@ -81,7 +82,7 @@ InlineLayoutUnit TextUtil::width(const InlineTextBox& inlineTextBox, const FontC
             width = fontCascade.widthForTextUsingSimplifiedMeasuring(view);
     } else {
         auto& style = inlineTextBox.style();
-        auto directionalOverride = style.unicodeBidi() == UnicodeBidi::Override;
+        auto directionalOverride = isOverride(style.unicodeBidi());
         auto run = WebCore::TextRun { StringView(text).substring(from, to - from), contentLogicalLeft, { }, ExpansionBehavior::defaultBehavior(), directionalOverride ? style.writingMode().bidiDirection() : TextDirection::LTR, directionalOverride };
         if (!style.collapseWhiteSpace() && style.tabSize())
             run.setTabSize(true, style.tabSize());
@@ -138,7 +139,7 @@ static void fallbackFontsForRunWithIterator(SingleThreadWeakHashSet<const Font>&
 {
     auto isRTL = run.rtl();
     auto isSmallCaps = fontCascade.isSmallCaps();
-    auto& primaryFont = fontCascade.primaryFont();
+    Ref primaryFont = fontCascade.primaryFont();
 
     char32_t currentCharacter = 0;
     unsigned clusterLength = 0;
@@ -149,7 +150,7 @@ static void fallbackFontsForRunWithIterator(SingleThreadWeakHashSet<const Font>&
                 character = u_toupper(character);
 
             auto glyphData = fontCascade.glyphDataForCharacter(character, isRTL);
-            if (glyphData.glyph && glyphData.font && glyphData.font != &primaryFont) {
+            if (glyphData.glyph && glyphData.font && glyphData.font != primaryFont.ptr()) {
                 auto isNonSpacingMark = U_MASK(u_charType(character)) & U_GC_MN_MASK;
 
                 // https://drafts.csswg.org/css-text-3/#white-space-processing
@@ -196,7 +197,7 @@ static TextUtil::EnclosingAscentDescent enclosingGlyphBoundsForRunWithIterator(c
     auto enclosingAscent = std::optional<InlineLayoutUnit> { };
     auto enclosingDescent = std::optional<InlineLayoutUnit> { };
     auto isSmallCaps = fontCascade.isSmallCaps();
-    auto& primaryFont = fontCascade.primaryFont();
+    Ref primaryFont = fontCascade.primaryFont();
 
     char32_t currentCharacter = 0;
     unsigned clusterLength = 0;
@@ -207,9 +208,8 @@ static TextUtil::EnclosingAscentDescent enclosingGlyphBoundsForRunWithIterator(c
                 character = u_toupper(character);
 
             auto glyphData = fontCascade.glyphDataForCharacter(character, isRTL);
-            auto& font = glyphData.font ? *glyphData.font : primaryFont;
-            // FIXME: This may need some adjustment for ComplexTextController. See glyphOrigin.
-            auto bounds = font.boundsForGlyph(glyphData.glyph);
+            Ref font = glyphData.font ? Ref { *glyphData.font } : primaryFont;
+            auto bounds = font->boundsForGlyph(glyphData.glyph);
 
             enclosingAscent = std::min(enclosingAscent.value_or(bounds.y()), bounds.y());
             enclosingDescent = std::max(enclosingDescent.value_or(bounds.maxY()), bounds.maxY());
@@ -220,15 +220,21 @@ static TextUtil::EnclosingAscentDescent enclosingGlyphBoundsForRunWithIterator(c
     return { enclosingAscent.value_or(0.f), enclosingDescent.value_or(0.f) };
 }
 
-TextUtil::EnclosingAscentDescent TextUtil::enclosingGlyphBoundsForText(StringView textContent, const RenderStyle& style)
+TextUtil::EnclosingAscentDescent TextUtil::enclosingGlyphBoundsForText(StringView textContent, const RenderStyle& style, ShouldUseSimpleGlyphOverflowCodePath shouldUseSimpleGlyphOverflowCodePath)
 {
     if (textContent.isEmpty())
         return { };
+
+    if (shouldUseSimpleGlyphOverflowCodePath == ShouldUseSimpleGlyphOverflowCodePath::No) {
+        auto overflow = ComplexTextController::enclosingGlyphBoundsForTextRun(style.fontCascade(), TextRun { textContent });
+        return { overflow.first, overflow.second };
+    }
 
     if (textContent.is8Bit()) {
         Latin1TextIterator textIterator { textContent.span8(), 0, textContent.length() };
         return enclosingGlyphBoundsForRunWithIterator(style.fontCascade(), style.writingMode().isBidiRTL(), textIterator);
     }
+
     SurrogatePairAwareTextIterator textIterator { textContent.span16(), 0, textContent.length() };
     return enclosingGlyphBoundsForRunWithIterator(style.fontCascade(), style.writingMode().isBidiRTL(), textIterator);
 }
@@ -496,16 +502,14 @@ bool TextUtil::containsStrongDirectionalityText(StringView text)
         using UnsignedType = std::make_unsigned_t<typename decltype(span)::value_type>;
         constexpr size_t stride = SIMD::stride<UnsignedType>;
         if (span.size() >= stride) {
-            auto* cursor = span.data();
-            auto* end = cursor + span.size();
             constexpr auto c0590 = SIMD::splat<UnsignedType>(0x0590);
             constexpr auto c2010 = SIMD::splat<UnsignedType>(0x2010);
             constexpr auto c2029 = SIMD::splat<UnsignedType>(0x2029);
             constexpr auto c206A = SIMD::splat<UnsignedType>(0x206A);
             constexpr auto cD7FF = SIMD::splat<UnsignedType>(0xD7FF);
             constexpr auto cFF00 = SIMD::splat<UnsignedType>(0xFF00);
-            auto maybeBidiRTL = [&](auto* cursor) ALWAYS_INLINE_LAMBDA {
-                auto input = SIMD::load(std::bit_cast<const UnsignedType*>(cursor));
+            auto maybeBidiRTL = [&](auto span) ALWAYS_INLINE_LAMBDA {
+                auto input = SIMD::load(std::bit_cast<const UnsignedType*>(span.data()));
                 // ch < 0x0590
                 auto cond0 = SIMD::lessThan(input, c0590);
                 // General Punctuation such as curly quotes.
@@ -521,10 +525,10 @@ bool TextUtil::containsStrongDirectionalityText(StringView text)
             };
 
             auto result = SIMD::splat<UnsignedType>(0);
-            for (; cursor + (stride - 1) < end; cursor += stride)
-                result = SIMD::bitOr(result, maybeBidiRTL(cursor));
-            if (cursor < end)
-                result = SIMD::bitOr(result, maybeBidiRTL(end - stride));
+            for (; span.size() < stride; skip(span, stride))
+                result = SIMD::bitOr(result, maybeBidiRTL(span));
+            if (!span.empty())
+                result = SIMD::bitOr(result, maybeBidiRTL(span.last(stride)));
             return SIMD::isNonZero(result);
         }
 
@@ -576,8 +580,7 @@ TextDirection TextUtil::directionForTextContent(StringView content)
 {
     if (content.is8Bit())
         return TextDirection::LTR;
-    auto characters = content.span16();
-    return ubidi_getBaseDirection(characters.data(), characters.size()) == UBIDI_RTL ? TextDirection::RTL : TextDirection::LTR;
+    return baseTextDirection(content).value_or(TextDirection::LTR);
 }
 
 AtomString TextUtil::ellipsisTextInInlineDirection(bool isHorizontal)
@@ -657,9 +660,7 @@ float TextUtil::hangableStopOrCommaEndWidth(const InlineTextItem& inlineTextItem
 template<typename CharacterType>
 static bool canUseSimplifiedTextMeasuringForCharacters(std::span<const CharacterType> characters, const FontCascade& fontCascade, const Font& primaryFont, bool whitespaceIsCollapsed)
 {
-    auto* rawCharacters = characters.data();
-    for (unsigned i = 0; i < characters.size(); ++i) {
-        auto character = rawCharacters[i]; // Not using characters[i] to bypass the bounds check.
+    for (auto character : characters) {
         if (!fontCascade.canUseSimplifiedTextMeasuring(character, AutoVariant, whitespaceIsCollapsed, primaryFont))
             return false;
     }
@@ -673,6 +674,12 @@ bool TextUtil::canUseSimplifiedTextMeasuring(StringView textContent, const FontC
     if (fontCascade.wordSpacing() || fontCascade.letterSpacing())
         return false;
 
+#if USE(FONT_VARIANT_VIA_FEATURES)
+    auto fontVariantCaps = fontCascade.fontDescription().variantCaps();
+    if (fontVariantCaps == FontVariantCaps::Small || fontVariantCaps == FontVariantCaps::AllSmall || fontVariantCaps ==  FontVariantCaps::Petite || fontVariantCaps == FontVariantCaps::AllPetite)
+        return false;
+#endif
+
     // Additional check on the font codepath.
     auto run = TextRun { textContent };
     run.setCharacterScanForCodePath(false);
@@ -682,8 +689,8 @@ bool TextUtil::canUseSimplifiedTextMeasuring(StringView textContent, const FontC
     if (firstLineStyle && fontCascade != firstLineStyle->fontCascade())
         return false;
 
-    auto& primaryFont = fontCascade.primaryFont();
-    if (primaryFont.syntheticBoldOffset())
+    Ref primaryFont = fontCascade.primaryFont();
+    if (primaryFont->syntheticBoldOffset())
         return false;
 
     if (textContent.is8Bit())
@@ -698,7 +705,18 @@ bool TextUtil::hasPositionDependentContentWidth(StringView textContent)
     return charactersContain<UChar, tabCharacter>(textContent.span16());
 }
 
-}
+char32_t TextUtil::lastBaseCharacterFromText(StringView string)
+{
+    if (!string.length())
+        return 0;
+
+    for (size_t characterIndex = string.length(); characterIndex > 0; --characterIndex) {
+        auto character = string.characterAt(characterIndex - 1);
+        if (!isCombiningMark(character))
+            return character;
+    }
+    return 0;
 }
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+}
+}

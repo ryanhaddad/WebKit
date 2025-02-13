@@ -61,6 +61,7 @@
 #include "HTMLFormControlElement.h"
 #include "HTMLFormElement.h"
 #include "HTMLFrameElementBase.h"
+#include "HTMLIFrameElement.h"
 #include "HTMLNames.h"
 #include "HTMLTableCellElement.h"
 #include "HTMLTableRowElement.h"
@@ -74,6 +75,7 @@
 #include "LocalDOMWindow.h"
 #include "LocalFrameLoaderClient.h"
 #include "LocalFrameView.h"
+#include "LocalizedStrings.h"
 #include "Logging.h"
 #include "Navigator.h"
 #include "NodeList.h"
@@ -89,6 +91,7 @@
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "RenderWidget.h"
+#include "ResourceMonitor.h"
 #include "SVGDocument.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGElementTypeHelpers.h"
@@ -114,6 +117,7 @@
 #include <wtf/HexNumber.h>
 #include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
+#include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
 #include <wtf/text/TextStream.h>
 
@@ -121,6 +125,11 @@
 #include "DataDetectionResultsStorage.h"
 #endif
 
+#if ENABLE(CONTENT_EXTENSIONS) && USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/LocalFrameAdditions.h>)
+#include <WebKitAdditions/LocalFrameAdditions.h>
+#endif
+
+#define FRAME_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - Frame::" fmt, this, ##__VA_ARGS__)
 #define FRAME_RELEASE_LOG_ERROR(channel, fmt, ...) RELEASE_LOG_ERROR(channel, "%p - Frame::" fmt, this, ##__VA_ARGS__)
 
 namespace WebCore {
@@ -171,7 +180,7 @@ LocalFrame::LocalFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifie
     ProcessWarming::initializeNames();
     StaticCSSValuePool::init();
 
-    if (RefPtr localMainFrame = dynamicDowncast<LocalFrame>(mainFrame()); localMainFrame && parent)
+    if (RefPtr localMainFrame = this->localMainFrame(); localMainFrame && parent)
         localMainFrame->selfOnlyRef();
 
 #ifndef NDEBUG
@@ -233,11 +242,21 @@ LocalFrame::~LocalFrame()
     while (auto* destructionObserver = m_destructionObservers.takeAny())
         destructionObserver->frameDestroyed();
 
-    RefPtr localMainFrame = dynamicDowncast<LocalFrame>(mainFrame());
+    RefPtr localMainFrame = this->localMainFrame();
     if (!isMainFrame() && localMainFrame)
         localMainFrame->selfOnlyDeref();
 
     detachFromPage();
+}
+
+RefPtr<const LocalFrame> LocalFrame::localMainFrame() const
+{
+    return dynamicDowncast<const LocalFrame>(mainFrame());
+}
+
+RefPtr<LocalFrame> LocalFrame::localMainFrame()
+{
+    return dynamicDowncast<LocalFrame>(mainFrame());
 }
 
 void LocalFrame::addDestructionObserver(FrameDestructionObserver& observer)
@@ -331,8 +350,11 @@ void LocalFrame::setDocument(RefPtr<Document>&& newDocument)
     }
 #endif
 
-    if (page() && m_doc && isMainFrame() && !loader().stateMachine().isDisplayingInitialEmptyDocument())
-        protectedPage()->mainFrameDidChangeToNonInitialEmptyDocument();
+    if (RefPtr page = this->page(); page && isMainFrame()) {
+        if (m_doc && !loader().stateMachine().isDisplayingInitialEmptyDocument())
+            page->mainFrameDidChangeToNonInitialEmptyDocument();
+        page->clearAXObjectCache();
+    }
 
     InspectorInstrumentation::frameDocumentUpdated(*this);
 
@@ -740,12 +762,15 @@ void LocalFrame::injectUserScriptImmediately(DOMWrapperWorld& world, const UserS
     RefPtr document = this->document();
     if (!document)
         return;
+    RefPtr page = document->protectedPage();
+    if (!page)
+        return;
     if (script.injectedFrames() == UserContentInjectedFrames::InjectInTopFrameOnly && !isMainFrame())
         return;
     if (!UserContentURLPattern::matchesPatterns(document->url(), script.allowlist(), script.blocklist()))
         return;
 
-    document->setAsRunningUserScripts();
+    page->setHasInjectedUserScript();
     loader->client().willInjectUserScript(world);
     checkedScript()->evaluateInWorldIgnoringException(ScriptSourceCode(script.source(), JSC::SourceTaintedOrigin::Untainted, URL(script.url())), world);
 }
@@ -1239,12 +1264,15 @@ CheckedRef<const EventHandler> LocalFrame::checkedEventHandler() const
     return m_eventHandler.get();
 }
 
-void LocalFrame::documentURLDidChange(const URL& url)
+void LocalFrame::documentURLOrOriginDidChange()
 {
-    if (RefPtr page = this->page(); page && isMainFrame()) {
-        page->setMainFrameURL(url);
-        page->processSyncClient().broadcastMainFrameURLChangeToOtherProcesses(url);
-    }
+    if (!isMainFrame())
+        return;
+
+    RefPtr page = this->protectedPage();
+    RefPtr document = this->protectedDocument();
+    if (page && document)
+        page->setMainFrameURLAndOrigin(document->url(), document->protectedSecurityOrigin());
 }
 
 #if ENABLE(DATA_DETECTION)
@@ -1380,6 +1408,98 @@ void LocalFrame::setScrollingMode(ScrollbarMode scrollingMode)
     if (RefPtr view = this->view())
         view->setCanHaveScrollbars(m_scrollingMode != ScrollbarMode::AlwaysOff);
 }
+
+#if ENABLE(CONTENT_EXTENSIONS)
+
+static String generateResourceMonitorErrorHTML(OptionSet<ColorScheme> colorScheme)
+{
+#if PLATFORM(COCOA) && HAVE(CUSTOM_IFRAME_UNLOADING_HTML)
+#if HAVE(CUSTOM_IFRAME_UNLOADING_HTML_WITH_COLOR_SCHEME)
+    return generateResourceMonitorErrorHTMLForCocoa(colorScheme);
+#else
+    UNUSED_PARAM(colorScheme);
+    return generateResourceMonitorErrorHTMLForCocoa();
+#endif
+#else
+    constexpr auto lightAndDarkColorScheme = ":root { color-scheme: light dark } "_s;
+    constexpr auto darkOnlyColorScheme = ":root { color-scheme: only dark } "_s;
+    constexpr auto lightStyle = "p { color: black } "_s;
+    constexpr auto darkStyle = "p { color: white } "_s;
+    constexpr auto empty = ""_s;
+
+    bool needDarkStyle = colorScheme.contains(ColorScheme::Dark);
+    bool needLightStyle = !needDarkStyle || colorScheme.contains(ColorScheme::Light);
+    bool conditionalStyle = needDarkStyle && needLightStyle;
+
+    const auto& colorSchemeStyle = conditionalStyle ? lightAndDarkColorScheme : needDarkStyle ? darkOnlyColorScheme : empty;
+    const auto& darkStyleOpen = conditionalStyle ? "@media (prefers-color-scheme: dark) { "_s : empty;
+    const auto& darkStyleClose = conditionalStyle ? "} "_s : empty;
+
+    return makeString(
+        "<style> body { background-color: gray }"_s,
+        colorSchemeStyle,
+        lightStyle,
+        darkStyleOpen,
+        (needDarkStyle ? darkStyle : empty),
+        darkStyleClose,
+        "</style><p>"_s,
+        WEB_UI_STRING("This frame is hidden for using too many system resources.", "Description HTML for frame unloaded by ResourceMonitor"),
+        "</p>"_s
+    );
+#endif
+}
+
+void LocalFrame::showResourceMonitoringError()
+{
+    RefPtr iframeElement = dynamicDowncast<HTMLIFrameElement>(ownerElement());
+    RefPtr document = this->document();
+    if (!iframeElement || !document)
+        return;
+
+    URL url;
+    URL mainFrameURL;
+    if (document)
+        url = document->url();
+    if (RefPtr page = protectedPage())
+        mainFrameURL = page->mainFrameURL();
+
+    FRAME_RELEASE_LOG(ResourceLoading, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": unloading", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
+
+    document->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Error, "Frame was unloaded because its network usage exceeded the limit."_s);
+
+    for (RefPtr<Frame> frame = this; frame; frame = frame->tree().traverseNext()) {
+        if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame)) {
+            if (RefPtr window = localFrame->window())
+                window->removeAllEventListeners();
+        }
+    }
+
+    OptionSet<ColorScheme> colorScheme { ColorScheme::Light };
+
+#if ENABLE(DARK_MODE_CSS)
+    if (CheckedPtr style = iframeElement->existingComputedStyle())
+        colorScheme = document->resolvedColorScheme(style.get());
+#endif
+
+    iframeElement->setSrcdoc(generateResourceMonitorErrorHTML(colorScheme));
+}
+
+void LocalFrame::reportResourceMonitoringWarning()
+{
+    URL url;
+    URL mainFrameURL;
+    if (RefPtr document = protectedDocument())
+        url = document->url();
+    if (RefPtr page = protectedPage())
+        mainFrameURL = page->mainFrameURL();
+
+    FRAME_RELEASE_LOG(ResourceLoading, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": not unloading due to global limits", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
+
+    if (RefPtr document = this->document())
+        document->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Warning, "Frame's network usage exceeded the limit."_s);
+}
+
+#endif
 
 } // namespace WebCore
 

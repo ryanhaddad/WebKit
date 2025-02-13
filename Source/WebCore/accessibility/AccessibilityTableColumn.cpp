@@ -64,19 +64,6 @@ LayoutRect AccessibilityTableColumn::elementRect() const
     return columnRect;
 }
 
-AXCoreObject* AccessibilityTableColumn::columnHeader()
-{
-    auto* parentTable = dynamicDowncast<AccessibilityTable>(m_parent.get());
-    if (!parentTable || !parentTable->isExposable())
-        return nullptr;
-
-    for (const auto& cell : unignoredChildren()) {
-        if (cell->roleValue() == AccessibilityRole::ColumnHeader)
-            return cell.get();
-    }
-    return nullptr;
-}
-
 void AccessibilityTableColumn::setColumnIndex(unsigned columnIndex)
 {
     if (m_columnIndex == columnIndex)
@@ -114,10 +101,10 @@ void AccessibilityTableColumn::addChildren()
             continue;
 
         // make sure the last one isn't the same as this one (rowspan cells)
-        if (m_children.size() > 0 && m_children.last() == cell.get())
+        if (m_children.size() > 0 && m_children.last().ptr() == cell.get())
             continue;
 
-        addChild(cell.get());
+        addChild(*cell);
     }
 }
     

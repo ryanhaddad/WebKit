@@ -21,12 +21,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-#if ENABLE_SWIFTUI
+#if ENABLE_SWIFTUI && compiler(>=6.0)
 
 import Foundation
-import SwiftUI
 
-extension WebPage_v0 {
+extension WebPage {
+    /// An opaque identifier which can be used to uniquely identify a load request for a web page.
+    @available(WK_IOS_TBA, WK_MAC_TBA, WK_XROS_TBA, *)
+    @available(watchOS, unavailable)
+    @available(tvOS, unavailable)
     public struct NavigationID: Sendable, Hashable, Equatable {
         let rawValue: ObjectIdentifier
 
@@ -35,69 +38,45 @@ extension WebPage_v0 {
         }
     }
 
-    @_spi(Internal)
+    /// A particular state that occurs during the progression of a navigation.
+    @available(WK_IOS_TBA, WK_MAC_TBA, WK_XROS_TBA, *)
+    @available(watchOS, unavailable)
+    @available(tvOS, unavailable)
     public struct NavigationEvent: Sendable {
+        /// A set of values representing the possible types a NavigationEvent can represent.
         public enum Kind: Sendable {
+            /// This event occurs when the web page receives provisional approval to process a navigation request,
+            /// but before it receives a response to that request.
             case startedProvisionalNavigation
 
+            /// This event occurs when the web page received a server redirect for a request.
             case receivedServerRedirect
 
+            /// This event occurs when the web page has started to receive content for the main frame.
+            /// This happens immediately before the web page starts to update the main frame.
             case committed
 
+            /// This event occurs once the navigation is complete.
             case finished
 
+            /// This event indicates an error occurs during the early navigation process.
             case failedProvisionalNavigation(underlyingError: any Error)
 
+            /// This event indicates an error occurred during navigation.
             case failed(underlyingError: any Error)
         }
-
-        public let kind: Kind
-
-        public let navigationID: NavigationID
 
         @_spi(Testing)
         public init(kind: Kind, navigationID: NavigationID) {
             self.kind = kind
             self.navigationID = navigationID
         }
-    }
 
-    @_spi(Internal)
-    public struct Navigations: AsyncSequence, Sendable {
-        public typealias AsyncIterator = Iterator
-        
-        public typealias Element = NavigationEvent
+        /// The type of this navigation event.
+        public let kind: Kind
 
-        public typealias Failure = Never
-
-        private let source: AsyncStream<Element>
-
-        init(source: AsyncStream<Element>) {
-            self.source = source
-        }
-        
-        public func makeAsyncIterator() -> AsyncIterator {
-            Iterator(source: source.makeAsyncIterator())
-        }
-    }
-}
-
-extension WebPage_v0.Navigations {
-    @_spi(Internal)
-    public struct Iterator: AsyncIteratorProtocol {
-        public typealias Element = WebPage_v0.NavigationEvent
-
-        public typealias Failure = Never
-
-        private var source: AsyncStream<Element>.AsyncIterator
-
-        init(source: AsyncStream<Element>.AsyncIterator) {
-            self.source = source
-        }
-        
-        public mutating func next() async -> Element? {
-            await source.next()
-        }
+        /// The ID of the navigation that triggered this event. Multiple sequential events will have the same navigation identifier.
+        public let navigationID: NavigationID
     }
 }
 

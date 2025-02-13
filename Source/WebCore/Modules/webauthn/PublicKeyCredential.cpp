@@ -28,6 +28,8 @@
 
 #if ENABLE(WEB_AUTHN)
 
+#include "AuthenticatorAssertionResponse.h"
+#include "AuthenticatorAttestationResponse.h"
 #include "AuthenticatorCoordinator.h"
 #include "AuthenticatorResponse.h"
 #include "BufferSource.h"
@@ -42,6 +44,7 @@
 #include "PublicKeyCredentialDescriptorJSON.h"
 #include "PublicKeyCredentialRequestOptionsJSON.h"
 #include "Settings.h"
+#include "WebAuthenticationUtils.h"
 #include <wtf/text/Base64.h>
 
 namespace WebCore {
@@ -89,8 +92,9 @@ PublicKeyCredentialJSON PublicKeyCredential::toJSON()
     if (is<AuthenticatorAttestationResponse>(m_response)) {
         RegistrationResponseJSON response;
         if (auto id = rawId()) {
-            response.id = base64EncodeToString(id->span());
-            response.rawId = base64EncodeToString(id->span());
+            auto encodedString = base64URLEncodeToString(id->span());
+            response.id = encodedString;
+            response.rawId = encodedString;
         }
 
         response.response = downcast<AuthenticatorAttestationResponse>(m_response)->toJSON();
@@ -103,8 +107,9 @@ PublicKeyCredentialJSON PublicKeyCredential::toJSON()
     if (is<AuthenticatorAssertionResponse>(m_response)) {
         AuthenticationResponseJSON response;
         if (auto id = rawId()) {
-            response.id = base64EncodeToString(id->span());
-            response.rawId = base64EncodeToString(id->span());
+            auto encodedString = base64URLEncodeToString(id->span());
+            response.id = encodedString;
+            response.rawId = encodedString;
         }
         response.response = downcast<AuthenticatorAssertionResponse>(m_response)->toJSON();
         response.authenticatorAttachment = convertEnumerationToString(authenticatorAttachment());

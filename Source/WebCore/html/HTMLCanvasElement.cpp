@@ -187,6 +187,12 @@ RenderPtr<RenderElement> HTMLCanvasElement::createElementRenderer(RenderStyle&& 
     return HTMLElement::createElementRenderer(WTFMove(style), insertionPosition);
 }
 
+bool HTMLCanvasElement::isReplaced(const RenderStyle&) const
+{
+    RefPtr frame { document().frame() };
+    return frame && frame->script().canExecuteScripts(ReasonForCallingCanExecuteScripts::NotAboutToExecuteScript);
+}
+
 bool HTMLCanvasElement::canContainRangeEndPoint() const
 {
     return false;
@@ -640,8 +646,11 @@ void HTMLCanvasElement::paint(GraphicsContext& context, const LayoutRect& r)
         if (!usesContentsAsLayerContents() || document().printing() || m_isSnapshotting) {
             if (m_context->compositingResultsNeedUpdating())
                 m_context->prepareForDisplay();
-            const bool skipTransparentBlackDraw = context.compositeMode() == CompositeMode { CompositeOperator::SourceOver, BlendMode::Normal };
-            if (!skipTransparentBlackDraw || !m_context->isSurfaceBufferTransparentBlack(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer)) {
+            if (m_context->isSurfaceBufferTransparentBlack(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer)) {
+                const bool skipTransparentBlackDraw = context.compositeMode() == CompositeMode { CompositeOperator::SourceOver, BlendMode::Normal };
+                if (!skipTransparentBlackDraw)
+                    context.fillRect(snappedIntRect(r), Color::transparentBlack);
+            } else {
                 RefPtr buffer = m_context->surfaceBufferToImageBuffer(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer);
                 if (buffer)
                     context.drawImageBuffer(*buffer, snappedIntRect(r), { context.compositeOperation() });
@@ -688,13 +697,14 @@ ExceptionOr<UncachedString> HTMLCanvasElement::toDataURL(const String& mimeType,
 
     if (size().isEmpty())
         return UncachedString { "data:,"_s };
-    if (document().settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document());
+    Ref document = this->document();
+    if (document->settings().webAPIStatisticsEnabled())
+        ResourceLoadObserver::shared().logCanvasRead(document);
 
     auto encodingMIMEType = toEncodingMimeType(mimeType);
     auto quality = qualityFromJSValue(qualityValue);
 
-    if (document().requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Canvas)) {
+    if (document->requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Canvas)) {
         if (RefPtr buffer = createImageForNoiseInjection())
             return UncachedString { buffer->toDataURL(encodingMIMEType, quality) };
 
@@ -707,7 +717,7 @@ ExceptionOr<UncachedString> HTMLCanvasElement::toDataURL(const String& mimeType,
         return UncachedString { dataURL(imageData->pixelBuffer(), encodingMIMEType, quality) };
 #endif
 
-    if (auto url = document().quirks().advancedPrivacyProtectionSubstituteDataURLForScriptWithFeatures(lastFillText(), width(), height()); !url.isNull()) {
+    if (auto url = document->quirks().advancedPrivacyProtectionSubstituteDataURLForScriptWithFeatures(lastFillText(), width(), height()); !url.isNull()) {
         RELEASE_LOG(FingerprintingMitigation, "HTMLCanvasElement::toDataURL: Quirking returned URL for identified fingerprinting script");
         auto consoleMessage = "Detected fingerprinting script. Quirking value returned from HTMLCanvasElement.toDataURL()"_s;
         canvasBaseScriptExecutionContext()->addConsoleMessage(MessageSource::Rendering, MessageLevel::Info, consoleMessage);
@@ -729,23 +739,24 @@ ExceptionOr<void> HTMLCanvasElement::toBlob(Ref<BlobCallback>&& callback, const 
     if (!originClean())
         return Exception { ExceptionCode::SecurityError };
 
+    Ref document = this->document();
     if (size().isEmpty()) {
-        callback->scheduleCallback(document(), nullptr);
+        callback->scheduleCallback(document, nullptr);
         return { };
     }
-    if (document().settings().webAPIStatisticsEnabled())
-        ResourceLoadObserver::shared().logCanvasRead(document());
+    if (document->settings().webAPIStatisticsEnabled())
+        ResourceLoadObserver::shared().logCanvasRead(document);
 
     auto encodingMIMEType = toEncodingMimeType(mimeType);
     auto quality = qualityFromJSValue(qualityValue);
     auto scheduleCallbackWithBlobData = [&](Ref<BlobCallback>&& callback, Vector<uint8_t>&& blobData) {
         RefPtr<Blob> blob;
         if (!blobData.isEmpty())
-            blob = Blob::create(&document(), WTFMove(blobData), encodingMIMEType);
-        callback->scheduleCallback(document(), WTFMove(blob));
+            blob = Blob::create(document.ptr(), WTFMove(blobData), encodingMIMEType);
+        callback->scheduleCallback(document, WTFMove(blob));
     };
 
-    if (document().requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Canvas)) {
+    if (document->requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Canvas)) {
         RefPtr buffer = createImageForNoiseInjection();
         scheduleCallbackWithBlobData(WTFMove(callback), buffer ? buffer->toData(encodingMIMEType, quality) : Vector<uint8_t> { });
         return { };
@@ -760,7 +771,7 @@ ExceptionOr<void> HTMLCanvasElement::toBlob(Ref<BlobCallback>&& callback, const 
 
     RefPtr buffer = makeRenderingResultsAvailable();
     if (!buffer) {
-        callback->scheduleCallback(document(), nullptr);
+        callback->scheduleCallback(document, nullptr);
         return { };
     }
     scheduleCallbackWithBlobData(WTFMove(callback), buffer->toData(encodingMIMEType, quality));
@@ -831,11 +842,7 @@ RefPtr<VideoFrame> HTMLCanvasElement::toVideoFrame()
         return nullptr;
 
     // FIXME: Set color space.
-#if PLATFORM(COCOA)
     return VideoFrame::createFromPixelBuffer(pixelBuffer.releaseNonNull());
-#elif USE(GSTREAMER)
-    return VideoFrameGStreamer::createFromPixelBuffer(pixelBuffer.releaseNonNull(), VideoFrameGStreamer::CanvasContentType::Canvas2D);
-#endif
 #else
     return nullptr;
 #endif

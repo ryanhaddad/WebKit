@@ -28,11 +28,13 @@
 
 #import "AutomationClient.h"
 #import "CacheModel.h"
+#import "Connection.h"
 #import "DownloadManager.h"
 #import "GPUProcessProxy.h"
 #import "LegacyDownloadClient.h"
 #import "Logging.h"
 #import "NetworkProcessProxy.h"
+#import "ProcessTerminationReason.h"
 #import "SandboxUtilities.h"
 #import "UIGamepadProvider.h"
 #import "WKAPICast.h"
@@ -507,6 +509,11 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 + (void)_setLinkedOnOrAfterEverythingForTesting
 {
     [self _setLinkedOnOrAfterEverything];
+}
+
++ (void)_crashOnMessageCheckFailureForTesting
+{
+    IPC::Connection::setShouldCrashOnMessageCheckFailure(true);
 }
 
 + (void)_setLinkedOnOrAfterEverything

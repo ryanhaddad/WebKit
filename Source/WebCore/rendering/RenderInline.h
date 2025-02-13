@@ -71,8 +71,7 @@ public:
 
     RenderLineBoxList& legacyLineBoxes() { return m_legacyLineBoxes; }
     const RenderLineBoxList& legacyLineBoxes() const { return m_legacyLineBoxes; }
-    void dirtyLegacyLineBoxes(bool fullLayout);
-    void deleteLegacyLines();
+    void deleteLegacyLineBoxes();
     LegacyInlineFlowBox* firstLegacyInlineBox() const { return m_legacyLineBoxes.firstLegacyLineBox(); }
     LegacyInlineFlowBox* lastLegacyInlineBox() const { return m_legacyLineBoxes.lastLegacyLineBox(); }
 
@@ -143,7 +142,7 @@ private:
     LayoutUnit lineHeight(bool firstLine, LineDirectionMode, LinePositionMode = PositionOnContainingLine) const final;
     LayoutUnit baselinePosition(FontBaseline, bool firstLine, LineDirectionMode, LinePositionMode = PositionOnContainingLine) const final;
     
-    void updateHitTestResult(HitTestResult&, const LayoutPoint&) final;
+    void updateHitTestResult(HitTestResult&, const LayoutPoint&) const final;
 
     void imageChanged(WrappedImagePtr, const IntRect* = 0) final;
 

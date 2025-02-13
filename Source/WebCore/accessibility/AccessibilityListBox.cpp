@@ -86,19 +86,6 @@ void AccessibilityListBox::setSelectedChildren(const AccessibilityChildrenVector
     }
 }
 
-std::optional<AXCoreObject::AccessibilityChildrenVector> AccessibilityListBox::selectedChildren()
-{
-    if (!childrenInitialized())
-        addChildren();
-
-    AccessibilityChildrenVector result;
-    for (const auto& child : unignoredChildren()) {
-        if (child->isSelected())
-            result.append(child.get());
-    }
-    return result;
-}
-
 AXCoreObject::AccessibilityChildrenVector AccessibilityListBox::visibleChildren()
 {
     ASSERT(!m_renderer || is<RenderListBox>(m_renderer.get()));
@@ -148,7 +135,7 @@ AccessibilityObject* AccessibilityListBox::elementAccessibilityHitTest(const Int
         // The cast to HTMLElement below is safe because the only other possible listItem type
         // would be a WMLElement, but WML builds don't use accessibility features at all.
         if (rect.contains(point)) {
-            listBoxOption = downcast<AccessibilityObject>(children[i].get());
+            listBoxOption = &downcast<AccessibilityObject>(children[i].get());
             break;
         }
     }

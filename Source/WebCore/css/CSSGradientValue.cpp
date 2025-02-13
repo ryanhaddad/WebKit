@@ -45,96 +45,44 @@ template<typename CSSType> static bool styleImageIsUncacheable(const CSSType& va
     return StyleImageIsUncacheable<CSSType>()(value);
 }
 
-template<typename TupleLike> static bool styleImageIsUncacheableOnTupleLike(const TupleLike& tupleLike)
-{
-    return WTF::apply([&](const auto& ...x) { return (styleImageIsUncacheable(x) || ...); }, tupleLike);
-}
-
-template<typename CSSType> struct StyleImageIsUncacheable<std::optional<CSSType>> {
-    bool operator()(const auto& value) { return value && styleImageIsUncacheable(*value); }
+template<> struct StyleImageIsUncacheable<GradientColorInterpolationMethod> {
+    constexpr bool operator()(const auto&) { return false; }
 };
 
-template<CSSValueID C, typename CSSType> struct StyleImageIsUncacheable<FunctionNotation<C, CSSType>> {
-    bool operator()(const auto& value) { return styleImageIsUncacheable(value.parameters); }
-};
-
-template<typename CSSType, size_t inlineCapacity> struct StyleImageIsUncacheable<SpaceSeparatedVector<CSSType, inlineCapacity>> {
-    bool operator()(const auto& value) { return std::ranges::any_of(value, [](auto& element) { return styleImageIsUncacheable(element); }); }
-};
-
-template<typename CSSType, size_t inlineCapacity> struct StyleImageIsUncacheable<CommaSeparatedVector<CSSType, inlineCapacity>> {
-    bool operator()(const auto& value) { return std::ranges::any_of(value, [](auto& element) { return styleImageIsUncacheable(element); }); }
-};
-
-template<typename CSSType, size_t N> struct StyleImageIsUncacheable<SpaceSeparatedArray<CSSType, N>> {
-    bool operator()(const auto& value) { return styleImageIsUncacheableOnTupleLike(value); }
-};
-
-template<typename CSSType, size_t N> struct StyleImageIsUncacheable<CommaSeparatedArray<CSSType, N>> {
-    bool operator()(const auto& value) { return styleImageIsUncacheableOnTupleLike(value); }
-};
-
-template<typename... CSSTypes> struct StyleImageIsUncacheable<SpaceSeparatedTuple<CSSTypes...>> {
-    bool operator()(const auto& value) { return styleImageIsUncacheableOnTupleLike(value); }
-};
-
-template<typename... CSSTypes> struct StyleImageIsUncacheable<CommaSeparatedTuple<CSSTypes...>> {
-    bool operator()(const auto& value) { return styleImageIsUncacheableOnTupleLike(value); }
-};
-
-template<typename... CSSTypes> struct StyleImageIsUncacheable<std::variant<CSSTypes...>> {
-    bool operator()(const auto& value) { return WTF::switchOn(value, [](const auto& alternative) { return styleImageIsUncacheable(alternative); }); }
-};
-
-template<> struct StyleImageIsUncacheable<CSSUnitType> {
-    bool operator()(const auto& value) { return conversionToCanonicalUnitRequiresConversionData(value); }
-};
-
-template<RawNumeric CSSType> struct StyleImageIsUncacheable<CSSType> {
-    constexpr bool operator()(const auto& value) { return styleImageIsUncacheable(value.type); }
-};
-
-template<RawNumeric CSSType> struct StyleImageIsUncacheable<UnevaluatedCalc<CSSType>> {
-    constexpr bool operator()(const auto& value) { return value.protectedCalc()->requiresConversionData(); }
-};
-
-template<RawNumeric CSSType> struct StyleImageIsUncacheable<PrimitiveNumeric<CSSType>> {
-    constexpr bool operator()(const auto& value) { return styleImageIsUncacheable(value.value); }
+template<> struct StyleImageIsUncacheable<Color> {
+    bool operator()(const auto& value) { return containsCurrentColor(value) || containsColorSchemeDependentColor(value); }
 };
 
 template<CSSValueID C> struct StyleImageIsUncacheable<Constant<C>> {
     constexpr bool operator()(const auto&) { return false; }
 };
 
-template<> struct StyleImageIsUncacheable<GradientColorInterpolationMethod> {
-    constexpr bool operator()(const auto&) { return false; }
+template<UnitEnum CSSType> struct StyleImageIsUncacheable<CSSType> {
+    constexpr bool operator()(const auto& value) { return conversionToCanonicalUnitRequiresConversionData(value); }
 };
 
-template<> struct StyleImageIsUncacheable<TwoComponentPositionHorizontal> {
-    bool operator()(const auto& value) { return styleImageIsUncacheable(value.offset); }
+template<NumericRaw CSSType> struct StyleImageIsUncacheable<CSSType> {
+    constexpr bool operator()(const auto& value) { return styleImageIsUncacheable(value.unit); }
 };
 
-template<> struct StyleImageIsUncacheable<TwoComponentPositionVertical> {
-    bool operator()(const auto& value) { return styleImageIsUncacheable(value.offset); }
+template<Calc CSSType> struct StyleImageIsUncacheable<CSSType> {
+    constexpr bool operator()(const auto& value) { return value.protectedCalc()->requiresConversionData(); }
 };
 
-template<> struct StyleImageIsUncacheable<Position> {
-    bool operator()(const auto& value) { return styleImageIsUncacheable(value.value); }
+template<OptionalLike CSSType> struct StyleImageIsUncacheable<CSSType> {
+    bool operator()(const auto& value) { return value && styleImageIsUncacheable(*value); }
 };
 
-template<typename CSSType> struct StyleImageIsUncacheable<GradientColorStop<CSSType>> {
-    bool operator()(const auto& value)
-    {
-        if (styleImageIsUncacheable(value.position))
-            return true;
-        if (value.color && Style::BuilderState::isColorFromPrimitiveValueDerivedFromElement(*value.color))
-            return true;
-        return false;
-    }
+template<TupleLike CSSType> struct StyleImageIsUncacheable<CSSType> {
+    bool operator()(const auto& value) { return WTF::apply([&](const auto& ...x) { return (styleImageIsUncacheable(x) || ...); }, value); }
 };
 
-template<typename CSSType> requires (TreatAsTupleLike<CSSType>) struct StyleImageIsUncacheable<CSSType> {
-    bool operator()(const auto& value) { return styleImageIsUncacheableOnTupleLike(value); }
+template<RangeLike CSSType> struct StyleImageIsUncacheable<CSSType> {
+    bool operator()(const auto& value) { return std::ranges::any_of(value, [](auto& element) { return styleImageIsUncacheable(element); }); }
+};
+
+template<VariantLike CSSType> struct StyleImageIsUncacheable<CSSType> {
+    bool operator()(const auto& value) { return WTF::switchOn(value, [](const auto& alternative) { return styleImageIsUncacheable(alternative); }); }
 };
 
 } // namespace (anonymous)
@@ -156,9 +104,9 @@ RefPtr<StyleImage> CSSGradientValue::createStyleImage(const Style::BuilderState&
     return styleImage;
 }
 
-String CSSGradientValue::customCSSText() const
+String CSSGradientValue::customCSSText(const CSS::SerializationContext& context) const
 {
-    return CSS::serializationForCSS(m_gradient);
+    return CSS::serializationForCSS(context, m_gradient);
 }
 
 bool CSSGradientValue::equals(const CSSGradientValue& other) const
@@ -166,7 +114,7 @@ bool CSSGradientValue::equals(const CSSGradientValue& other) const
     return m_gradient == other.m_gradient;
 }
 
-IterationStatus CSSGradientValue::customVisitChildren(const Function<IterationStatus(CSSValue&)>& func) const
+IterationStatus CSSGradientValue::customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>& func) const
 {
     return CSS::visitCSSValueChildren(func, m_gradient);
 }

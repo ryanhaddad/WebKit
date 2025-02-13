@@ -27,20 +27,10 @@
 
 #include "Test.h"
 #include "Utilities.h"
+#include <wtf/CheckedPtr.h>
 #include <wtf/RunLoop.h>
 #include <wtf/Threading.h>
 #include <wtf/threads/BinarySemaphore.h>
-
-namespace TestWebKitAPI {
-class DerivedOneShotTimer;
-class DerivedRepeatingTimer;
-}
-
-namespace WTF {
-template<typename T> struct IsDeprecatedTimerSmartPointerException;
-template<> struct IsDeprecatedTimerSmartPointerException<TestWebKitAPI::DerivedOneShotTimer> : std::true_type { };
-template<> struct IsDeprecatedTimerSmartPointerException<TestWebKitAPI::DerivedRepeatingTimer> : std::true_type { };
-}
 
 namespace TestWebKitAPI {
 
@@ -53,7 +43,7 @@ TEST(WTF_RunLoop, Deadlock)
 
     struct DispatchFromDestructorTester {
         ~DispatchFromDestructorTester() {
-            RunLoop::main().dispatch([] {
+            RunLoop::protectedMain()->dispatch([] {
                 if (!(--count))
                     testFinished = true;
             });
@@ -62,7 +52,7 @@ TEST(WTF_RunLoop, Deadlock)
 
     for (int i = 0; i < count; ++i) {
         auto capture = std::make_shared<DispatchFromDestructorTester>();
-        RunLoop::main().dispatch([capture] { });
+        RunLoop::protectedMain()->dispatch([capture] { });
     }
 
     Util::run(&testFinished);
@@ -75,15 +65,15 @@ TEST(WTF_RunLoop, NestedInOrder)
     bool done = false;
     bool didExecuteOuter = false;
 
-    RunLoop::main().dispatch([&done, &didExecuteOuter] {
-        RunLoop::main().dispatch([&done, &didExecuteOuter] {
+    RunLoop::protectedMain()->dispatch([&done, &didExecuteOuter] {
+        RunLoop::protectedMain()->dispatch([&done, &didExecuteOuter] {
             EXPECT_TRUE(didExecuteOuter);
             done = true;
         });
 
         Util::run(&done);
     });
-    RunLoop::main().dispatch([&didExecuteOuter] {
+    RunLoop::protectedMain()->dispatch([&didExecuteOuter] {
         didExecuteOuter = true;
     });
 
@@ -96,16 +86,16 @@ TEST(WTF_RunLoop, DispatchCrossThreadWhileNested)
 
     bool done = false;
 
-    RunLoop::main().dispatch([&done] {
+    RunLoop::protectedMain()->dispatch([&done] {
         Thread::create("DispatchCrossThread"_s, [&done] {
-            RunLoop::main().dispatch([&done] {
+            RunLoop::protectedMain()->dispatch([&done] {
                 done = true;
             });
         });
 
         Util::run(&done);
     });
-    RunLoop::main().dispatch([] { });
+    RunLoop::protectedMain()->dispatch([] { });
 
     Util::run(&done);
 }
@@ -130,7 +120,9 @@ TEST(WTF_RunLoop, CallOnMainCrossThreadWhileNested)
     Util::run(&done);
 }
 
-class DerivedOneShotTimer : public RunLoop::Timer {
+class DerivedOneShotTimer : public RunLoop::Timer, public CanMakeCheckedPtr<DerivedOneShotTimer> {
+    WTF_MAKE_FAST_ALLOCATED;
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DerivedOneShotTimer);
 public:
     DerivedOneShotTimer(bool& testFinished)
         : RunLoop::Timer(RunLoop::current(), this, &DerivedOneShotTimer::fired)
@@ -162,7 +154,9 @@ TEST(WTF_RunLoop, OneShotTimer)
     Util::run(&testFinished);
 }
 
-class DerivedRepeatingTimer : public RunLoop::Timer {
+class DerivedRepeatingTimer : public RunLoop::Timer, public CanMakeCheckedPtr<DerivedRepeatingTimer> {
+    WTF_MAKE_FAST_ALLOCATED;
+    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(DerivedRepeatingTimer);
 public:
     DerivedRepeatingTimer(bool& testFinished)
         : RunLoop::Timer(RunLoop::current(), this, &DerivedRepeatingTimer::fired)
@@ -210,7 +204,7 @@ TEST(WTF_RunLoop, ManyTimes)
                 RunLoop::current().stop();
                 return;
             }
-            RunLoop::current().dispatch([this] {
+            RunLoop::protectedCurrent()->dispatch([this] {
                 run();
             });
         }
@@ -221,7 +215,7 @@ TEST(WTF_RunLoop, ManyTimes)
 
     Thread::create("RunLoopManyTimes"_s, [] {
         Counter counter;
-        RunLoop::current().dispatch([&counter] {
+        RunLoop::protectedCurrent()->dispatch([&counter] {
             counter.run();
         });
         RunLoop::run();

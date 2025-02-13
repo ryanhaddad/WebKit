@@ -35,6 +35,7 @@
 #include "EventLoop.h"
 #include "EventNames.h"
 #include "ExtendableMessageEvent.h"
+#include "InstallEvent.h"
 #include "JSDOMPromise.h"
 #include "LoaderStrategy.h"
 #include "Logging.h"
@@ -43,7 +44,6 @@
 #include "NotificationPayload.h"
 #include "PlatformStrategies.h"
 #include "PushEvent.h"
-#include "PushNotificationEvent.h"
 #include "PushSubscription.h"
 #include "PushSubscriptionChangeEvent.h"
 #include "SWContextManager.h"
@@ -200,13 +200,20 @@ void ServiceWorkerThread::queueTaskToPostMessage(MessageWithMessagePorts&& messa
     });
 }
 
+static Ref<ExtendableEvent> createInstallEvent(ServiceWorkerGlobalScope& scope)
+{
+    if (scope.settingsValues().serviceWorkerInstallEventEnabled)
+        return InstallEvent::create(eventNames().installEvent, { }, ExtendableEvent::IsTrusted::Yes);
+    return ExtendableEvent::create(eventNames().installEvent, { }, ExtendableEvent::IsTrusted::Yes);
+}
+
 void ServiceWorkerThread::queueTaskToFireInstallEvent()
 {
     Ref serviceWorkerGlobalScope = downcast<ServiceWorkerGlobalScope>(*globalScope());
     serviceWorkerGlobalScope->eventLoop().queueTask(TaskSource::DOMManipulation, [weakThis = ThreadSafeWeakPtr { *this }, serviceWorkerGlobalScope]() mutable {
         RELEASE_LOG(ServiceWorker, "ServiceWorkerThread::queueTaskToFireInstallEvent firing event for worker %" PRIu64, serviceWorkerGlobalScope->thread().identifier().toUInt64());
 
-        auto installEvent = ExtendableEvent::create(eventNames().installEvent, { }, ExtendableEvent::IsTrusted::Yes);
+        auto installEvent = createInstallEvent(serviceWorkerGlobalScope);
         serviceWorkerGlobalScope->dispatchEvent(installEvent);
 
         installEvent->whenAllExtendLifetimePromisesAreSettled([weakThis = WTFMove(weakThis)](HashSet<Ref<DOMPromise>>&& extendLifetimePromises) mutable {
@@ -252,7 +259,7 @@ void ServiceWorkerThread::queueTaskToFirePushEvent(std::optional<Vector<uint8_t>
 #if ENABLE(DECLARATIVE_WEB_PUSH)
     // Logic for pushnotification events is different enough to not share this same implementation body.
     if (payload) {
-        queueTaskToFirePushNotificationEvent(WTFMove(*payload), WTFMove(callback));
+        queueTaskToFireDeclarativePushEvent(WTFMove(*payload), WTFMove(callback));
         return;
     }
 #else
@@ -291,19 +298,19 @@ void ServiceWorkerThread::queueTaskToFirePushEvent(std::optional<Vector<uint8_t>
 }
 
 #if ENABLE(DECLARATIVE_WEB_PUSH)
-void ServiceWorkerThread::queueTaskToFirePushNotificationEvent(NotificationPayload&& proposedPayload, Function<void(bool, std::optional<NotificationPayload>&&)>&& callback)
+void ServiceWorkerThread::queueTaskToFireDeclarativePushEvent(NotificationPayload&& proposedPayload, Function<void(bool, std::optional<NotificationPayload>&&)>&& callback)
 {
     Ref serviceWorkerGlobalScope = downcast<ServiceWorkerGlobalScope>(*globalScope());
     auto scopeURL = serviceWorkerGlobalScope->registration().data().scopeURL;
     serviceWorkerGlobalScope->eventLoop().queueTask(TaskSource::DOMManipulation, [weakThis = ThreadSafeWeakPtr { *this }, serviceWorkerGlobalScope = Ref { serviceWorkerGlobalScope }, proposedPayload = WTFMove(proposedPayload), callback = WTFMove(callback), scopeURL]() mutable {
-        RELEASE_LOG(ServiceWorker, "ServiceWorkerThread::queueTaskToFirePushNotificationEvent firing pushnotification event for worker %" PRIu64, serviceWorkerGlobalScope->thread().identifier().toUInt64());
+        RELEASE_LOG(ServiceWorker, "ServiceWorkerThread::queueTaskToFireDeclarativePushEvent firing pushnotification event for worker %" PRIu64, serviceWorkerGlobalScope->thread().identifier().toUInt64());
 
         auto notification = Notification::create(serviceWorkerGlobalScope.get(), scopeURL, proposedPayload);
-        auto pushNotificationEvent = PushNotificationEvent::create(eventNames().pushnotificationEvent, { }, notification.get(), proposedPayload.appBadge, ExtendableEvent::IsTrusted::Yes);
-        serviceWorkerGlobalScope->dispatchPushNotificationEvent(pushNotificationEvent);
+        Ref declarativePushEvent = PushEvent::create(eventNames().pushEvent, { }, notification.get(), proposedPayload.appBadge, ExtendableEvent::IsTrusted::Yes);
+        serviceWorkerGlobalScope->dispatchDeclarativePushEvent(declarativePushEvent);
 
-        pushNotificationEvent->whenAllExtendLifetimePromisesAreSettled([serviceWorkerGlobalScope = Ref { serviceWorkerGlobalScope }, proposedPayload = WTFMove(proposedPayload), pushNotificationEvent = WTFMove(pushNotificationEvent), callback = WTFMove(callback)](auto&& extendLifetimePromises) mutable {
-            serviceWorkerGlobalScope->clearPushNotificationEvent();
+        declarativePushEvent->whenAllExtendLifetimePromisesAreSettled([serviceWorkerGlobalScope = Ref { serviceWorkerGlobalScope }, proposedPayload = WTFMove(proposedPayload), declarativePushEvent = WTFMove(declarativePushEvent), callback = WTFMove(callback)](auto&& extendLifetimePromises) mutable {
+            serviceWorkerGlobalScope->clearDeclarativePushEvent();
 
             bool hasRejectedAnyPromise = false;
             for (auto& promise : extendLifetimePromises) {
@@ -322,11 +329,11 @@ void ServiceWorkerThread::queueTaskToFirePushNotificationEvent(NotificationPaylo
             RELEASE_LOG_ERROR_IF(!success, ServiceWorker, "ServiceWorkerThread::queueTaskToFirePushEvent failed to process push event (rejectedPromise = %d, showedNotification = %d)", hasRejectedAnyPromise, showedNotification);
 
             auto proposedAppBadge = proposedPayload.appBadge;
-            auto data = pushNotificationEvent->updatedNotificationData();
+            auto data = declarativePushEvent->updatedNotificationData();
             std::optional<NotificationPayload> resultPayload = data ? NotificationPayload::fromNotificationData(*data) : WTFMove(proposedPayload);
             RELEASE_ASSERT(resultPayload);
 
-            if (auto updatedAppBadge = pushNotificationEvent->updatedAppBadge())
+            if (auto updatedAppBadge = declarativePushEvent->updatedAppBadge())
                 resultPayload->appBadge = *updatedAppBadge;
             else
                 resultPayload->appBadge = proposedAppBadge;

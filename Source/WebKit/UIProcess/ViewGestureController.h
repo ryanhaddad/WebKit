@@ -31,6 +31,7 @@
 #include <WebCore/Color.h>
 #include <WebCore/FloatRect.h>
 #include <WebCore/FloatSize.h>
+#include <WebCore/PageIdentifier.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/RetainPtr.h>
@@ -98,17 +99,19 @@ class WebBackForwardListItem;
 class WebPageProxy;
 class WebProcessProxy;
 
-class ViewGestureController final : public IPC::MessageReceiver, public CanMakeCheckedPtr<ViewGestureController> {
+class ViewGestureController final : public IPC::MessageReceiver, public RefCounted<ViewGestureController> {
     WTF_MAKE_TZONE_ALLOCATED(ViewGestureController);
     WTF_MAKE_NONCOPYABLE(ViewGestureController);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(ViewGestureController);
 public:
-
     static constexpr double defaultMinMagnification { 1 };
     static constexpr double defaultMaxMagnification { 3 };
 
-    ViewGestureController(WebPageProxy&);
+    static Ref<ViewGestureController> create(WebPageProxy&);
     ~ViewGestureController();
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
+
     void platformTeardown();
 
     void disconnectFromProcess();
@@ -125,10 +128,8 @@ public:
         Swipe
     };
 
-    enum class SwipeDirection {
-        Back,
-        Forward
-    };
+    enum class SwipeDirection : bool { Back, Forward };
+    enum class DeferToConflictingGestures : bool { No, Yes };
 
     typedef uint64_t GestureID;
 
@@ -174,7 +175,7 @@ public:
 
     void setAlternateBackForwardListSourcePage(WebPageProxy*);
 
-    bool canSwipeInDirection(SwipeDirection) const;
+    bool canSwipeInDirection(SwipeDirection, DeferToConflictingGestures) const;
 
     WebCore::Color backgroundColorForCurrentSnapshot() const { return m_backgroundColorForCurrentSnapshot; }
 
@@ -210,12 +211,12 @@ public:
     bool completeSimulatedSwipeInDirectionForTesting(SwipeDirection);
 
 private:
+    explicit ViewGestureController(WebPageProxy&);
+
     // IPC::MessageReceiver.
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
 
     static ViewGestureController* controllerForGesture(WebPageProxyIdentifier, GestureID);
-
-    Ref<WebPageProxy> protectedWebPageProxy() const;
 
     static GestureID takeNextGestureID();
     void willBeginGesture(ViewGestureType);
@@ -300,7 +301,7 @@ private:
 
     void willEndSwipeGesture(WebBackForwardListItem& targetItem, bool cancelled);
     void endSwipeGesture(WebBackForwardListItem* targetItem, bool cancelled);
-    bool shouldUseSnapshotForSize(ViewSnapshot&, WebCore::FloatSize swipeLayerSize, float topContentInset);
+    bool shouldUseSnapshotForSize(ViewSnapshot&, WebCore::FloatSize swipeLayerSize, WebCore::FloatBoxExtent obscuredContentInsets);
 
 #if PLATFORM(MAC)
     static double resistanceForDelta(double deltaScale, double currentScale, double minMagnification, double maxMagnification);
@@ -326,8 +327,7 @@ private:
         void setShouldIgnorePinnedState(bool ignore) { m_shouldIgnorePinnedState = ignore; }
 
     private:
-        CheckedRef<ViewGestureController> checkedViewGestureController() const;
-        Ref<WebPageProxy> protectedWebPageProxy() const;
+        Ref<ViewGestureController> protectedViewGestureController() const;
 
         bool tryToStartSwipe(PlatformScrollEvent);
         bool scrollEventCanBecomeSwipe(PlatformScrollEvent, SwipeDirection&);
@@ -359,7 +359,10 @@ private:
     GRefPtr<GtkStyleContext> createStyleContext(const char*);
 #endif
 
-    WeakRef<WebPageProxy> m_webPageProxy;
+    WeakPtr<WebPageProxy> m_webPageProxy;
+    WebPageProxyIdentifier m_webPageProxyIdentifier;
+    Markable<WebCore::PageIdentifier> m_webPageIDInMainFrameProcess;
+    WeakPtr<WebProcessProxy> m_mainFrameProcess;
     ViewGestureType m_activeGestureType { ViewGestureType::None };
 
     bool m_swipeGestureEnabled { true };
@@ -468,7 +471,7 @@ private:
         float m_endProgress { 0 };
         bool m_cancelled { false };
 
-        CheckedRef<ViewGestureController> m_viewGestureController;
+        WeakRef<ViewGestureController> m_viewGestureController;
         WeakRef<WebPageProxy> m_webPageProxy;
     };
 

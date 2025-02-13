@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2009-2024 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Google Inc. All rights reserved.
  * Copyright (C) 2009 Joseph Pecoraro
  *
@@ -55,6 +55,7 @@
 #include "ContainerNode.h"
 #include "Cookie.h"
 #include "CookieJar.h"
+#include "CustomElementRegistry.h"
 #include "DOMEditor.h"
 #include "DOMException.h"
 #include "DOMPatchSupport.h"
@@ -138,8 +139,6 @@
 #include <wtf/text/WTFString.h>
 #include <wtf/unicode/CharacterNames.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorDOMAgent);
@@ -180,11 +179,10 @@ static Color parseOptionalConfigColor(const String& fieldName, JSON::Object& con
 
 static bool parseQuad(Ref<JSON::Array>&& quadArray, FloatQuad* quad)
 {
-    const size_t coordinatesInQuad = 8;
-    double coordinates[coordinatesInQuad];
-    if (quadArray->length() != coordinatesInQuad)
+    std::array<double, 8> coordinates;
+    if (quadArray->length() != coordinates.size())
         return false;
-    for (size_t i = 0; i < coordinatesInQuad; ++i) {
+    for (size_t i = 0; i < coordinates.size(); ++i) {
         auto coordinate = quadArray->get(i)->asDouble();
         if (!coordinate)
             return false;
@@ -199,7 +197,7 @@ static bool parseQuad(Ref<JSON::Array>&& quadArray, FloatQuad* quad)
 }
 
 class RevalidateStyleAttributeTask final : public CanMakeCheckedPtr<RevalidateStyleAttributeTask> {
-    WTF_MAKE_TZONE_ALLOCATED_INLINE(RevalidateStyleAttributeTask);
+    WTF_MAKE_TZONE_ALLOCATED(RevalidateStyleAttributeTask);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RevalidateStyleAttributeTask);
 public:
     RevalidateStyleAttributeTask(InspectorDOMAgent*);
@@ -212,6 +210,8 @@ private:
     Timer m_timer;
     HashSet<RefPtr<Element>> m_elements;
 };
+
+WTF_MAKE_TZONE_ALLOCATED_IMPL(RevalidateStyleAttributeTask);
 
 RevalidateStyleAttributeTask::RevalidateStyleAttributeTask(InspectorDOMAgent* domAgent)
     : m_domAgent(domAgent)
@@ -329,10 +329,7 @@ void InspectorDOMAgent::didCreateFrontendAndBackend(Inspector::FrontendRouter*, 
     m_domEditor = makeUnique<DOMEditor>(*m_history);
 
     m_instrumentingAgents.setPersistentDOMAgent(this);
-    auto* localMainFrame = dynamicDowncast<LocalFrame>(m_inspectedPage.mainFrame());
-    if (!localMainFrame)
-        return;
-    m_document = localMainFrame->document();
+    m_document = m_inspectedPage->localTopDocument();
 
     // Force a layout so that we can collect additional information from the layout process.
     relayoutDocument();
@@ -817,7 +814,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::setAttributesAsText(
     }
 
     bool foundOriginalAttribute = false;
-    for (const Attribute& attribute : childElement->attributesIterator()) {
+    for (auto& attribute : childElement->attributes()) {
         // Add attribute pair
         auto attributeName = attribute.name().toAtomString();
         foundOriginalAttribute = foundOriginalAttribute || attributeName == name;
@@ -1322,7 +1319,7 @@ void InspectorDOMAgent::setSearchingForNode(Inspector::Protocol::ErrorString& er
 
     protectedOverlay()->didSetSearchingForNode(m_searchingForNode);
 
-    if (InspectorClient* client = m_inspectedPage.inspectorController().inspectorClient())
+    if (InspectorClient* client = m_inspectedPage->inspectorController().inspectorClient())
         client->elementSelectionChanged(m_searchingForNode);
 }
 
@@ -2036,7 +2033,7 @@ Ref<JSON::ArrayOf<String>> InspectorDOMAgent::buildArrayForElementAttributes(Ele
     // Go through all attributes and serialize them.
     if (!element->hasAttributes())
         return attributesValue;
-    for (const Attribute& attribute : element->attributesIterator()) {
+    for (auto& attribute : element->attributes()) {
         // Add attribute pair
         attributesValue->addItem(attribute.name().toString());
         attributesValue->addItem(attribute.value());
@@ -2179,7 +2176,7 @@ Ref<Inspector::Protocol::DOM::EventListener> InspectorDOMAgent::buildObjectForEv
 
 void InspectorDOMAgent::processAccessibilityChildren(AXCoreObject& axObject, JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>& childNodeIds)
 {
-    const auto& children = axObject.children();
+    const auto& children = axObject.unignoredChildren();
     if (!children.size())
         return;
 
@@ -2187,7 +2184,7 @@ void InspectorDOMAgent::processAccessibilityChildren(AXCoreObject& axObject, JSO
         if (Node* childNode = childObject->node())
             childNodeIds.addItem(pushNodePathToFrontend(childNode));
         else
-            processAccessibilityChildren(*childObject, childNodeIds);
+            processAccessibilityChildren(childObject.get(), childNodeIds);
     }
 }
     
@@ -2415,9 +2412,9 @@ Ref<Inspector::Protocol::DOM::AccessibilityProperties> InspectorDOMAgent::buildO
             selected = axObject->isSelected();
 
             auto selectedChildren = axObject->selectedChildren();
-            if (selectedChildren && selectedChildren->size()) {
+            if (selectedChildren.size()) {
                 selectedChildNodeIds = JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>::create();
-                for (auto& selectedChildObject : *selectedChildren) {
+                for (auto& selectedChildObject : selectedChildren) {
                     if (Node* selectedChildNode = selectedChildObject->node()) {
                         if (auto selectedChildNodeId = pushNodePathToFrontend(selectedChildNode))
                             selectedChildNodeIds->addItem(selectedChildNodeId);
@@ -2429,7 +2426,7 @@ Ref<Inspector::Protocol::DOM::AccessibilityProperties> InspectorDOMAgent::buildO
             hierarchicalLevel = axObject->hierarchicalLevel();
             
             level = hierarchicalLevel ? hierarchicalLevel : headingLevel;
-            isPopupButton = axObject->isPopUpButton() || axObject->hasPopup();
+            isPopupButton = axObject->isPopUpButton() || axObject->selfOrAncestorLinkHasPopup();
         }
     }
     
@@ -3214,5 +3211,3 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::MediaStats>> In
 }
 
 } // namespace WebCore
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

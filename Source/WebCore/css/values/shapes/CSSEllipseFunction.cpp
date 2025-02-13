@@ -36,7 +36,7 @@ static bool hasDefaultValueForEllipseRadius(Ellipse::RadialSize radius)
     return WTF::switchOn(radius,
         [](Ellipse::Extent extent) {
             // FIXME: The spec says that `farthest-corner` should be the default, but this does not match the tests.
-            return std::holds_alternative<ClosestSide>(extent);
+            return std::holds_alternative<Keyword::ClosestSide>(extent);
         },
         [](const auto&) {
             return false;
@@ -44,20 +44,20 @@ static bool hasDefaultValueForEllipseRadius(Ellipse::RadialSize radius)
     );
 }
 
-void Serialize<Ellipse>::operator()(StringBuilder& builder, const Ellipse& value)
+void Serialize<Ellipse>::operator()(StringBuilder& builder, const SerializationContext& context, const Ellipse& value)
 {
     // <ellipse()> = ellipse( <radial-size>? [ at <position> ]? )
 
     auto lengthBefore = builder.length();
 
     if (!hasDefaultValueForEllipseRadius(get<0>(value.radii)) || !hasDefaultValueForEllipseRadius(get<1>(value.radii)))
-        serializationForCSS(builder, value.radii);
+        serializationForCSS(builder, context, value.radii);
 
     if (value.position) {
         // FIXME: To match other serialization of Percentage, this should not serialize if equal to the default value of 50% 50%, but this does not match the tests.
         bool wroteSomething = builder.length() != lengthBefore;
         builder.append(wroteSomething ? " at "_s : "at "_s);
-        serializationForCSS(builder, *value.position);
+        serializationForCSS(builder, context, *value.position);
     }
 }
 

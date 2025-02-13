@@ -26,7 +26,7 @@
 #include "config.h"
 #include "WebMouseEvent.h"
 
-#include "WebCoreArgumentCoders.h"
+#include <WebCore/MouseEventTypes.h>
 #include <WebCore/NavigationAction.h>
 
 namespace WebKit {

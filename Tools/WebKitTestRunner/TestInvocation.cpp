@@ -76,6 +76,11 @@ static void postPageMessage(const char* name)
     postPageMessage(name, WKRetainPtr<WKTypeRef> { });
 }
 
+Ref<TestInvocation> TestInvocation::create(WKURLRef url, const TestOptions& options)
+{
+    return adoptRef(*new TestInvocation(url, options));
+}
+
 TestInvocation::TestInvocation(WKURLRef url, const TestOptions& options)
     : m_options(options)
     , m_url(url)
@@ -88,16 +93,7 @@ TestInvocation::TestInvocation(WKURLRef url, const TestOptions& options)
     m_dumpFrameLoadCallbacks = urlContains("loading/"_s) && !urlContains("://localhost"_s);
 }
 
-TestInvocation::~TestInvocation()
-{
-    if (m_pendingUIScriptInvocationData)
-        m_pendingUIScriptInvocationData->testInvocation = nullptr;
-}
-
-WKURLRef TestInvocation::url() const
-{
-    return m_url.get();
-}
+TestInvocation::~TestInvocation() = default;
 
 bool TestInvocation::urlContains(StringView searchString) const
 {
@@ -638,7 +634,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
         invocationData->testInvocation = this;
         invocationData->callbackID = uint64Value(messageBodyDictionary, "CallbackID");
         invocationData->scriptString = stringValue(messageBodyDictionary, "Script");
-        m_pendingUIScriptInvocationData = invocationData;
         WKPageCallAfterNextPresentationUpdate(TestController::singleton().mainWebView()->page(), invocationData, runUISideScriptAfterUpdateCallback);
         return;
     }
@@ -649,7 +644,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
         invocationData->testInvocation = this;
         invocationData->callbackID = uint64Value(messageBodyDictionary, "CallbackID");
         invocationData->scriptString = stringValue(messageBodyDictionary, "Script");
-        m_pendingUIScriptInvocationData = invocationData;
         runUISideScriptImmediately(nullptr, invocationData);
         return;
     }
@@ -702,6 +696,31 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
 
     if (WKStringIsEqualToUTF8CString(messageName, "StopLoading"))
         return WKPageStopLoading(TestController::singleton().mainWebView()->page());
+
+    if (WKStringIsEqualToUTF8CString(messageName, "DumpFullScreenCallbacks")) {
+        TestController::singleton().dumpFullScreenCallbacks();
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "WaitBeforeFinishingFullscreenExit")) {
+        TestController::singleton().waitBeforeFinishingFullscreenExit();
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "FinishFullscreenExit")) {
+        TestController::singleton().finishFullscreenExit(TestController::singleton().mainWebView()->page());
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "RequestExitFullscreenFromUIProcess")) {
+        TestController::singleton().requestExitFullscreenFromUIProcess(TestController::singleton().mainWebView()->page());
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ShowWebInspector")) {
+        WKPageShowWebInspectorForTesting(TestController::singleton().mainWebView()->page());
+        return;
+    }
 
     ASSERT_NOT_REACHED();
 }
@@ -885,8 +904,11 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         return nullptr;
     }
 
-    if (WKStringIsEqualToUTF8CString(messageName, "SetMockCameraOrientation")) {
-        TestController::singleton().setMockCameraOrientation(uint64Value(messageBody));
+    if (WKStringIsEqualToUTF8CString(messageName, "SetMockCameraRotation")) {
+        auto messageBodyDictionary = dictionaryValue(messageBody);
+        auto rotation = uint64Value(messageBodyDictionary, "Rotation");
+        auto persistentID = stringValue(messageBodyDictionary, "PersistentID");
+        TestController::singleton().setMockCameraOrientation(rotation, persistentID);
         return nullptr;
     }
 
@@ -1435,7 +1457,7 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
 void TestInvocation::runUISideScriptImmediately(WKErrorRef, void* context)
 {
     UIScriptInvocationData* data = static_cast<UIScriptInvocationData*>(context);
-    if (TestInvocation* invocation = data->testInvocation) {
+    if (TestInvocation* invocation = data->testInvocation.get()) {
         RELEASE_ASSERT(TestController::singleton().isCurrentInvocation(invocation));
         invocation->runUISideScript(data->scriptString.get(), data->callbackID);
     }
@@ -1449,10 +1471,8 @@ void TestInvocation::runUISideScriptAfterUpdateCallback(WKErrorRef error, void* 
 
 void TestInvocation::runUISideScript(WKStringRef script, unsigned scriptCallbackID)
 {
-    m_pendingUIScriptInvocationData = nullptr;
-
     if (!m_UIScriptContext)
-        m_UIScriptContext = makeUnique<UIScriptContext>(*this, UIScriptController::create);
+        m_UIScriptContext = UIScriptContext::create(*this, UIScriptController::create);
 
     m_UIScriptContext->runUIScript(toWTFString(script), scriptCallbackID);
 }
@@ -1590,7 +1610,7 @@ void TestInvocation::done()
     m_gotFinalMessage = true;
     invalidateWaitToDumpWatchdogTimer();
     invalidateWaitForPostDumpWatchdogTimer();
-    RunLoop::main().dispatch([] {
+    RunLoop::protectedMain()->dispatch([] {
         TestController::singleton().notifyDone();
     });
 }

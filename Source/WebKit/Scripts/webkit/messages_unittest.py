@@ -42,16 +42,15 @@ reset_results = False
 
 _test_receiver_names = [
     'TestWithCVPixelBuffer',
-    'TestWithWantsDispatch',
-    'TestWithWantsDispatchNoSyncMessages',
-    'TestWithWantsAsyncDispatch',
+    'TestWithDeferSendingOption',
+    'TestWithDispatchedFromAndTo',
     'TestWithEnabledBy',
     'TestWithEnabledByAndConjunction',
     'TestWithEnabledByOrConjunction',
-    'TestWithEnabledIf',
     'TestWithIfMessage',
     'TestWithImageData',
     'TestWithLegacyReceiver',
+    'TestWithMultiLineExtendedAttributes',
     'TestWithoutAttributes',
     'TestWithoutUsingIPCConnection',
     'TestWithSemaphore',
@@ -62,6 +61,10 @@ _test_receiver_names = [
     'TestWithSuperclass',
     'TestWithSuperclassAndWantsAsyncDispatch',
     'TestWithSuperclassAndWantsDispatch',
+    'TestWithValidator',
+    'TestWithWantsAsyncDispatch',
+    'TestWithWantsDispatch',
+    'TestWithWantsDispatchNoSyncMessages',
 ]
 
 

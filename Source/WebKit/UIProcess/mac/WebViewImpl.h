@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +27,7 @@
 
 #if PLATFORM(MAC)
 
+#include "AppKitSPI.h"
 #include "DrawingAreaInfo.h"
 #include "EditorState.h"
 #include "ImageAnalysisUtilities.h"
@@ -92,6 +93,10 @@ OBJC_CLASS WKTextTouchBarItemController;
 OBJC_CLASS WebPlaybackControlsManager;
 #endif // HAVE(TOUCH_BAR)
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+OBJC_CLASS WKDigitalCredentialsPicker;
+#endif
+
 OBJC_CLASS WKPDFHUDView;
 
 OBJC_CLASS VKCImageAnalysis;
@@ -128,6 +133,10 @@ enum class ReplacementBehavior : uint8_t;
 }
 
 } // namespace WebCore
+
+#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WebViewImplAdditionsBefore.h>)
+#import <WebKitAdditions/WebViewImplAdditionsBefore.h>
+#endif
 
 @protocol WebViewImplDelegate
 
@@ -176,6 +185,9 @@ enum class ReplacementBehavior : uint8_t;
 namespace WebCore {
 struct DragItem;
 struct KeypressCommand;
+#if ENABLE(DIGITAL_CREDENTIALS_UI)
+struct DigitalCredentialsRequestData;
+#endif
 }
 
 namespace WebKit {
@@ -257,7 +269,7 @@ public:
     void setFixedLayoutSize(CGSize);
     CGSize fixedLayoutSize() const;
 
-    std::unique_ptr<DrawingAreaProxy> createDrawingAreaProxy(WebProcessProxy&);
+    Ref<DrawingAreaProxy> createDrawingAreaProxy(WebProcessProxy&);
     bool isUsingUISideCompositing() const;
     void setDrawingAreaSize(CGSize);
     void updateLayer();
@@ -270,9 +282,9 @@ public:
     void setAutomaticallyAdjustsContentInsets(bool);
     bool automaticallyAdjustsContentInsets() const;
     void updateContentInsetsIfAutomatic();
-    void setTopContentInset(CGFloat);
-    CGFloat topContentInset() const;
-    void flushPendingTopContentInset();
+    void setObscuredContentInsets(const WebCore::FloatBoxExtent&);
+    WebCore::FloatBoxExtent obscuredContentInsets() const;
+    void flushPendingObscuredContentInsetChanges();
 
     void prepareContentInRect(CGRect);
     void updateViewExposedRect();
@@ -465,7 +477,6 @@ public:
     void cancelImmediateActionAnimation();
     void completeImmediateActionAnimation();
     void didChangeContentSize(CGSize);
-    void didHandleAcceptedCandidate();
     void videoControlsManagerDidChange();
 
     void setIgnoresNonWheelEvents(bool);
@@ -513,6 +524,11 @@ public:
     
     void showShareSheet(const WebCore::ShareDataWithParsedURL&, WTF::CompletionHandler<void(bool)>&&, WKWebView *);
     void shareSheetDidDismiss(WKShareSheet *);
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+    void showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData&, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&, WKWebView*);
+    void dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&&, WKWebView*);
+#endif
 
     _WKRemoteObjectRegistry *remoteObjectRegistry();
 
@@ -701,9 +717,6 @@ public:
 
     bool beginBackSwipeForTesting();
     bool completeBackSwipeForTesting();
-    
-    void setUseSystemAppearance(bool);
-    bool useSystemAppearance();
 
     bool useFormSemanticContext() const;
     void semanticContextDidChange();
@@ -761,6 +774,10 @@ public:
 
 #if HAVE(INLINE_PREDICTIONS)
     bool allowsInlinePredictions() const;
+#endif
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    void updateContentInsetFillViews();
 #endif
 
 private:
@@ -903,6 +920,10 @@ private:
 
     RetainPtr<WKShareSheet> _shareSheet;
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+    RetainPtr<WKDigitalCredentialsPicker> _digitalCredentialsPicker;
+#endif
+
     RetainPtr<WKWindowVisibilityObserver> m_windowVisibilityObserver;
     RetainPtr<WKAccessibilitySettingsObserver> m_accessibilitySettingsObserver;
 
@@ -956,7 +977,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     RetainPtr<WKBrowsingContextController> m_browsingContextController;
 ALLOW_DEPRECATED_DECLARATIONS_END
 
-    std::unique_ptr<ViewGestureController> m_gestureController;
+    RefPtr<ViewGestureController> m_gestureController;
     bool m_allowsBackForwardNavigationGestures { false };
     bool m_allowsMagnification { false };
 
@@ -1028,8 +1049,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     WeakObjCPtr<NSPopover> m_lastContextMenuTranslationPopover;
 #endif
 
-#if HAVE(REDESIGNED_TEXT_CURSOR) && PLATFORM(MAC)
-    RetainPtr<_WKWebViewTextInputNotifications> _textInputNotifications;
+#if HAVE(REDESIGNED_TEXT_CURSOR)
+    RetainPtr<_WKWebViewTextInputNotifications> m_textInputNotifications;
+#endif
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    RetainPtr<WKNSContentInsetFillView> m_topContentInsetFillView;
 #endif
 
 #if HAVE(INLINE_PREDICTIONS)

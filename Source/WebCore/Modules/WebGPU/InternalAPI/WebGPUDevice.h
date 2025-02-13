@@ -36,6 +36,7 @@
 #include <wtf/CompletionHandler.h>
 #include <wtf/HashSet.h>
 #include <wtf/Ref.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
 
@@ -85,7 +86,7 @@ class Texture;
 struct TextureDescriptor;
 class XRBinding;
 
-class Device : public RefCounted<Device>, public CanMakeWeakPtr<Device> {
+class Device : public RefCountedAndCanMakeWeakPtr<Device> {
 public:
     virtual ~Device() = default;
 
@@ -139,6 +140,8 @@ public:
     virtual Ref<RenderPassEncoder> invalidRenderPassEncoder() = 0;
     virtual Ref<ComputePassEncoder> invalidComputePassEncoder() = 0;
     virtual void pauseAllErrorReporting(bool pause) = 0;
+
+    virtual bool isRemoteDeviceProxy() const { return false; }
 
 protected:
     Device(Ref<SupportedFeatures>&& features, Ref<SupportedLimits>&& limits)

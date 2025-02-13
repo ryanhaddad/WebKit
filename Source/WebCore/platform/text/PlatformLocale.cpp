@@ -37,13 +37,9 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/StringBuilder.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Locale);
-
-#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
 
 class DateTimeStringBuilder : private DateTimeFormat::TokenHandler {
     WTF_MAKE_NONCOPYABLE(DateTimeStringBuilder);
@@ -183,8 +179,6 @@ String DateTimeStringBuilder::toString()
 {
     return m_builder.toString();
 }
-
-#endif
 
 Locale::~Locale() = default;
 
@@ -338,7 +332,11 @@ String Locale::convertFromLocalizedNumber(const String& localized)
     return converted;
 }
 
-#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
+Locale::WritingDirection Locale::defaultWritingDirection() const
+{
+    return WritingDirection::Default;
+}
+
 String Locale::formatDateTime(const DateComponents& date, FormatType formatType)
 {
     if (date.type() == DateComponentsType::Invalid)
@@ -373,8 +371,5 @@ String Locale::localizedDecimalSeparator()
     initializeLocaleData();
     return m_decimalSymbols[DecimalSeparatorIndex];
 }
-#endif
 
 }
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

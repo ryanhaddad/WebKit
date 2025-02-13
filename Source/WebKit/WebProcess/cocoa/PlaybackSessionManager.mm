@@ -33,7 +33,6 @@
 #import "MessageSenderInlines.h"
 #import "PlaybackSessionManagerMessages.h"
 #import "PlaybackSessionManagerProxyMessages.h"
-#import "WebCoreArgumentCoders.h"
 #import "WebPage.h"
 #import "WebProcess.h"
 #import <WebCore/Color.h>
@@ -172,6 +171,12 @@ void PlaybackSessionInterfaceContext::spatialVideoMetadataChanged(const std::opt
 {
     if (m_manager)
         m_manager->spatialVideoMetadataChanged(m_contextId, metadata);
+}
+
+void PlaybackSessionInterfaceContext::isImmersiveVideoChanged(bool value)
+{
+    if (m_manager)
+        m_manager->isImmersiveVideoChanged(m_contextId, value);
 }
 #endif
 
@@ -457,6 +462,11 @@ void PlaybackSessionManager::isInWindowFullscreenActiveChanged(PlaybackSessionCo
 void PlaybackSessionManager::spatialVideoMetadataChanged(PlaybackSessionContextIdentifier contextId, const std::optional<WebCore::SpatialVideoMetadata>& metadata)
 {
     m_page->send(Messages::PlaybackSessionManagerProxy::SpatialVideoMetadataChanged(contextId, metadata));
+}
+
+void PlaybackSessionManager::isImmersiveVideoChanged(PlaybackSessionContextIdentifier contextId, bool value)
+{
+    m_page->send(Messages::PlaybackSessionManagerProxy::IsImmersiveVideoChanged(contextId, value));
 }
 #endif
 

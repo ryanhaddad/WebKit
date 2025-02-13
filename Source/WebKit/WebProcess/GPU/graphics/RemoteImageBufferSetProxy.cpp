@@ -140,17 +140,26 @@ ALWAYS_INLINE auto RemoteImageBufferSetProxy::sendSync(T&& message)
         return IPC::StreamClientConnection::SendSyncResult<T> { IPC::Error::InvalidConnection };
 
     auto result = connection->sendSync(std::forward<T>(message), identifier());
-    if (UNLIKELY(!result.succeeded())) {
-        RELEASE_LOG(RemoteLayerBuffers, "[renderingBackend=%" PRIu64 "] Proxy::sendSync - failed, name:%" PUBLIC_LOG_STRING ", error:%" PUBLIC_LOG_STRING,
-            m_remoteRenderingBackendProxy->renderingBackendIdentifier().toUInt64(), IPC::description(T::name()).characters(), IPC::errorAsString(result.error()).characters());
-        didBecomeUnresponsive();
+    if (LIKELY(result.succeeded()))
+        return result;
+
+    RefPtr remoteRenderingBackendProxy = m_remoteRenderingBackendProxy.get();
+    if (UNLIKELY(!remoteRenderingBackendProxy)) {
+        RELEASE_LOG(RemoteLayerBuffers, "[renderingBackend was deleted] Proxy::sendSync - failed, name:%" PUBLIC_LOG_STRING ", error:%" PUBLIC_LOG_STRING,
+            IPC::description(T::name()).characters(), IPC::errorAsString(result.error()).characters());
+        return result;
     }
+
+    RELEASE_LOG(RemoteLayerBuffers, "[renderingBackend=%" PRIu64 "] Proxy::sendSync - failed, name:%" PUBLIC_LOG_STRING ", error:%" PUBLIC_LOG_STRING,
+        remoteRenderingBackendProxy->renderingBackendIdentifier().toUInt64(), IPC::description(T::name()).characters(), IPC::errorAsString(result.error()).characters());
+    didBecomeUnresponsive();
+
     return result;
 }
 
 ALWAYS_INLINE RefPtr<IPC::StreamClientConnection> RemoteImageBufferSetProxy::connection() const
 {
-    auto* backend = m_remoteRenderingBackendProxy.get();
+    RefPtr backend = m_remoteRenderingBackendProxy.get();
     if (UNLIKELY(!backend))
         return nullptr;
     return backend->connection();
@@ -158,7 +167,7 @@ ALWAYS_INLINE RefPtr<IPC::StreamClientConnection> RemoteImageBufferSetProxy::con
 
 void RemoteImageBufferSetProxy::didBecomeUnresponsive() const
 {
-    auto* backend = m_remoteRenderingBackendProxy.get();
+    RefPtr backend = m_remoteRenderingBackendProxy.get();
     if (UNLIKELY(!backend))
         return;
     backend->didBecomeUnresponsive();
@@ -206,7 +215,7 @@ void RemoteImageBufferSetProxy::didPrepareForDisplay(ImageBufferSetPrepareBuffer
 
         auto createBufferAndBackendInfo = [&](const std::optional<WebCore::RenderingResourceIdentifier>& bufferIdentifier) {
             if (bufferIdentifier)
-                return std::optional { BufferAndBackendInfo { *bufferIdentifier, m_generation }    };
+                return std::optional { BufferAndBackendInfo { *bufferIdentifier, m_generation } };
             return std::optional<BufferAndBackendInfo>();
         };
 
@@ -235,18 +244,13 @@ void RemoteImageBufferSetProxy::close()
         streamConnection->removeWorkQueueMessageReceiver(Messages::RemoteImageBufferSetProxy::messageReceiverName(), identifier().toUInt64());
         m_streamConnection = nullptr;
     }
-    if (m_remoteRenderingBackendProxy)
-        m_remoteRenderingBackendProxy->releaseRemoteImageBufferSet(*this);
+    if (RefPtr remoteRenderingBackendProxy = m_remoteRenderingBackendProxy.get())
+        remoteRenderingBackendProxy->releaseRemoteImageBufferSet(*this);
 }
 
-void RemoteImageBufferSetProxy::setConfiguration(WebCore::FloatSize size, float scale, const WebCore::DestinationColorSpace& colorSpace, WebCore::ImageBufferPixelFormat pixelFormat, WebCore::RenderingMode renderingMode, WebCore::RenderingPurpose renderingPurpose)
+void RemoteImageBufferSetProxy::setConfiguration(RemoteImageBufferSetConfiguration&& configuration)
 {
-    m_size = size;
-    m_scale = scale;
-    m_colorSpace = colorSpace;
-    m_pixelFormat = pixelFormat;
-    m_renderingMode = renderingMode;
-    m_renderingPurpose = renderingPurpose;
+    m_configuration = WTFMove(configuration);
     m_remoteNeedsConfigurationUpdate = true;
 }
 
@@ -273,13 +277,9 @@ void RemoteImageBufferSetProxy::willPrepareForDisplay()
         return;
 
     if (m_remoteNeedsConfigurationUpdate) {
-        send(Messages::RemoteImageBufferSet::UpdateConfiguration(m_size, m_renderingMode, m_scale, m_colorSpace, m_pixelFormat));
+        send(Messages::RemoteImageBufferSet::UpdateConfiguration(m_configuration));
 
-        OptionSet<WebCore::ImageBufferOptions> options;
-        if (m_renderingMode == RenderingMode::Accelerated)
-            options.add(WebCore::ImageBufferOptions::Accelerated);
-
-        m_displayListRecorder = m_remoteRenderingBackendProxy->createDisplayListRecorder(m_displayListIdentifier, m_size, m_renderingPurpose, m_scale, m_colorSpace, m_pixelFormat, options);
+        m_displayListRecorder = Ref { *m_remoteRenderingBackendProxy }->createDisplayListRecorder(m_displayListIdentifier, m_configuration.logicalSize, m_configuration.renderingMode, m_configuration.renderingPurpose, m_configuration.resolutionScale, m_configuration.colorSpace, m_configuration.pixelFormat);
     }
     m_remoteNeedsConfigurationUpdate = false;
 

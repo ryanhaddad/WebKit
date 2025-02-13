@@ -457,6 +457,7 @@ class StylePropertyCodeGenProperties:
         Schema.Entry("conditional-converter", allowed_types=[str]),
         Schema.Entry("converter", allowed_types=[str]),
         Schema.Entry("custom", allowed_types=[str]),
+        Schema.Entry("disables-native-appearance", allowed_types=[bool], default_value=False),
         Schema.Entry("enable-if", allowed_types=[str]),
         Schema.Entry("fast-path-inherited", allowed_types=[bool], default_value=False),
         Schema.Entry("fill-layer-property", allowed_types=[bool], default_value=False),
@@ -824,6 +825,11 @@ class StyleProperties:
 
         self._perform_fixups()
 
+        self.shorthand_by_longhand = {}
+        for shorthand in self.all_shorthands:
+            for longhand in shorthand.codegen_properties.longhands:
+                self.shorthand_by_longhand[longhand] = shorthand
+
     def __str__(self):
         return "StyleProperties"
 
@@ -885,7 +891,7 @@ class StyleProperties:
     def all_non_shorthands(self):
         return (property for property in self.all if not property.codegen_properties.longhands)
 
-    # Returns a generator for the set of properties that are direction-aware (aka flow-sensative). Sorted first by property group name and then by property name.
+    # Returns a generator for the set of properties that are direction-aware (aka flow-sensitive). Sorted first by property group name and then by property name.
     @property
     def all_direction_aware_properties(self):
         for group_name, property_group in sorted(self.logical_property_groups.items(), key=lambda x: x[0]):
@@ -2464,9 +2470,7 @@ class GenerateCSSPropertyNames:
         )
 
         to.write_block("""\
-            // Using std::numeric_limits<uint16_t>::max() here would be cleaner,
-            // but is not possible due to missing constexpr support in MSVC 2013.
-            static_assert(numCSSProperties + 1 <= 65535, "CSSPropertyID should fit into uint16_t.");
+            static_assert(numCSSProperties + 1 <= std::numeric_limits<uint16_t>::max(), "CSSPropertyID should fit into uint16_t.");
             """)
 
         all_computed_property_ids = (f"{property.id}," for property in self.properties_and_descriptors.style_properties.all_computed)
@@ -2859,9 +2863,30 @@ class GenerateCSSPropertyNames:
 
             self.generation_context.generate_property_id_switch_function_bool(
                 to=writer,
+                signature="bool CSSProperty::disablesNativeAppearance(CSSPropertyID id)",
+                iterable=(p for p in self.properties_and_descriptors.style_properties.all if p.codegen_properties.disables_native_appearance)
+            )
+
+            self.generation_context.generate_property_id_switch_function_bool(
+                to=writer,
                 signature="bool CSSProperty::isDirectionAwareProperty(CSSPropertyID id)",
                 iterable=self.properties_and_descriptors.style_properties.all_direction_aware_properties
             )
+
+            for group_name, property_group in sorted(self.generation_context.properties_and_descriptors.style_properties.logical_property_groups.items(), key=lambda x: x[0]):
+                properties = set()
+                for kind in ["logical", "physical"]:
+                    for property in property_group[kind].values():
+                        properties.add(property)
+                        if property in self.generation_context.properties_and_descriptors.style_properties.shorthand_by_longhand:
+                            properties.add(self.generation_context.properties_and_descriptors.style_properties.shorthand_by_longhand[property])
+
+                group_id = PropertyName.convert_name_to_id(group_name)
+                self.generation_context.generate_property_id_switch_function_bool(
+                    to=writer,
+                    signature=f"bool CSSProperty::is{group_id}Property(CSSPropertyID id)",
+                    iterable=sorted(properties, key=lambda x: x.name)
+                )
 
             self.generation_context.generate_property_id_switch_function_bool(
                 to=writer,
@@ -3284,7 +3309,7 @@ class GenerateStyleBuilderGenerated:
 
     def _generate_color_property_initial_value_setter(self, to, property):
         if property.codegen_properties.initial == "currentColor":
-            initial_function = "StyleColor::currentColor"
+            initial_function = "Style::Color::currentColor"
         else:
             initial_function = "RenderStyle::" + property.codegen_properties.initial
         to.write(f"if (builderState.applyPropertyToRegularStyle())")
@@ -3300,9 +3325,9 @@ class GenerateStyleBuilderGenerated:
 
     def _generate_color_property_value_setter(self, to, property, value):
         to.write(f"if (builderState.applyPropertyToRegularStyle())")
-        to.write(f"    builderState.style().{property.codegen_properties.setter}(builderState.colorFromPrimitiveValue({value}, ForVisitedLink::No));")
+        to.write(f"    builderState.style().{property.codegen_properties.setter}(builderState.createStyleColor({value}, ForVisitedLink::No));")
         to.write(f"if (builderState.applyPropertyToVisitedLinkStyle())")
-        to.write(f"    builderState.style().setVisitedLink{property.name_for_methods}(builderState.colorFromPrimitiveValue({value}, ForVisitedLink::Yes));")
+        to.write(f"    builderState.style().setVisitedLink{property.name_for_methods}(builderState.createStyleColor({value}, ForVisitedLink::Yes));")
 
     # Animation property setters.
 
@@ -3358,7 +3383,8 @@ class GenerateStyleBuilderGenerated:
 
     def _generate_font_property_inherit_value_setter(self, to, property):
         to.write(f"auto fontDescription = builderState.fontDescription();")
-        to.write(f"fontDescription.{property.codegen_properties.setter}(builderState.parentFontDescription().{property.codegen_properties.getter}());")
+        to.write(f"auto inheritedValue = builderState.parentFontDescription().{property.codegen_properties.getter}();")
+        to.write(f"fontDescription.{property.codegen_properties.setter}(WTFMove(inheritedValue));")
         to.write(f"builderState.setFontDescription(WTFMove(fontDescription));")
 
     def _generate_font_property_value_setter(self, to, property, value):
@@ -3515,7 +3541,7 @@ class GenerateStyleBuilderGenerated:
                 elif property.codegen_properties.conditional_converter:
                     return f"WTFMove(convertedValue.value())"
                 elif property.codegen_properties.color_property and not property.codegen_properties.visited_link_color_support:
-                    return f"builderState.colorFromPrimitiveValue(downcast<CSSPrimitiveValue>(value), ForVisitedLink::No)"
+                    return f"builderState.createStyleColor(value, ForVisitedLink::No)"
                 else:
                     return "fromCSSValueDeducingType(builderState, value)"
 
@@ -3751,7 +3777,7 @@ class GenerateStylePropertyShorthandFunctions:
                             to.write(f"{longhand.id},")
 
                 to.write(f"}};")
-                to.write(f"return StylePropertyShorthand({property.id}, {property.id_without_prefix_with_lowercase_first_letter}Properties);")
+                to.write(f"return StylePropertyShorthand({property.id}, std::span {{ {property.id_without_prefix_with_lowercase_first_letter}Properties }});")
             to.write(f"}}")
             to.newline()
 
@@ -3931,17 +3957,29 @@ class GenerateCSSPropertyParsing:
                     "CSSParserIdioms.h",
                     "CSSPropertyParser.h",
                     "CSSPropertyParserConsumer+Align.h",
+                    "CSSPropertyParserConsumer+Anchor.h",
                     "CSSPropertyParserConsumer+Angle.h",
+                    "CSSPropertyParserConsumer+Animations.h",
+                    "CSSPropertyParserConsumer+AppleVisualEffect.h",
+                    "CSSPropertyParserConsumer+Attr.h",
                     "CSSPropertyParserConsumer+Background.h",
+                    "CSSPropertyParserConsumer+Box.h",
                     "CSSPropertyParserConsumer+Color.h",
                     "CSSPropertyParserConsumer+ColorAdjust.h",
+                    "CSSPropertyParserConsumer+Conditional.h",
+                    "CSSPropertyParserConsumer+Contain.h",
+                    "CSSPropertyParserConsumer+Content.h",
                     "CSSPropertyParserConsumer+CounterStyles.h",
+                    "CSSPropertyParserConsumer+Display.h",
+                    "CSSPropertyParserConsumer+Easing.h",
                     "CSSPropertyParserConsumer+Filter.h",
                     "CSSPropertyParserConsumer+Font.h",
                     "CSSPropertyParserConsumer+Grid.h",
                     "CSSPropertyParserConsumer+Ident.h",
-                    "CSSPropertyParserConsumer+Integer.h",
                     "CSSPropertyParserConsumer+Image.h",
+                    "CSSPropertyParserConsumer+Inline.h",
+                    "CSSPropertyParserConsumer+Inset.h",
+                    "CSSPropertyParserConsumer+Integer.h",
                     "CSSPropertyParserConsumer+Length.h",
                     "CSSPropertyParserConsumer+LengthPercentage.h",
                     "CSSPropertyParserConsumer+List.h",
@@ -3949,18 +3987,33 @@ class GenerateCSSPropertyParsing:
                     "CSSPropertyParserConsumer+Masking.h",
                     "CSSPropertyParserConsumer+Motion.h",
                     "CSSPropertyParserConsumer+Number.h",
+                    "CSSPropertyParserConsumer+Overflow.h",
+                    "CSSPropertyParserConsumer+Page.h",
                     "CSSPropertyParserConsumer+Percentage.h",
+                    "CSSPropertyParserConsumer+PointerEvents.h",
                     "CSSPropertyParserConsumer+Position.h",
+                    "CSSPropertyParserConsumer+PositionTry.h",
                     "CSSPropertyParserConsumer+Primitives.h",
                     "CSSPropertyParserConsumer+Resolution.h",
+                    "CSSPropertyParserConsumer+Ruby.h",
+                    "CSSPropertyParserConsumer+SVG.h",
+                    "CSSPropertyParserConsumer+ScrollSnap.h",
+                    "CSSPropertyParserConsumer+Scrollbars.h",
                     "CSSPropertyParserConsumer+Shapes.h",
+                    "CSSPropertyParserConsumer+Sizing.h",
+                    "CSSPropertyParserConsumer+Speech.h",
                     "CSSPropertyParserConsumer+String.h",
+                    "CSSPropertyParserConsumer+Syntax.h",
+                    "CSSPropertyParserConsumer+Text.h",
+                    "CSSPropertyParserConsumer+TextDecoration.h",
                     "CSSPropertyParserConsumer+Time.h",
                     "CSSPropertyParserConsumer+Timeline.h",
-                    "CSSPropertyParserConsumer+TimingFunction.h",
                     "CSSPropertyParserConsumer+Transform.h",
+                    "CSSPropertyParserConsumer+Transitions.h",
+                    "CSSPropertyParserConsumer+UI.h",
                     "CSSPropertyParserConsumer+URL.h",
                     "CSSPropertyParserConsumer+ViewTransition.h",
+                    "CSSPropertyParserConsumer+WillChange.h",
                     "CSSValuePool.h",
                     "DeprecatedGlobalSettings.h",
                 ]

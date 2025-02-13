@@ -24,6 +24,7 @@
 
 import os
 import sys
+from typing import IO
 
 from webkitscmpy.local import Git
 from webkitscmpy import Commit
@@ -49,12 +50,18 @@ def main(inputfile, identifier_template):
         sys.stderr.write("Failed to compute the identifier for '{}'".format(GIT_COMMIT))
         return -1
 
+    rewrite_message(inputfile, sys.stdout, commit, identifier_template)
+
+
+def rewrite_message(inputfile: IO[str], outputfile: IO[str], commit: Commit, identifier_template: str) -> None:
     lines = []
     for line in inputfile.readlines():
         lines.append(line.rstrip())
 
+    identifier_template_key = identifier_template.format('').split(':', maxsplit=1)[0]
+
     identifier_index = len(lines)
-    if identifier_index and repository.GIT_SVN_REVISION.match(lines[-1]):
+    if identifier_index and Git.GIT_SVN_REVISION.match(lines[-1]):
         identifier_index -= 1
 
     # We're trying to cover cases where there is a space between link and git-svn-id:
@@ -67,12 +74,12 @@ def main(inputfile, identifier_template):
     #     Canonical link: ...
     #
     #     git-svn-id: ...
-    if identifier_index and lines[identifier_index - 1].startswith(identifier_template.format('').split(':')[0]):
+    if identifier_index and lines[identifier_index - 1].startswith(identifier_template_key):
         lines[identifier_index - 1] = identifier_template.format(commit)
         identifier_index = identifier_index - 2
     else:
         for index in [2, 3]:
-            if identifier_index - index > 0 and lines[identifier_index - index].startswith(identifier_template.format('').split(':')[0]):
+            if identifier_index - index > 0 and lines[identifier_index - index].startswith(identifier_template_key):
                 del lines[identifier_index - index]
                 lines.insert(identifier_index - 1, identifier_template.format(commit))
                 identifier_index = identifier_index - 2
@@ -98,7 +105,7 @@ def main(inputfile, identifier_template):
         index -= 1
 
     for line in lines:
-        print(line)
+        print(line, file=outputfile)
 
 
 if __name__ == '__main__':

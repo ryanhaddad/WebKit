@@ -157,12 +157,12 @@ public:
     RefPtr<Node> protectedNextSibling() const { return m_next.get(); }
     static constexpr ptrdiff_t nextSiblingMemoryOffset() { return OBJECT_OFFSETOF(Node, m_next); }
     WEBCORE_EXPORT RefPtr<NodeList> childNodes();
-    Node* firstChild() const;
-    RefPtr<Node> protectedFirstChild() const { return firstChild(); }
-    Node* lastChild() const;
-    RefPtr<Node> protectedLastChild() const { return lastChild(); }
+    inline Node* firstChild() const; // Defined in ContainerNode.h
+    inline RefPtr<Node> protectedFirstChild() const; // Defined in ContainerNode.h
+    inline Node* lastChild() const; // Defined in ContainerNode.h
+    inline RefPtr<Node> protectedLastChild() const; // Defined in ContainerNode.h
     inline bool hasAttributes() const;
-    inline NamedNodeMap* attributes() const;
+    inline NamedNodeMap* attributesMap() const;
     Node* pseudoAwareNextSibling() const;
     Node* pseudoAwarePreviousSibling() const;
     Node* pseudoAwareFirstChild() const;
@@ -178,22 +178,22 @@ public:
     WEBCORE_EXPORT ExceptionOr<void> removeChild(Node& child);
     WEBCORE_EXPORT ExceptionOr<void> appendChild(Node& newChild);
 
-    bool hasChildNodes() const { return firstChild(); }
+    inline bool hasChildNodes() const;
 
     enum class CloningOperation {
         OnlySelf,
         SelfWithTemplateContent,
         Everything,
     };
-    virtual Ref<Node> cloneNodeInternal(Document&, CloningOperation) = 0;
-    Ref<Node> cloneNode(bool deep) { return cloneNodeInternal(document(), deep ? CloningOperation::Everything : CloningOperation::OnlySelf); }
+    virtual Ref<Node> cloneNodeInternal(Document&, CloningOperation, CustomElementRegistry*) = 0;
+    Ref<Node> cloneNode(bool deep);
     WEBCORE_EXPORT ExceptionOr<Ref<Node>> cloneNodeForBindings(bool deep);
 
     virtual const AtomString& localName() const;
     virtual const AtomString& namespaceURI() const;
     virtual const AtomString& prefix() const;
     virtual ExceptionOr<void> setPrefix(const AtomString&);
-    WEBCORE_EXPORT void normalize();
+    WEBCORE_EXPORT ExceptionOr<void> normalize();
 
     bool isSameNode(Node* other) const { return this == other; }
     WEBCORE_EXPORT bool isEqualNode(Node*) const;
@@ -290,6 +290,14 @@ public:
     bool isInCustomElementReactionQueue() const { return hasElementStateFlag(ElementStateFlag::IsInCustomElementReactionQueue); }
     void setIsInCustomElementReactionQueue() { setElementStateFlag(ElementStateFlag::IsInCustomElementReactionQueue); }
     void clearIsInCustomElementReactionQueue() { clearElementStateFlag(ElementStateFlag::IsInCustomElementReactionQueue); }
+
+    bool usesNullCustomElementRegistry() const { return hasElementStateFlag(ElementStateFlag::UsesNullCustomElementRegistry); }
+    void setUsesNullCustomElementRegistry() const { setElementStateFlag(ElementStateFlag::UsesNullCustomElementRegistry); }
+    void clearUsesNullCustomElementRegistry() const { clearElementStateFlag(ElementStateFlag::UsesNullCustomElementRegistry); }
+
+    bool usesScopedCustomElementRegistryMap() const { return hasElementStateFlag(ElementStateFlag::UsesScopedCustomElementRegistryMap); }
+    void setUsesScopedCustomElementRegistryMap() { setElementStateFlag(ElementStateFlag::UsesScopedCustomElementRegistryMap); }
+    void clearUsesScopedCustomElementRegistryMap() { clearElementStateFlag(ElementStateFlag::UsesScopedCustomElementRegistryMap); }
 
     // Returns null, a child of ShadowRoot, or a legacy shadow root.
     Node* nonBoundaryShadowTreeRootNode();
@@ -465,7 +473,7 @@ public:
     RenderBoxModelObject* renderBoxModelObject() const;
 
     // Wrapper for nodes that don't have a renderer, but still cache the style (like HTMLOptionElement).
-    const RenderStyle* renderStyle() const;
+    inline const RenderStyle* renderStyle() const;
 
     WEBCORE_EXPORT const RenderStyle* computedStyle();
     virtual const RenderStyle* computedStyle(const std::optional<Style::PseudoElementIdentifier>&);
@@ -496,7 +504,7 @@ public:
     void showNode(ASCIILiteral prefix = ""_s) const;
     WEBCORE_EXPORT void showTreeForThis() const;
     void showNodePathForThis() const;
-    void showTreeAndMark(const Node* markedNode1, const char* markedLabel1, const Node* markedNode2 = nullptr, const char* markedLabel2 = nullptr) const;
+    void showTreeAndMark(const Node* markedNode1, ASCIILiteral markedLabel1, const Node* markedNode2 = nullptr, ASCIILiteral markedLabel2 = { }) const;
     void showTreeForThisAcrossFrame() const;
 #endif // ENABLE(TREE_DEBUGGING)
 
@@ -588,7 +596,9 @@ public:
     static auto flagIsParsingChildren() { return enumToUnderlyingType(StateFlag::IsParsingChildren); }
 #endif // ENABLE(JIT)
 
-    bool deletionHasBegun() const { return hasStateFlag(StateFlag::HasStartedDeletion); }
+#if ASSERT_ENABLED
+    bool deletionHasBegun() const { return hasStateFlag(StateFlag::DeletionHasBegun); }
+#endif
 
     bool containsSelectionEndPoint() const { return hasStateFlag(StateFlag::ContainsSelectionEndPoint); }
     void setContainsSelectionEndPoint(bool value) { setStateFlag(StateFlag::ContainsSelectionEndPoint, value); }
@@ -626,7 +636,9 @@ protected:
         ContainsOnlyASCIIWhitespace = 1 << 7, // Only used on CharacterData.
         ContainsOnlyASCIIWhitespaceIsValid = 1 << 8, // Only used on CharacterData.
         HasHeldBackChildrenChanged = 1 << 9,
-        HasStartedDeletion = 1 << 10,
+#if ASSERT_ENABLED
+        DeletionHasBegun = 1 << 10,
+#endif
         ContainsSelectionEndPoint = 1 << 11,
         IsSpecialInternalNode = 1 << 12, // DocumentFragment node for innerHTML/outerHTML or EditingText node.
 
@@ -643,7 +655,9 @@ protected:
 #if ENABLE(FULLSCREEN_API)
         IsFullscreen = 1 << 6,
 #endif
-        // 9-bits free.
+        UsesNullCustomElementRegistry = 1 << 7,
+        UsesScopedCustomElementRegistryMap = 1 << 8,
+        // 7-bits free.
     };
 
     enum class TabIndexState : uint8_t {
@@ -838,7 +852,7 @@ ALWAYS_INLINE void Node::ref() const
 
 inline void Node::applyRefDuringDestructionCheck() const
 {
-#if CHECK_REF_COUNTED_LIFECYCLE
+#if ASSERT_ENABLED
     if (!deletionHasBegun())
         return;
     WTF::RefCountedBase::logRefDuringDestruction(this);
@@ -850,12 +864,10 @@ ALWAYS_INLINE void Node::deref() const
     ASSERT(isMainThread());
     ASSERT(!m_adoptionIsRequired);
 
-    ASSERT(refCount());
+    ASSERT_WITH_SECURITY_IMPLICATION(refCount());
     auto updatedRefCount = m_refCountAndParentBit - s_refCountIncrement;
     if (!updatedRefCount) {
-        if (deletionHasBegun())
-            return;
-        // Don't update m_refCountAndParentBit to avoid double destruction through use of Ref<T>/RefPtr<T>.
+        ASSERT(!deletionHasBegun());
 #if ASSERT_ENABLED
         m_inRemovedLastRefFunction = true;
 #endif

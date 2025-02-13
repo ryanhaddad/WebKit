@@ -589,8 +589,10 @@ void NetworkDataTaskSoup::didSniffContentCallback(SoupMessage* soupMessage, cons
     gpointer key, value;
     g_hash_table_iter_init(&iter, parameters);
     while (g_hash_table_iter_next(&iter, &key, &value)) {
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GTK/WPE Port
         g_string_append(sniffedType, "; ");
         soup_header_g_string_append_param(sniffedType, static_cast<const char*>(key), static_cast<const char*>(value));
+        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     }
     task->didSniffContent(sniffedType->str);
     g_string_free(sniffedType, TRUE);
@@ -1046,6 +1048,10 @@ void NetworkDataTaskSoup::didRead(gssize bytesRead)
         writeDownload();
     } else {
         ASSERT(m_client);
+
+        // FIXME: This should be exact network transferred size rather than decoded bytes.
+        setTotalBytesTransferredOverNetwork(totalBytesTransferredOverNetwork() + bytesRead);
+
         m_client->didReceiveData(SharedBuffer::create(WTFMove(m_readBuffer)));
         read();
     }
@@ -1250,7 +1256,7 @@ void NetworkDataTaskSoup::didGetHeaders()
         auto* address = soup_message_get_remote_address(m_soupMessage.get());
         if (G_IS_INET_SOCKET_ADDRESS(address)) {
             GUniquePtr<char> ipAddress(g_inet_address_to_string(g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address))));
-            additionalMetrics.remoteAddress = makeString(span(ipAddress.get()), ':', g_inet_socket_address_get_port(G_INET_SOCKET_ADDRESS(address)));
+            additionalMetrics.remoteAddress = makeString(unsafeSpan(ipAddress.get()), ':', g_inet_socket_address_get_port(G_INET_SOCKET_ADDRESS(address)));
         }
         additionalMetrics.tlsProtocol = tlsProtocolVersionToString(soup_message_get_tls_protocol_version(m_soupMessage.get()));
         additionalMetrics.tlsCipher = String::fromUTF8(soup_message_get_tls_ciphersuite_name(m_soupMessage.get()));
@@ -1530,7 +1536,7 @@ void NetworkDataTaskSoup::networkEvent(GSocketClientEvent event, GIOStream* stre
             GRefPtr<GSocketAddress> address = adoptGRef(g_socket_connection_get_remote_address(G_SOCKET_CONNECTION(stream), nullptr));
             if (G_IS_INET_SOCKET_ADDRESS(address.get())) {
                 GUniquePtr<char> ipAddress(g_inet_address_to_string(g_inet_socket_address_get_address(G_INET_SOCKET_ADDRESS(address.get()))));
-                additionalNetworkLoadMetricsForWebInspector().remoteAddress = makeString(span(ipAddress.get()), ':', g_inet_socket_address_get_port(G_INET_SOCKET_ADDRESS(address.get())));
+                additionalNetworkLoadMetricsForWebInspector().remoteAddress = makeString(unsafeSpan(ipAddress.get()), ':', g_inet_socket_address_get_port(G_INET_SOCKET_ADDRESS(address.get())));
             }
         }
         // Web Timing considers that connection time involves dns, proxy & TLS negotiation...

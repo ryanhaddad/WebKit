@@ -112,7 +112,7 @@ void NetworkDataTaskBlob::resume()
 
     m_state = State::Running;
 
-    RunLoop::main().dispatch([this, protectedThis = Ref { *this }] {
+    RunLoop::protectedMain()->dispatch([this, protectedThis = Ref { *this }] {
         if (m_state == State::Canceling || m_state == State::Completed || !m_client) {
             clearStream();
             return;
@@ -342,7 +342,7 @@ void NetworkDataTaskBlob::readFile(const BlobDataItem& item)
     ASSERT(m_stream);
 
     if (m_fileOpened) {
-        m_stream->read(m_buffer.data(), m_buffer.size());
+        m_stream->read(m_buffer.mutableSpan());
         return;
     }
 

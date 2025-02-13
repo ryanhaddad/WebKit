@@ -168,7 +168,7 @@ RegisterID* RegExpNode::emitBytecode(BytecodeGenerator& generator, RegisterID* d
     if (regExp->isValid())
         return generator.emitNewRegExp(generator.finalDestination(dst), regExp);
 
-    auto& message = generator.parserArena().identifierArena().makeIdentifier(generator.vm(), span8(regExp->errorMessage()));
+    auto& message = generator.parserArena().identifierArena().makeIdentifier(generator.vm(), regExp->errorMessage().span8());
     generator.emitThrowStaticError(ErrorTypeWithExtension::SyntaxError, message);
     return generator.emitLoad(generator.finalDestination(dst), jsUndefined());
 }
@@ -1239,7 +1239,7 @@ CallArguments::CallArguments(BytecodeGenerator& generator, ArgumentsNode* argume
     // We initialize 0 based on offset. And adjust m_argv based on that.
     if ((-m_allocatedRegisters[1]->index() + CallFrame::headerSizeInRegisters) % stackAlignmentRegisters()) {
         m_allocatedRegisters[0] = generator.newTemporary();
-        m_argv = m_allocatedRegisters.mutableSpan().subspan(0, argumentCountIncludingThis);
+        m_argv = m_allocatedRegisters.mutableSpan().first(argumentCountIncludingThis);
     } else
         m_argv = m_allocatedRegisters.mutableSpan().subspan(1, argumentCountIncludingThis);
 }

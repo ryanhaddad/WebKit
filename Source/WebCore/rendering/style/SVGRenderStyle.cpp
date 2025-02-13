@@ -32,8 +32,10 @@
 #include "CSSValueList.h"
 #include "IntRect.h"
 #include "NodeRenderStyle.h"
+#include "RenderStyleDifference.h"
 #include "SVGElement.h"
 #include <wtf/NeverDestroyed.h>
+#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 
@@ -95,14 +97,7 @@ SVGRenderStyle::~SVGRenderStyle() = default;
 
 bool SVGRenderStyle::operator==(const SVGRenderStyle& other) const
 {
-    return m_fillData == other.m_fillData
-        && m_strokeData == other.m_strokeData
-        && m_stopData == other.m_stopData
-        && m_miscData == other.m_miscData
-        && m_layoutData == other.m_layoutData
-        && m_inheritedResourceData == other.m_inheritedResourceData
-        && m_inheritedFlags == other.m_inheritedFlags
-        && m_nonInheritedFlags == other.m_nonInheritedFlags;
+    return inheritedEqual(other) && nonInheritedEqual(other);
 }
 
 bool SVGRenderStyle::inheritedEqual(const SVGRenderStyle& other) const
@@ -111,6 +106,14 @@ bool SVGRenderStyle::inheritedEqual(const SVGRenderStyle& other) const
         && m_strokeData == other.m_strokeData
         && m_inheritedResourceData == other.m_inheritedResourceData
         && m_inheritedFlags == other.m_inheritedFlags;
+}
+
+bool SVGRenderStyle::nonInheritedEqual(const SVGRenderStyle& other) const
+{
+    return m_stopData == other.m_stopData
+        && m_miscData == other.m_miscData
+        && m_layoutData == other.m_layoutData
+        && m_nonInheritedFlags == other.m_nonInheritedFlags;
 }
 
 void SVGRenderStyle::inheritFrom(const SVGRenderStyle& other)
@@ -130,7 +133,7 @@ void SVGRenderStyle::copyNonInheritedFrom(const SVGRenderStyle& other)
     m_layoutData = other.m_layoutData;
 }
 
-static bool colorChangeRequiresRepaint(const StyleColor& a, const StyleColor& b, bool currentColorDiffers)
+static bool colorChangeRequiresRepaint(const Style::Color& a, const Style::Color& b, bool currentColorDiffers)
 {
     if (a != b)
         return true;
@@ -352,5 +355,44 @@ void SVGRenderStyle::conservativelyCollectChangedAnimatableProperties(const SVGR
     if (m_nonInheritedFlags != other.m_nonInheritedFlags)
         conservativelyCollectChangedAnimatablePropertiesViaNonInheritedFlags(m_nonInheritedFlags, other.m_nonInheritedFlags);
 }
+
+#if !LOG_DISABLED
+
+void SVGRenderStyle::InheritedFlags::dumpDifferences(TextStream& ts, const SVGRenderStyle::InheritedFlags& other) const
+{
+    LOG_IF_DIFFERENT_WITH_CAST(ShapeRendering, shapeRendering);
+    LOG_IF_DIFFERENT_WITH_CAST(WindRule, clipRule);
+    LOG_IF_DIFFERENT_WITH_CAST(WindRule, fillRule);
+    LOG_IF_DIFFERENT_WITH_CAST(TextAnchor, textAnchor);
+    LOG_IF_DIFFERENT_WITH_CAST(ColorInterpolation, colorInterpolation);
+    LOG_IF_DIFFERENT_WITH_CAST(ColorInterpolation, colorInterpolationFilters);
+    LOG_IF_DIFFERENT_WITH_CAST(GlyphOrientation, glyphOrientationHorizontal);
+    LOG_IF_DIFFERENT_WITH_CAST(GlyphOrientation, glyphOrientationVertical);
+}
+
+void SVGRenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const SVGRenderStyle::NonInheritedFlags& other) const
+{
+    LOG_IF_DIFFERENT_WITH_CAST(AlignmentBaseline, flagBits.alignmentBaseline);
+    LOG_IF_DIFFERENT_WITH_CAST(DominantBaseline, flagBits.dominantBaseline);
+    LOG_IF_DIFFERENT_WITH_CAST(BaselineShift, flagBits.baselineShift);
+    LOG_IF_DIFFERENT_WITH_CAST(VectorEffect, flagBits.vectorEffect);
+    LOG_IF_DIFFERENT_WITH_CAST(BufferedRendering, flagBits.bufferedRendering);
+    LOG_IF_DIFFERENT_WITH_CAST(MaskType, flagBits.maskType);
+}
+
+void SVGRenderStyle::dumpDifferences(TextStream& ts, const SVGRenderStyle& other) const
+{
+    m_inheritedFlags.dumpDifferences(ts, other.m_inheritedFlags);
+    m_nonInheritedFlags.dumpDifferences(ts, other.m_nonInheritedFlags);
+
+    m_fillData->dumpDifferences(ts, other.m_fillData);
+    m_strokeData->dumpDifferences(ts, other.m_strokeData);
+    m_inheritedResourceData->dumpDifferences(ts, other.m_inheritedResourceData);
+
+    m_stopData->dumpDifferences(ts, other.m_stopData);
+    m_miscData->dumpDifferences(ts, other.m_miscData);
+    m_layoutData->dumpDifferences(ts, other.m_layoutData);
+}
+#endif
 
 }

@@ -23,16 +23,15 @@
 
 #if ENABLE(GPU_PROCESS) && PLATFORM(IOS_FAMILY)
 
-messages -> RemoteMediaSessionHelperProxy NotRefCounted {
-#if !PLATFORM(WATCHOS)
-    [EnabledBy=MediaSessionEnabled] StartMonitoringWirelessRoutes()
-    [EnabledBy=MediaSessionEnabled] StopMonitoringWirelessRoutes()
-#endif
-#if PLATFORM(WATCHOS)
+[
+    DispatchedFrom=WebContent,
+    DispatchedTo=GPU,
+    EnabledBy=UseGPUProcessForMediaEnabled
+]
+messages -> RemoteMediaSessionHelperProxy {
     StartMonitoringWirelessRoutes()
     StopMonitoringWirelessRoutes()
-#endif
-    ProvidePresentingApplicationPID(int pid)
+    ProvidePresentingApplicationPID(int pid, WebCore::MediaSessionHelper::ShouldOverride shouldOverride)
 }
 
 #endif

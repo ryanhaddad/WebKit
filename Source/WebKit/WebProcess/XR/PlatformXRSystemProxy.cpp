@@ -35,6 +35,7 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include "XRDeviceInfo.h"
+#include <WebCore/Page.h>
 #include <WebCore/SecurityOrigin.h>
 #include <wtf/Vector.h>
 
@@ -113,12 +114,16 @@ void PlatformXRSystemProxy::submitFrame()
 
 void PlatformXRSystemProxy::sessionDidEnd(XRDeviceIdentifier deviceIdentifier)
 {
+    RELEASE_ASSERT(webXREnabled());
+
     if (auto device = deviceByIdentifier(deviceIdentifier))
         device->sessionDidEnd();
 }
 
 void PlatformXRSystemProxy::sessionDidUpdateVisibilityState(XRDeviceIdentifier deviceIdentifier, PlatformXR::VisibilityState visibilityState)
 {
+    RELEASE_ASSERT(webXREnabled());
+
     if (auto device = deviceByIdentifier(deviceIdentifier))
         device->updateSessionVisibilityState(visibilityState);
 }

@@ -50,8 +50,6 @@
 
 #include <queue>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WebCore {
 
 using namespace HTMLNames;
@@ -216,7 +214,7 @@ bool AccessibilityTable::isDataTable() const
     unsigned cellsWithRightBorder = 0;
 
     UncheckedKeyHashMap<Node*, unsigned> cellCountForEachRow;
-    Color alternatingRowColors[5];
+    std::array<Color, 5> alternatingRowColors;
     int alternatingRowColorCount = 0;
     unsigned rowCount = 0;
     unsigned maxColumnCount = 0;
@@ -429,9 +427,9 @@ void AccessibilityTable::setCellSlotsDirty()
 void AccessibilityTable::updateChildrenRoles()
 {
     for (const auto& row : m_rows) {
-        downcast<AccessibilityObject>(*row).updateRole();
+        downcast<AccessibilityObject>(row.get()).updateRole();
         for (const auto& cell : row->unignoredChildren())
-            downcast<AccessibilityObject>(*cell).updateRole();
+            downcast<AccessibilityObject>(cell.get()).updateRole();
     }
 }
 
@@ -471,10 +469,10 @@ void AccessibilityTable::addChildren()
         return;
 
     for (unsigned i = 0; i < desiredColumnCount; ++i) {
-        RefPtr column = downcast<AccessibilityTableColumn>(cache->create(AccessibilityRole::Column));
+        Ref column = downcast<AccessibilityTableColumn>(*cache->create(AccessibilityRole::Column));
         column->setColumnIndex(i);
         column->setParent(this);
-        m_columns.append(column.get());
+        m_columns.append(column);
         addChild(column.get(), DescendIfIgnored::No);
     }
     addChild(headerContainer(), DescendIfIgnored::No);
@@ -624,6 +622,16 @@ unsigned AccessibilityTable::computeCellSlots()
                     colSpan,
                     rowSpan - 1
                 });
+            } else if (!rowSpan) {
+                // Zero is a special value for rowspan that means it spans all remaining rows.
+                // Pass the max rowspan value for DownwardGrowingCell::remainingRowsToSpan, allowing
+                // this cell to span for as long as the table extends.
+                downwardGrowingCells.append({
+                    *currentCell,
+                    xCurrent,
+                    colSpan,
+                    HTMLTableCellElement::maxRowspan - yCurrent
+                });
             }
 
             // Step 15.
@@ -634,10 +642,10 @@ unsigned AccessibilityTable::computeCellSlots()
         }
 
         // Not specified: update some internal data structures.
-        m_rows.append(row);
+        m_rows.append(*row);
         row->setRowIndex(yCurrent);
 #if !ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
-        addChild(row);
+        addChild(*row);
 #endif // !ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
 
         // Step 16: If current cell is the last td or th element child in the tr element being processed, then increase ycurrent by 1, abort this set of steps, and return to the algorithm above.
@@ -646,12 +654,10 @@ unsigned AccessibilityTable::computeCellSlots()
     auto needsToDescend = [&processedRows] (AXCoreObject& axObject) {
         return !axObject.isTableRow() && !processedRows.contains(&downcast<AccessibilityObject>(axObject));
     };
-    std::function<void(AXCoreObject*)> processRowDescendingIfNeeded = [&] (AXCoreObject* axObject) {
-        if (!axObject)
-            return;
+    std::function<void(AXCoreObject&)> processRowDescendingIfNeeded = [&] (AXCoreObject& axObject) {
         // Descend past anonymous renderers and non-rows.
-        if (needsToDescend(*axObject)) {
-            for (const auto& child : axObject->unignoredChildren())
+        if (needsToDescend(axObject)) {
+            for (const auto& child : axObject.unignoredChildren())
                 processRowDescendingIfNeeded(child.get());
         } else
             processRow(dynamicDowncast<AccessibilityTableRow>(axObject));
@@ -708,11 +714,11 @@ unsigned AccessibilityTable::computeCellSlots()
 
 #if !ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
         // Not needed for ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE) because we add captions via AccessibilityRenderObject::addChildren().
-        if (auto* caption = dynamicDowncast<HTMLTableCaptionElement>(node)) {
+        if (auto* caption = dynamicDowncast<HTMLTableCaptionElement>(element)) {
             // Step 6: Associate the first caption element child of the table element with the table.
             if (!didAddCaption) {
                 if (RefPtr axCaption = cache->getOrCreate(*caption)) {
-                    addChild(axCaption.get(), DescendIfIgnored::No);
+                    addChild(*axCaption, DescendIfIgnored::No);
                     didAddCaption = true;
                 }
             }
@@ -739,7 +745,7 @@ unsigned AccessibilityTable::computeCellSlots()
                 // We are forgiving with ARIA grid markup, descending past disallowed elements to build the grid structure (this is not specified, but consistent with other browsers).
                 if (RefPtr axObject = cache->getOrCreate(node); axObject && needsToDescend(*axObject)) {
                     for (const auto& child : axObject->childrenIncludingIgnored())
-                        processTableDescendant(child ? child->node() : nullptr);
+                        processTableDescendant(child->node());
                 }
             }
             return;
@@ -780,7 +786,7 @@ unsigned AccessibilityTable::computeCellSlots()
     return xWidth;
 }
 
-AXCoreObject* AccessibilityTable::headerContainer()
+AccessibilityObject* AccessibilityTable::headerContainer()
 {
     if (m_headerContainer)
         return m_headerContainer.get();
@@ -818,10 +824,9 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityTable::rowHeaders()
     // Sometimes m_rows can be reset during the iteration, we cache it here to be safe.
     AccessibilityChildrenVector rowsCopy = m_rows;
     for (const auto& row : rowsCopy) {
-        if (auto* header = downcast<AccessibilityTableRow>(*row).rowHeader())
-            headers.append(header);
+        if (auto* header = downcast<AccessibilityTableRow>(row.get()).rowHeader())
+            headers.append(*header);
     }
-
     return headers;
 }
 
@@ -831,10 +836,9 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityTable::visibleRows()
 
     AccessibilityChildrenVector rows;
     for (const auto& row : m_rows) {
-        if (row && !row->isOffScreen())
+        if (!row->isOffScreen())
             rows.append(row);
     }
-
     return rows;
 }
 
@@ -964,5 +968,3 @@ void AccessibilityTable::ensureRowAndColumn(unsigned rowIndex, unsigned columnIn
 }
 
 } // namespace WebCore
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

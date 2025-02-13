@@ -35,6 +35,7 @@
 #import "TestUIDelegate.h"
 #import "TestWKWebView.h"
 #import "UIKitSPIForTesting.h"
+#import "UnifiedPDFTestHelpers.h"
 #import "WKWebViewConfigurationExtras.h"
 #import <SoftLinking/WeakLinking.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
@@ -58,6 +59,7 @@
 
 #if PLATFORM(MAC)
 #import <pal/cocoa/WritingToolsUISoftLink.h>
+#import <pal/spi/mac/NSMenuSPI.h>
 #import <pal/spi/mac/NSTextInputContextSPI.h>
 #endif
 
@@ -301,7 +303,7 @@ using PlatformTextPlaceholder = NSTextPlaceholder;
 - (void)waitForProofreadingSuggestionsToBeReplaced
 {
     // FIXME: Avoid using a hard-coded delay.
-    TestWebKitAPI::Util::runFor(1.0_s);
+    TestWebKitAPI::Util::runFor(3.0_s);
 }
 
 @end
@@ -2534,30 +2536,6 @@ TEST(WritingTools, TransparencyMarkersForInlineEditing)
     TestWebKitAPI::Util::run(&finished);
 }
 
-TEST(WritingTools, TransparencyMarkersUsingWKWebViewSPI)
-{
-    auto webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:@"<h1 id='title'>Title</h1><p id='content'>Early morning in Cupertino</p>"]);
-
-    auto waitForValue = [webView](NSUInteger expectedValue) {
-        do {
-            if ([webView transparentContentMarkerCount:@"document.getElementById('content').childNodes[0]"] == expectedValue)
-                break;
-
-            TestWebKitAPI::Util::runFor(0.1_s);
-        } while (true);
-    };
-
-    EXPECT_EQ(0U, [webView transparentContentMarkerCount:@"document.getElementById('content').childNodes[0]"]);
-
-    RetainPtr identifier = [webView _enableSourceTextAnimationAfterElementWithID:@"title"];
-    waitForValue(1U);
-    EXPECT_EQ(1U, [webView transparentContentMarkerCount:@"document.getElementById('content').childNodes[0]"]);
-
-    [webView _disableTextAnimationWithUUID:identifier.get()];
-    waitForValue(0U);
-    EXPECT_EQ(0U, [webView transparentContentMarkerCount:@"document.getElementById('content').childNodes[0]"]);
-}
-
 TEST(WritingTools, NoCrashWhenWebProcessTerminates)
 {
     auto session = adoptNS([[WTSession alloc] initWithType:WTSessionTypeComposition textViewDelegate:nil]);
@@ -2613,7 +2591,7 @@ static void expectScheduleShowAffordanceForSelectionRectCalled(bool expectation)
         TestWebKitAPI::Util::run(&didCallScheduleShowAffordanceForSelectionRect);
     else {
         bool doneWaiting = false;
-        RunLoop::main().dispatchAfter(300_ms, [&] {
+        RunLoop::protectedMain()->dispatchAfter(300_ms, [&] {
             EXPECT_FALSE(didCallScheduleShowAffordanceForSelectionRect);
             doneWaiting = true;
         });
@@ -2672,6 +2650,9 @@ TEST(WritingTools, APIWithBehaviorDefault)
     // If `PlatformWritingToolsBehaviorDefault` (or `Limited`), there should be a context menu item, but no affordance nor inline editing support.
 
 #if PLATFORM(MAC)
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
     }));
@@ -2715,6 +2696,9 @@ TEST(WritingTools, APIWithBehaviorComplete)
     // If `PlatformWritingToolsBehaviorComplete`, there should be a context menu item, an affordance, and inline editing support.
 
 #if PLATFORM(MAC)
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
     }));
@@ -2886,6 +2870,9 @@ TEST(WritingTools, PanelHidesInputAccessoryView)
 
 TEST(WritingTools, ShowAffordance)
 {
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
     }));
@@ -2915,6 +2902,9 @@ TEST(WritingTools, ShowAffordance)
 
 TEST(WritingTools, ShowAffordanceForMultipleLines)
 {
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     static const Vector<WebCore::IntRect> expectedRects {
         { { 0, 0 }, { 0, 0 } },
         { { 8, 8 }, { 139, 52 } }
@@ -2941,6 +2931,9 @@ TEST(WritingTools, ShowAffordanceForMultipleLines)
 
 TEST(WritingTools, ShowPanelWithNoSelection)
 {
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
     __block NSRect selectionRect = NSZeroRect;
@@ -2964,6 +2957,9 @@ TEST(WritingTools, ShowPanelWithNoSelection)
 
 TEST(WritingTools, ShowPanelWithCaretSelection)
 {
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
     __block NSRect selectionRect = NSZeroRect;
@@ -3003,6 +2999,9 @@ TEST(WritingTools, ShowPanelWithCaretSelection)
 
 TEST(WritingTools, ShowPanelWithRangedSelection)
 {
+    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
+        return;
+
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
     __block NSRect selectionRect = NSZeroRect;
@@ -3270,6 +3269,66 @@ TEST(WritingTools, ContextMenuItemsEditableEmpty)
             continue;
 
         EXPECT_EQ(subItem.enabled, subItem.tag == WTRequestedToolIndex || subItem.tag == WTRequestedToolCompose);
+    }
+}
+
+TEST(WritingTools, AppMenuNonEditable)
+{
+    RetainPtr webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:@"<body><p>AAAA BBBB CCCC</p></body>" writingToolsBehavior:PlatformWritingToolsBehaviorComplete]);
+
+    [webView focusDocumentBodyAndSelectAll];
+
+    RetainPtr writingToolsMenuItem = [NSMenuItem standardWritingToolsMenuItem];
+    EXPECT_NOT_NULL(writingToolsMenuItem.get());
+
+    RetainPtr items = [[writingToolsMenuItem submenu] itemArray];
+    EXPECT_GT([items count], 0U);
+
+    for (NSMenuItem *subItem in items.get()) {
+        if (subItem.isSeparatorItem)
+            continue;
+
+        EXPECT_EQ([webView validateUserInterfaceItem:subItem], subItem.tag != WTRequestedToolCompose);
+    }
+}
+
+TEST(WritingTools, AppMenuEditable)
+{
+    RetainPtr webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:@"<body contenteditable><p>AAAA BBBB CCCC</p></body>" writingToolsBehavior:PlatformWritingToolsBehaviorComplete]);
+
+    [webView focusDocumentBodyAndSelectAll];
+
+    RetainPtr writingToolsMenuItem = [NSMenuItem standardWritingToolsMenuItem];
+    EXPECT_NOT_NULL(writingToolsMenuItem.get());
+
+    RetainPtr items = [[writingToolsMenuItem submenu] itemArray];
+    EXPECT_GT([items count], 0U);
+
+    for (NSMenuItem *subItem in items.get()) {
+        if (subItem.isSeparatorItem)
+            continue;
+
+        EXPECT_TRUE([webView validateUserInterfaceItem:subItem]);
+    }
+}
+
+TEST(WritingTools, AppMenuEditableEmpty)
+{
+    RetainPtr webView = adoptNS([[WritingToolsWKWebView alloc] initWithHTMLString:@"<body contenteditable></body>" writingToolsBehavior:PlatformWritingToolsBehaviorComplete]);
+
+    [webView focusDocumentBodyAndSelectAll];
+
+    RetainPtr writingToolsMenuItem = [NSMenuItem standardWritingToolsMenuItem];
+    EXPECT_NOT_NULL(writingToolsMenuItem.get());
+
+    RetainPtr items = [[writingToolsMenuItem submenu] itemArray];
+    EXPECT_GT([items count], 0U);
+
+    for (NSMenuItem *subItem in items.get()) {
+        if (subItem.isSeparatorItem)
+            continue;
+
+        EXPECT_EQ([webView validateUserInterfaceItem:subItem], subItem.tag == WTRequestedToolIndex || subItem.tag == WTRequestedToolCompose);
     }
 }
 
@@ -3750,7 +3809,7 @@ TEST(WritingTools, IntelligenceTextEffectCoordinatorDelegate_RectsForProofreadin
     id<WKIntelligenceTextEffectCoordinatorDelegate> coordinatorDelegate = (id<WKIntelligenceTextEffectCoordinatorDelegate>)webView.get();
 
     // FIXME: Figure out how to use `WebKitSwiftSoftLink` within TestWebKitAPI so that an actual instance can be created.
-    WKIntelligenceTextEffectCoordinator *coordinator = nil;
+    id<WKIntelligenceTextEffectCoordinating> coordinator = nil;
 
     NSRange subrange = NSMakeRange(18, 43); // "I didn't quite hear him.\n\nWho's over there?"
 
@@ -3803,7 +3862,7 @@ TEST(WritingTools, IntelligenceTextEffectCoordinatorDelegate_UpdateTextVisibilit
     finished = false;
 
     id<WKIntelligenceTextEffectCoordinatorDelegate> coordinatorDelegate = (id<WKIntelligenceTextEffectCoordinatorDelegate>)webView.get();
-    WKIntelligenceTextEffectCoordinator *coordinator = nil;
+    id<WKIntelligenceTextEffectCoordinating> coordinator = nil;
 
     __auto_type moveSelectionToFirstNode = ^{
         NSString *setSelectionJavaScript = @""
@@ -3891,7 +3950,7 @@ TEST(WritingTools, IntelligenceTextEffectCoordinatorDelegate_TextPreviewsForRang
     NSRange subrange = NSMakeRange(17, 45); // "I didn't quite here him.\n\nWho's over they're."
 
     id<WKIntelligenceTextEffectCoordinatorDelegate> coordinatorDelegate = (id<WKIntelligenceTextEffectCoordinatorDelegate>)webView.get();
-    WKIntelligenceTextEffectCoordinator *coordinator = nil;
+    id<WKIntelligenceTextEffectCoordinating> coordinator = nil;
 
 #if PLATFORM(MAC)
     __block RetainPtr<NSArray<_WKTextPreview *>> previews;
@@ -3954,6 +4013,34 @@ TEST(WritingTools, AttributedStringWithWebKitLegacy)
     }];
 
     TestWebKitAPI::Util::run(&finished);
+}
+#endif
+
+#if ENABLE(PDF_PLUGIN)
+TEST(WritingTools, PDFTextSelections)
+{
+    if constexpr (!TestWebKitAPI::unifiedPDFForTestingEnabled)
+        return;
+
+    RetainPtr webView = adoptNS([[WritingToolsWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:TestWebKitAPI::configurationForWebViewTestingUnifiedPDF().get()]);
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]];
+    [webView synchronouslyLoadRequest:request.get()];
+
+    auto selectAllText = [](TestWKWebView *webView) {
+#if PLATFORM(IOS_FAMILY)
+        [webView selectTextInGranularity:UITextGranularityDocument atPoint:CGPointMake(100, 100)];
+#else
+        [[webView window] makeFirstResponder:webView];
+        [[webView window] makeKeyAndOrderFront:nil];
+        [[webView window] orderFrontRegardless];
+        [webView sendClickAtPoint:NSMakePoint(100, 100)];
+        [webView selectAll:nil];
+#endif
+    };
+
+    selectAllText(webView.get());
+    [webView waitForNextPresentationUpdate];
+    EXPECT_EQ([webView writingToolsBehaviorForTesting], PlatformWritingToolsBehaviorNone);
 }
 #endif
 

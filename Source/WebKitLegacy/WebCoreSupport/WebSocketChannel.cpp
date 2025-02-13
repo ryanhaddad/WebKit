@@ -55,6 +55,7 @@
 #include <WebCore/UserContentProvider.h>
 #include <WebCore/WebSocketChannelClient.h>
 #include <WebCore/WebSocketHandshake.h>
+#include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
@@ -437,11 +438,11 @@ bool WebSocketChannel::appendToBuffer(std::span<const uint8_t> data)
     return true;
 }
 
-void WebSocketChannel::skipBuffer(size_t len)
+void WebSocketChannel::skipBuffer(size_t length)
 {
-    ASSERT_WITH_SECURITY_IMPLICATION(len <= m_buffer.size());
-    memmove(m_buffer.data(), m_buffer.data() + len, m_buffer.size() - len);
-    m_buffer.shrink(m_buffer.size() - len);
+    ASSERT_WITH_SECURITY_IMPLICATION(length <= m_buffer.size());
+    memmoveSpan(m_buffer.mutableSpan(), m_buffer.subspan(length));
+    m_buffer.shrink(m_buffer.size() - length);
 }
 
 bool WebSocketChannel::processBuffer()
@@ -548,7 +549,7 @@ bool WebSocketChannel::processFrame()
     WebSocketFrame frame;
     const uint8_t* frameEnd;
     String errorString;
-    WebSocketFrame::ParseFrameResult result = WebSocketFrame::parseFrame(m_buffer.data(), m_buffer.size(), frame, frameEnd, errorString);
+    WebSocketFrame::ParseFrameResult result = WebSocketFrame::parseFrame(m_buffer.mutableSpan(), frame, frameEnd, errorString);
     if (result == WebSocketFrame::FrameIncomplete)
         return false;
     if (result == WebSocketFrame::FrameError) {
@@ -769,7 +770,7 @@ void WebSocketChannel::processOutgoingFrameQueue()
         auto frame = m_outgoingFrameQueue.takeFirst();
         switch (frame->frameType) {
         case QueuedFrameTypeString: {
-            sendFrame(frame->opCode, frame->stringData.span(), [this, protectedThis = Ref { *this }] (bool success) {
+            sendFrame(frame->opCode, byteCast<uint8_t>(frame->stringData.span()), [this, protectedThis = Ref { *this }] (bool success) {
                 if (!success)
                     fail("Failed to send WebSocket frame."_s);
             });

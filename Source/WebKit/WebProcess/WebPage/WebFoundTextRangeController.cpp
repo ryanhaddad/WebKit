@@ -90,7 +90,7 @@ void WebFoundTextRangeController::findTextRangesForStringMatches(const String& s
         auto domData = WebFoundTextRange::DOMData { range.location, range.length };
         auto foundTextRange = WebFoundTextRange { domData, frameName.length() ? frameName : emptyAtom(), order };
 
-        m_cachedFoundRanges.add(foundTextRange, simpleRange);
+        m_cachedFoundRanges.add(foundTextRange, simpleRange.makeWeakSimpleRange());
         foundTextRanges.append(foundTextRange);
     }
 
@@ -151,10 +151,10 @@ void WebFoundTextRangeController::decorateTextRangeWithStyle(const WebFoundTextR
     if (auto simpleRange = simpleRangeFromFoundTextRange(range)) {
         switch (style) {
         case FindDecorationStyle::Normal:
-            simpleRange->start.document().markers().removeMarkers(*simpleRange, WebCore::DocumentMarker::Type::TextMatch);
+            simpleRange->start.document().markers().removeMarkers(*simpleRange, WebCore::DocumentMarkerType::TextMatch);
             break;
         case FindDecorationStyle::Found:
-            simpleRange->start.document().markers().addMarker(*simpleRange, WebCore::DocumentMarker::Type::TextMatch);
+            simpleRange->start.document().markers().addMarker(*simpleRange, WebCore::DocumentMarkerType::TextMatch);
             break;
         case FindDecorationStyle::Highlighted: {
             m_highlightedRange = range;
@@ -223,7 +223,7 @@ void WebFoundTextRangeController::scrollTextRangeToVisible(const WebFoundTextRan
 
 void WebFoundTextRangeController::clearAllDecoratedFoundText()
 {
-    m_cachedFoundRanges.clear();
+    clearCachedRanges();
     m_decoratedRanges.clear();
     m_webPage->corePage()->unmarkAllTextMatches();
 
@@ -298,6 +298,11 @@ void WebFoundTextRangeController::redraw()
             setTextIndicatorWithPDFRange(m_highlightedRange);
         }
     );
+}
+
+void WebFoundTextRangeController::clearCachedRanges()
+{
+    m_cachedFoundRanges.clear();
 }
 
 void WebFoundTextRangeController::willMoveToPage(WebCore::PageOverlay&, WebCore::Page* page)
@@ -477,7 +482,7 @@ Vector<WebCore::FloatRect> WebFoundTextRangeController::rectsForTextMatchesInRec
         if (!document)
             continue;
 
-        for (auto rect : document->markers().renderedRectsForMarkers(WebCore::DocumentMarker::Type::TextMatch)) {
+        for (auto rect : document->markers().renderedRectsForMarkers(WebCore::DocumentMarkerType::TextMatch)) {
             if (!localFrame->isMainFrame())
                 rect = mainFrameView->windowToContents(localFrame->view()->contentsToWindow(enclosingIntRect(rect)));
 
@@ -493,7 +498,7 @@ Vector<WebCore::FloatRect> WebFoundTextRangeController::rectsForTextMatchesInRec
 
 WebCore::LocalFrame* WebFoundTextRangeController::frameForFoundTextRange(const WebFoundTextRange& range) const
 {
-    RefPtr mainFrame = dynamicDowncast<LocalFrame>(m_webPage->corePage()->mainFrame());
+    RefPtr mainFrame = m_webPage->corePage()->localMainFrame();
     if (!mainFrame)
         return nullptr;
 
@@ -513,7 +518,7 @@ WebCore::Document* WebFoundTextRangeController::documentForFoundTextRange(const 
 
 std::optional<WebCore::SimpleRange> WebFoundTextRangeController::simpleRangeFromFoundTextRange(WebFoundTextRange range)
 {
-    return m_cachedFoundRanges.ensure(range, [&] () -> std::optional<WebCore::SimpleRange> {
+    auto foundRange = m_cachedFoundRanges.ensure(range, [&] -> std::optional<WebCore::WeakSimpleRange> {
         if (!std::holds_alternative<WebFoundTextRange::DOMData>(range.data))
             return std::nullopt;
 
@@ -523,8 +528,14 @@ std::optional<WebCore::SimpleRange> WebFoundTextRangeController::simpleRangeFrom
 
         Ref documentElement = *document->documentElement();
         auto domData = std::get<WebFoundTextRange::DOMData>(range.data);
-        return resolveCharacterRange(makeRangeSelectingNodeContents(documentElement), { domData.location, domData.length }, WebCore::findIteratorOptions());
+        auto simpleRange = resolveCharacterRange(makeRangeSelectingNodeContents(documentElement), { domData.location, domData.length }, WebCore::findIteratorOptions());
+        return simpleRange.makeWeakSimpleRange();
     }).iterator->value;
+
+    if (!foundRange)
+        return std::nullopt;
+
+    return makeSimpleRange(*foundRange);
 }
 
 } // namespace WebKit

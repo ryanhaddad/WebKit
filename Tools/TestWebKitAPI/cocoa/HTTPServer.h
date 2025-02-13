@@ -30,6 +30,7 @@
 #import <wtf/Forward.h>
 #import <wtf/HashMap.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/StringHash.h>
 
 OBJC_CLASS NSURLRequest;
@@ -101,12 +102,20 @@ struct HTTPResponse {
         , body(bodyFromString(body)) { }
     HTTPResponse(Behavior behavior)
         : behavior(behavior) { }
+    HTTPResponse(NSData *data)
+        : body(makeVector(data)) { }
 
     HTTPResponse(const HTTPResponse&) = default;
     HTTPResponse(HTTPResponse&&) = default;
     HTTPResponse() = default;
     HTTPResponse& operator=(const HTTPResponse&) = default;
     HTTPResponse& operator=(HTTPResponse&&) = default;
+
+    void setShouldRespondWith304ToConditionalRequests(HashMap<String, String>&& headerFields = { })
+    {
+        shouldRespondWith304ToConditionalRequests = true;
+        headerFieldsFor304 = WTFMove(headerFields);
+    }
 
     enum class IncludeContentLength : bool { No, Yes };
     Vector<uint8_t> serialize(IncludeContentLength = IncludeContentLength::Yes) const;
@@ -116,6 +125,8 @@ struct HTTPResponse {
     HashMap<String, String> headerFields;
     Vector<uint8_t> body;
     Behavior behavior { Behavior::SendResponseNormally };
+    bool shouldRespondWith304ToConditionalRequests { false };
+    HashMap<String, String> headerFieldsFor304;
 };
 
 namespace H2 {
@@ -178,3 +189,4 @@ private:
 RetainPtr<SecCertificateRef> testCertificate();
 RetainPtr<SecIdentityRef> testIdentity();
 RetainPtr<SecIdentityRef> testIdentity2();
+void verifyCertificateAndPublicKey(SecTrustRef);

@@ -38,12 +38,10 @@
 #include <wtf/ThreadSafeRefCounted.h>
 
 #if USE(SKIA)
-IGNORE_CLANG_WARNINGS_BEGIN("cast-align")
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkCanvas.h>
 #include <skia/core/SkSurface.h>
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-IGNORE_CLANG_WARNINGS_END
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
 namespace WebCore {
@@ -66,9 +64,9 @@ public:
 
     bool supportsAlpha() const { return m_flags & SupportsAlpha; }
 
-    virtual void beginPainting() = 0;
-    virtual void completePainting() = 0;
-    virtual void waitUntilPaintingComplete() = 0;
+    virtual void beginPainting();
+    virtual void completePainting();
+    void waitUntilPaintingComplete();
 
 #if USE(SKIA)
     SkCanvas* canvas();
@@ -88,6 +86,17 @@ protected:
     static Lock s_layersMemoryUsageLock;
     static double s_currentLayersMemoryUsage;
     static double s_maxLayersMemoryUsage;
+
+    enum class PaintingState {
+        InProgress,
+        Complete
+    };
+
+    struct {
+        Lock lock;
+        Condition condition;
+        PaintingState state { PaintingState::Complete };
+    } m_painting;
 
 private:
     Flags m_flags;
@@ -114,9 +123,6 @@ private:
 #if USE(SKIA)
     bool tryEnsureSurface() final;
 #endif
-    void beginPainting() final;
-    void completePainting() final;
-    void waitUntilPaintingComplete() final;
 
     MallocSpan<unsigned char> m_data;
     IntSize m_size;
@@ -140,6 +146,7 @@ public:
     WEBCORE_EXPORT virtual ~CoordinatedAcceleratedTileBuffer();
 
     BitmapTexture& texture() const { return m_texture.get(); }
+    void serverWait();
 
 private:
     CoordinatedAcceleratedTileBuffer(Ref<BitmapTexture>&&, Flags);
@@ -148,9 +155,7 @@ private:
     IntSize size() const final;
 
     bool tryEnsureSurface() final;
-    void beginPainting() final { }
     void completePainting() final;
-    void waitUntilPaintingComplete() final;
 
     Ref<BitmapTexture> m_texture;
     std::unique_ptr<GLFence> m_fence;

@@ -35,12 +35,19 @@ class RenderBoxModelObject;
 class RenderElement;
 class RenderObject;
 class RenderInline;
+class RenderStyle;
 class RenderText;
+
+namespace Layout {
+class Box;
+class ElementBox;
+class InitialContainingBlock;
+}
 
 namespace LayoutIntegration {
 
 #if ENABLE(TREE_DEBUGGING)
-struct InlineContent;
+class InlineContent;
 #endif
 
 class BoxTreeUpdater {

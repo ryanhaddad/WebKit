@@ -213,7 +213,7 @@ void RemoteLayerTreeEventDispatcher::scrollingThreadHandleWheelEvent(const WebWh
     ASSERT(ScrollingThread::isCurrentThread());
     
     auto continueEventHandlingOnMainThread = [protectedThis = Ref { *this }](WheelEventHandlingResult handlingResult) {
-        RunLoop::main().dispatch([protectedThis, handlingResult] {
+        RunLoop::protectedMain()->dispatch([protectedThis, handlingResult] {
             protectedThis->continueWheelEventHandling(handlingResult);
         });
     };
@@ -304,7 +304,7 @@ void RemoteLayerTreeEventDispatcher::wheelEventHandlingCompleted(const PlatformW
             return;
 
         auto result = scrollingTree->handleWheelEventAfterDefaultHandling(wheelEvent, scrollingNodeID, gestureState);
-        RunLoop::main().dispatch([protectedThis, wasHandled, result]() {
+        RunLoop::protectedMain()->dispatch([protectedThis, wasHandled, result]() {
             if (auto* scrollingCoordinator = protectedThis->scrollingCoordinator())
                 scrollingCoordinator->webPageProxy().wheelEventHandlingCompleted(wasHandled || result.wasHandled);
         });
@@ -327,9 +327,7 @@ PlatformWheelEvent RemoteLayerTreeEventDispatcher::filteredWheelEvent(const Plat
 
 RemoteLayerTreeDrawingAreaProxyMac& RemoteLayerTreeEventDispatcher::drawingAreaMac() const
 {
-    auto* drawingArea = dynamicDowncast<RemoteLayerTreeDrawingAreaProxy>(m_scrollingCoordinator->webPageProxy().drawingArea());
-    ASSERT(drawingArea && drawingArea->isRemoteLayerTreeDrawingAreaProxyMac());
-    return *static_cast<RemoteLayerTreeDrawingAreaProxyMac*>(drawingArea);
+    return *downcast<RemoteLayerTreeDrawingAreaProxyMac>(m_scrollingCoordinator->webPageProxy().drawingArea());
 }
 
 DisplayLink* RemoteLayerTreeEventDispatcher::displayLink() const
@@ -359,7 +357,7 @@ void RemoteLayerTreeEventDispatcher::startOrStopDisplayLink()
         return;
     }
 
-    RunLoop::main().dispatch([protectedThis = Ref { *this }] {
+    RunLoop::protectedMain()->dispatch([protectedThis = Ref { *this }] {
         protectedThis->startOrStopDisplayLinkOnMainThread();
     });
 }
@@ -740,7 +738,7 @@ void RemoteLayerTreeEventDispatcher::stopDisplayDidRefreshCallbacks(PlatformDisp
 #if ENABLE(MOMENTUM_EVENT_DISPATCHER_TEMPORARY_LOGGING)
 void RemoteLayerTreeEventDispatcher::flushMomentumEventLoggingSoon()
 {
-    RunLoop::current().dispatchAfter(1_s, [protectedThis = Ref { *this }] {
+    RunLoop::protectedCurrent()->dispatchAfter(1_s, [protectedThis = Ref { *this }] {
         protectedThis->m_momentumEventDispatcher->flushLog();
     });
 }

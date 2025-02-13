@@ -51,6 +51,7 @@
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/HTMLInputElement.h>
 #import <WebCore/HTMLNames.h>
+#import <WebCore/Icon.h>
 #import <WebCore/IntRect.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/Node.h>
@@ -149,7 +150,7 @@ void WebChromeClientIOS::runOpenPanel(LocalFrame&, FileChooser& chooser)
     };
 
     if (WebThreadIsCurrent()) {
-        RunLoop::main().dispatch([this, listener = WTFMove(listener), configuration = retainPtr(configuration)] {
+        RunLoop::protectedMain()->dispatch([this, listener = WTFMove(listener), configuration = retainPtr(configuration)] {
             [[webView() _UIKitDelegateForwarder] webView:webView() runOpenPanelForFileButtonWithResultListener:listener.get() configuration:configuration.get()];
         });
     } else

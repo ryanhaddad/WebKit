@@ -36,7 +36,7 @@ static bool hasDefaultValueForAxis(const SpaceSeparatedArray<LengthPercentage<No
     return values.value[3] == values.value[1]
         && values.value[2] == values.value[0]
         && values.value[1] == values.value[0]
-        && values.value[0] == LengthPercentage<Nonnegative> { LengthPercentageRaw<Nonnegative> { CSSUnitType::CSS_PX, 0 } };
+        && values.value[0] == 0_css_px;
 }
 
 bool hasDefaultValue(const BorderRadius& borderRadius)
@@ -61,13 +61,13 @@ static std::pair<SpaceSeparatedVector<LengthPercentage<Nonnegative>, 4>, bool> g
     } else if (values.value[1] != values.value[0]) {
         result.append(values.value[1]);
     } else {
-        isDefaultValue = result[0] == LengthPercentage<Nonnegative> { LengthPercentageRaw<Nonnegative> { CSSUnitType::CSS_PX, 0 } };
+        isDefaultValue = result[0] == 0_css_px;
     }
 
     return { { WTFMove(result) }, isDefaultValue };
 }
 
-void Serialize<BorderRadius>::operator()(StringBuilder& builder, const BorderRadius& borderRadius)
+void Serialize<BorderRadius>::operator()(StringBuilder& builder, const SerializationContext& context, const BorderRadius& borderRadius)
 {
     // <'border-radius'> = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
 
@@ -75,11 +75,11 @@ void Serialize<BorderRadius>::operator()(StringBuilder& builder, const BorderRad
     auto [vertical, verticalIsDefault] = gatherSerializableRadiiForAxis(borderRadius.vertical);
 
     if (!horizontalIsDefault || !verticalIsDefault) {
-        serializationForCSS(builder, horizontal);
+        serializationForCSS(builder, context, horizontal);
 
         if (horizontal != vertical) {
             builder.append(" / "_s);
-            serializationForCSS(builder, vertical);
+            serializationForCSS(builder, context, vertical);
         }
     }
 }

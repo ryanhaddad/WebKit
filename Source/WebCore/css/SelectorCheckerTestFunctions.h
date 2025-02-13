@@ -412,7 +412,7 @@ ALWAYS_INLINE bool matchesFullscreenPseudoClass(const Element& element)
 ALWAYS_INLINE bool matchesAnimatingFullscreenTransitionPseudoClass(const Element& element)
 {
     CheckedPtr fullscreenManager = element.document().fullscreenManagerIfExists();
-    if (!fullscreenManager || &element != fullscreenManager->currentFullscreenElement())
+    if (!fullscreenManager || &element != fullscreenManager->fullscreenElement())
         return false;
     return fullscreenManager->isAnimatingFullscreen();
 }
@@ -428,7 +428,7 @@ ALWAYS_INLINE bool matchesFullscreenDocumentPseudoClass(const Element& element)
 ALWAYS_INLINE bool matchesInWindowFullscreenPseudoClass(const Element& element)
 {
 #if ENABLE(VIDEO)
-    if (&element != element.document().fullscreenManager().currentFullscreenElement())
+    if (&element != element.document().fullscreenManager().fullscreenElement())
         return false;
 
     auto* mediaElement = dynamicDowncast<HTMLMediaElement>(element);
@@ -588,29 +588,6 @@ ALWAYS_INLINE bool matchesActiveViewTransitionPseudoClass(const Element& element
     if (&element != element.document().documentElement())
         return false;
     return !!element.document().activeViewTransition();
-}
-
-ALWAYS_INLINE bool matchesActiveViewTransitionTypePseudoClass(const Element& element, const FixedVector<AtomString>& types)
-{
-    // This pseudo class only matches the root element.
-    if (&element != element.document().documentElement())
-        return false;
-
-    if (const auto* viewTransition = element.document().activeViewTransition()) {
-        const auto& activeTypes = viewTransition->types();
-
-        for (const auto& type : types) {
-            // https://github.com/w3c/csswg-drafts/issues/9534#issuecomment-1802364085
-            // RESOLVED: type can accept any idents, except 'none' or '-ua-' prefixes
-            if (type.convertToASCIILowercase() == "none"_s || type.convertToASCIILowercase().startsWith("-ua-"_s))
-                continue;
-
-            if (activeTypes.hasType(type))
-                return true;
-        }
-    }
-
-    return false;
 }
 
 } // namespace WebCore

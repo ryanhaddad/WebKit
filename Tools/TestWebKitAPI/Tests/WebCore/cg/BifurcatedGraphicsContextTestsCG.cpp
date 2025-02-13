@@ -104,7 +104,7 @@ TEST(BifurcatedGraphicsContextTests, Text)
         EXPECT_FALSE(displayList.isEmpty());
         bool sawDrawGlyphs = false;
         for (auto& displayListItem : displayList.items()) {
-            if (auto* item = std::get_if<DrawGlyphs>(&displayListItem))
+            if (std::holds_alternative<DrawGlyphs>(displayListItem))
                 sawDrawGlyphs = true;
         }
 
@@ -301,7 +301,7 @@ TEST(BifurcatedGraphicsContextTests, ClipToImageBuffer)
 
     BifurcatedGraphicsContext ctx(primaryContext, secondaryContext);
 
-    auto imageBuffer = ImageBuffer::create({ 100, 100 }, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8);
+    auto imageBuffer = ImageBuffer::create({ 100, 100 }, RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8);
     ctx.clipToImageBuffer(*imageBuffer, { 0, 0, 100, 100 });
 
     auto runTest = [&] (DisplayList& displayList) {

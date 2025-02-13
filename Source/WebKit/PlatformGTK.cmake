@@ -1,12 +1,9 @@
 include(GLibMacros)
 include(InspectorGResources.cmake)
+include(ModernMediaControlsGResources.cmake)
 
 if (ENABLE_PDFJS)
     include(PdfJSGResources.cmake)
-endif ()
-
-if (ENABLE_MODERN_MEDIA_CONTROLS)
-    include(ModernMediaControlsGResources.cmake)
 endif ()
 
 if (USE_SKIA)
@@ -73,8 +70,8 @@ endif ()
 
 list(APPEND WebKit_SERIALIZATION_IN_FILES
     Shared/glib/DMABufRendererBufferFormat.serialization.in
-    Shared/glib/DMABufRendererBufferMode.serialization.in
     Shared/glib/InputMethodState.serialization.in
+    Shared/glib/RendererBufferTransportMode.serialization.in
     Shared/glib/SystemSettings.serialization.in
     Shared/glib/UserMessage.serialization.in
 
@@ -85,12 +82,15 @@ list(APPEND WebKit_SERIALIZATION_IN_FILES
 
 list(APPEND WebKit_DERIVED_SOURCES
     ${WebKitGTK_DERIVED_SOURCES_DIR}/InspectorGResourceBundle.c
+    ${WebKitGTK_DERIVED_SOURCES_DIR}/ModernMediaControlsGResourceBundle.c
     ${WebKitGTK_DERIVED_SOURCES_DIR}/WebKitDirectoryInputStreamData.cpp
     ${WebKitGTK_DERIVED_SOURCES_DIR}/WebKitResourcesGResourceBundle.c
 
     ${WebKitGTK_DERIVED_SOURCES_DIR}/webkit/WebKitEnumTypes.cpp
     ${WebKitGTK_DERIVED_SOURCES_DIR}/webkit/WebKitWebProcessEnumTypes.cpp
 )
+
+WEBKIT_BUILD_MODERN_MEDIA_CONTROLS_GRESOURCES(${WebKitGTK_DERIVED_SOURCES_DIR})
 
 if (ENABLE_WAYLAND_TARGET)
     list(APPEND WebKit_DERIVED_SOURCES
@@ -106,14 +106,6 @@ if (ENABLE_PDFJS)
     )
 
     WEBKIT_BUILD_PDFJS_GRESOURCES(${WebKitGTK_DERIVED_SOURCES_DIR})
-endif ()
-
-if (ENABLE_MODERN_MEDIA_CONTROLS)
-    list(APPEND WebKit_DERIVED_SOURCES
-        ${WebKitGTK_DERIVED_SOURCES_DIR}/ModernMediaControlsGResourceBundle.c
-    )
-
-    WEBKIT_BUILD_MODERN_MEDIA_CONTROLS_GRESOURCES(${WebKitGTK_DERIVED_SOURCES_DIR})
 endif ()
 
 set(WebKit_DirectoryInputStream_DATA
@@ -194,6 +186,7 @@ set(WebKitGTK_HEADER_TEMPLATES
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMediaPermissionRequest.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitUserMessage.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebContext.h.in
+    ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebExtensionMatchPattern.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebResource.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebView.h.in
     ${WEBKIT_DIR}/UIProcess/API/glib/WebKitWebViewSessionState.h.in
@@ -351,6 +344,12 @@ list(APPEND GPUProcess_SOURCES
 
 if (GTK_UNIX_PRINT_FOUND)
     list(APPEND WebKit_LIBRARIES GTK::UnixPrint)
+endif ()
+
+if (USE_CAIRO)
+    list(APPEND WebKit_SERIALIZATION_IN_FILES
+        Shared/cairo/WebCoreFontCairo.serialization.in
+    )
 endif ()
 
 if (USE_LIBWEBRTC)
@@ -597,6 +596,8 @@ GI_DOCGEN(WebKit${WEBKITGTK_API_INFIX} gtk/gtk${GTK_API_VERSION}-webkitgtk.toml.
     CONTENT_TEMPLATES
         gtk/gtk${GTK_API_VERSION}-urlmap.js
         glib/environment-variables.md
+        glib/profiling.md
+        glib/remote-inspector.md
 )
 
 if (ENABLE_2022_GLIB_API)

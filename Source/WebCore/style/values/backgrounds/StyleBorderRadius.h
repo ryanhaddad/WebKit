@@ -34,7 +34,7 @@ namespace Style {
 // <'border-radius'> = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
 // https://drafts.csswg.org/css-backgrounds-3/#propdef-border-radius
 struct BorderRadius {
-    using Corner = Size<LengthPercentage<CSS::Nonnegative>>;
+    using Corner = SpaceSeparatedSize<LengthPercentage<CSS::Nonnegative>>;
 
     constexpr bool operator==(const BorderRadius&) const = default;
 
@@ -56,12 +56,16 @@ template<size_t I> const auto& get(const BorderRadius& value)
         return value.bottomLeft;
 }
 
-template<> struct ToCSS<BorderRadius> { auto operator()(const BorderRadius&, const RenderStyle&) -> CSS::BorderRadius; };
-template<> struct ToStyle<CSS::BorderRadius> { auto operator()(const CSS::BorderRadius&, const BuilderState&, const CSSCalcSymbolTable&) -> BorderRadius; };
+// MARK: - Conversion
 
-FloatRoundedRect::Radii evaluate(const BorderRadius&, FloatSize referenceBox);
+template<> struct ToCSS<BorderRadius> { auto operator()(const BorderRadius&, const RenderStyle&) -> CSS::BorderRadius; };
+template<> struct ToStyle<CSS::BorderRadius> { auto operator()(const CSS::BorderRadius&, const BuilderState&) -> BorderRadius; };
+
+// MARK: - Evaluation
+
+template<> struct Evaluation<BorderRadius> { auto operator()(const BorderRadius&, FloatSize) -> FloatRoundedRect::Radii; };
 
 } // namespace Style
 } // namespace WebCore
 
-STYLE_TUPLE_LIKE_CONFORMANCE(BorderRadius, 4)
+DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::BorderRadius, 4)

@@ -28,6 +28,7 @@
 
 #if ENABLE(MEDIA_STREAM)
 
+#include "AudioMediaStreamTrackRenderer.h"
 #include "AudioSampleDataSource.h"
 #include "Logging.h"
 
@@ -36,10 +37,20 @@ namespace WebCore {
 AudioMediaStreamTrackRendererUnit& AudioMediaStreamTrackRendererUnit::singleton()
 {
     static LazyNeverDestroyed<std::unique_ptr<AudioMediaStreamTrackRendererUnit>> sharedUnit;
-    auto& unit = sharedUnit.get();
-    if (!unit)
-        unit = std::unique_ptr<AudioMediaStreamTrackRendererUnit>(new AudioMediaStreamTrackRendererUnit);
-    return *unit;
+    static std::once_flag onceKey;
+    std::call_once(onceKey, [&] {
+        sharedUnit.construct(std::unique_ptr<AudioMediaStreamTrackRendererUnit>(new AudioMediaStreamTrackRendererUnit()));
+    });
+    return *sharedUnit.get();
+}
+
+bool AudioMediaStreamTrackRendererUnit::supportsPerDeviceRendering()
+{
+#if !PLATFORM(IOS_FAMILY)
+    return true;
+#else
+    return false;
+#endif
 }
 
 AudioMediaStreamTrackRendererUnit::AudioMediaStreamTrackRendererUnit()
@@ -48,6 +59,16 @@ AudioMediaStreamTrackRendererUnit::AudioMediaStreamTrackRendererUnit()
 }
 
 AudioMediaStreamTrackRendererUnit::~AudioMediaStreamTrackRendererUnit() = default;
+
+void AudioMediaStreamTrackRendererUnit::setLastDeviceUsed(const String& deviceID)
+{
+    if (supportsPerDeviceRendering())
+        return;
+
+    UNUSED_PARAM(deviceID);
+    Ref unit = ensureDeviceUnit(AudioMediaStreamTrackRenderer::defaultDeviceID());
+    unit->setLastDeviceUsed(deviceID);
+}
 
 void AudioMediaStreamTrackRendererUnit::deleteUnitsIfPossible()
 {
@@ -63,11 +84,34 @@ void AudioMediaStreamTrackRendererUnit::deleteUnitsIfPossible()
     });
 }
 
-void AudioMediaStreamTrackRendererUnit::addSource(const String& deviceID, Ref<AudioSampleDataSource>&& source)
+Ref<AudioMediaStreamTrackRendererUnit::Unit> AudioMediaStreamTrackRendererUnit::ensureDeviceUnit(const String& identifier)
 {
+    String deviceID = supportsPerDeviceRendering() ? identifier : AudioMediaStreamTrackRenderer::defaultDeviceID();
+
     assertIsMainThread();
 
-    Ref unit = m_units.ensure(deviceID, [&deviceID] { return Unit::create(deviceID); }).iterator->value;
+    return m_units.ensure(deviceID, [&deviceID] {
+        return Unit::create(deviceID);
+    }).iterator->value;
+}
+
+RefPtr<AudioMediaStreamTrackRendererUnit::Unit> AudioMediaStreamTrackRendererUnit::getDeviceUnit(const String& identifier)
+{
+    String deviceID = supportsPerDeviceRendering() ? identifier : AudioMediaStreamTrackRenderer::defaultDeviceID();
+
+    assertIsMainThread();
+
+    auto iterator = m_units.find(deviceID);
+    if (iterator == m_units.end())
+        return { };
+    return iterator->value.ptr();
+}
+
+void AudioMediaStreamTrackRendererUnit::addSource(const String& deviceID, Ref<AudioSampleDataSource>&& source)
+{
+    setLastDeviceUsed(deviceID);
+
+    Ref unit = ensureDeviceUnit(deviceID);
     unit->addSource(WTFMove(source));
 }
 
@@ -75,22 +119,18 @@ void AudioMediaStreamTrackRendererUnit::removeSource(const String& deviceID, Aud
 {
     assertIsMainThread();
 
-    auto iterator = m_units.find(deviceID);
-    if (iterator == m_units.end())
+    RefPtr unit = getDeviceUnit(deviceID);
+    if (!unit)
         return;
 
     static constexpr Seconds deleteUnitDelay = 10_s;
-
-    Ref unit = iterator->value;
     if (unit->removeSource(source) && !unit->isDefault())
         m_deleteUnitsTimer.startOneShot(deleteUnitDelay);
 }
 
 void AudioMediaStreamTrackRendererUnit::addResetObserver(const String& deviceID, ResetObserver& observer)
 {
-    assertIsMainThread();
-
-    Ref unit = m_units.ensure(deviceID, [&deviceID] { return Unit::create(deviceID); }).iterator->value;
+    Ref unit = ensureDeviceUnit(deviceID);
     unit->addResetObserver(observer);
 }
 
@@ -98,8 +138,7 @@ void AudioMediaStreamTrackRendererUnit::retrieveFormatDescription(CompletionHand
 {
     assertIsMainThread();
 
-    auto defaultDeviceID = AudioMediaStreamTrackRenderer::defaultDeviceID();
-    Ref unit = m_units.ensure(defaultDeviceID, [&defaultDeviceID] { return Unit::create(defaultDeviceID); }).iterator->value;
+    Ref unit = ensureDeviceUnit(AudioMediaStreamTrackRenderer::defaultDeviceID());
     unit->retrieveFormatDescription(WTFMove(callback));
 }
 
@@ -167,6 +206,12 @@ void AudioMediaStreamTrackRendererUnit::Unit::addResetObserver(ResetObserver& ob
 {
     assertIsMainThread();
     m_resetObservers.add(observer);
+}
+
+void AudioMediaStreamTrackRendererUnit::Unit::setLastDeviceUsed(const String& deviceID)
+{
+    assertIsMainThread();
+    m_internalUnit->setLastDeviceUsed(deviceID);
 }
 
 void AudioMediaStreamTrackRendererUnit::Unit::retrieveFormatDescription(CompletionHandler<void(std::optional<CAAudioStreamDescription>)>&& callback)

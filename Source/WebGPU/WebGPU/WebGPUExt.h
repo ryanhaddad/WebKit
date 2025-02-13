@@ -161,6 +161,8 @@ WGPU_EXPORT void wgpuDeviceClearUncapturedErrorCallback(WGPUDevice device) WGPU_
 
 #endif  // !defined(WGPU_SKIP_DECLARATIONS)
 
+WGPU_EXPORT String wgpuAdapterFeatureName(WGPUFeatureName feature) WGPU_FUNCTION_ATTRIBUTE;
+
 // Current Swift-C++ encapsulation rules prevent Swift from accessing non-public data members,
 // even in extensions. When building WebGPU, use these macros to allow our Swift module to break
 // encapsulation.
@@ -175,15 +177,6 @@ WGPU_EXPORT void wgpuDeviceClearUncapturedErrorCallback(WGPUDevice device) WGPU_
 // Used to indicate that a class member has a specialized implementation in Swift. See
 // "SwiftCXXThunk.h".
 #define HAS_SWIFTCXX_THUNK  NS_REFINED_FOR_SWIFT
-
-#if defined(ENABLE_WEBGPU_SWIFT) && ENABLE_WEBGPU_SWIFT && defined(__WEBGPU__)
-#include "Buffer.h"
-#include "CommandEncoder.h"
-#include "CommandsMixin.h"
-#include "Device.h"
-#include "QuerySet.h"
-#include "Queue.h"
-#endif
 
 #endif
 

@@ -63,8 +63,8 @@ LegacyLineLayout::LegacyLineLayout(RenderBlockFlow& flow)
 
 LegacyLineLayout::~LegacyLineLayout()
 {
-    lineBoxes().deleteLineBoxTree();
-};
+    deleteLegacyRootBox(true);
+}
 
 static void determineDirectionality(TextDirection& dir, LegacyInlineIterator iter)
 {
@@ -146,16 +146,13 @@ std::unique_ptr<LegacyRootInlineBox> LegacyLineLayout::createRootInlineBox()
 
 LegacyRootInlineBox* LegacyLineLayout::createAndAppendRootInlineBox()
 {
-    auto newRootBox = createRootInlineBox();
-    LegacyRootInlineBox* rootBox = newRootBox.get();
-    m_lineBoxes.appendLineBox(WTFMove(newRootBox));
-
-    if (UNLIKELY(AXObjectCache::accessibilityEnabled()) && legacyRootBox() == rootBox) {
+    m_legacyRootInlineBox = createRootInlineBox();
+    if (UNLIKELY(AXObjectCache::accessibilityEnabled())) {
         if (AXObjectCache* cache = m_flow.document().existingAXObjectCache())
             cache->deferRecomputeIsIgnored(m_flow.element());
     }
 
-    return rootBox;
+    return m_legacyRootInlineBox.get();
 }
 
 LegacyInlineBox* LegacyLineLayout::createInlineBoxForRenderer(RenderObject* renderer)
@@ -163,7 +160,7 @@ LegacyInlineBox* LegacyLineLayout::createInlineBoxForRenderer(RenderObject* rend
     if (renderer == &m_flow)
         return createAndAppendRootInlineBox();
 
-    if (CheckedPtr textRenderer = dynamicDowncast<RenderText>(*renderer))
+    if (CheckedPtr textRenderer = dynamicDowncast<RenderSVGInlineText>(*renderer))
         return textRenderer->createInlineTextBox();
 
     if (CheckedPtr renderInline = dynamicDowncast<RenderInline>(renderer))
@@ -175,10 +172,10 @@ LegacyInlineBox* LegacyLineLayout::createInlineBoxForRenderer(RenderObject* rend
 
 static inline void dirtyLineBoxesForRenderer(RenderObject& renderer)
 {
-    if (CheckedPtr renderText = dynamicDowncast<RenderText>(renderer))
-        renderText->dirtyLegacyLineBoxes(true);
+    if (CheckedPtr renderText = dynamicDowncast<RenderSVGInlineText>(renderer))
+        renderText->deleteLegacyLineBoxes();
     else if (CheckedPtr renderInline = dynamicDowncast<RenderInline>(renderer))
-        renderInline->dirtyLegacyLineBoxes(true);
+        renderInline->deleteLegacyLineBoxes();
 }
 
 static bool parentIsConstructedOrHaveNext(LegacyInlineFlowBox* parentBox)
@@ -248,8 +245,13 @@ LegacyInlineFlowBox* LegacyLineLayout::createLineBoxes(RenderObject* obj, const 
 
 LegacyRootInlineBox* LegacyLineLayout::constructLine(BidiRunList<BidiRun>& bidiRuns, const LineInfo& lineInfo)
 {
-    ASSERT(bidiRuns.firstRun());
+    if (legacyRootBox()) {
+        // Refuse to create multiple lines for svg content. There should not need to be more than one.
+        ASSERT_NOT_REACHED();
+        return nullptr;
+    }
 
+    ASSERT(bidiRuns.firstRun());
     LegacyInlineFlowBox* parentBox = 0;
     for (BidiRun* r = bidiRuns.firstRun(); r; r = r->next()) {
         if (lineInfo.isEmpty())
@@ -303,7 +305,7 @@ void LegacyLineLayout::removeInlineBox(BidiRun& run, const LegacyRootInlineBox& 
     inlineBox->removeFromParent();
 
     auto& renderer = run.renderer();
-    if (CheckedPtr textRenderer = dynamicDowncast<RenderText>(renderer))
+    if (CheckedPtr textRenderer = dynamicDowncast<RenderSVGInlineText>(renderer))
         textRenderer->removeTextBox(downcast<LegacyInlineTextBox>(*inlineBox));
     delete inlineBox;
     run.setBox(nullptr);
@@ -429,22 +431,7 @@ LegacyRootInlineBox* LegacyLineLayout::createLineBoxesFromBidiRuns(unsigned bidi
 
     lineBox->setBidiLevel(bidiLevel);
 
-    bool isSVGRootInlineBox = is<SVGRootInlineBox>(*lineBox);
-    ASSERT(isSVGRootInlineBox);
-
-    // Now we position all of our text runs horizontally.
-
     removeEmptyTextBoxesAndUpdateVisualReordering(lineBox, bidiRuns.firstRun());
-
-    // SVG text layout code computes vertical & horizontal positions on its own.
-    // Note that we still need to execute computeVerticalPositionsForLine() as
-    // it calls LegacyInlineTextBox::positionLineBox(), which tracks whether the box
-    // contains reversed text or not. If we wouldn't do that editing and thus
-    // text selection in RTL boxes would not work as expected.
-    if (isSVGRootInlineBox) {
-        RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(m_flow.isRenderSVGText());
-        downcast<SVGRootInlineBox>(*lineBox).computePerCharacterLayoutInformation();
-    }
 
     GlyphOverflowAndFallbackFontsMap textBoxDataMap;
     lineBox->computeOverflow(lineBox->lineTop(), lineBox->lineBottom(), textBoxDataMap);
@@ -464,7 +451,7 @@ static void repaintSelfPaintInlineBoxes(const LegacyRootInlineBox& rootInlineBox
 
 void LegacyLineLayout::layoutRunsAndFloats(bool hasInlineChild)
 {
-    m_lineBoxes.deleteLineBoxTree();
+    deleteLegacyRootBox(true);
 
     TextDirection direction = style().writingMode().bidiDirection();
     if (style().unicodeBidi() == UnicodeBidi::Plaintext)
@@ -554,7 +541,7 @@ void LegacyLineLayout::layoutLineBoxes()
 {
     m_flow.setLogicalHeight(0_lu);
 
-    lineBoxes().deleteLineBoxes();
+    deleteLegacyRootBox();
 
     if (m_flow.firstChild()) {
         // In full layout mode, clear the line boxes of children upfront. Otherwise,
@@ -603,5 +590,24 @@ const LocalFrameViewLayoutContext& LegacyLineLayout::layoutContext() const
     return m_flow.view().frameView().layoutContext();
 }
 
+void LegacyLineLayout::shiftLineBy(LayoutUnit shiftX, LayoutUnit shiftY)
+{
+    if (m_legacyRootInlineBox)
+        m_legacyRootInlineBox->adjustPosition(shiftX, shiftY);
+}
+
+void LegacyLineLayout::deleteLegacyRootBox(bool runCleanup)
+{
+    if (!m_legacyRootInlineBox)
+        return;
+
+    if (!runCleanup) {
+        m_legacyRootInlineBox = { };
+        return;
+    }
+
+    auto* rootInlineBoxToDestroy = m_legacyRootInlineBox.release();
+    rootInlineBoxToDestroy->deleteLine();
+}
 
 }

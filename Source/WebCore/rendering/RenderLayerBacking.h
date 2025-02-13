@@ -207,6 +207,10 @@ public:
     void clearInteractionRegions();
 #endif
 
+#if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
+    void updateSeparatedProperties();
+#endif
+
     void updateAfterWidgetResize();
     void positionOverflowControlsLayers();
     
@@ -229,7 +233,9 @@ public:
     float deviceScaleFactor() const override;
     float contentsScaleMultiplierForNewTiles(const GraphicsLayer*) const override;
 
-    bool layerContainsBitmapOnly(const GraphicsLayer*) const override { return isBitmapOnly(); }
+#if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
+    bool layerAllowsDynamicContentScaling(const GraphicsLayer*) const override;
+#endif
 
     bool paintsOpaquelyAtNonIntegralScales(const GraphicsLayer*) const override;
 
@@ -239,10 +245,11 @@ public:
     void didChangePlatformLayerForLayer(const GraphicsLayer*) override;
     bool getCurrentTransform(const GraphicsLayer*, TransformationMatrix&) const override;
 
+    bool isFlushingLayers() const override;
     bool isTrackingRepaints() const override;
     bool shouldSkipLayerInDump(const GraphicsLayer*, OptionSet<LayerTreeAsTextOptions>) const override;
     bool shouldDumpPropertyForLayer(const GraphicsLayer*, ASCIILiteral propertyName, OptionSet<LayerTreeAsTextOptions>) const override;
-#if HAVE(HDR_SUPPORT)
+#if ENABLE(HDR_FOR_IMAGES)
     bool hdrForImagesEnabled() const override;
 #endif
 
@@ -364,6 +371,9 @@ private:
     void updateVideoGravity(const RenderStyle&);
 #endif
     void updateContentsScalingFilters(const RenderStyle&);
+#if HAVE(CORE_MATERIAL)
+    void updateAppleVisualEffect(const RenderStyle&);
+#endif
 
     // Return the opacity value that this layer should use for compositing.
     float compositingOpacity(float rendererOpacity) const;
@@ -372,7 +382,7 @@ private:
     bool isMainFrameRenderViewLayer() const;
     
     bool paintsBoxDecorations() const;
-    bool paintsContent(RenderLayer::PaintedContentRequest&) const;
+    void determinePaintsContent(RenderLayer::PaintedContentRequest&) const;
 
     void updateDrawsContent(PaintedContentsInfo&);
 
@@ -393,7 +403,7 @@ private:
     void resetContentsRect();
     void updateContentsRects();
 
-    bool isPaintDestinationForDescendantLayers(RenderLayer::PaintedContentRequest&) const;
+    void determineNonCompositedLayerDescendantsPaintedContent(RenderLayer::PaintedContentRequest&) const;
     bool hasVisibleNonCompositedDescendants() const;
 
     bool shouldClipCompositedBounds() const;

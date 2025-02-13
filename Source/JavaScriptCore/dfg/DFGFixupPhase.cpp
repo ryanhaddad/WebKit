@@ -1076,11 +1076,15 @@ private:
                 fixEdge<UntypedUse>(node->child1());
             break;
 
+        case StringAt:
         case StringCharAt:
         case StringCharCodeAt:
         case StringCodePointAt: {
             // Currently we have no good way of refining these.
-            ASSERT(node->arrayMode() == ArrayMode(Array::String, Array::Read));
+            if (op == StringAt)
+                ASSERT(node->arrayMode() == ArrayMode(Array::String, Array::Read, Array::OutOfBounds) || node->arrayMode() == ArrayMode(Array::String, Array::Read, Array::InBounds));
+            else
+                ASSERT(node->arrayMode() == ArrayMode(Array::String, Array::Read));
             blessArrayOperation(node->child1(), node->child2(), node->child1()); // Rewrite child1 with ResolveRope.
             fixEdge<KnownStringUse>(node->child1());
             fixEdge<Int32Use>(node->child2());
@@ -1523,12 +1527,16 @@ private:
             }
             break;
         }
-            
-        case AtomicsIsLockFree:
-            if (m_graph.child(node, 0)->shouldSpeculateInt32())
-                fixIntOrBooleanEdge(m_graph.child(node, 0));
+
+        case AtomicsIsLockFree: {
+            Edge child1 = m_graph.child(node, 0);
+            if (child1->shouldSpeculateInt32()) {
+                fixIntOrBooleanEdge(child1);
+                node->clearFlags(NodeMustGenerate);
+            }
             break;
-            
+        }
+
         case ArrayPush: {
             // May need to refine the array mode in case the value prediction contravenes
             // the array prediction. For example, we may have evidence showing that the
@@ -2487,6 +2495,7 @@ private:
         case DoubleAsInt32:
         case ValueToInt32:
         case DoubleRep:
+        case PurifyNaN:
         case ValueRep:
         case Int52Rep:
         case Int52Constant:
@@ -2801,6 +2810,7 @@ private:
             break;
 
         case MapStorage:
+        case MapStorageOrSentinel:
             if (node->child1().useKind() == MapObjectUse)
                 fixEdge<MapObjectUse>(node->child1());
             else if (node->child1().useKind() == SetObjectUse)
@@ -5182,9 +5192,7 @@ private:
                                 Edge(edge.node(), Int52RepUse));
                         } else {
                             UseKind useKind;
-                            if (edge->shouldSpeculateDoubleReal())
-                                useKind = RealNumberUse;
-                            else if (edge->shouldSpeculateNumber())
+                            if (edge->shouldSpeculateNumber())
                                 useKind = NumberUse;
                             else
                                 useKind = NotCellNorBigIntUse;

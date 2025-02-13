@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +33,17 @@
 #import "CocoaHelpers.h"
 #import "MessageSenderInlines.h"
 #import "WebExtensionAPINamespace.h"
+#import "WebExtensionAPIWebPageNamespace.h"
 #import "WebExtensionControllerMessages.h"
 #import "WebExtensionControllerProxy.h"
 #import "WebExtensionEventListenerType.h"
+#import "WebFrame.h"
+#import "WebPage.h"
 #import "WebProcess.h"
 #import <JavaScriptCore/APICast.h>
 #import <JavaScriptCore/ScriptCallStack.h>
 #import <JavaScriptCore/ScriptCallStackFactory.h>
+#import <WebCore/LocalFrame.h>
 
 #if ENABLE(WK_WEB_EXTENSIONS)
 
@@ -88,7 +92,7 @@ void WebExtensionAPITest::notifyPass(JSContextRef context, NSString *message)
     WebProcess::singleton().send(Messages::WebExtensionController::TestFinished(true, message, location.first, location.second), webExtensionControllerProxy->identifier());
 }
 
-void WebExtensionAPITest::yield(JSContextRef context, NSString *message)
+void WebExtensionAPITest::sendMessage(JSContextRef context, NSString *message, JSValue *argument)
 {
     auto location = scriptLocation(context);
 
@@ -100,7 +104,28 @@ void WebExtensionAPITest::yield(JSContextRef context, NSString *message)
     if (!webExtensionControllerProxy)
         return;
 
-    WebProcess::singleton().send(Messages::WebExtensionController::TestYielded(message, location.first, location.second), webExtensionControllerProxy->identifier());
+    WebProcess::singleton().send(Messages::WebExtensionController::TestSentMessage(message, argument._toSortedJSONString, location.first, location.second), webExtensionControllerProxy->identifier());
+}
+
+WebExtensionAPIEvent& WebExtensionAPITest::onMessage()
+{
+    if (!m_onMessage)
+        m_onMessage = WebExtensionAPIEvent::create(*this, WebExtensionEventListenerType::TestOnMessage);
+
+    return *m_onMessage;
+}
+
+JSValue *WebExtensionAPITest::runWithUserGesture(WebFrame& frame, JSValue *function)
+{
+    RefPtr coreFrame = frame.protectedCoreLocalFrame();
+    WebCore::UserGestureIndicator gestureIndicator(WebCore::IsProcessingUserGesture::Yes, coreFrame ? coreFrame->document() : nullptr);
+
+    return [function callWithArguments:@[ ]];
+}
+
+bool WebExtensionAPITest::isProcessingUserGesture()
+{
+    return WebCore::UserGestureIndicator::processingUserGesture();
 }
 
 inline NSString *debugString(JSValue *value)
@@ -122,7 +147,7 @@ void WebExtensionAPITest::log(JSContextRef context, JSValue *value)
     if (!webExtensionControllerProxy)
         return;
 
-    WebProcess::singleton().send(Messages::WebExtensionController::TestMessage(debugString(value), location.first, location.second), webExtensionControllerProxy->identifier());
+    WebProcess::singleton().send(Messages::WebExtensionController::TestLogMessage(debugString(value), location.first, location.second), webExtensionControllerProxy->identifier());
 }
 
 void WebExtensionAPITest::fail(JSContextRef context, NSString *message)
@@ -334,6 +359,23 @@ JSValue *WebExtensionAPITest::assertSafeResolve(JSContextRef context, JSValue *f
         return result;
 
     return assertResolves(context, result, message);
+}
+
+void WebExtensionContextProxy::dispatchTestMessageEvent(const String& message, const String& argumentJSON, WebExtensionContentWorldType contentWorldType)
+{
+    id argument = parseJSON(argumentJSON, JSONOptions::FragmentsAllowed);
+
+    if (contentWorldType == WebExtensionContentWorldType::WebPage) {
+        enumerateFramesAndWebPageNamespaceObjects([&](auto&, auto& namespaceObject) {
+            namespaceObject.test().onMessage().invokeListenersWithArgument(message, argument);
+        });
+
+        return;
+    }
+
+    enumerateFramesAndNamespaceObjects([&](auto&, auto& namespaceObject) {
+        namespaceObject.test().onMessage().invokeListenersWithArgument(message, argument);
+    }, toDOMWrapperWorld(contentWorldType));
 }
 
 } // namespace WebKit

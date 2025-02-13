@@ -81,6 +81,11 @@ WebExtensionMessagePort::WebExtensionMessagePort(WebExtensionContext& extensionC
 {
 }
 
+WebExtensionMessagePort::~WebExtensionMessagePort()
+{
+    remove();
+}
+
 bool WebExtensionMessagePort::operator==(const WebExtensionMessagePort& other) const
 {
     return this == &other || (m_extensionContext == other.m_extensionContext && m_applicationIdentifier == other.m_applicationIdentifier && m_channelIdentifier == other.m_channelIdentifier);
@@ -118,8 +123,12 @@ void WebExtensionMessagePort::remove()
 
     Ref protectedThis { *this };
 
-    m_extensionContext->removeNativePort(*this);
-    m_extensionContext->firePortDisconnectEventIfNeeded(WebExtensionContentWorldType::Native, WebExtensionContentWorldType::Main, m_channelIdentifier);
+    RefPtr extensionContext = m_extensionContext.get();
+    if (!extensionContext)
+        return;
+
+    extensionContext->removeNativePort(*this);
+    extensionContext->firePortDisconnectEventIfNeeded(WebExtensionContentWorldType::Native, WebExtensionContentWorldType::Main, m_channelIdentifier);
     m_extensionContext = nullptr;
 }
 
@@ -137,7 +146,14 @@ void WebExtensionMessagePort::sendMessage(id message, CompletionHandler<void(Err
         return;
     }
 
-    m_extensionContext->portPostMessage(WebExtensionContentWorldType::Native, WebExtensionContentWorldType::Main, std::nullopt, m_channelIdentifier, encodeJSONString(message, JSONOptions::FragmentsAllowed) );
+    RefPtr extensionContext = m_extensionContext.get();
+    if (!extensionContext) {
+        if (completionHandler)
+            completionHandler({ { ErrorType::NotConnected, std::nullopt } });
+        return;
+    }
+
+    extensionContext->portPostMessage(WebExtensionContentWorldType::Native, WebExtensionContentWorldType::Main, std::nullopt, m_channelIdentifier, encodeJSONString(message, JSONOptions::FragmentsAllowed) );
 
     if (completionHandler)
         completionHandler(std::nullopt);

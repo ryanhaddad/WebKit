@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,6 @@
 #include <wtf/StdLibExtras.h>
 #include <wtf/text/AtomString.h>
 #include <wtf/text/StringView.h>
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #if defined(NDEBUG)
 #define WTF_STRINGTYPEADAPTER_COPIED_WTF_STRING() do { } while (0)
@@ -122,81 +120,67 @@ private:
     char32_t m_character;
 };
 
-inline unsigned stringLength(size_t length)
-{
-    RELEASE_ASSERT(length <= String::MaxLength);
-    return static_cast<unsigned>(length);
-}
-
 template<> class StringTypeAdapter<const LChar*, void> {
 public:
     StringTypeAdapter(const LChar* characters)
-        : m_characters { characters }
-        , m_length { computeLength(characters) }
+        : m_characters { unsafeSpan(characters) }
     {
+        RELEASE_ASSERT(m_characters.size() <= String::MaxLength);
     }
 
-    unsigned length() const { return m_length; }
+    unsigned length() const { return m_characters.size(); }
     bool is8Bit() const { return true; }
-    template<typename CharacterType> void writeTo(std::span<CharacterType> destination) const { StringImpl::copyCharacters(destination.data(), { m_characters, m_length }); }
+    template<typename CharacterType> void writeTo(std::span<CharacterType> destination) const { StringImpl::copyCharacters(destination, m_characters); }
 
 private:
-    static unsigned computeLength(const LChar* characters)
-    {
-        return stringLength(std::strlen(byteCast<char>(characters)));
-    }
-
-    const LChar* m_characters;
-    unsigned m_length;
+    std::span<const LChar> m_characters;
 };
 
 template<> class StringTypeAdapter<const UChar*, void> {
 public:
     StringTypeAdapter(const UChar* characters)
-        : m_characters { characters }
-        , m_length { computeLength(characters) }
+        : m_characters { unsafeSpan(characters) }
     {
+        RELEASE_ASSERT(m_characters.size() <= String::MaxLength);
     }
 
-    unsigned length() const { return m_length; }
-    bool is8Bit() const { return !m_length; }
-    void writeTo(std::span<LChar>) const { ASSERT(!m_length); }
-    void writeTo(std::span<UChar> destination) const { StringImpl::copyCharacters(destination.data(), { m_characters, m_length }); }
+    unsigned length() const { return m_characters.size(); }
+    bool is8Bit() const { return m_characters.empty(); }
+    void writeTo(std::span<LChar>) const { ASSERT(m_characters.empty()); }
+    void writeTo(std::span<UChar> destination) const { StringImpl::copyCharacters(destination, m_characters); }
 
 private:
-    static unsigned computeLength(const UChar* characters)
-    {
-        size_t length = 0;
-        while (characters[length])
-            ++length;
-        return stringLength(length);
-    }
-
-    const UChar* m_characters;
-    unsigned m_length;
+    std::span<const UChar> m_characters;
 };
 
 template<typename CharacterType, size_t Extent> class StringTypeAdapter<std::span<CharacterType, Extent>, void> {
 public:
     StringTypeAdapter(std::span<CharacterType, Extent> span)
-        : m_characters { span.data() }
-        , m_length { stringLength(span.size()) }
+        : m_characters { span }
     {
+        RELEASE_ASSERT(m_characters.size() <= String::MaxLength);
     }
 
-    unsigned length() const { return m_length; }
+    unsigned length() const { return m_characters.size(); }
     static constexpr bool is8Bit() { return sizeof(CharacterType) == 1; }
 
     template<typename DestinationCharacterType> void writeTo(std::span<DestinationCharacterType> destination) const
     {
         using CharacterTypeForString = std::conditional_t<sizeof(CharacterType) == sizeof(LChar), LChar, UChar>;
         static_assert(sizeof(CharacterTypeForString) == sizeof(CharacterType));
-        StringImpl::copyCharacters(destination.data(), { reinterpret_cast<const CharacterTypeForString*>(m_characters), m_length });
+        StringImpl::copyCharacters(destination, spanReinterpretCast<const CharacterTypeForString>(m_characters));
     }
 
 private:
-    const CharacterType* m_characters;
-    unsigned m_length;
+    std::span<const CharacterType> m_characters;
+};
+
+template<> class StringTypeAdapter<CString, void> : public StringTypeAdapter<std::span<const char>, void> {
+public:
+    StringTypeAdapter(const CString& string)
+        : StringTypeAdapter<std::span<const char>, void> { spanReinterpretCast<const char>(string.span()) }
+    {
+    }
 };
 
 template<> class StringTypeAdapter<ASCIILiteral, void> : public StringTypeAdapter<std::span<const LChar>, void> {
@@ -486,6 +470,7 @@ public:
     Interleave(Interleave&&) = default;
     Interleave& operator=(Interleave&&) = default;
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     template<typename Accumulator> void writeUsing(Accumulator& accumulator) const
     {
         auto begin = std::begin(container);
@@ -513,6 +498,7 @@ public:
                 accumulator.append(between, std::invoke(each, *begin));
         }
     }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 private:
     const C& container;
@@ -662,5 +648,3 @@ using WTF::asASCIILowercase;
 using WTF::asASCIIUppercase;
 using WTF::interleave;
 using WTF::pad;
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

@@ -26,10 +26,14 @@
 #include "config.h"
 #include "URLPattern.h"
 
+#include "ScriptExecutionContext.h"
 #include "URLPatternCanonical.h"
+#include "URLPatternConstructorStringParser.h"
 #include "URLPatternInit.h"
 #include "URLPatternOptions.h"
+#include "URLPatternParser.h"
 #include "URLPatternResult.h"
+#include <JavaScriptCore/RegExp.h>
 #include <wtf/RefCounted.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
@@ -38,37 +42,9 @@
 #include <wtf/text/StringToIntegerConversion.h>
 
 namespace WebCore {
+using namespace JSC;
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(URLPattern);
-
-template<typename CharacterType>
-static String escapePatternStringForCharacters(std::span<const CharacterType> characters)
-{
-    static constexpr std::array escapeCharacters { '+', '*', '?', ':', '(', ')', '\\', '{', '}' }; // NOLINT
-
-    StringBuilder result;
-    result.reserveCapacity(characters.size());
-
-    for (auto character : characters) {
-        if (std::find(escapeCharacters.begin(), escapeCharacters.end(), character) != escapeCharacters.end())
-            result.append('\\');
-
-        result.append(character);
-    }
-
-    return result.toString();
-}
-
-// https://urlpattern.spec.whatwg.org/#escape-a-pattern-string
-static String escapePatternString(StringView input)
-{
-    ASSERT(input.containsOnlyASCII());
-
-    if (input.is8Bit())
-        return escapePatternStringForCharacters(input.span8());
-
-    return escapePatternStringForCharacters(input.span16());
-}
 
 // https://urlpattern.spec.whatwg.org/#process-a-base-url-string
 static String processBaseURLString(StringView input, BaseURLStringType type)
@@ -76,8 +52,24 @@ static String processBaseURLString(StringView input, BaseURLStringType type)
     if (type != BaseURLStringType::Pattern)
         return input.toString();
 
-    return escapePatternString(input);
+    return URLPatternUtilities::escapePatternString(input);
 }
+
+// https://urlpattern.spec.whatwg.org/#hostname-pattern-is-an-ipv6-address
+static bool isHostnamePatternIPv6(StringView hostname)
+{
+    if (hostname.length() < 2)
+        return false;
+    if (hostname[0] == '[')
+        return true;
+    if (hostname[0] == '{' && hostname[1] == '[')
+        return true;
+    if (hostname[0] == '\\' && hostname[1] == '[')
+        return true;
+    return false;
+}
+
+URLPattern::URLPattern() = default;
 
 // https://urlpattern.spec.whatwg.org/#process-a-urlpatterninit
 static ExceptionOr<URLPatternInit> processInit(URLPatternInit&& init, BaseURLStringType type, String&& protocol = { }, String&& username = { }, String&& password = { }, String&& hostname = { }, String&& port = { }, String&& pathname = { }, String&& search = { }, String&& hash = { })
@@ -185,20 +177,19 @@ static ExceptionOr<URLPatternInit> processInit(URLPatternInit&& init, BaseURLStr
     if (!init.pathname.isNull()) {
         result.pathname = init.pathname;
 
-        if (!baseURL.isNull() && baseURL.hasOpaquePath() && !isAbsolutePathname(result.pathname, type)) {
+        if (!baseURL.isNull() && !baseURL.hasOpaquePath() && !isAbsolutePathname(result.pathname, type)) {
             auto baseURLPath = processBaseURLString(baseURL.path(), type);
             size_t slashIndex = baseURLPath.reverseFind('/');
 
             if (slashIndex != notFound)
                 result.pathname = makeString(StringView { baseURLPath }.left(slashIndex + 1), result.pathname);
-
-            auto pathResult = processPathname(result.pathname, baseURL.protocol(), type);
-
-            if (pathResult.hasException())
-                return pathResult.releaseException();
-
-            result.pathname = pathResult.releaseReturnValue();
         }
+        auto pathResult = processPathname(result.pathname, result.protocol, type);
+
+        if (pathResult.hasException())
+            return pathResult.releaseException();
+
+        result.pathname = pathResult.releaseReturnValue();
     }
 
     if (!init.search.isNull()) {
@@ -222,22 +213,25 @@ static ExceptionOr<URLPatternInit> processInit(URLPatternInit&& init, BaseURLStr
     return result;
 }
 
-ExceptionOr<Ref<URLPattern>> URLPattern::create(URLPatternInput&&, String&& baseURL, URLPatternOptions&&)
-{
-    UNUSED_PARAM(baseURL);
-
-    return Exception { ExceptionCode::NotSupportedError, "Not implemented."_s };
-}
-
-ExceptionOr<Ref<URLPattern>> URLPattern::create(std::optional<URLPatternInput>&& input, URLPatternOptions&&)
+// https://urlpattern.spec.whatwg.org/#url-pattern-create
+ExceptionOr<Ref<URLPattern>> URLPattern::create(ScriptExecutionContext& context, URLPatternInput&& input, String&& baseURL, URLPatternOptions&& options)
 {
     URLPatternInit init;
-    if (!input)
-        return Exception { ExceptionCode::NotSupportedError, "Not implemented."_s };
-    if (std::holds_alternative<String>(*input) && !std::get<String>(*input).isNull())
-        return Exception { ExceptionCode::NotSupportedError, "Not implemented."_s };
-    if (std::holds_alternative<URLPatternInit>(*input))
-        init = std::get<URLPatternInit>(*input);
+
+    if (std::holds_alternative<String>(input) && !std::get<String>(input).isNull()) {
+        auto maybeInit = URLPatternConstructorStringParser(WTFMove(std::get<String>(input))).parse(context);
+        if (maybeInit.hasException())
+            return maybeInit.releaseException();
+        init = maybeInit.releaseReturnValue();
+
+        if (baseURL.isNull() && init.protocol.isEmpty())
+            return Exception { ExceptionCode::TypeError, "Relative constructor string must have additional baseURL argument."_s };
+        init.baseURL = WTFMove(baseURL);
+    } else if (std::holds_alternative<URLPatternInit>(input)) {
+        if (!baseURL.isNull())
+            return Exception { ExceptionCode::TypeError, "Constructor with a URLPatternInit should have a null baseURL argument."_s };
+        init = std::get<URLPatternInit>(input);
+    }
 
     auto maybeProcessedInit = processInit(WTFMove(init), BaseURLStringType::Pattern);
 
@@ -245,7 +239,6 @@ ExceptionOr<Ref<URLPattern>> URLPattern::create(std::optional<URLPatternInput>&&
         return maybeProcessedInit.releaseException();
 
     auto processedInit = maybeProcessedInit.releaseReturnValue();
-
     if (!processedInit.protocol)
         processedInit.protocol = "*"_s;
     if (!processedInit.username)
@@ -263,41 +256,243 @@ ExceptionOr<Ref<URLPattern>> URLPattern::create(std::optional<URLPatternInput>&&
     if (!processedInit.port)
         processedInit.port = "*"_s;
 
-    if (auto parsedPort = parseInteger<uint16_t>(processedInit.port)) {
+    if (auto parsedPort = parseInteger<uint16_t>(processedInit.port, 10, WTF::ParseIntegerWhitespacePolicy::Disallow)) {
         if (WTF::URLParser::isSpecialScheme(processedInit.protocol) && isDefaultPortForProtocol(*parsedPort, processedInit.protocol))
             processedInit.port = emptyString();
     }
 
-    // FIXME: Implement compiling the component for each URLPattern member field to replace this current placeholder code which reroutes processed URLPatternInit object to URLPattern result.
-    return adoptRef(*new URLPattern(WTFMove(processedInit)));
+    Ref result = adoptRef(*new URLPattern);
+
+    auto maybeCompileException = result->compileAllComponents(context, WTFMove(processedInit), options);
+    if (maybeCompileException.hasException())
+        return maybeCompileException.releaseException();
+
+    return result;
 }
 
-URLPattern::URLPattern(URLPatternInit&& initInput)
-    : m_protocol(WTFMove(initInput.protocol))
-    , m_username(WTFMove(initInput.username))
-    , m_password(WTFMove(initInput.password))
-    , m_hostname(WTFMove(initInput.hostname))
-    , m_port(WTFMove(initInput.port))
-    , m_pathname(WTFMove(initInput.pathname))
-    , m_search(WTFMove(initInput.search))
-    , m_hash(WTFMove(initInput.hash))
+// https://urlpattern.spec.whatwg.org/#urlpattern-initialize
+ExceptionOr<Ref<URLPattern>> URLPattern::create(ScriptExecutionContext& context, std::optional<URLPatternInput>&& input, URLPatternOptions&& options)
 {
+    if (!input)
+        input = URLPatternInit { };
+
+    return create(context, WTFMove(*input), String { }, WTFMove(options));
+}
+
+// https://urlpattern.spec.whatwg.org/#build-a-url-pattern-from-a-web-idl-value
+ExceptionOr<Ref<URLPattern>> URLPattern::create(ScriptExecutionContext& context, Compatible&& value, const String& baseURL)
+{
+    return switchOn(WTFMove(value), [&](RefPtr<URLPattern>&& pattern) -> ExceptionOr<Ref<URLPattern>> {
+        return pattern.releaseNonNull();
+    }, [&](URLPatternInit&& init) -> ExceptionOr<Ref<URLPattern>> {
+        return URLPattern::create(context, WTFMove(init), { }, { });
+    }, [&](String&& string) -> ExceptionOr<Ref<URLPattern>> {
+        return URLPattern::create(context, WTFMove(string), String { baseURL }, { });
+    });
 }
 
 URLPattern::~URLPattern() = default;
 
-ExceptionOr<bool> URLPattern::test(std::optional<URLPatternInput>&&, String&& baseURL) const
+// https://urlpattern.spec.whatwg.org/#dom-urlpattern-test
+ExceptionOr<bool> URLPattern::test(ScriptExecutionContext& context, std::optional<URLPatternInput>&& input, String&& baseURL) const
 {
-    UNUSED_PARAM(baseURL);
+    if (!input)
+        input = URLPatternInit { };
 
-    return Exception { ExceptionCode::NotSupportedError };
+    auto maybeResult = match(context, WTFMove(*input), WTFMove(baseURL));
+    if (maybeResult.hasException())
+        return maybeResult.releaseException();
+
+    return !!maybeResult.returnValue();
 }
 
-ExceptionOr<std::optional<URLPatternResult>> URLPattern::exec(std::optional<URLPatternInput>&&, String&& baseURL) const
+// https://urlpattern.spec.whatwg.org/#dom-urlpattern-exec
+ExceptionOr<std::optional<URLPatternResult>> URLPattern::exec(ScriptExecutionContext& context, std::optional<URLPatternInput>&& input, String&& baseURL) const
 {
-    UNUSED_PARAM(baseURL);
+    if (!input)
+        input = URLPatternInit { };
 
-    return Exception { ExceptionCode::NotSupportedError };
+    return match(context, WTFMove(*input), WTFMove(baseURL));
+}
+
+ExceptionOr<void> URLPattern::compileAllComponents(ScriptExecutionContext& context, URLPatternInit&& processedInit, const URLPatternOptions& options)
+{
+    Ref vm = context.vm();
+    JSC::JSLockHolder lock(vm);
+
+    auto maybeProtocolComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.protocol, EncodingCallbackType::Protocol, URLPatternUtilities::URLPatternStringOptions { });
+    if (maybeProtocolComponent.hasException())
+        return maybeProtocolComponent.releaseException();
+    m_protocolComponent = maybeProtocolComponent.releaseReturnValue();
+
+    auto maybeUsernameComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.username, EncodingCallbackType::Username, URLPatternUtilities::URLPatternStringOptions { });
+    if (maybeUsernameComponent.hasException())
+        return maybeUsernameComponent.releaseException();
+    m_usernameComponent = maybeUsernameComponent.releaseReturnValue();
+
+    auto maybePasswordComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.password, EncodingCallbackType::Password, URLPatternUtilities::URLPatternStringOptions { });
+    if (maybePasswordComponent.hasException())
+        return maybePasswordComponent.releaseException();
+    m_passwordComponent = maybePasswordComponent.releaseReturnValue();
+
+    auto hostnameEncodingCallbackType = isHostnamePatternIPv6(processedInit.hostname) ? EncodingCallbackType::IPv6Host : EncodingCallbackType::Host;
+    auto maybeHostnameComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.hostname, hostnameEncodingCallbackType, URLPatternUtilities::URLPatternStringOptions { .delimiterCodepoint = "."_s });
+    if (maybeHostnameComponent.hasException())
+        return maybeHostnameComponent.releaseException();
+    m_hostnameComponent = maybeHostnameComponent.releaseReturnValue();
+
+    auto maybePortComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.port, EncodingCallbackType::Port, URLPatternUtilities::URLPatternStringOptions { });
+    if (maybePortComponent.hasException())
+        return maybePortComponent.releaseException();
+    m_portComponent = maybePortComponent.releaseReturnValue();
+
+    URLPatternUtilities::URLPatternStringOptions compileOptions { .ignoreCase = options.ignoreCase };
+
+    auto maybePathnameComponent = m_protocolComponent.matchSpecialSchemeProtocol(context)
+    ? URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.pathname, EncodingCallbackType::Path, URLPatternUtilities::URLPatternStringOptions  { "/"_s, "/"_s, options.ignoreCase })
+    : URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.pathname, EncodingCallbackType::OpaquePath, compileOptions);
+    if (maybePathnameComponent.hasException())
+        return maybePathnameComponent.releaseException();
+    m_pathnameComponent = maybePathnameComponent.releaseReturnValue();
+
+    auto maybeSearchComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.search, EncodingCallbackType::Search, compileOptions);
+    if (maybeSearchComponent.hasException())
+        return maybeSearchComponent.releaseException();
+    m_searchComponent = maybeSearchComponent.releaseReturnValue();
+
+    auto maybeHashComponent = URLPatternUtilities::URLPatternComponent::compile(vm, processedInit.hash, EncodingCallbackType::Hash, compileOptions);
+    if (maybeHashComponent.hasException())
+        return maybeHashComponent.releaseException();
+    m_hashComponent = maybeHashComponent.releaseReturnValue();
+
+    return { };
+}
+
+static inline void matchHelperAssignInputsFromURL(const URL& input, String& protocol, String& username, String& password, String& hostname, String& port, String& pathname, String& search, String& hash)
+{
+    protocol = input.protocol().toString();
+    username = input.user();
+    password = input.password();
+    hostname = input.host().toString();
+    port = input.port() ? String::number(*input.port()) : emptyString();
+    pathname = input.path().toString();
+    search = input.query().toString();
+    hash = input.fragmentIdentifier().toString();
+}
+
+static inline void matchHelperAssignInputsFromInit(const URLPatternInit& input, String& protocol, String& username, String& password, String& hostname, String& port, String& pathname, String& search, String& hash)
+{
+    protocol = input.protocol;
+    username = input.username;
+    password = input.password;
+    hostname = input.hostname;
+    port = input.port;
+    pathname = input.pathname;
+    search = input.search;
+    hash = input.hash;
+}
+
+// https://urlpattern.spec.whatwg.org/#url-pattern-match
+ExceptionOr<std::optional<URLPatternResult>> URLPattern::match(ScriptExecutionContext& context, std::variant<URL, URLPatternInput>&& input, String&& baseURLString) const
+{
+    URLPatternResult result;
+    String protocol, username, password, hostname, port, pathname, search, hash;
+
+    if (URL* inputURL = std::get_if<URL>(&input)) {
+        ASSERT(!inputURL->isEmpty() && inputURL->isValid());
+        matchHelperAssignInputsFromURL(*inputURL, protocol, username, password, hostname, port, pathname, search, hash);
+        result.inputs = Vector<URLPatternInput> { String { inputURL->string() } };
+    } else {
+        URLPatternInput* inputPattern = std::get_if<URLPatternInput>(&input);
+        result.inputs.append(*inputPattern);
+
+        auto hasError = WTF::switchOn(*inputPattern, [&](const URLPatternInit& value) -> ExceptionOr<bool> {
+            if (!baseURLString.isNull())
+                return Exception { ExceptionCode::TypeError, "Base URL string is provided with a URLPatternInit. If URLPatternInit is provided, please use URLPatternInit.baseURL property instead"_s };
+
+            URLPatternInit initCopy = value;
+            auto maybeResult = processInit(WTFMove(initCopy), BaseURLStringType::URL);
+            if (maybeResult.hasException())
+                return true;
+
+            matchHelperAssignInputsFromInit(maybeResult.releaseReturnValue(), protocol, username, password, hostname, port, pathname, search, hash);
+            return false;
+        }, [&](const String& value) -> ExceptionOr<bool> {
+            URL baseURL;
+            if (!baseURLString.isNull()) {
+                baseURL = URL { baseURLString };
+                if (!baseURL.isValid())
+                    return true;
+                result.inputs.append(baseURLString);
+            }
+            URL url { baseURL, value };
+            if (!url.isValid())
+                return true;
+
+            matchHelperAssignInputsFromURL(url, protocol, username, password, hostname, port, pathname, search, hash);
+            return false;
+        });
+
+        if (hasError.hasException())
+            return hasError.releaseException();
+        if (hasError.returnValue())
+            return { std::nullopt };
+    }
+
+    auto protocolExecResult = m_protocolComponent.componentExec(context, protocol);
+    if (protocolExecResult.isNull() || protocolExecResult.isUndefined())
+        return { std::nullopt };
+    result.protocol = m_protocolComponent.createComponentMatchResult(context, WTFMove(protocol), protocolExecResult);
+
+    auto usernameExecResult = m_usernameComponent.componentExec(context, username);
+    if (usernameExecResult.isNull() || usernameExecResult.isUndefined())
+        return { std::nullopt };
+    result.username = m_usernameComponent.createComponentMatchResult(context, WTFMove(username), usernameExecResult);
+
+    auto passwordExecResult = m_passwordComponent.componentExec(context, password);
+    if (passwordExecResult.isNull() || passwordExecResult.isUndefined())
+        return { std::nullopt };
+    result.password = m_passwordComponent.createComponentMatchResult(context, WTFMove(password), passwordExecResult);
+
+    auto hostnameExecResult = m_hostnameComponent.componentExec(context, hostname);
+    if (hostnameExecResult.isNull() || hostnameExecResult.isUndefined())
+        return { std::nullopt };
+    result.hostname = m_hostnameComponent.createComponentMatchResult(context, WTFMove(hostname), hostnameExecResult);
+
+    auto pathnameExecResult = m_pathnameComponent.componentExec(context, pathname);
+    if (pathnameExecResult.isNull() || pathnameExecResult.isUndefined())
+        return { std::nullopt };
+    result.pathname = m_pathnameComponent.createComponentMatchResult(context, WTFMove(pathname), pathnameExecResult);
+
+    auto portExecResult = m_portComponent.componentExec(context, port);
+    if (portExecResult.isNull() || portExecResult.isUndefined())
+        return { std::nullopt };
+    result.port = m_portComponent.createComponentMatchResult(context, WTFMove(port), portExecResult);
+
+    auto searchExecResult = m_searchComponent.componentExec(context, search);
+    if (searchExecResult.isNull() || searchExecResult.isUndefined())
+        return { std::nullopt };
+    result.search = m_searchComponent.createComponentMatchResult(context, WTFMove(search), searchExecResult);
+
+    auto hashExecResult = m_hashComponent.componentExec(context, hash);
+    if (hashExecResult.isNull() || hashExecResult.isUndefined())
+        return { std::nullopt };
+    result.hash = m_hashComponent.createComponentMatchResult(context, WTFMove(hash), hashExecResult);
+
+    return { result };
+}
+
+// https://urlpattern.spec.whatwg.org/#url-pattern-has-regexp-groups
+bool URLPattern::hasRegExpGroups() const
+{
+    return m_protocolComponent.hasRegexGroupsFromPartList()
+    || m_usernameComponent.hasRegexGroupsFromPartList()
+    || m_passwordComponent.hasRegexGroupsFromPartList()
+    || m_hostnameComponent.hasRegexGroupsFromPartList()
+    || m_pathnameComponent.hasRegexGroupsFromPartList()
+    || m_portComponent.hasRegexGroupsFromPartList()
+    || m_searchComponent.hasRegexGroupsFromPartList()
+    || m_hashComponent.hasRegexGroupsFromPartList();
 }
 
 }

@@ -60,25 +60,24 @@ static String permissiveTopPrivateDomain(StringView domain)
 
 String PublicSuffixStore::platformTopPrivatelyControlledDomain(StringView domain) const
 {
-    CString domainUTF8 = domain.utf8();
-
     // This function is expected to work with the format used by cookies, so skip any leading dots.
-    WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port
     unsigned position = 0;
-    while (domainUTF8.data()[position] == '.')
+    while (position < domain.length() && domain[position] == '.')
         position++;
 
-    if (position == domainUTF8.length())
+    auto tldView = domain.substring(position);
+    if (tldView.isEmpty())
         return String();
 
+    const auto tldCString = tldView.utf8();
+
     GUniqueOutPtr<GError> error;
-    if (const char* baseDomain = soup_tld_get_base_domain(domainUTF8.data() + position, &error.outPtr()))
+    if (const char* baseDomain = soup_tld_get_base_domain(tldCString.data(), &error.outPtr()))
         return String::fromUTF8(baseDomain);
-    WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     if (g_error_matches(error.get(), SOUP_TLD_ERROR, SOUP_TLD_ERROR_NO_BASE_DOMAIN)) {
         if (domain.endsWithIgnoringASCIICase("web-platform.test"_s))
-            return permissiveTopPrivateDomain(domain.substring(position));
+            return permissiveTopPrivateDomain(tldView);
         return String();
     }
 

@@ -33,8 +33,8 @@ namespace CSS {
 // <xywh()> = xywh( <length-percentage>{2} <length-percentage [0,∞]>{2} [ round <'border-radius'> ]? )
 // https://drafts.csswg.org/css-shapes-1/#funcdef-basic-shape-xywh
 struct Xywh {
-    using Location = Point<LengthPercentage<>>;
-    using Size = CSS::Size<LengthPercentage<Nonnegative>>;
+    using Location = SpaceSeparatedPoint<LengthPercentage<>>;
+    using Size = SpaceSeparatedSize<LengthPercentage<Nonnegative>>;
 
     Location location;
     Size size;
@@ -54,9 +54,9 @@ template<size_t I> const auto& get(const Xywh& value)
         return value.radii;
 }
 
-template<> struct Serialize<Xywh> { void operator()(StringBuilder&, const Xywh&); };
+template<> struct Serialize<Xywh> { void operator()(StringBuilder&, const SerializationContext&, const Xywh&); };
 
 } // namespace CSS
 } // namespace WebCore
 
-CSS_TUPLE_LIKE_CONFORMANCE(Xywh, 3)
+DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::CSS::Xywh, 3)

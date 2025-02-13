@@ -24,43 +24,62 @@
 
 #pragma once
 
+#include "CSSNoConversionDataRequiredToken.h"
 #include "CSSPrimitiveNumericTypes.h"
 #include "CSSUnevaluatedCalc.h"
 
 namespace WebCore {
 namespace CSS {
 
+// MARK: - Requires Conversion Data
+
+inline bool requiresConversionData(Numeric auto const& primitive)
+{
+    return WTF::switchOn(primitive, [&](const auto& value) { return requiresConversionData(value); });
+}
+
 // MARK: - Evaluation
 
 // FIXME: Remove "evaluateCalc" family of functions once color code has moved to the "toStyle" family of functions.
 
-template<RawNumeric T> auto evaluateCalcNoConversionDataRequired(const UnevaluatedCalc<T>& calc, const CSSCalcSymbolTable& symbolTable) -> T
+template<Calc T> auto evaluateCalc(const T& calc, NoConversionDataRequiredToken token, const CSSCalcSymbolTable& symbolTable) -> typename T::Raw
 {
-    return { unevaluatedCalcEvaluateNoConversionDataRequired(calc.protectedCalc(), symbolTable, T::category) };
+    return { calc.evaluate(T::category, token, symbolTable) };
 }
 
-template<typename T> constexpr auto evaluateCalcNoConversionDataRequired(const T& component, const CSSCalcSymbolTable&) -> T
+template<typename T> constexpr auto evaluateCalc(const T& component, NoConversionDataRequiredToken, const CSSCalcSymbolTable&) -> T
 {
     return component;
 }
 
 template<typename... Ts> auto evaluateCalcIfNoConversionDataRequired(const std::variant<Ts...>& component, const CSSCalcSymbolTable& symbolTable) -> std::variant<Ts...>
 {
-    return WTF::switchOn(component, [&](auto part) -> std::variant<Ts...> {
-        if (requiresConversionData(part))
-            return part;
-        return evaluateCalcNoConversionDataRequired(part, symbolTable);
+    return WTF::switchOn(component, [&](const auto& alternative) -> std::variant<Ts...> {
+        if (requiresConversionData(alternative))
+            return alternative;
+        return evaluateCalc(alternative, NoConversionDataRequiredToken { }, symbolTable);
     });
 }
 
-template<typename T> auto evaluateCalcIfNoConversionDataRequired(const PrimitiveNumeric<T>& component, const CSSCalcSymbolTable& symbolTable) -> PrimitiveNumeric<T>
+template<Numeric T> auto evaluateCalcIfNoConversionDataRequired(const T& component, const CSSCalcSymbolTable& symbolTable) -> T
 {
-    return { evaluateCalcIfNoConversionDataRequired(component.value, symbolTable) };
+    return WTF::switchOn(component, [&](const auto& alternative) -> T {
+        if (requiresConversionData(alternative))
+            return { alternative };
+        return { evaluateCalc(alternative, NoConversionDataRequiredToken { }, symbolTable) };
+    });
 }
 
 template<typename T> decltype(auto) evaluateCalcIfNoConversionDataRequired(const std::optional<T>& component, const CSSCalcSymbolTable& symbolTable)
 {
     return component ? std::make_optional(evaluateCalcIfNoConversionDataRequired(*component, symbolTable)) : std::nullopt;
+}
+
+// MARK: - Is UnevaluatedCalc
+
+inline bool isUnevaluatedCalc(Numeric auto const& value)
+{
+    return WTF::switchOn(value, [&](const auto& alternative) { return isUnevaluatedCalc(alternative); });
 }
 
 } // namespace CSS

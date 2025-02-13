@@ -53,6 +53,7 @@
 @end
 
 @interface UIView (WebKitInternal)
+- (BOOL)_wk_isAncestorOf:(UIView *)view;
 @property (nonatomic, readonly) UIScrollView *_wk_parentScrollView;
 @property (nonatomic, readonly) UIViewController *_wk_viewControllerForFullScreenPresentation;
 @end
@@ -60,6 +61,14 @@
 @interface UIViewController (WebKitInternal)
 @property (nonatomic, readonly) BOOL _wk_isInFullscreenPresentation;
 @end
+
+#if USE(UICONTEXTMENU)
+
+@interface UIContextMenuInteraction (WebKitInternal)
+@property (nonatomic, readonly) BOOL _wk_isMenuVisible;
+@end
+
+#endif
 
 namespace WebKit {
 

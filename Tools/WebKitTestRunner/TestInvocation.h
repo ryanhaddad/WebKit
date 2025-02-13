@@ -32,29 +32,22 @@
 #include <WebKit/WKRetainPtr.h>
 #include <string>
 #include <wtf/Noncopyable.h>
+#include <wtf/RefCounted.h>
 #include <wtf/RunLoop.h>
 #include <wtf/Seconds.h>
+#include <wtf/WeakPtr.h>
 #include <wtf/text/StringBuilder.h>
 
 namespace WTR {
-class TestInvocation;
-}
 
-namespace WTF {
-template<typename T> struct IsDeprecatedTimerSmartPointerException;
-template<> struct IsDeprecatedTimerSmartPointerException<WTR::TestInvocation> : std::true_type { };
-}
-
-namespace WTR {
-
-class TestInvocation final : public UIScriptContextDelegate {
+class TestInvocation final : public RefCounted<TestInvocation>, public UIScriptContextDelegate, public CanMakeWeakPtr<TestInvocation> {
     WTF_MAKE_FAST_ALLOCATED;
     WTF_MAKE_NONCOPYABLE(TestInvocation);
 public:
-    explicit TestInvocation(WKURLRef, const TestOptions&);
+    static Ref<TestInvocation> create(WKURLRef, const TestOptions&);
     ~TestInvocation();
 
-    WKURLRef url() const;
+    WKURLRef url() const { return m_url.get(); }
     bool urlContains(StringView) const;
     
     const TestOptions& options() const { return m_options; }
@@ -94,6 +87,8 @@ public:
     void dumpResourceLoadStatisticsIfNecessary();
 
 private:
+    TestInvocation(WKURLRef, const TestOptions&);
+
     WKRetainPtr<WKMutableDictionaryRef> createTestSettingsDictionary();
 
     void waitToDumpWatchdogTimerFired();
@@ -125,7 +120,7 @@ private:
     struct UIScriptInvocationData {
         unsigned callbackID;
         WebKit::WKRetainPtr<WKStringRef> scriptString;
-        TestInvocation* testInvocation;
+        WeakPtr<TestInvocation> testInvocation;
     };
     static void runUISideScriptAfterUpdateCallback(WKErrorRef, void* context);
     static void runUISideScriptImmediately(WKErrorRef, void* context);
@@ -173,8 +168,7 @@ private:
     WKRetainPtr<WKImageRef> m_pixelResult;
     WKRetainPtr<WKArrayRef> m_repaintRects;
     
-    std::unique_ptr<UIScriptContext> m_UIScriptContext;
-    UIScriptInvocationData* m_pendingUIScriptInvocationData { nullptr };
+    RefPtr<UIScriptContext> m_UIScriptContext;
 };
 
 } // namespace WTR

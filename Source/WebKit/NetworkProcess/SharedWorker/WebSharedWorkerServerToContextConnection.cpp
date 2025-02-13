@@ -33,7 +33,6 @@
 #include "NetworkProcess.h"
 #include "NetworkProcessProxyMessages.h"
 #include "RemoteWorkerType.h"
-#include "WebCoreArgumentCoders.h"
 #include "WebSWServerConnection.h"
 #include "WebSharedWorker.h"
 #include "WebSharedWorkerContextManagerConnectionMessages.h"
@@ -64,6 +63,7 @@ WebSharedWorkerServerToContextConnection::WebSharedWorkerServerToContextConnecti
     , m_idleTerminationTimer(*this, &WebSharedWorkerServerToContextConnection::idleTerminationTimerFired)
 {
     CONTEXT_CONNECTION_RELEASE_LOG("WebSharedWorkerServerToContextConnection:");
+    relaxAdoptionRequirement();
     server.addContextConnection(*this);
 }
 
@@ -131,10 +131,10 @@ void WebSharedWorkerServerToContextConnection::launchSharedWorker(WebSharedWorke
     if (auto contextIdentifier = initializationData.clientIdentifier) {
         initializationData.clientIdentifier = WebCore::ScriptExecutionContextIdentifier { contextIdentifier->object(), *webProcessIdentifier() };
         if (RefPtr serviceWorkerOldConnection = connection->protectedNetworkProcess()->webProcessConnection(contextIdentifier->processIdentifier())) {
-            if (CheckedPtr swOldConnection = serviceWorkerOldConnection->swConnection()) {
+            if (RefPtr swOldConnection = serviceWorkerOldConnection->swConnection()) {
                 if (auto clientData = swOldConnection->gatherClientData(*contextIdentifier)) {
                     swOldConnection->unregisterServiceWorkerClient(*contextIdentifier);
-                    if (CheckedPtr swNewConnection = connection->swConnection()) {
+                    if (RefPtr swNewConnection = connection->swConnection()) {
                         clientData->serviceWorkerClientData.identifier = *initializationData.clientIdentifier;
                         swNewConnection->registerServiceWorkerClient(WTFMove(clientData->clientOrigin), WTFMove(clientData->serviceWorkerClientData), clientData->controllingServiceWorkerRegistrationIdentifier, WTFMove(clientData->userAgent));
                     }
@@ -143,8 +143,8 @@ void WebSharedWorkerServerToContextConnection::launchSharedWorker(WebSharedWorke
         }
     }
     send(Messages::WebSharedWorkerContextManagerConnection::LaunchSharedWorker { sharedWorker.origin(), sharedWorker.identifier(), sharedWorker.workerOptions(), sharedWorker.fetchResult(), initializationData });
-    sharedWorker.forEachSharedWorkerObject([&](auto, auto& port) {
-        postConnectEvent(sharedWorker, port, [](bool) { });
+    sharedWorker.forEachSharedWorkerObject([protectedThis = Ref { *this }, sharedWorker = Ref { sharedWorker }](auto, auto& port) {
+        protectedThis->postConnectEvent(sharedWorker, port, [](bool) { });
     });
 }
 

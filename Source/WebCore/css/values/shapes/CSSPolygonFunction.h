@@ -34,7 +34,7 @@ namespace CSS {
 // https://drafts.csswg.org/css-shapes-1/#funcdef-basic-shape-polygon
 // FIXME: Add support the "round" clause.
 struct Polygon {
-    using Vertex = Point<LengthPercentage<>>;
+    using Vertex = SpaceSeparatedPoint<LengthPercentage<>>;
     using Vertices = CommaSeparatedVector<Vertex>;
 
     std::optional<FillRule> fillRule;
@@ -52,9 +52,9 @@ template<size_t I> const auto& get(const Polygon& value)
         return value.vertices;
 }
 
-template<> struct Serialize<Polygon> { void operator()(StringBuilder&, const Polygon&); };
+template<> struct Serialize<Polygon> { void operator()(StringBuilder&, const SerializationContext&, const Polygon&); };
 
 } // namespace CSS
 } // namespace WebCore
 
-CSS_TUPLE_LIKE_CONFORMANCE(Polygon, 2)
+DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::CSS::Polygon, 2)

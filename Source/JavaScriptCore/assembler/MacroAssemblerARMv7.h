@@ -758,7 +758,12 @@ public:
         else
             xor32(imm, dest, dest);
     }
-    
+
+    void depend32(RegisterID src, RegisterID dest)
+    {
+        xor32(src, src, dest);
+    }
+
     void not32(RegisterID srcDest)
     {
         m_assembler.mvn(srcDest, srcDest);
@@ -1878,6 +1883,12 @@ public:
         CRASH();
     }
 
+    NO_RETURN_DUE_TO_CRASH void truncFloat(FPRegisterID, FPRegisterID)
+    {
+        ASSERT(!supportsFloatingPointRounding());
+        CRASH();
+    }
+
     NO_RETURN_DUE_TO_CRASH void roundTowardNearestIntFloat(FPRegisterID, FPRegisterID)
     {
         ASSERT(!supportsFloatingPointRounding());
@@ -1897,6 +1908,12 @@ public:
     }
 
     NO_RETURN_DUE_TO_CRASH void floorDouble(FPRegisterID, FPRegisterID)
+    {
+        ASSERT(!supportsFloatingPointRounding());
+        CRASH();
+    }
+
+    NO_RETURN_DUE_TO_CRASH void truncDouble(FPRegisterID, FPRegisterID)
     {
         ASSERT(!supportsFloatingPointRounding());
         CRASH();
@@ -3166,8 +3183,10 @@ public:
         // generate a specific number of instructions. Specifically, move(x, x)
         // would not generate an instruction, so the IT block would apply to
         // some later, unrelated instruction.
-        if (thenCase == elseCase)
+        if (thenCase == elseCase) {
+            move(thenCase, dest);
             return;
+        }
         m_assembler.tst(left, right);
         if (thenCase == dest) {
             m_assembler.it(armV7Condition(cond), false);

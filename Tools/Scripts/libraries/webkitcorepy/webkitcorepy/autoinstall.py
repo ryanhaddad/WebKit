@@ -20,6 +20,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import importlib.abc
+import importlib.machinery
 import json
 import logging
 import math
@@ -42,14 +44,9 @@ from webkitcorepy import log
 from webkitcorepy.version import Version
 from webkitcorepy.file_lock import FileLock
 
-if sys.version_info > (3, 0):
-    from html.parser import HTMLParser
-    from importlib import machinery as importmachinery
-    from urllib.request import urlopen
-    from urllib.error import URLError
-else:
-    from urllib2 import urlopen, URLError
-    from HTMLParser import HTMLParser
+from html.parser import HTMLParser
+from urllib.request import urlopen
+from urllib.error import URLError
 
 
 class SimplyPypiIndexPageParser(HTMLParser):
@@ -116,7 +113,7 @@ class Package(object):
                             file.write(data)
                     return
                 except (IOError, URLError) as e:
-                    if count > (AutoInstall.times_to_retry or 0):
+                    if count == (AutoInstall.times_to_retry or 0):
                         raise
                     else:
                         AutoInstall.log(str(e))
@@ -125,6 +122,8 @@ class Package(object):
                     if response:
                         response.close()
                     count += 1
+            # This is unreachable because the raise in the above loop should always return or raise.
+            raise RuntimeError("unreachable")
 
         def unpack(self, target):
             if not os.path.isfile(self.path):
@@ -213,11 +212,11 @@ class Package(object):
                                 # This is a subset of compatible tags, but these are the
                                 # only ones that are particularly common; we need these
                                 # to be able to install packaging and its dependencies.
-                                generic_tags = ["py2.py3-none-any", "py3.py2-none-any"]
-                                if sys.version_info >= (3,):
-                                    generic_tags.append("py3-none-any")
-                                else:
-                                    generic_tags.append("py2-none-any")
+                                generic_tags = [
+                                    "py2.py3-none-any",
+                                    "py3.py2-none-any",
+                                    "py3-none-any",
+                                ]
 
                                 if match.group(1) not in generic_tags:
                                     continue
@@ -432,20 +431,23 @@ class Package(object):
                     'version': str(archive.version),
                 }
 
+                AutoInstall.log('Installed {}!'.format(archive))
+            except Exception:
+                if self.name in AutoInstall.manifest:
+                    del AutoInstall.manifest[self.name]
+
+                AutoInstall.log('Failed to install {}!'.format(archive), level=logging.CRITICAL)
+                raise
+            finally:
+                importlib.machinery.PathFinder.invalidate_caches()
                 manifest = os.path.join(AutoInstall.directory, AutoInstall.MANIFEST_JSON)
                 with open(manifest, 'w') as file:
                     json.dump(AutoInstall.manifest, file, indent=4)
                 AutoInstall.userspace_should_own(manifest)
 
-                AutoInstall.log('Installed {}!'.format(archive))
-            except Exception:
-                AutoInstall.log('Failed to install {}!'.format(archive), level=logging.CRITICAL)
-                raise
 
 
 def _default_pypi_index():
-    return 'pypi.org'
-
     pypi_url = re.compile(r'\Aindex\S* = https?://(?P<host>\S+)/.*')
     pip_config = '/Library/Application Support/pip/pip.conf'
     if os.path.isfile(pip_config):
@@ -457,7 +459,7 @@ def _default_pypi_index():
     return 'pypi.org'
 
 
-class AutoInstall(object):
+class AutoInstall(importlib.abc.MetaPathFinder):
     LOCKFILE_TIMEOUT = 5 * 60
     MANIFEST_JSON = 'manifest.json'
     LOCK_FILE = 'autoinstall.lock'
@@ -465,9 +467,7 @@ class AutoInstall(object):
     CA_CERT_PATH_ENV_VAR = 'AUTOINSTALL_CA_CERT_PATH'
 
     # This list of libraries is required to install other libraries, and must be installed first
-    BASE_LIBRARIES = ['setuptools', 'wheel', 'six', 'pyparsing', 'packaging', 'setuptools_scm']
-    if sys.version_info >= (3, 0):
-        BASE_LIBRARIES.insert(-1, 'tomli')
+    BASE_LIBRARIES = ['setuptools', 'wheel', 'six', 'pyparsing', 'packaging', 'tomli', 'setuptools_scm']
 
     directory = None
     index = _default_pypi_index()
@@ -494,10 +494,14 @@ class AutoInstall(object):
 
     @classmethod
     def _request(cls, url, ca_cert_path=None):
-        if sys.platform.startswith('linux'):
-            return urlopen(url, timeout=cls.timeout)
+        # This creates a default context, including default CA certs.
+        context = ssl.create_default_context()
 
-        context = ssl.create_default_context(cafile=ca_cert_path or cls.ca_cert_path)
+        if ca_cert_path is not None:
+            context.load_verify_locations(cafile=ca_cert_path)
+        elif cls.ca_cert_path is not None:
+            context.load_verify_locations(cafile=cls.ca_cert_path)
+
         return urlopen(url, timeout=cls.timeout, context=context)
 
     @classmethod
@@ -696,13 +700,6 @@ class AutoInstall(object):
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        loader = cls.find_module(fullname, path=path)
-        if not loader:
-            return None
-        return loader.create_module(None)
-
-    @classmethod
-    def find_module(cls, fullname, path=None):
         if not cls.enabled() or path is not None:
             return None
 
@@ -711,24 +708,10 @@ class AutoInstall(object):
             return None
 
         cls.install(name)
-        if sys.version_info < (3, 0):
-            # Python 2 works fine with the default module finder, once we've installed the module in question
-            return None
 
-        path = cls.directory
-        for part in fullname.split('.'):
-            path = os.path.join(path, part)
-            for ext in ('', '.py', '.pyc', '.py3', '.pyo'):
-                candidate = '{}{}'.format(path, ext)
-                if os.path.exists(candidate):
-                    path = candidate
-                    break
-            if not os.path.isdir(path):
-                break
-        if os.path.isdir(path):
-            path = os.path.join(path, '__init__.py')
-
-        return importmachinery.SourceFileLoader(name, path)
+        return importlib.machinery.PathFinder.find_spec(
+            fullname, [cls.directory], target
+        )
 
     @classmethod
     def tags(cls):

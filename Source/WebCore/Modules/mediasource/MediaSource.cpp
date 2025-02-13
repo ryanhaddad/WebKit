@@ -39,7 +39,6 @@
 #include "AudioTrackPrivate.h"
 #include "ContentType.h"
 #include "ContentTypeUtilities.h"
-#include "DeprecatedGlobalSettings.h"
 #include "DocumentInlines.h"
 #include "Event.h"
 #include "EventNames.h"
@@ -73,15 +72,13 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(MediaSource);
 
 String convertEnumerationToString(MediaSourcePrivate::AddStatus enumerationValue)
 {
-    static const NeverDestroyed<String> values[] = {
+    static const std::array<NeverDestroyed<String>, 3> values {
         MAKE_STATIC_STRING_IMPL("Ok"),
         MAKE_STATIC_STRING_IMPL("NotSupported"),
         MAKE_STATIC_STRING_IMPL("ReachedIdLimit"),
@@ -95,7 +92,7 @@ String convertEnumerationToString(MediaSourcePrivate::AddStatus enumerationValue
 
 String convertEnumerationToString(MediaSourcePrivate::EndOfStreamStatus enumerationValue)
 {
-    static const NeverDestroyed<String> values[] = {
+    static const std::array<NeverDestroyed<String>, 3> values {
         MAKE_STATIC_STRING_IMPL("NoError"),
         MAKE_STATIC_STRING_IMPL("NetworkError"),
         MAKE_STATIC_STRING_IMPL("DecodeError"),
@@ -925,7 +922,8 @@ ExceptionOr<Ref<SourceBuffer>> MediaSource::addSourceBuffer(const String& type)
     // 2. If type contains a MIME type that is not supported ..., then throw a
     // NotSupportedError exception and abort these steps.
     Vector<ContentType> mediaContentTypesRequiringHardwareSupport;
-    if (RefPtr document = dynamicDowncast<Document>(context))
+    RefPtr document = dynamicDowncast<Document>(*context);
+    if (document)
         mediaContentTypesRequiringHardwareSupport.appendVector(document->settings().mediaContentTypesRequiringHardwareSupport());
 
     if (!isTypeSupported(*context, type, WTFMove(mediaContentTypesRequiringHardwareSupport)))
@@ -938,7 +936,6 @@ ExceptionOr<Ref<SourceBuffer>> MediaSource::addSourceBuffer(const String& type)
 
     // 5. Create a new SourceBuffer object and associated resources.
     ContentType contentType(type);
-    RefPtr document = dynamicDowncast<Document>(context);
     if (document && document->quirks().needsVP9FullRangeFlagQuirk())
         contentType = addVP9FullRangeVideoFlagToContentType(contentType);
 
@@ -1214,7 +1211,7 @@ bool MediaSource::isTypeSupported(ScriptExecutionContext& context, const String&
     parameters.isMediaSource = true;
     parameters.contentTypesRequiringHardwareSupport = WTFMove(contentTypesRequiringHardwareSupport);
 
-    if (RefPtr document = dynamicDowncast<Document>(context)) {
+    if (document) {
         if (!contentTypeMeetsContainerAndCodecTypeRequirements(contentType, document->settings().allowedMediaContainerTypes(), document->settings().allowedMediaCodecTypes()))
             return false;
 
@@ -1422,8 +1419,9 @@ void MediaSource::onReadyStateChange(ReadyState oldState, ReadyState newState)
         // https://w3c.github.io/media-source/#htmlmediaelement-extensions-buffered
         for (auto& sourceBuffer : m_sourceBuffers.get())
             sourceBuffer->setMediaSourceEnded(true);
-        updateBufferedIfNeeded(true /* force */);
     }
+    if (newState == ReadyState::Ended || (newState == ReadyState::Open && oldState == ReadyState::Ended))
+        updateBufferedIfNeeded(true /* force */);
 
     // MediaSource's readyState transitions from "open" to "closed" or "ended" to "closed".
     if (oldState > ReadyState::Closed && newState == ReadyState::Closed) {
@@ -1447,8 +1445,7 @@ ExceptionOr<Ref<SourceBufferPrivate>> MediaSource::createSourceBufferPrivate(con
 {
     ContentType type { incomingType };
 
-    RefPtr context = scriptExecutionContext();
-    RefPtr document = dynamicDowncast<Document>(context);
+    RefPtr document = dynamicDowncast<Document>(scriptExecutionContext());
     if (document && document->quirks().needsVP9FullRangeFlagQuirk())
         type = addVP9FullRangeVideoFlagToContentType(incomingType);
 
@@ -1456,7 +1453,7 @@ ExceptionOr<Ref<SourceBufferPrivate>> MediaSource::createSourceBufferPrivate(con
     Ref msp = protectedPrivate().releaseNonNull();
 
     RefPtr<SourceBufferPrivate> sourceBufferPrivate;
-    switch (msp->addSourceBuffer(type, DeprecatedGlobalSettings::webMParserEnabled(), sourceBufferPrivate)) {
+    switch (msp->addSourceBuffer(type, sourceBufferPrivate)) {
     case MediaSourcePrivate::AddStatus::Ok:
         return sourceBufferPrivate.releaseNonNull();
     case MediaSourcePrivate::AddStatus::NotSupported:
@@ -1758,7 +1755,5 @@ bool MediaSource::canConstructInDedicatedWorker(ScriptExecutionContext& context)
 #endif
 
 } // namespace WebCore
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 #endif // ENABLE(MEDIA_SOURCE)

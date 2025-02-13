@@ -1955,7 +1955,7 @@ Error Display::destroyContext(Thread *thread, gl::Context *context)
 
         // Make the context current, so we can release resources belong to the context, and then
         // when context is released from the current, it will be destroyed.
-        // TODO(http://www.anglebug.com/42264840): Don't require a Context to be current in order to
+        // TODO(http://anglebug.com/42264840): Don't require a Context to be current in order to
         // destroy it.
         ANGLE_TRY(makeCurrent(thread, currentContext, nullptr, nullptr, context));
         ANGLE_TRY(
@@ -2168,8 +2168,9 @@ static ClientExtensions GenerateClientExtensions()
 #endif
 
 #if defined(ANGLE_ENABLE_VULKAN)
-    extensions.platformANGLEVulkan   = true;
-    extensions.platformANGLEDeviceId = true;
+    extensions.platformANGLEVulkan           = true;
+    extensions.platformANGLEVulkanDeviceUUID = true;
+    extensions.platformANGLEDeviceId         = true;
 #endif
 
 #if defined(ANGLE_ENABLE_SWIFTSHADER)
@@ -2263,6 +2264,9 @@ void Display::initDisplayExtensions()
 
     // All backends support specific context versions
     mDisplayExtensions.createContextBackwardsCompatible = true;
+
+    // EGL_ANGLE_memory_usage_report is implemented on front end.
+    mDisplayExtensions.memoryUsageReportANGLE = true;
 
     mDisplayExtensionString = GenerateExtensionsString(mDisplayExtensions);
 }
@@ -2642,6 +2646,16 @@ Error Display::waitUntilWorkScheduled()
     return NoError();
 }
 
+void Display::lockVulkanQueue()
+{
+    return mImplementation->lockVulkanQueue();
+}
+
+void Display::unlockVulkanQueue()
+{
+    return mImplementation->unlockVulkanQueue();
+}
+
 bool Display::supportsDmaBufFormat(EGLint format) const
 {
     return mImplementation->supportsDmaBufFormat(format);
@@ -2661,6 +2675,18 @@ Error Display::queryDmaBufModifiers(EGLint format,
 {
     ANGLE_TRY(mImplementation->queryDmaBufModifiers(format, max_modifiers, modifiers, external_only,
                                                     num_modifiers));
+    return NoError();
+}
+
+Error Display::querySupportedCompressionRates(const Config *configuration,
+                                              const AttributeMap &attributes,
+                                              EGLint *rates,
+                                              EGLint rate_size,
+                                              EGLint *num_rates) const
+{
+    ANGLE_TRY(mImplementation->querySupportedCompressionRates(configuration, attributes, rates,
+                                                              rate_size, num_rates));
+
     return NoError();
 }
 

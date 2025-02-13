@@ -93,11 +93,11 @@ ExceptionOr<RefPtr<Node>> InspectorAuditAccessibilityObject::getActiveDescendant
 
 static void addChildren(AXCoreObject& parentObject, Vector<Ref<Node>>& childNodes)
 {
-    for (const auto& childObject : parentObject.children()) {
+    for (const auto& childObject : parentObject.unignoredChildren()) {
         if (RefPtr childNode = childObject->node())
             childNodes.append(childNode.releaseNonNull());
         else
-            addChildren(*childObject, childNodes);
+            addChildren(childObject.get(), childNodes);
     }
 }
 
@@ -191,7 +191,7 @@ ExceptionOr<std::optional<InspectorAuditAccessibilityObject::ComputedProperties>
         else
             computedProperties.invalidStatus = "true"_s;
 
-        computedProperties.isPopUpButton = axObject->isPopUpButton() || axObject->hasPopup();
+        computedProperties.isPopUpButton = axObject->isPopUpButton() || axObject->selfOrAncestorLinkHasPopup();
         computedProperties.label = axObject->computedLabel();
 
         if (axObject->supportsLiveRegion()) {
@@ -323,11 +323,10 @@ ExceptionOr<std::optional<Vector<Ref<Node>>>> InspectorAuditAccessibilityObject:
     if (auto* axObject = accessibilityObjectForNode(node)) {
         Vector<Ref<Node>> selectedChildNodes;
 
-        if (auto selectedChildren = axObject->selectedChildren()) {
-            for (auto& selectedChildObject : *selectedChildren) {
-                if (RefPtr selectedChildNode = selectedChildObject->node())
-                    selectedChildNodes.append(selectedChildNode.releaseNonNull());
-            }
+        auto selectedChildren = axObject->selectedChildren();
+        for (auto& selectedChildObject : selectedChildren) {
+            if (RefPtr selectedChildNode = selectedChildObject->node())
+                selectedChildNodes.append(selectedChildNode.releaseNonNull());
         }
 
         result = WTFMove(selectedChildNodes);

@@ -191,7 +191,7 @@ void SessionHost::connectToBrowser(std::unique_ptr<ConnectToBrowserAsyncData>&& 
     if (!m_browser && !m_isRemoteBrowser)
         return;
 
-    RunLoop::main().dispatchAfter(100_ms, [connectToBrowserData = WTFMove(data)]() mutable {
+    RunLoop::protectedMain()->dispatchAfter(100_ms, [connectToBrowserData = WTFMove(data)]() mutable {
         auto* data = connectToBrowserData.release();
         if (g_cancellable_is_cancelled(data->cancellable.get()))
             return;
@@ -390,11 +390,6 @@ void SessionHost::sendMessageToBackend(const String& message)
     ASSERT(m_connectionID);
     ASSERT(m_target.id);
     m_socketConnection->sendMessage("SendMessageToBackend", g_variant_new("(tts)", m_connectionID, m_target.id, message.utf8().data()));
-}
-
-bool SessionHost::isRemoteBrowser() const
-{
-    return m_isRemoteBrowser;
 }
 
 } // namespace WebDriver

@@ -1,3 +1,3 @@
 
-FAIL Changing the animation range updates the play state assert_equals: expected (string) "normal" but got (object) object "[object Object]"
+PASS Changing the animation range updates the play state
 

@@ -46,10 +46,10 @@ public:
 
     uint64_t window() const override;
     uint64_t surfaceID() const override;
-    void clientResize(const WebCore::IntSize&) override;
+    bool resize(const WebCore::IntSize&) override;
     void finalize() override;
     void willRenderFrame() override;
-    void didRenderFrame(WebCore::Region&&) override;
+    void didRenderFrame() override;
 
 private:
     AcceleratedSurfaceLibWPE(WebPage&, Function<void()>&& frameCompleteHandler);
@@ -57,6 +57,7 @@ private:
     void initialize();
 
     UnixFileDescriptor m_hostFD;
+    WebCore::IntSize m_initialSize;
     struct wpe_renderer_backend_egl_target* m_backend { nullptr };
 };
 

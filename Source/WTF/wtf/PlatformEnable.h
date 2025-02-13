@@ -188,14 +188,6 @@
 #define ENABLE_DATACUE_VALUE 0
 #endif
 
-#if !defined(ENABLE_DATALIST_ELEMENT)
-#define ENABLE_DATALIST_ELEMENT 0
-#endif
-
-#if !defined(ENABLE_DATE_AND_TIME_INPUT_TYPES)
-#define ENABLE_DATE_AND_TIME_INPUT_TYPES 0
-#endif
-
 #if !defined(ENABLE_DECLARATIVE_WEB_PUSH)
 #define ENABLE_DECLARATIVE_WEB_PUSH 0
 #endif
@@ -206,6 +198,14 @@
 
 #if !defined(ENABLE_DESTINATION_COLOR_SPACE_DISPLAY_P3)
 #define ENABLE_DESTINATION_COLOR_SPACE_DISPLAY_P3 0
+#endif
+
+#if !defined(ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_SRGB)
+#define ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_SRGB 0
+#endif
+
+#if !defined(ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_REC_2020)
+#define ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_REC_2020 0
 #endif
 
 #if !defined(ENABLE_DRAG_SUPPORT)
@@ -248,6 +248,14 @@
 #define ENABLE_GPU_PROCESS_WEBGL_BY_DEFAULT 0
 #endif
 
+#if !defined(ENABLE_HDR_FOR_IMAGES)
+#define ENABLE_HDR_FOR_IMAGES 0
+#endif
+
+#if !defined(ENABLE_HDR_FOR_WEBGPU)
+#define ENABLE_HDR_FOR_WEBGPU 0
+#endif
+
 #if !defined(ENABLE_IMAGE_ANALYSIS)
 #define ENABLE_IMAGE_ANALYSIS 0
 #endif
@@ -262,30 +270,6 @@
 
 #if !defined(ENABLE_INLINE_PATH_DATA)
 #define ENABLE_INLINE_PATH_DATA 0
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_COLOR)
-#define ENABLE_INPUT_TYPE_COLOR 1
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_DATE)
-#define ENABLE_INPUT_TYPE_DATE 0
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_DATETIMELOCAL)
-#define ENABLE_INPUT_TYPE_DATETIMELOCAL 0
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_MONTH)
-#define ENABLE_INPUT_TYPE_MONTH 0
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_TIME)
-#define ENABLE_INPUT_TYPE_TIME 0
-#endif
-
-#if !defined(ENABLE_INPUT_TYPE_WEEK)
-#define ENABLE_INPUT_TYPE_WEEK 0
 #endif
 
 #if !defined(ENABLE_INPUT_TYPE_WEEK_PICKER)
@@ -371,10 +355,6 @@
 #define ENABLE_MHTML 0
 #endif
 
-#if !defined(ENABLE_MODERN_MEDIA_CONTROLS)
-#define ENABLE_MODERN_MEDIA_CONTROLS 0
-#endif
-
 #if !defined(ENABLE_MONOSPACE_FONT_EXCEPTION)
 #define ENABLE_MONOSPACE_FONT_EXCEPTION 0
 #endif
@@ -436,6 +416,18 @@
 
 #if !defined(ENABLE_PERIODIC_MEMORY_MONITOR)
 #define ENABLE_PERIODIC_MEMORY_MONITOR 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGB10)
+#define ENABLE_PIXEL_FORMAT_RGB10 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGB10A8)
+#define ENABLE_PIXEL_FORMAT_RGB10A8 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGBA16F)
+#define ENABLE_PIXEL_FORMAT_RGBA16F 0
 #endif
 
 #if !defined(ENABLE_PLATFORM_DRIVEN_TEXT_CHECKING)
@@ -848,6 +840,11 @@
 #define ENABLE_YARR_JIT_UNICODE_EXPRESSIONS 1
 #endif
 
+/* Enables an optimiztion to advance two codepoints when we fail to match a non-BMP character */
+#if ENABLE(YARR_JIT) && CPU(ARM64)
+#define ENABLE_YARR_JIT_UNICODE_CAN_INCREMENT_INDEX_FOR_NON_BMP 1
+#endif
+
 /* If either the JIT or the RegExp JIT is enabled, then the Assembler must be
    enabled as well: */
 #if ENABLE(JIT) || ENABLE(YARR_JIT) || !ENABLE(C_LOOP)
@@ -936,7 +933,7 @@
    that executes each opcode. It cannot be supported by the CLoop since there's no way to embed the
    OpcodeID word in the CLoop's switch statement cases. It is also currently not implemented for MSVC.
 */
-#if !defined(ENABLE_LLINT_EMBEDDED_OPCODE_ID) && !ENABLE(C_LOOP) && !COMPILER(MSVC) && (CPU(X86) || CPU(X86_64) || CPU(ARM64) || (CPU(ARM_THUMB2) && OS(DARWIN)) || CPU(RISCV64))
+#if !defined(ENABLE_LLINT_EMBEDDED_OPCODE_ID) && !ENABLE(C_LOOP) && (CPU(X86) || CPU(X86_64) || CPU(ARM64) || (CPU(ARM_THUMB2) && OS(DARWIN)) || CPU(RISCV64))
 #define ENABLE_LLINT_EMBEDDED_OPCODE_ID 1
 #endif
 
@@ -1014,4 +1011,8 @@
 #if !defined(ENABLE_WRITING_SUGGESTIONS) \
     && (PLATFORM(COCOA) && HAVE(INLINE_PREDICTIONS) && !PLATFORM(MACCATALYST))
 #define ENABLE_WRITING_SUGGESTIONS 1
+#endif
+
+#if !defined(ENABLE_COOKIE_STORE_API_BY_DEFAULT)
+#define ENABLE_COOKIE_STORE_API_BY_DEFAULT 0
 #endif

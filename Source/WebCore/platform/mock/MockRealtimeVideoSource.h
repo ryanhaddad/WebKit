@@ -32,6 +32,7 @@
 
 #if ENABLE(MEDIA_STREAM)
 
+#include "DashArray.h"
 #include "FontCascade.h"
 #include "ImageBuffer.h"
 #include "MockMediaDevice.h"
@@ -93,6 +94,7 @@ private:
 
     // OrientationNotifier::Observer
     void orientationChanged(IntDegrees orientation) final;
+    void rotationAngleForHorizonLevelDisplayChanged(const String&, VideoFrameRotation) final;
     void monitorOrientation(OrientationNotifier&) final;
 
     void drawAnimation(GraphicsContext&);
@@ -172,6 +174,7 @@ private:
     std::optional<PhotoCapabilities> m_photoCapabilities;
     std::optional<PhotoSettings> m_photoSettings;
     bool m_beingConfigured { false };
+    bool m_isUsingRotationAngleForHorizonLevelDisplayChanged { false };
 };
 
 } // namespace WebCore

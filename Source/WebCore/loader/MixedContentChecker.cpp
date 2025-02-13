@@ -71,13 +71,15 @@ static bool foundMixedContentInFrameTree(const LocalFrame& frame, const URL& url
         if (!frame || frame->isMainFrame())
             break;
 
-        RefPtr abstractParentFrame = frame->tree().parent();
-        RELEASE_ASSERT_WITH_MESSAGE(abstractParentFrame, "Should never have a parentless non main frame");
-        if (auto* parentFrame = dynamicDowncast<LocalFrame>(abstractParentFrame.get()))
-            document = parentFrame->document();
+        RefPtr parentFrame = frame->tree().parent();
+        if (!parentFrame)
+            break;
+
+        if (RefPtr localParentFrame = dynamicDowncast<LocalFrame>(parentFrame.get()))
+            document = localParentFrame->document();
         else {
             // FIXME: <rdar://116259764> Make mixed content checks work correctly with site isolated iframes.
-            document = nullptr;
+            break;
         }
     }
 
@@ -173,7 +175,7 @@ static bool destinationIsImageAndInitiatorIsImageset(FetchOptions::Destination d
     return destination == FetchOptions::Destination::Image && initiator == Initiator::Imageset;
 }
 
-bool MixedContentChecker::shouldUpgradeInsecureContent(LocalFrame& frame, IsUpgradable isUpgradable, const URL& url, FetchOptions::Mode mode, FetchOptions::Destination destination, Initiator initiator)
+bool MixedContentChecker::shouldUpgradeInsecureContent(LocalFrame& frame, IsUpgradable isUpgradable, const URL& url, FetchOptions::Destination destination, Initiator initiator)
 {
     RefPtr document = frame.document();
     if (!document || !isUpgradeMixedContentEnabled(*document) || isUpgradable != IsUpgradable::Yes)
@@ -192,9 +194,6 @@ bool MixedContentChecker::shouldUpgradeInsecureContent(LocalFrame& frame, IsUpgr
 
     // 4.1 The request's URL is not upgraded in the following cases.
     if (!canModifyRequest(url, destination, initiator, shouldUpgradeIPAddressAndLocalhostForTesting))
-        return false;
-    // or CORS is excluded
-    if (mode == FetchOptions::Mode::Cors && !(document->quirks().needsRelaxedCorsMixedContentCheckQuirk() && destinationIsImageAudioOrVideo(destination)))
         return false;
 
     logConsoleWarningForUpgrade(frame, /* blocked */ false, url, shouldUpgradeIPAddressAndLocalhostForTesting);

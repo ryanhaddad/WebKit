@@ -180,7 +180,7 @@ void Download::setPlaceholderURL(NSURL *placeholderURL, NSData *bookmarkData)
     BOOL usingSecurityScopedURL = [placeholderURL startAccessingSecurityScopedResource];
 
     SandboxExtension::Handle sandboxExtensionHandle;
-    if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(StringView::fromLatin1(placeholderURL.fileSystemRepresentation), SandboxExtension::Type::ReadOnly))
+    if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(String::fromUTF8(placeholderURL.fileSystemRepresentation), SandboxExtension::Type::ReadOnly))
         sandboxExtensionHandle = WTFMove(*handle);
 
     if (usingSecurityScopedURL)
@@ -205,7 +205,7 @@ void Download::setFinalURL(NSURL *finalURL, NSData *bookmarkData)
     BOOL usingSecurityScopedURL = [finalURL startAccessingSecurityScopedResource];
 
     SandboxExtension::Handle sandboxExtensionHandle;
-    if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(StringView::fromLatin1(finalURL.fileSystemRepresentation), SandboxExtension::Type::ReadOnly))
+    if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(String::fromUTF8(finalURL.fileSystemRepresentation), SandboxExtension::Type::ReadOnly))
         sandboxExtensionHandle = WTFMove(*handle);
 
     if (usingSecurityScopedURL)
@@ -223,6 +223,8 @@ void Download::startUpdatingProgress()
 
     auto *progress = (WKModernDownloadProgress *)m_progress;
     [progress startUpdatingDownloadProgress];
+
+    send(Messages::DownloadProxy::DidStartUpdatingProgress());
 
     // If we have a download task, progress is updated by observing this task. See startUpdatingDownloadProgress method.
     if (m_downloadTask)

@@ -46,7 +46,7 @@ friend class RemoteScrollingCoordinatorProxyMac;
     WTF_MAKE_NONCOPYABLE(RemoteLayerTreeDrawingAreaProxyMac);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(RemoteLayerTreeDrawingAreaProxyMac);
 public:
-    RemoteLayerTreeDrawingAreaProxyMac(WebPageProxy&, WebProcessProxy&);
+    static Ref<RemoteLayerTreeDrawingAreaProxyMac> create(WebPageProxy&, WebProcessProxy&);
     ~RemoteLayerTreeDrawingAreaProxyMac();
 
     void didRefreshDisplay() override;
@@ -59,6 +59,8 @@ public:
     std::optional<WebCore::PlatformLayerIdentifier> pageScrollingLayerID() { return m_pageScrollingLayerID.asOptional(); }
 
 private:
+    RemoteLayerTreeDrawingAreaProxyMac(WebPageProxy&, WebProcessProxy&);
+
     WebCore::DelegatedScrollingMode delegatedScrollingMode() const override;
     std::unique_ptr<RemoteScrollingCoordinatorProxy> createScrollingCoordinatorProxy() const override;
 
@@ -82,7 +84,7 @@ private:
     void windowScreenDidChange(WebCore::PlatformDisplayID) override;
     std::optional<WebCore::FramesPerSecond> displayNominalFramesPerSecond() override;
 
-    void dispatchSetTopContentInset() override;
+    void dispatchSetObscuredContentInsets() override;
 
     void colorSpaceDidChange() override;
 
@@ -121,5 +123,8 @@ private:
 
 } // namespace WebKit
 
-#endif // #if PLATFORM(MAC)
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::RemoteLayerTreeDrawingAreaProxyMac)
+    static bool isType(const WebKit::DrawingAreaProxy& proxy) { return proxy.isRemoteLayerTreeDrawingAreaProxyMac(); }
+SPECIALIZE_TYPE_TRAITS_END()
 
+#endif // #if PLATFORM(MAC)

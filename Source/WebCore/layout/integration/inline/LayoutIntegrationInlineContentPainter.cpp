@@ -80,6 +80,21 @@ void InlineContentPainter::paintDisplayBox(const InlineDisplay::Box& box)
         if (!box.isVisible() || !hasDamage(box))
             return;
 
+        auto canSkipInlineBoxPainting = [&]() {
+            if (m_paintInfo.phase != PaintPhase::Foreground)
+                return false;
+
+            // The root inline box only has to paint a background for ::first-line style.
+            bool isFirstLineBox = !box.lineIndex();
+            if (box.isRootInlineBox() && (!isFirstLineBox || &box.style() == &box.layoutBox().style()))
+                return true;
+
+            return false;
+        }();
+
+        if (canSkipInlineBoxPainting)
+            return;
+
         auto inlineBoxPaintInfo = PaintInfo { m_paintInfo };
         inlineBoxPaintInfo.phase = m_paintInfo.phase == PaintPhase::ChildOutlines ? PaintPhase::Outline : m_paintInfo.phase;
         inlineBoxPaintInfo.outlineObjects = &m_outlineObjects;
@@ -97,7 +112,7 @@ void InlineContentPainter::paintDisplayBox(const InlineDisplay::Box& box)
         return;
     }
 
-    if (auto* renderer = dynamicDowncast<RenderBox>(box.layoutBox().rendererForIntegration()); renderer && renderer->isReplacedOrInlineBlock()) {
+    if (auto* renderer = dynamicDowncast<RenderBox>(box.layoutBox().rendererForIntegration()); renderer && renderer->isReplacedOrAtomicInline()) {
         if (m_paintInfo.shouldPaintWithinRoot(*renderer)) {
             // FIXME: Painting should not require a non-const renderer.
             const_cast<RenderBox*>(renderer)->paintAsInlineBlock(m_paintInfo, flippedContentOffsetIfNeeded(*renderer));
@@ -155,6 +170,11 @@ LayoutPoint InlineContentPainter::flippedContentOffsetIfNeeded(const RenderBox& 
     if (root().writingMode().isBlockFlipped())
         return root().flipForWritingModeForChild(childRenderer, m_paintOffset);
     return m_paintOffset;
+}
+
+const RenderBlock& InlineContentPainter::root() const
+{
+    return m_root;
 }
 
 LayerPaintScope::LayerPaintScope(const RenderInline* inlineBoxWithLayer)

@@ -185,32 +185,6 @@ void LegacyInlineFlowBox::removeLineBoxFromRenderObject()
     downcast<RenderInline>(renderer()).legacyLineBoxes().removeLineBox(this);
 }
 
-void LegacyInlineFlowBox::extractLine()
-{
-    if (!extracted())
-        extractLineBoxFromRenderObject();
-    for (auto* child = firstChild(); child; child = child->nextOnLine())
-        child->extractLine();
-}
-
-void LegacyInlineFlowBox::extractLineBoxFromRenderObject()
-{
-    downcast<RenderInline>(renderer()).legacyLineBoxes().extractLineBox(this);
-}
-
-void LegacyInlineFlowBox::attachLine()
-{
-    if (extracted())
-        attachLineBoxToRenderObject();
-    for (auto* child = firstChild(); child; child = child->nextOnLine())
-        child->attachLine();
-}
-
-void LegacyInlineFlowBox::attachLineBoxToRenderObject()
-{
-    downcast<RenderInline>(renderer()).legacyLineBoxes().attachLineBox(this);
-}
-
 void LegacyInlineFlowBox::adjustPosition(float dx, float dy)
 {
     LegacyInlineBox::adjustPosition(dx, dy);
@@ -325,79 +299,6 @@ void LegacyInlineFlowBox::setOverflowFromLogicalRects(const LayoutRect& logicalV
 {
     LayoutRect visualOverflow(isHorizontal() ? logicalVisualOverflow : logicalVisualOverflow.transposedRect());
     setVisualOverflow(visualOverflow, lineTop, lineBottom);
-}
-
-bool LegacyInlineFlowBox::nodeAtPoint(const HitTestRequest& request, HitTestResult& result, const HitTestLocation& locationInContainer, const LayoutPoint& accumulatedOffset, LayoutUnit lineTop, LayoutUnit lineBottom, HitTestAction hitTestAction)
-{
-    if (hitTestAction != HitTestForeground)
-        return false;
-
-    LayoutRect overflowRect(visualOverflowRect(lineTop, lineBottom));
-    flipForWritingMode(overflowRect);
-    overflowRect.moveBy(accumulatedOffset);
-    if (!locationInContainer.intersects(overflowRect))
-        return false;
-
-    // Check children first.
-    for (auto* child = lastChild(); child; child = child->previousOnLine()) {
-        if (is<RenderText>(child->renderer()) || !child->boxModelObject()->hasSelfPaintingLayer()) {
-            if (child->nodeAtPoint(request, result, locationInContainer, accumulatedOffset, lineTop, lineBottom, hitTestAction)) {
-                renderer().updateHitTestResult(result, locationInContainer.point() - toLayoutSize(accumulatedOffset));
-                return true;
-            }
-        }
-    }
-
-    // Now check ourselves. Pixel snap hit testing.
-    if (!renderer().visibleToHitTesting(request))
-        return false;
-
-    // Move x/y to our coordinates.
-    FloatRect rect(frameRect());
-    flipForWritingMode(rect);
-    rect.moveBy(accumulatedOffset);
-
-    if (locationInContainer.intersects(rect)) {
-        renderer().updateHitTestResult(result, flipForWritingMode(locationInContainer.point() - toLayoutSize(accumulatedOffset))); // Don't add in m_x or m_y here, we want coords in the containing block's space.
-        if (result.addNodeToListBasedTestResult(renderer().protectedNodeForHitTest().get(), request, locationInContainer, rect) == HitTestProgress::Stop)
-            return true;
-    }
-
-    return false;
-}
-
-void LegacyInlineFlowBox::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, LayoutUnit lineTop, LayoutUnit lineBottom)
-{
-    if (paintInfo.phase != PaintPhase::Foreground && paintInfo.phase != PaintPhase::Selection && paintInfo.phase != PaintPhase::Outline && paintInfo.phase != PaintPhase::SelfOutline && paintInfo.phase != PaintPhase::ChildOutlines && paintInfo.phase != PaintPhase::TextClip && paintInfo.phase != PaintPhase::Mask && paintInfo.phase != PaintPhase::EventRegion && paintInfo.phase != PaintPhase::Accessibility)
-        return;
-
-    LayoutRect overflowRect(visualOverflowRect(lineTop, lineBottom));
-    flipForWritingMode(overflowRect);
-    overflowRect.moveBy(paintOffset);
-    
-    if (!paintInfo.rect.intersects(snappedIntRect(overflowRect)))
-        return;
-
-    if (paintInfo.phase != PaintPhase::ChildOutlines) {
-        InlineBoxPainter painter(*this, paintInfo, paintOffset);
-        painter.paint();
-    }
-
-    if (paintInfo.phase == PaintPhase::Mask)
-        return;
-
-    PaintPhase paintPhase = paintInfo.phase == PaintPhase::ChildOutlines ? PaintPhase::Outline : paintInfo.phase;
-    PaintInfo childInfo(paintInfo);
-    childInfo.phase = paintPhase;
-    childInfo.updateSubtreePaintRootForChildren(&renderer());
-    
-    // Paint our children.
-    if (paintPhase != PaintPhase::SelfOutline) {
-        for (auto* curr = firstChild(); curr; curr = curr->nextOnLine()) {
-            if (curr->renderer().isRenderText() || !curr->boxModelObject()->hasSelfPaintingLayer())
-                curr->paint(childInfo, paintOffset, lineTop, lineBottom);
-        }
-    }
 }
 
 LegacyInlineBox* LegacyInlineFlowBox::firstLeafDescendant() const

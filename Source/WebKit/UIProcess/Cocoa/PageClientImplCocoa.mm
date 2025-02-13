@@ -26,9 +26,10 @@
 #import "config.h"
 #import "PageClientImplCocoa.h"
 
-
 #import "WKTextAnimationType.h"
 #import "WKWebViewInternal.h"
+#import "WebFullScreenManagerProxy.h"
+#import "WebPageProxy.h"
 #import <WebCore/AlternativeTextUIController.h>
 #import <WebCore/TextAnimationTypes.h>
 #import <WebCore/WritingToolsTypes.h>
@@ -38,6 +39,10 @@
 #import <wtf/Vector.h>
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/WTFString.h>
+
+#if ENABLE(SCREEN_TIME)
+#import <pal/cocoa/ScreenTimeSoftLink.h>
+#endif
 
 namespace WebKit {
 
@@ -49,7 +54,7 @@ PageClientImplCocoa::PageClientImplCocoa(WKWebView *webView)
 
 PageClientImplCocoa::~PageClientImplCocoa() = default;
 
-void PageClientImplCocoa::topContentInsetDidChange()
+void PageClientImplCocoa::obscuredContentInsetsDidChange()
 {
     [m_webView _recalculateViewportSizesWithMinimumViewportInset:[m_webView minimumViewportInset] maximumViewportInset:[m_webView maximumViewportInset] throwOnInvalidInput:NO];
 }
@@ -57,17 +62,11 @@ void PageClientImplCocoa::topContentInsetDidChange()
 void PageClientImplCocoa::themeColorWillChange()
 {
     [m_webView willChangeValueForKey:@"themeColor"];
-
-    // FIXME: Remove old `-[WKWebView _themeColor]` SPI <rdar://76662644>
-    [m_webView willChangeValueForKey:@"_themeColor"];
 }
 
 void PageClientImplCocoa::themeColorDidChange()
 {
     [m_webView didChangeValueForKey:@"themeColor"];
-
-    // FIXME: Remove old `-[WKWebView _themeColor]` SPI <rdar://76662644>
-    [m_webView didChangeValueForKey:@"_themeColor"];
 }
 
 void PageClientImplCocoa::underPageBackgroundColorWillChange()
@@ -80,18 +79,6 @@ void PageClientImplCocoa::underPageBackgroundColorDidChange()
     [m_webView didChangeValueForKey:@"underPageBackgroundColor"];
 }
 
-void PageClientImplCocoa::pageExtendedBackgroundColorWillChange()
-{
-    // FIXME: Remove old `-[WKWebView _pageExtendedBackgroundColor]` SPI <rdar://77789732>
-    [m_webView willChangeValueForKey:@"_pageExtendedBackgroundColor"];
-}
-
-void PageClientImplCocoa::pageExtendedBackgroundColorDidChange()
-{
-    // FIXME: Remove old `-[WKWebView _pageExtendedBackgroundColor]` SPI <rdar://77789732>
-    [m_webView didChangeValueForKey:@"_pageExtendedBackgroundColor"];
-}
-
 void PageClientImplCocoa::sampledPageTopColorWillChange()
 {
     [m_webView willChangeValueForKey:@"_sampledPageTopColor"];
@@ -101,6 +88,19 @@ void PageClientImplCocoa::sampledPageTopColorDidChange()
 {
     [m_webView didChangeValueForKey:@"_sampledPageTopColor"];
 }
+
+#if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
+void PageClientImplCocoa::spatialBackdropSourceWillChange()
+{
+    [m_webView willChangeValueForKey:@"_spatialBackdropSource"];
+}
+
+void PageClientImplCocoa::spatialBackdropSourceDidChange()
+{
+    [m_webView _spatialBackdropSourceDidChange];
+    [m_webView didChangeValueForKey:@"_spatialBackdropSource"];
+}
+#endif
 
 void PageClientImplCocoa::isPlayingAudioWillChange()
 {
@@ -321,6 +321,55 @@ void PageClientImplCocoa::removeTextAnimationForAnimationID(const WTF::UUID& uui
 
 #endif
 
+#if ENABLE(SCREEN_TIME)
+void PageClientImplCocoa::installScreenTimeWebpageController()
+{
+    [m_webView _installScreenTimeWebpageController];
+}
+
+void PageClientImplCocoa::didChangeScreenTimeWebpageControllerURL()
+{
+    updateScreenTimeWebpageControllerURL(webView().get());
+}
+
+void PageClientImplCocoa::updateScreenTimeWebpageControllerURL(WKWebView *webView)
+{
+    if (!PAL::isScreenTimeFrameworkAvailable())
+        return;
+
+    RetainPtr screenTimeWebpageController = [webView _screenTimeWebpageController];
+    if (!screenTimeWebpageController)
+        return;
+
+    RefPtr pageProxy = [webView _page].get();
+    if (pageProxy && !pageProxy->preferences().screenTimeEnabled()) {
+        [webView _uninstallScreenTimeWebpageController];
+        return;
+    }
+
+    [screenTimeWebpageController setURL:[webView _mainFrameURL]];
+}
+
+void PageClientImplCocoa::setURLIsPictureInPictureForScreenTime(bool value)
+{
+    RetainPtr screenTimeWebpageController = [webView() _screenTimeWebpageController];
+    if (!screenTimeWebpageController)
+        return;
+
+    [screenTimeWebpageController setURLIsPictureInPicture:value];
+}
+
+void PageClientImplCocoa::setURLIsPlayingVideoForScreenTime(bool value)
+{
+    RetainPtr screenTimeWebpageController = [webView() _screenTimeWebpageController];
+    if (!screenTimeWebpageController)
+        return;
+
+    [screenTimeWebpageController setURLIsPlayingVideo:value];
+}
+
+#endif
+
 #if ENABLE(GAMEPAD)
 void PageClientImplCocoa::setGamepadsRecentlyAccessed(GamepadsRecentlyAccessed gamepadsRecentlyAccessed)
 {
@@ -364,5 +413,12 @@ void PageClientImplCocoa::processDidUpdateThrottleState()
     [m_webView willChangeValueForKey:@"_webProcessState"];
     [m_webView didChangeValueForKey:@"_webProcessState"];
 }
+
+#if ENABLE(FULLSCREEN_API)
+void PageClientImplCocoa::setFullScreenClientForTesting(std::unique_ptr<WebFullScreenManagerProxyClient>&& client)
+{
+    m_fullscreenClientForTesting = WTFMove(client);
+}
+#endif
 
 } // namespace WebKit

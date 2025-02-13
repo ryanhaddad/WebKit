@@ -29,6 +29,7 @@
 #include "Element.h"
 #include "ScrollAxis.h"
 #include "ScrollTimelineOptions.h"
+#include "Styleable.h"
 #include <wtf/Ref.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/WeakPtr.h>
@@ -36,22 +37,26 @@
 namespace WebCore {
 
 class AnimationTimelinesController;
-class CSSScrollValue;
+class Document;
 class Element;
 class RenderStyle;
 class ScrollableArea;
 
 struct TimelineRange;
 
+TextStream& operator<<(TextStream&, Scroller);
+
 class ScrollTimeline : public AnimationTimeline {
 public:
-    static Ref<ScrollTimeline> create(ScrollTimelineOptions&& = { });
+    static Ref<ScrollTimeline> create(Document&, ScrollTimelineOptions&& = { });
     static Ref<ScrollTimeline> create(const AtomString&, ScrollAxis);
-    static Ref<ScrollTimeline> createFromCSSValue(const CSSScrollValue&);
+    static Ref<ScrollTimeline> create(Scroller, ScrollAxis);
+    static Ref<ScrollTimeline> createInactiveStyleOriginatedTimeline(const AtomString& name);
 
-    virtual Element* source() const { return m_source.get(); }
-    Element* sourceElementForProgressCalculation() const;
-    void setSource(const Element*);
+    const WeakStyleable& sourceStyleable() const { return m_source; }
+    virtual Element* source() const;
+    void setSource(Element*);
+    void setSource(const Styleable&);
 
     ScrollAxis axis() const { return m_axis; }
     void setAxis(ScrollAxis axis) { m_axis = axis; }
@@ -59,19 +64,21 @@ public:
     const AtomString& name() const { return m_name; }
     void setName(const AtomString& name) { m_name = name; }
 
-    virtual void dump(TextStream&) const;
-    virtual Ref<CSSValue> toCSSValue(const RenderStyle&) const;
+    bool isInactiveStyleOriginatedTimeline() const { return m_isInactiveStyleOriginatedTimeline; }
 
     AnimationTimeline::ShouldUpdateAnimationsAndSendEvents documentWillUpdateAnimationsAndSendEvents() override;
 
     AnimationTimelinesController* controller() const override;
-    static ScrollableArea* scrollableAreaForSourceRenderer(RenderElement*, Ref<Document>);
 
-    std::optional<WebAnimationTime> currentTime(const TimelineRange&) override;
+    std::optional<WebAnimationTime> currentTime() override;
     TimelineRange defaultRange() const override;
     WeakPtr<Element, WeakPtrImplWithEventTargetData> timelineScopeDeclaredElement() const { return m_timelineScopeElement; }
     void setTimelineScopeElement(const Element&);
     void clearTimelineScopeDeclaredElement() { m_timelineScopeElement = nullptr; }
+
+    virtual std::pair<WebAnimationTime, WebAnimationTime> intervalForAttachmentRange(const TimelineRange&) const;
+
+    void removeTimelineFromDocument(Element*);
 
 protected:
     explicit ScrollTimeline(const AtomString&, ScrollAxis);
@@ -82,23 +89,38 @@ protected:
         float rangeEnd { 0 };
     };
     static float floatValueForOffset(const Length&, float);
-    virtual Data computeTimelineData(const TimelineRange&) const;
+    virtual Data computeTimelineData() const;
+
+    static ScrollableArea* scrollableAreaForSourceRenderer(const RenderElement*, Document&);
+
+    struct ResolvedScrollDirection {
+        bool isVertical;
+        bool isReversed;
+    };
+    std::optional<ResolvedScrollDirection> resolvedScrollDirection() const;
 
 private:
-    enum class Scroller : uint8_t { Nearest, Root, Self };
-
-    explicit ScrollTimeline(ScrollTimelineOptions&& = { });
+    explicit ScrollTimeline();
     explicit ScrollTimeline(Scroller, ScrollAxis);
 
     bool isScrollTimeline() const final { return true; }
 
     void animationTimingDidChange(WebAnimation&) override;
 
-    WeakPtr<Element, WeakPtrImplWithEventTargetData> m_source;
+    struct CurrentTimeData {
+        float scrollOffset { 0 };
+        float maxScrollOffset { 0 };
+    };
+
+    void cacheCurrentTime();
+
+    WeakStyleable m_source;
     ScrollAxis m_axis { ScrollAxis::Block };
     AtomString m_name;
     Scroller m_scroller { Scroller::Self };
     WeakPtr<Element, WeakPtrImplWithEventTargetData> m_timelineScopeElement;
+    CurrentTimeData m_cachedCurrentTimeData { };
+    bool m_isInactiveStyleOriginatedTimeline { false };
 };
 
 } // namespace WebCore

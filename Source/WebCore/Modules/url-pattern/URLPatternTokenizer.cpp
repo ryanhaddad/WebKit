@@ -26,21 +26,12 @@
 #include "config.h"
 #include "URLPatternTokenizer.h"
 
+#include "URLPatternParser.h"
 #include <unicode/utf16.h>
-#include <unicode/utf8.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
 namespace URLPatternUtilities {
-
-// https://urlpattern.spec.whatwg.org/#is-a-valid-name-code-point
-static bool isValidNameCodepoint(UChar codepoint, bool first)
-{
-    if (first)
-        return u_isIDStart(codepoint);
-
-    return u_isIDPart(codepoint);
-}
 
 bool Token::isNull() const
 {
@@ -51,19 +42,21 @@ bool Token::isNull() const
     return false;
 }
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 // https://urlpattern.spec.whatwg.org/#get-the-next-code-point
 void Tokenizer::getNextCodePoint()
 {
-    if (m_input.is8Bit()) {
-        auto characters = m_input.span8();
-        U8_NEXT_OR_FFFD(characters, m_nextIndex, m_input.length(), m_codepoint);
-    } else {
-        auto characters = m_input.span16();
-        U16_NEXT_OR_FFFD(characters, m_nextIndex, m_input.length(), m_codepoint);
-    }
+    m_codepoint = m_input[m_nextIndex++];
+
+    if (m_input.is8Bit() || !U16_IS_LEAD(m_codepoint) || m_nextIndex >= m_input.length())
+        return;
+
+    auto next = m_input[m_nextIndex];
+    if (!U16_IS_TRAIL(next))
+        return;
+
+    m_nextIndex++;
+    m_codepoint = U16_GET_SUPPLEMENTARY(m_codepoint, next);
 }
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 // https://urlpattern.spec.whatwg.org/#seek-and-get-the-next-code-point
 void Tokenizer::seekNextCodePoint(size_t index)
@@ -161,7 +154,7 @@ ExceptionOr<Vector<Token>> Tokenizer::tokenize()
             while (namePosition < m_input.length()) {
                 seekNextCodePoint(namePosition);
 
-                bool isValidCodepoint = isValidNameCodepoint(m_codepoint, namePosition == nameStart);
+                bool isValidCodepoint = isValidNameCodepoint(m_codepoint, namePosition == nameStart ? IsFirst::Yes : IsFirst::No);
 
                 if (!isValidCodepoint)
                     break;
