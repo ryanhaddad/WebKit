@@ -51,6 +51,7 @@ if 'uat' in CURRENT_HOSTNAME:
 BUILD_WEBKIT_HOSTNAMES = ['build.webkit.org', 'build']
 TESTING_ENVIRONMENT_HOSTNAMES = ['build.webkit-uat.org', 'build-uat', 'build.webkit-dev.org', 'build-dev']
 COMMITS_INFO_URL = 'https://commits.webkit.org/'
+PERF_WEBKIT_URL = f'https://perf.webkit{custom_suffix}.org'
 RESULTS_WEBKIT_URL = 'https://results.webkit.org'
 RESULTS_SERVER_API_KEY = 'RESULTS_SERVER_API_KEY'
 S3URL = 'https://s3-us-west-2.amazonaws.com/'
@@ -1442,7 +1443,7 @@ class RunAndUploadPerfTests(shell.Test):
                "--worker-config-json-path", "../../perf-test-config.json",
                "--no-show-results",
                "--reset-results",
-               "--test-results-server", "perf.webkit.org",
+               "--test-results-server", PERF_WEBKIT_URL,
                "--builder-name", WithProperties("%(buildername)s"),
                "--build-number", WithProperties("%(buildnumber)s"),
                "--platform", WithProperties("%(fullPlatform)s"),
