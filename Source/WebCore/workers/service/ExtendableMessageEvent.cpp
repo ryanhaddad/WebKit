@@ -90,9 +90,7 @@ ExtendableMessageEvent::ExtendableMessageEvent(const AtomString& type, Ref<Secur
 {
 }
 
-ExtendableMessageEvent::~ExtendableMessageEvent()
-{
-}
+ExtendableMessageEvent::~ExtendableMessageEvent() = default;
 
 String ExtendableMessageEvent::origin() const
 {

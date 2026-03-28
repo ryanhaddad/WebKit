@@ -79,9 +79,7 @@ LibWebRTCProvider::LibWebRTCProvider()
 {
 }
 
-LibWebRTCProvider::~LibWebRTCProvider()
-{
-}
+LibWebRTCProvider::~LibWebRTCProvider() = default;
 
 #if !PLATFORM(COCOA)
 void LibWebRTCProvider::registerWebKitVP9Decoder()

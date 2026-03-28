@@ -106,9 +106,7 @@ BoxTreeUpdater::BoxTreeUpdater(RenderBlock& rootRenderer, const Document& docume
 {
 }
 
-BoxTreeUpdater::~BoxTreeUpdater()
-{
-}
+BoxTreeUpdater::~BoxTreeUpdater() = default;
 
 CheckedRef<Layout::ElementBox> BoxTreeUpdater::build()
 {

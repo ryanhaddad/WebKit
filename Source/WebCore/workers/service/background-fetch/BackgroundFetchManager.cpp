@@ -46,9 +46,7 @@ BackgroundFetchManager::BackgroundFetchManager(ServiceWorkerRegistration& regist
 {
 }
 
-BackgroundFetchManager::~BackgroundFetchManager()
-{
-}
+BackgroundFetchManager::~BackgroundFetchManager() = default;
 
 static ExceptionOr<Vector<Ref<FetchRequest>>> buildBackgroundFetchRequests(ScriptExecutionContext& context, BackgroundFetchManager::Requests&& backgroundFetchRequests)
 {

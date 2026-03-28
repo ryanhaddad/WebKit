@@ -112,9 +112,7 @@ LibWebRTCVPXVideoEncoder::LibWebRTCVPXVideoEncoder(Type type, OutputCallback&& o
 {
 }
 
-LibWebRTCVPXVideoEncoder::~LibWebRTCVPXVideoEncoder()
-{
-}
+LibWebRTCVPXVideoEncoder::~LibWebRTCVPXVideoEncoder() = default;
 
 int LibWebRTCVPXVideoEncoder::initialize(LibWebRTCVPXVideoEncoder::Type type, const VideoEncoder::Config& config)
 {

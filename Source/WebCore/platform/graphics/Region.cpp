@@ -65,9 +65,7 @@ Region::Region(Region&& other)
 {
 }
 
-Region::~Region()
-{
-}
+Region::~Region() = default;
 
 Region& Region::operator=(const Region& other)
 {

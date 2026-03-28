@@ -42,9 +42,7 @@ StorageNamespaceProvider::StorageNamespaceProvider()
 {
 }
 
-StorageNamespaceProvider::~StorageNamespaceProvider()
-{
-}
+StorageNamespaceProvider::~StorageNamespaceProvider() = default;
 
 Ref<StorageArea> StorageNamespaceProvider::localStorageArea(Document& document)
 {

@@ -200,9 +200,7 @@ LibWebRTCIceTransportBackend::LibWebRTCIceTransportBackend(webrtc::scoped_refptr
 {
 }
 
-LibWebRTCIceTransportBackend::~LibWebRTCIceTransportBackend()
-{
-}
+LibWebRTCIceTransportBackend::~LibWebRTCIceTransportBackend() = default;
 
 void LibWebRTCIceTransportBackend::registerClient(RTCIceTransportBackendClient& client)
 {

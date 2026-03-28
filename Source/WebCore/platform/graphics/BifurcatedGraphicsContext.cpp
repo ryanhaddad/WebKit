@@ -46,9 +46,7 @@ BifurcatedGraphicsContext::BifurcatedGraphicsContext(GraphicsContext& primaryCon
     VERIFY_STATE_SYNCHRONIZATION();
 }
 
-BifurcatedGraphicsContext::~BifurcatedGraphicsContext()
-{
-}
+BifurcatedGraphicsContext::~BifurcatedGraphicsContext() = default;
 
 bool BifurcatedGraphicsContext::hasPlatformContext() const
 {

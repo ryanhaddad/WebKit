@@ -52,9 +52,7 @@ RenderLineBreak::RenderLineBreak(HTMLElement& element, RenderStyle&& style)
     ASSERT(isRenderLineBreak());
 }
 
-RenderLineBreak::~RenderLineBreak()
-{
-}
+RenderLineBreak::~RenderLineBreak() = default;
 
 int RenderLineBreak::caretMinOffset() const
 {

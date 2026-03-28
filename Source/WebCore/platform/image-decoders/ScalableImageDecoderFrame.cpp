@@ -34,9 +34,7 @@ ScalableImageDecoderFrame::ScalableImageDecoderFrame()
 {
 }
 
-ScalableImageDecoderFrame::~ScalableImageDecoderFrame()
-{
-}
+ScalableImageDecoderFrame::~ScalableImageDecoderFrame() = default;
 
 ScalableImageDecoderFrame& ScalableImageDecoderFrame::operator=(const ScalableImageDecoderFrame& other)
 {

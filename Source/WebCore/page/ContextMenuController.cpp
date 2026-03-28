@@ -111,9 +111,7 @@ ContextMenuController::ContextMenuController(Page& page, UniqueRef<ContextMenuCl
 {
 }
 
-ContextMenuController::~ContextMenuController()
-{
-}
+ContextMenuController::~ContextMenuController() = default;
 
 Page& ContextMenuController::page()
 {
