@@ -56,6 +56,7 @@
 #include "StyledMarkedText.h"
 #include "TextPaintStyle.h"
 #include "TextPainter.h"
+#include <numeric>
 #include <ranges>
 
 #if ENABLE(WRITING_TOOLS)
@@ -1293,7 +1294,7 @@ static void drawWritingToolsUnderline(GraphicsContext& context, const FloatRect&
     auto maxX = rect.maxX();
     auto minY = rect.y();
     auto maxY = rect.maxY();
-    auto midY = (minY + maxY) / 2.0;
+    auto midY = std::midpoint(minY, maxY);
 
     auto frameX = frameSize.width();
     auto frameY = frameSize.height();

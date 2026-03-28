@@ -28,6 +28,7 @@
 
 #if USE(SKIA)
 
+#include <numeric>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/TextStream.h>
 
@@ -236,7 +237,7 @@ size_t SkiaImageAtlasLayoutBuilder::findMaxPackableBatch(const Vector<IntSize>& 
     size_t maxPackable = 0;
 
     while (lo <= hi) {
-        size_t mid = lo + (hi - lo) / 2;
+        size_t mid = std::midpoint(lo, hi);
 
         Vector<IntSize> testBatch(mid, [&sizes](size_t index) {
             return sizes[index];
