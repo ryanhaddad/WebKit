@@ -875,10 +875,7 @@ bool HTMLImageElement::isServerMap() const
     const AtomString& usemap = attributeWithoutSynchronization(usemapAttr);
 
     // If the usemap attribute starts with '#', it refers to a map element in the document.
-    if (usemap.string()[0] == '#')
-        return false;
-
-    return protect(document())->completeURL(usemap).isEmpty();
+    return !usemap.startsWith('#');
 }
 
 String HTMLImageElement::crossOrigin() const
