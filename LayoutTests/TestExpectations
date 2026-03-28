@@ -736,8 +736,6 @@ imported/w3c/web-platform-tests/eventsource/eventsource-request-cancellation.any
 imported/w3c/web-platform-tests/eventsource/request-cache-control.any.html [ Skip ]
 imported/w3c/web-platform-tests/eventsource/request-cache-control.any.worker.html [ Skip ]
 imported/w3c/web-platform-tests/eventsource/request-credentials.any.window.html [ Skip ]
-# Feature Policy API is obsolete and replaced by Permissions Policy. Skip the entire directory.
-imported/w3c/web-platform-tests/feature-policy [ Skip ]
 # Tests that depend on obsolete feature-policy/resources/featurepolicy.js
 imported/w3c/web-platform-tests/mediacapture-streams/MediaStream-default-feature-policy.https.html [ Skip ]
 imported/w3c/web-platform-tests/clipboard-apis/feature-policy/clipboard-write/clipboard-write-enabled-on-self-origin-by-feature-policy.tentative.https.sub.html [ Skip ]
