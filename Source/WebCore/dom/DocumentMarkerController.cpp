@@ -100,9 +100,9 @@ bool DocumentMarkerController::addMarker(const SimpleRange& range, DocumentMarke
 
 #if ENABLE(WRITING_TOOLS_TEXT_EFFECTS)
     RefPtr page = m_document->page();
-    bool isGrammar = type == DocumentMarkerType::Grammar;
-    bool textEffectsEnabled = page && page->settings().textEffectsEnabled();
-    bool needsTextEffect = false;
+    const auto isGrammar = type == DocumentMarkerType::Grammar;
+    const auto textEffectsEnabled = page && page->settings().textEffectsEnabled();
+    auto needsTextEffect = false;
     if (isGrammar && textEffectsEnabled) {
         needsTextEffect = true;
         auto textRanges = collectTextRanges(range);
