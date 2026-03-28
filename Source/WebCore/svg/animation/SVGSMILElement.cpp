@@ -113,7 +113,7 @@ bool ConditionEventListener::operator==(const EventListener& listener) const
 void ConditionEventListener::handleEvent(ScriptExecutionContext&, Event&)
 {
     if (RefPtr animation = m_animation.get())
-        animation->addInstanceTime(m_condition->m_beginOrEnd, m_animation->elapsed() + m_condition->m_offset);
+        animation->addInstanceTime(m_condition->m_beginOrEnd, animation->elapsed() + m_condition->m_offset);
 }
 
 SVGSMILElement::Condition::Condition(Type type, BeginOrEnd beginOrEnd, const String& baseID, const AtomString& name, SMILTime offset, int repeats)
