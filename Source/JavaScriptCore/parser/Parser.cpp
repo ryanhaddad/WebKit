@@ -5290,7 +5290,7 @@ template <class TreeBuilder> TreeExpression Parser<LexerType>::parsePrimaryExpre
         JSTextPosition start = tokenStartPosition();
         JSTokenLocation location(tokenLocation());
         next();
-        TreeExpression re = context.createRegExp(location, *pattern, *flags, start);
+        TreeExpression re = context.createRegExp(location, *pattern, *flags, start, m_lexer->isReparsingFunction());
         if (!re) [[unlikely]] {
             Yarr::ErrorCode errorCode = Yarr::checkSyntax(pattern->string(), flags->string());
             regexFail(String::fromLatin1(Yarr::errorMessage(errorCode)));
