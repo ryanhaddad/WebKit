@@ -450,11 +450,14 @@ bool InputType::isInRange(const String& value) const
     if (!stepRange.hasRangeLimitations())
         return false;
 
-    // This function should return true if both of validity.rangeUnderflow and
+    // This function should return true if both validity.rangeUnderflow and
     // validity.rangeOverflow are false. If the INPUT has no value, they are false.
     const Decimal numericValue = parseToNumberOrNaN(value);
     if (!numericValue.isFinite())
         return true;
+
+    if (stepRange.isReversible() && stepRange.maximum() < stepRange.minimum())
+        return numericValue >= stepRange.minimum() || numericValue <= stepRange.maximum();
 
     return numericValue >= stepRange.minimum() && numericValue <= stepRange.maximum();
 }
@@ -468,11 +471,14 @@ bool InputType::isOutOfRange(const String& value) const
     if (!stepRange.hasRangeLimitations())
         return false;
 
-    // This function should return true if both of validity.rangeUnderflow and
-    // validity.rangeOverflow are true. If the INPUT has no value, they are false.
+    // This function should return true if either validity.rangeUnderflow or
+    // validity.rangeOverflow is true. If the INPUT has no value, they are false.
     const Decimal numericValue = parseToNumberOrNaN(value);
     if (!numericValue.isFinite())
         return false;
+
+    if (stepRange.isReversible() && stepRange.maximum() < stepRange.minimum())
+        return numericValue > stepRange.maximum() && numericValue < stepRange.minimum();
 
     return numericValue < stepRange.minimum() || numericValue > stepRange.maximum();
 }
