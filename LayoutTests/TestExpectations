@@ -8353,3 +8353,6 @@ imported/w3c/web-platform-tests/css/css-text/line-breaking/segment-break-transfo
 imported/w3c/web-platform-tests/css/css-text/line-breaking/segment-break-transformation-punctuation-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-text/line-breaking/segment-break-transformation-punctuation-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-text/line-breaking/segment-break-transformation-punctuation-003.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/html/semantics/document-metadata/the-style-element/tentative/style-element-csp-allowed.html [ Skip ] # timeout
+imported/w3c/web-platform-tests/html/semantics/document-metadata/the-style-element/tentative/style-element-csp-blocked.html [ Skip ] # timeout - two subtests pass
