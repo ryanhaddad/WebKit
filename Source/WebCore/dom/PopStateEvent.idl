@@ -31,10 +31,10 @@
     [CallWith=CurrentGlobalObject] constructor([AtomString] DOMString type, optional PopStateEventInit eventInitDict = {});
 
     [CustomGetter] readonly attribute any state;
-    [EnabledBySetting=UAVisualTransitionDetectionEnabled] readonly attribute boolean hasUAVisualTransition;
+    readonly attribute boolean hasUAVisualTransition;
 };
 
 dictionary PopStateEventInit : EventInit {
     any state = null;
-    [EnabledBySetting=UAVisualTransitionDetectionEnabled] boolean hasUAVisualTransition = false;
+    boolean hasUAVisualTransition = false;
 };

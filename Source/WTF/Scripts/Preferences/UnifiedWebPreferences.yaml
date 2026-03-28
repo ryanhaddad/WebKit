@@ -8535,20 +8535,6 @@ TwoUpPDFDisplayModeSupportEnabled:
     WebCore:
       default: true
 
-UAVisualTransitionDetectionEnabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "Detect UA visual transitions"
-  humanReadableDescription: "Enable detection of UA visual transitions"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 URLPatternAPIEnabled:
   type: bool
   category: dom
