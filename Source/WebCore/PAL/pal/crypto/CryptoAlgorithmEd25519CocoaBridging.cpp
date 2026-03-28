@@ -26,9 +26,7 @@
 #include "config.h"
 #include "CryptoAlgorithmEd25519CocoaBridging.h"
 
-#include "CommonCryptoSPI.h"
 #include "PALSwift-Generated.h"
-#include <wtf/CryptographicUtilities.h>
 
 namespace PAL::Crypto {
 
@@ -36,7 +34,7 @@ Expected<VectorUInt8, Error> signEd25519CryptoKit(const VectorUInt8 &sk, const V
 {
     if (sk.size() != ed25519KeySize)
         return makeUnexpected(Error::FailedToSign);
-    auto rv = pal::EdKey::sign(pal::EdSigningAlgorithm::ed25519(), sk.span(), data.span());
+    auto rv = pal::EdKey::sign(PAL::Crypto::EdSigningAlgorithm::ED25519, sk.span(), data.span());
     if (rv.errorCode != PAL::Crypto::Error::Success)
         return makeUnexpected(rv.errorCode);
     return WTF::move(rv.result);
@@ -46,7 +44,7 @@ Expected<bool, Error> verifyEd25519CryptoKit(const VectorUInt8& pubKey, const Ve
 {
     if (pubKey.size() != ed25519KeySize || signature.size() != ed25519SignatureSize)
         return false;
-    auto rv = pal::EdKey::verify(pal::EdSigningAlgorithm::ed25519(), pubKey.span(), signature.span(), data.span());
+    auto rv = pal::EdKey::verify(PAL::Crypto::EdSigningAlgorithm::ED25519, pubKey.span(), signature.span(), data.span());
     return rv.errorCode == PAL::Crypto::Error::Success;
 }
 

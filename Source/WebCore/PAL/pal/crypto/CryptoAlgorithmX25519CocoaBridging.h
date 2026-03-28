@@ -27,10 +27,9 @@
 
 #include <pal/crypto/CryptoTypes.h>
 #include <wtf/Expected.h>
-#include <wtf/Unexpected.h>
 
 namespace PAL::Crypto {
 
-std::optional<VectorUInt8> deriveBitsCryptoKit(const VectorUInt8& baseKey, const VectorUInt8& publicKey);
+std::optional<VectorUInt8> deriveBitsX25519CryptoKit(const VectorUInt8& baseKey, const VectorUInt8& publicKey);
 
 } // namespace PAL::Crypto

@@ -29,7 +29,7 @@ namespace WebCore {
 
 std::optional<Vector<uint8_t>> CryptoAlgorithmX25519::platformDeriveBits(const CryptoKeyOKP& baseKey, const CryptoKeyOKP& publicKey)
 {
-    return PAL::Crypto::deriveBitsCryptoKit(baseKey.platformKey(), publicKey.platformKey());
+    return PAL::Crypto::deriveBitsX25519CryptoKit(baseKey.platformKey(), publicKey.platformKey());
 }
 
 } // namespace WebCore

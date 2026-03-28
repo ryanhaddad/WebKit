@@ -31,27 +31,17 @@
 #include "CryptoKeyRaw.h"
 #include "CryptoTypesBridging.h"
 #include "CryptoUtilitiesCocoa.h"
+#include <pal/crypto/CryptoAlgorithmHKDFCocoaBridging.h>
 #include <pal/crypto/CryptoTypes.h>
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
-#include "PALSwift-Generated.h"
-#pragma clang diagnostic pop
 
 namespace WebCore {
 
-static ExceptionOr<Vector<uint8_t>> platformDeriveBitsCryptoKit(const CryptoAlgorithmHkdfParams& parameters, const CryptoKeyRaw& key, size_t length)
+ExceptionOr<Vector<uint8_t>> CryptoAlgorithmHKDF::platformDeriveBits(const CryptoAlgorithmHkdfParams& parameters, const CryptoKeyRaw& key, size_t length)
 {
     if (!isValidHashParameter(parameters.hashIdentifier))
         return Exception { ExceptionCode::OperationError };
-    auto rv = pal::HKDF::deriveBits(key.key().span(), parameters.saltVector().span(), parameters.infoVector().span(), length, toCKHashFunction(parameters.hashIdentifier));
-    if (rv.errorCode != PAL::Crypto::Error::Success)
-        return Exception { ExceptionCode::OperationError };
-    return WTF::move(rv.result);
+
+    return toException(PAL::Crypto::deriveBitsHKDFCryptoKit(key.key(), parameters.saltVector(), parameters.infoVector(), length, toCKHashFunction(parameters.hashIdentifier)));
 }
 
-ExceptionOr<Vector<uint8_t>> CryptoAlgorithmHKDF::platformDeriveBits(const CryptoAlgorithmHkdfParams& parameters, const CryptoKeyRaw& key, size_t length)
-{
-    return platformDeriveBitsCryptoKit(parameters, key, length);
-}
 } // namespace WebCore

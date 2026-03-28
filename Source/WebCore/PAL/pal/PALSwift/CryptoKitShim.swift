@@ -530,61 +530,53 @@ public struct ECKey {
 
 // FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public enum EdSigningAlgorithm {
-    case ed25519
-    case ed448
-}
-
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public enum EdKeyAgreementAlgorithm {
-    case x25519
-    case x448
-}
-
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
 public class EdKey {
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func generatePrivateKey(algo: EdSigningAlgorithm) -> VectorUInt8 {
+    public static func generatePrivateKey(algo: PAL.Crypto.EdSigningAlgorithm) -> VectorUInt8 {
         switch algo {
-        case .ed25519:
-            return Curve25519.Signing.PrivateKey().rawRepresentation.copyToVectorUInt8()
-        case .ed448:
-            return Data(count: 0).copyToVectorUInt8()
+        case .ED25519:
+            Curve25519.Signing.PrivateKey().rawRepresentation.copyToVectorUInt8()
+        case .ED448:
+            Data(count: 0).copyToVectorUInt8()
+        @unknown default:
+            fatalError()
         }
     }
 
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func generatePrivateKeyKeyAgreement(algo: EdKeyAgreementAlgorithm) -> VectorUInt8 {
+    public static func generatePrivateKeyKeyAgreement(algo: PAL.Crypto.EdKeyAgreementAlgorithm) -> VectorUInt8 {
         switch algo {
-        case .x25519:
-            return Curve25519.KeyAgreement.PrivateKey().rawRepresentation.copyToVectorUInt8()
-        case .x448:
-            return Data(count: 0).copyToVectorUInt8()
+        case .X25519:
+            Curve25519.KeyAgreement.PrivateKey().rawRepresentation.copyToVectorUInt8()
+        case .X448:
+            Data(count: 0).copyToVectorUInt8()
+        @unknown default:
+            fatalError()
         }
     }
 
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func privateToPublic(algo: EdSigningAlgorithm, privateKey: SpanConstUInt8) -> CryptoOperationReturnValue {
+    public static func privateToPublic(algo: PAL.Crypto.EdSigningAlgorithm, privateKey: SpanConstUInt8) -> CryptoOperationReturnValue {
         var returnValue = CryptoOperationReturnValue()
         do {
             if unsafe privateKey.size() != 32 {
                 throw LocalErrors.invalidArgument
             }
             switch algo {
-            case .ed25519:
+            case .ED25519:
                 returnValue.result = try unsafe Curve25519.Signing.PrivateKey(span: privateKey).publicKey
                     .rawRepresentation.copyToVectorUInt8()
                 if returnValue.result.size() != 32 {
                     throw LocalErrors.invalidArgument
                 }
                 returnValue.errorCode = .Success
-            case .ed448:
+            case .ED448:
                 returnValue.errorCode = .UnsupportedAlgorithm
+            @unknown default:
+                fatalError()
             }
         } catch {
             returnValue.errorCode = .FailedToImport
@@ -595,7 +587,7 @@ public class EdKey {
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func privateToPublicKeyAgreement(
-        algo: EdKeyAgreementAlgorithm,
+        algo: PAL.Crypto.EdKeyAgreementAlgorithm,
         privateKey: SpanConstUInt8
     ) -> CryptoOperationReturnValue {
         var returnValue = CryptoOperationReturnValue()
@@ -604,15 +596,17 @@ public class EdKey {
                 throw LocalErrors.invalidArgument
             }
             switch algo {
-            case .x25519:
+            case .X25519:
                 returnValue.result = try unsafe Curve25519.KeyAgreement.PrivateKey(span: privateKey).publicKey
                     .rawRepresentation.copyToVectorUInt8()
                 if returnValue.result.size() != 32 {
                     throw LocalErrors.invalidArgument
                 }
                 returnValue.errorCode = .Success
-            case .x448:
+            case .X448:
                 returnValue.errorCode = .UnsupportedAlgorithm
+            @unknown default:
+                fatalError()
             }
         } catch {
             returnValue.errorCode = .FailedToImport
@@ -622,18 +616,20 @@ public class EdKey {
 
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func validateKeyPair(algo: EdSigningAlgorithm, privateKey: SpanConstUInt8, publicKey: SpanConstUInt8) -> Bool {
+    public static func validateKeyPair(algo: PAL.Crypto.EdSigningAlgorithm, privateKey: SpanConstUInt8, publicKey: SpanConstUInt8) -> Bool {
         do {
             if unsafe (privateKey.size() != 32 || publicKey.size() != 32) {
                 throw LocalErrors.invalidArgument
             }
             switch algo {
-            case .ed25519:
+            case .ED25519:
                 let derivedPublicKey = try unsafe Curve25519.Signing.PrivateKey(span: privateKey).publicKey.rawRepresentation
                 let importedPublicKey = try unsafe Curve25519.Signing.PublicKey(span: publicKey).rawRepresentation
                 return derivedPublicKey == importedPublicKey
-            case .ed448:
+            case .ED448:
                 return false
+            @unknown default:
+                fatalError()
             }
         } catch {
             return false
@@ -643,7 +639,7 @@ public class EdKey {
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func validateKeyPairKeyAgreement(
-        algo: EdKeyAgreementAlgorithm,
+        algo: PAL.Crypto.EdKeyAgreementAlgorithm,
         privateKey: SpanConstUInt8,
         publicKey: SpanConstUInt8
     ) -> Bool {
@@ -652,12 +648,14 @@ public class EdKey {
                 throw LocalErrors.invalidArgument
             }
             switch algo {
-            case .x25519:
+            case .X25519:
                 let derivedPublicKey = try unsafe Curve25519.KeyAgreement.PrivateKey(span: privateKey).publicKey.rawRepresentation
                 let importedPublicKey = try unsafe Curve25519.KeyAgreement.PublicKey(span: publicKey).rawRepresentation
                 return derivedPublicKey == importedPublicKey
-            case .x448:
+            case .X448:
                 return false
+            @unknown default:
+                fatalError()
             }
         } catch {
             return false
@@ -666,16 +664,22 @@ public class EdKey {
 
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func sign(algo: EdSigningAlgorithm, privateKey: SpanConstUInt8, data: SpanConstUInt8) -> CryptoOperationReturnValue {
+    public static func sign(
+        algo: PAL.Crypto.EdSigningAlgorithm,
+        privateKey: SpanConstUInt8,
+        data: SpanConstUInt8
+    ) -> CryptoOperationReturnValue {
         var returnValue = CryptoOperationReturnValue()
         do {
             switch algo {
-            case .ed25519:
+            case .ED25519:
                 let privateKeyImported = try unsafe Curve25519.Signing.PrivateKey(span: privateKey)
                 returnValue.result = try unsafe privateKeyImported.signature(span: data)
                 returnValue.errorCode = .Success
-            case .ed448:
+            case .ED448:
                 returnValue.errorCode = .UnsupportedAlgorithm
+            @unknown default:
+                fatalError()
             }
         } catch {
             returnValue.errorCode = .FailedToSign
@@ -686,7 +690,7 @@ public class EdKey {
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func verify(
-        algo: EdSigningAlgorithm,
+        algo: PAL.Crypto.EdSigningAlgorithm,
         publicKey: SpanConstUInt8,
         signature: SpanConstUInt8,
         data: SpanConstUInt8
@@ -694,13 +698,15 @@ public class EdKey {
         var returnValue = CryptoOperationReturnValue()
         do {
             switch algo {
-            case .ed25519:
+            case .ED25519:
                 let publicKeyImported = try unsafe Curve25519.Signing.PublicKey(span: publicKey)
                 returnValue.errorCode =
                     unsafe publicKeyImported.isValidSignature(signature: signature, data: data)
                     ? .Success : .FailedToVerify
-            case .ed448:
+            case .ED448:
                 returnValue.errorCode = .UnsupportedAlgorithm
+            @unknown default:
+                fatalError()
             }
         } catch {
             returnValue.errorCode = .FailedToSign
@@ -711,19 +717,21 @@ public class EdKey {
     // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func deriveBits(
-        algo: EdKeyAgreementAlgorithm,
+        algo: PAL.Crypto.EdKeyAgreementAlgorithm,
         privateKey: SpanConstUInt8,
         publicKey: SpanConstUInt8
     ) -> CryptoOperationReturnValue {
         var returnValue = CryptoOperationReturnValue()
         do {
             switch algo {
-            case .x25519:
+            case .X25519:
                 let privateKeyImported = try unsafe Curve25519.KeyAgreement.PrivateKey(span: privateKey)
                 returnValue.result = try unsafe privateKeyImported.sharedSecretFromKeyAgreement(pubSpan: publicKey)
                 returnValue.errorCode = .Success
-            case .x448:
+            case .X448:
                 returnValue.errorCode = .UnsupportedAlgorithm
+            @unknown default:
+                fatalError()
             }
         } catch {
             returnValue.errorCode = .FailedToDerive

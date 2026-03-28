@@ -27,7 +27,6 @@
 
 #include <pal/crypto/CryptoTypes.h>
 #include <wtf/Expected.h>
-#include <wtf/Unexpected.h>
 
 namespace PAL::Crypto {
 

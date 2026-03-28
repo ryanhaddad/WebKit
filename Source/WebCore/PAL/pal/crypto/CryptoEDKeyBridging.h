@@ -25,66 +25,20 @@
 
 #pragma once
 
-#include <cstdint>
-#include <span>
-#include <wtf/Vector.h>
+#include <pal/crypto/CryptoTypes.h>
 
-namespace PAL::Crypto {
+namespace PAL::Crypto::EdKey {
 
-using VectorUInt8 = WTF::Vector<uint8_t>;
+VectorUInt8 generatePrivateKey(EdSigningAlgorithm);
 
-using SpanConstUInt8 = std::span<const uint8_t>;
+VectorUInt8 generatePrivateKeyKeyAgreement(EdKeyAgreementAlgorithm);
 
-enum class CryptoDigestHashFunction: int {
-    SHA_1,
-    DEPRECATED_SHA_224,
-    SHA_256,
-    SHA_384,
-    SHA_512,
-};
+CryptoOperationReturnValue privateToPublic(EdSigningAlgorithm, SpanConstUInt8 privateKey);
 
-enum class Error: int {
-    Success = 0,
-    WrongTagSize,
-    EncryptionFailed,
-    EncryptionResultNil,
-    InvalidArgument,
-    TooBigArguments,
-    DecryptionFailed,
-    HashingFailed,
-    PublicKeyProvidedToSign,
-    FailedToSign,
-    FailedToVerify,
-    PrivateKeyProvidedForVerification,
-    FailedToImport,
-    FailedToDerive,
-    FailedToExport,
-    DefaultValue,
-    UnsupportedAlgorithm,
-};
+CryptoOperationReturnValue privateToPublicKeyAgreement(EdKeyAgreementAlgorithm, SpanConstUInt8 privateKey);
 
-struct CryptoOperationReturnValue {
-    Error errorCode = Error::DefaultValue;
-    VectorUInt8 result;
-};
+bool validateKeyPair(EdSigningAlgorithm, SpanConstUInt8 privateKey, SpanConstUInt8 publicKey);
 
-enum class ECNamedCurve : uint8_t {
-    P256,
-    P384,
-    P521,
-};
+bool validateKeyPairKeyAgreement(EdKeyAgreementAlgorithm, SpanConstUInt8 privateKey, SpanConstUInt8 publicKey);
 
-enum class EdSigningAlgorithm : uint8_t {
-    ED25519,
-    ED448,
-};
-
-enum class EdKeyAgreementAlgorithm : uint8_t {
-    X25519,
-    X448,
-};
-
-constexpr auto ed25519KeySize = 32;
-constexpr auto ed25519SignatureSize = ed25519KeySize * 2;
-
-} // namespace PAL::Crypto
+} // namespace PAL::Crypto::EdKey

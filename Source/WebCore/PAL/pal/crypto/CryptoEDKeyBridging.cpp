@@ -23,68 +23,41 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "config.h"
+#include "CryptoEDKeyBridging.h"
 
-#include <cstdint>
-#include <span>
-#include <wtf/Vector.h>
+#include "PALSwift-Generated.h"
 
-namespace PAL::Crypto {
+namespace PAL::Crypto::EdKey {
 
-using VectorUInt8 = WTF::Vector<uint8_t>;
+VectorUInt8 generatePrivateKey(EdSigningAlgorithm algorithm)
+{
+    return pal::EdKey::generatePrivateKey(algorithm);
+}
 
-using SpanConstUInt8 = std::span<const uint8_t>;
+VectorUInt8 generatePrivateKeyKeyAgreement(EdKeyAgreementAlgorithm algorithm)
+{
+    return pal::EdKey::generatePrivateKeyKeyAgreement(algorithm);
+}
 
-enum class CryptoDigestHashFunction: int {
-    SHA_1,
-    DEPRECATED_SHA_224,
-    SHA_256,
-    SHA_384,
-    SHA_512,
-};
+CryptoOperationReturnValue privateToPublic(EdSigningAlgorithm algorithm, SpanConstUInt8 privateKey)
+{
+    return pal::EdKey::privateToPublic(algorithm, privateKey);
+}
 
-enum class Error: int {
-    Success = 0,
-    WrongTagSize,
-    EncryptionFailed,
-    EncryptionResultNil,
-    InvalidArgument,
-    TooBigArguments,
-    DecryptionFailed,
-    HashingFailed,
-    PublicKeyProvidedToSign,
-    FailedToSign,
-    FailedToVerify,
-    PrivateKeyProvidedForVerification,
-    FailedToImport,
-    FailedToDerive,
-    FailedToExport,
-    DefaultValue,
-    UnsupportedAlgorithm,
-};
+CryptoOperationReturnValue privateToPublicKeyAgreement(EdKeyAgreementAlgorithm algorithm, SpanConstUInt8 privateKey)
+{
+    return pal::EdKey::privateToPublicKeyAgreement(algorithm, privateKey);
+}
 
-struct CryptoOperationReturnValue {
-    Error errorCode = Error::DefaultValue;
-    VectorUInt8 result;
-};
+bool validateKeyPair(EdSigningAlgorithm algorithm, SpanConstUInt8 privateKey, SpanConstUInt8 publicKey)
+{
+    return pal::EdKey::validateKeyPair(algorithm, privateKey, publicKey);
+}
 
-enum class ECNamedCurve : uint8_t {
-    P256,
-    P384,
-    P521,
-};
+bool validateKeyPairKeyAgreement(EdKeyAgreementAlgorithm algorithm, SpanConstUInt8 privateKey, SpanConstUInt8 publicKey)
+{
+    return pal::EdKey::validateKeyPairKeyAgreement(algorithm, privateKey, publicKey);
+}
 
-enum class EdSigningAlgorithm : uint8_t {
-    ED25519,
-    ED448,
-};
-
-enum class EdKeyAgreementAlgorithm : uint8_t {
-    X25519,
-    X448,
-};
-
-constexpr auto ed25519KeySize = 32;
-constexpr auto ed25519SignatureSize = ed25519KeySize * 2;
-
-} // namespace PAL::Crypto
+} // namespace PAL::Crypto::EdKey

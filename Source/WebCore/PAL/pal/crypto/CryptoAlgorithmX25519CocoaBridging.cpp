@@ -26,17 +26,15 @@
 #include "config.h"
 #include "CryptoAlgorithmX25519CocoaBridging.h"
 
-#include "CommonCryptoSPI.h"
 #include "PALSwift-Generated.h"
-#include <wtf/CryptographicUtilities.h>
 
 namespace PAL::Crypto {
 
-std::optional<VectorUInt8> deriveBitsCryptoKit(const VectorUInt8& baseKey, const VectorUInt8& publicKey)
+std::optional<VectorUInt8> deriveBitsX25519CryptoKit(const VectorUInt8& baseKey, const VectorUInt8& publicKey)
 {
     if (baseKey.size() != ed25519KeySize || publicKey.size() != ed25519KeySize)
         return std::nullopt;
-    auto rv = pal::EdKey::deriveBits(pal::EdKeyAgreementAlgorithm::x25519(), baseKey.span(), publicKey.span());
+    auto rv = pal::EdKey::deriveBits(PAL::Crypto::EdKeyAgreementAlgorithm::X25519, baseKey.span(), publicKey.span());
     if (rv.errorCode != PAL::Crypto::Error::Success)
         return std::nullopt;
     return WTF::move(rv.result);

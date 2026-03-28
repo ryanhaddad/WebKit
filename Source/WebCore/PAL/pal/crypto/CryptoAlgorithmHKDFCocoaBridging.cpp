@@ -23,68 +23,19 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "config.h"
+#include "CryptoAlgorithmHKDFCocoaBridging.h"
 
-#include <cstdint>
-#include <span>
-#include <wtf/Vector.h>
+#include "PALSwift-Generated.h"
 
 namespace PAL::Crypto {
 
-using VectorUInt8 = WTF::Vector<uint8_t>;
+Expected<VectorUInt8, Error> deriveBitsHKDFCryptoKit(const VectorUInt8& key, const VectorUInt8& salt, const VectorUInt8& info, size_t length, CryptoDigestHashFunction hashFunction)
+{
+    auto rv = pal::HKDF::deriveBits(key.span(), salt.span(), info.span(), length, hashFunction);
+    if (rv.errorCode != PAL::Crypto::Error::Success)
+        return makeUnexpected(rv.errorCode);
+    return WTF::move(rv.result);
+}
 
-using SpanConstUInt8 = std::span<const uint8_t>;
-
-enum class CryptoDigestHashFunction: int {
-    SHA_1,
-    DEPRECATED_SHA_224,
-    SHA_256,
-    SHA_384,
-    SHA_512,
-};
-
-enum class Error: int {
-    Success = 0,
-    WrongTagSize,
-    EncryptionFailed,
-    EncryptionResultNil,
-    InvalidArgument,
-    TooBigArguments,
-    DecryptionFailed,
-    HashingFailed,
-    PublicKeyProvidedToSign,
-    FailedToSign,
-    FailedToVerify,
-    PrivateKeyProvidedForVerification,
-    FailedToImport,
-    FailedToDerive,
-    FailedToExport,
-    DefaultValue,
-    UnsupportedAlgorithm,
-};
-
-struct CryptoOperationReturnValue {
-    Error errorCode = Error::DefaultValue;
-    VectorUInt8 result;
-};
-
-enum class ECNamedCurve : uint8_t {
-    P256,
-    P384,
-    P521,
-};
-
-enum class EdSigningAlgorithm : uint8_t {
-    ED25519,
-    ED448,
-};
-
-enum class EdKeyAgreementAlgorithm : uint8_t {
-    X25519,
-    X448,
-};
-
-constexpr auto ed25519KeySize = 32;
-constexpr auto ed25519SignatureSize = ed25519KeySize * 2;
-
-} // namespace PAL::Crypto
+}
