@@ -203,7 +203,6 @@ public:
 
     // On iOS, this matches [UIFocusRingStyle borderThickness] and on macOS this matches AppKit.
     virtual float platformFocusRingWidth() const { return 3; }
-    float platformFocusRingWidthOffset(float outlineWidth) const { return std::max<float>(outlineWidth - platformFocusRingWidth(), 0); }
 
 #if ENABLE(CSS_TAP_HIGHLIGHT_COLOR)
     static Color tapHighlightColor();

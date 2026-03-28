@@ -402,16 +402,7 @@ Style::LineWidth RenderStyle::usedColumnRuleWidth() const
 
 Style::Length<> RenderStyle::usedOutlineOffset() const
 {
-    auto& outline = m_computedStyle.outline();
-    if (static_cast<OutlineStyle>(outline.outlineStyle) != OutlineStyle::Auto)
-        return outline.outlineOffset;
-
-    auto zoom = usedZoom();
-    auto unzoomedWidth = Style::evaluate<float>(outline.outlineWidth, Style::ZoomNeeded { }) / zoom;
-    return Style::Length<> {
-        Style::evaluate<float>(outline.outlineOffset, Style::ZoomNeeded { })
-        + RenderTheme::singleton().platformFocusRingWidthOffset(unzoomedWidth) * zoom
-    };
+    return m_computedStyle.outline().outlineOffset;
 }
 
 Style::LineWidth RenderStyle::usedOutlineWidth() const
@@ -420,7 +411,7 @@ Style::LineWidth RenderStyle::usedOutlineWidth() const
     if (static_cast<OutlineStyle>(outline.outlineStyle) == OutlineStyle::None)
         return 0_css_px;
     if (static_cast<OutlineStyle>(outline.outlineStyle) == OutlineStyle::Auto)
-        return Style::LineWidth { std::max(Style::evaluate<float>(outline.outlineWidth, Style::ZoomNeeded { }), RenderTheme::singleton().platformFocusRingWidth() * usedZoom()) };
+        return Style::LineWidth { RenderTheme::singleton().platformFocusRingWidth() * usedZoom() };
     return outline.outlineWidth;
 }
 
