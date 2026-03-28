@@ -12567,6 +12567,7 @@
         "web-platform-tests/html/semantics/document-metadata/the-link-element/stylesheet-change-href-ref.html",
         "web-platform-tests/html/semantics/document-metadata/the-link-element/stylesheet-empty-href-ref.html",
         "web-platform-tests/html/semantics/document-metadata/the-link-element/stylesheet-media-ref.html",
+        "web-platform-tests/html/semantics/document-metadata/the-link-element/stylesheet-remove-href-ref.html",
         "web-platform-tests/html/semantics/document-metadata/the-link-element/stylesheet-with-base-ref.html",
         "web-platform-tests/html/semantics/document-metadata/the-meta-element/pragma-directives/attr-meta-http-equiv-refresh/support/refresh.sub.html",
         "web-platform-tests/html/semantics/document-metadata/the-meta-element/pragma-directives/http-equiv-enumerated-ascii-case-insensitive-lower.html",
