@@ -613,38 +613,26 @@ template<typename T, size_t inlineCapacity>
 template<std::predicate<T&> Predicate>
 inline T Deque<T, inlineCapacity>::takeFirst(NOESCAPE const Predicate& predicate)
 {
-    size_t count = 0;
-    size_t size = this->size();
-    while (count < size) {
-        T candidate = takeFirst();
-        if (predicate(candidate)) {
-            while (count--)
-                prepend(takeLast());
-            return candidate;
-        }
-        ++count;
-        append(WTF::move(candidate));
-    }
-    return T();
+    auto it = findIf(predicate);
+    if (it == end())
+        return T();
+    T result = WTF::move(*it);
+    remove(it);
+    return result;
 }
 
 template<typename T, size_t inlineCapacity>
 template<std::predicate<T&> Predicate>
 inline T Deque<T, inlineCapacity>::takeLast(NOESCAPE const Predicate& predicate)
 {
-    size_t count = 0;
-    size_t size = this->size();
-    while (count < size) {
-        T candidate = takeLast();
-        if (predicate(candidate)) {
-            while (count--)
-                append(takeFirst());
-            return candidate;
-        }
-        ++count;
-        prepend(WTF::move(candidate));
-    }
-    return T();
+    auto reverseIt = std::find_if(rbegin(), rend(), predicate);
+    if (reverseIt == rend())
+        return T();
+    T result = WTF::move(*reverseIt);
+    // Convert reverse iterator to forward iterator pointing to the same element.
+    auto it = std::prev(reverseIt.base());
+    remove(it);
+    return result;
 }
 
 #ifdef NDEBUG
