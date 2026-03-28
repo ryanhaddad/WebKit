@@ -78,9 +78,9 @@ using WebXRExternalImages = WebXRImageSet<WebXRExternalImage>;
 
 class WebXRWebGLSwapchain : public WebXRSwapchain {
 public:
-    ~WebXRWebGLSwapchain() override = default;
+    ~WebXRWebGLSwapchain() override;
 
-    RefPtr<WebGLRenderingContextBase> context() { return m_context; }
+    RefPtr<WebGLRenderingContextBase> context();
 
     IntSize size() const { return m_texSize; }
 

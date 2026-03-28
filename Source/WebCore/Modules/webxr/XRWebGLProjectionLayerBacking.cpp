@@ -31,6 +31,7 @@
 #include "WebXRSession.h"
 #include "WebXRWebGLLayer.h"
 #include "WebXRWebGLSwapchain.h"
+#include "XRProjectionLayerInit.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

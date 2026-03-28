@@ -1021,6 +1021,9 @@ void ReadableByteStreamController::visitDirectChildrenInGCThread(Visitor& visito
         SUPPRESS_UNCOUNTED_ARG m_cancelAlgorithm->visitJSFunctionInGCThread(visitor);
 }
 
+template void ReadableByteStreamController::visitDirectChildrenInGCThread(JSC::AbstractSlotVisitor&);
+template void ReadableByteStreamController::visitDirectChildrenInGCThread(JSC::SlotVisitor&);
+
 template<typename Visitor>
 void ReadableByteStreamController::visitAdditionalChildrenInGCThread(Visitor& visitor)
 {

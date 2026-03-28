@@ -27,6 +27,7 @@
 
 #if ENABLE(WEBXR_LAYERS)
 
+#include "GraphicsTypesGL.h"
 #include "XRLayerBacking.h"
 #include <wtf/TZoneMalloc.h>
 

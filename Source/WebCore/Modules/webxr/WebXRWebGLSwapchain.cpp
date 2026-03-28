@@ -39,6 +39,8 @@ namespace WebCore {
 
 using GL = GraphicsContextGL;
 
+WebXRWebGLSwapchain::~WebXRWebGLSwapchain() = default;
+
 WebXRWebGLSwapchain::WebXRWebGLSwapchain(WebGLRenderingContextBase& context, SwapchainTargets targets, bool clearOnAccess)
     : WebXRSwapchain(targets, clearOnAccess)
     , m_context(context)
@@ -91,6 +93,11 @@ void WebXRWebGLSwapchain::clearCurrentTexture(GraphicsContextGL& gl)
     gl.bindFramebuffer(GL::FRAMEBUFFER, m_framebufferForClearing->object());
     gl.framebufferTexture2D(GL::FRAMEBUFFER, computeAttachment(m_targetFlags), GL::TEXTURE_2D, texture, 0);
     gl.clear(clearMask);
+}
+
+RefPtr<WebGLRenderingContextBase> WebXRWebGLSwapchain::context()
+{
+    return m_context;
 }
 
 std::unique_ptr<WebXRWebGLSharedImageSwapchain> WebXRWebGLSharedImageSwapchain::create(WebGLRenderingContextBase& context, SwapchainTargets targets, GCGLenum format, bool clearOnAccess)

@@ -28,6 +28,7 @@
 #include "StreamTransferUtilities.h"
 
 #include "JSDOMException.h"
+#include "JSDOMPromiseDeferred.h"
 #include "MessagePort.h"
 #include "ReadableStream.h"
 #include "ReadableStreamSource.h"

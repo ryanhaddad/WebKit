@@ -29,6 +29,7 @@
 
 #include "Exception.h"
 #include "ExceptionCode.h"
+#include "JSDOMPromiseDeferred.h"
 #include "JSWebCodecsVideoFrame.h"
 #include "MediaStreamTrack.h"
 #include "VideoFrame.h"

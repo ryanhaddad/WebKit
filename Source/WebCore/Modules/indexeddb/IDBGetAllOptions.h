@@ -25,16 +25,31 @@
 
 #pragma once
 
+#include "ExceptionOr.h"
 #include "IDBCursorDirection.h"
 #include <JavaScriptCore/JSCJSValue.h>
 #include <optional>
 
+namespace JSC {
+class JSGlobalObject;
+}
+
 namespace WebCore {
+
+class IDBKeyRange;
 
 struct IDBGetAllOptions {
     JSC::JSValue query;
     std::optional<uint32_t> count;
     IDBCursorDirection direction { IDBCursorDirection::Next };
 };
+
+struct ParsedGetAllQueryOrOptions {
+    RefPtr<IDBKeyRange> keyRange;
+    std::optional<uint32_t> count { std::nullopt };
+    IDBCursorDirection cursorDirection { IDBCursorDirection::Next };
+};
+
+ExceptionOr<ParsedGetAllQueryOrOptions> parseGetAllOptions(JSC::JSGlobalObject& execState, JSC::JSValue keyOrOptions);
 
 }
