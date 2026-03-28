@@ -405,4 +405,25 @@ TEST(WebCoreHTMLParser, FastPathFailsWithNestedLi)
     EXPECT_FALSE(result);
 }
 
+TEST(WebCoreHTMLParser, FastPathAttributeNameWithUnderscore)
+{
+    ProcessWarming::initializeNames();
+
+    auto settings = Settings::create(nullptr);
+    auto document = HTMLDocument::create(nullptr, settings.get(), aboutBlankURL());
+    auto documentElement = HTMLHtmlElement::create(document);
+    document->appendChild(documentElement);
+    auto body = HTMLBodyElement::create(document);
+    documentElement->appendChild(body);
+
+    auto div = HTMLDivElement::create(document);
+    document->body()->appendChild(div);
+
+    // Underscore is valid in HTML attribute names but isValidAttributeNameChar() rejects it,
+    // causing an unnecessary fallback to the slow parser.
+    auto fragment = DocumentFragment::create(document);
+    bool result = tryFastParsingHTMLFragment("<span data_value=\"test\"></span>"_s, document, fragment, div, { ParserContentPolicy::AllowScriptingContent });
+    EXPECT_TRUE(result);
+}
+
 } // namespace TestWebKitAPI

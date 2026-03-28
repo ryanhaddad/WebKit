@@ -239,7 +239,7 @@ template<typename CharacterType> static inline bool NODELETE isValidAttributeNam
 {
     if (character == '=') // Early return for the most common way to end an attribute.
         return false;
-    return isASCIIAlphanumeric(character) || character == '-';
+    return isASCIIAlphanumeric(character) || character == '-' || character == '_';
 }
 
 template<typename CharacterType> static inline bool NODELETE isCharAfterTagNameOrAttribute(CharacterType character)
