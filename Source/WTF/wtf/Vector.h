@@ -170,6 +170,17 @@ struct VectorTypeOperations
         }
     }
 
+    template<typename U, std::size_t Extent>
+    static void uninitializedMove(std::span<U, Extent> source, std::span<T> destination)
+    {
+        if constexpr (std::same_as<T, U> && std::is_trivially_copyable_v<T>)
+            memcpySpan(destination, source);
+        else {
+            for (size_t i = 0; i < source.size(); ++i)
+                new (NotNull, std::addressof(destination[i])) T(WTF::move(source[i]));
+        }
+    }
+
     static void uninitializedFill(T* dst, T* dstEnd, const T& val)
     {
         if constexpr (VectorTraits<T>::canFillWithMemset) {
@@ -1568,20 +1579,23 @@ ALWAYS_INLINE void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Mallo
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
 template<typename U, size_t otherCapacity, typename OtherOverflowHandler, size_t otherMinCapacity, typename OtherMalloc>
-inline void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::appendVector(const Vector<U, otherCapacity, OtherOverflowHandler, otherMinCapacity, OtherMalloc>& val)
+inline void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::appendVector(const Vector<U, otherCapacity, OtherOverflowHandler, otherMinCapacity, OtherMalloc>& other)
 {
-    append(val.span());
+    append(other.span());
 }
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
 template<typename U, size_t otherCapacity, typename OtherOverflowHandler, size_t otherMinCapacity, typename OtherMalloc>
-inline void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::appendVector(Vector<U, otherCapacity, OtherOverflowHandler, otherMinCapacity, OtherMalloc>&& val)
+inline void Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::appendVector(Vector<U, otherCapacity, OtherOverflowHandler, otherMinCapacity, OtherMalloc>&& other)
 {
-    size_t newSize = m_size + val.size();
+    if (other.isEmpty())
+        return;
+    size_t newSize = m_size + other.size();
     if (newSize > capacity())
         expandCapacity<FailureAction::Crash>(newSize);
-    for (auto& item : val)
-        unsafeAppendWithoutCapacityCheck(WTF::move(item));
+    asanBufferSizeWillChangeTo(newSize);
+    TypeOperations::uninitializedMove(other.mutableSpan(), unsafeMakeSpan(end(), other.size()));
+    m_size = newSize;
 }
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
