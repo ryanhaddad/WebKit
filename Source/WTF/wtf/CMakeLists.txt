@@ -220,6 +220,7 @@ set(WTF_PUBLIC_HEADERS
     OptionalOrReference.h
     OptionSetHash.h
     OrderMaker.h
+    OverflowHandler.h
     OverflowPolicy.h
     Packed.h
     PackedRef.h
