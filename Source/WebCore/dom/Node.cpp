@@ -1822,7 +1822,7 @@ static inline unsigned short compareDetachedElementsPosition(Node& firstNode, No
 bool connectedInSameTreeScope(const Node* a, const Node* b)
 {
     // Note that we avoid comparing Attr nodes here, since they return false from isConnected() all the time (which seems like a bug).
-    return a && b && a->isConnected() == b->isConnected() && &a->treeScope() == &b->treeScope();
+    return a && b && a->isConnected() && b->isConnected() && &a->treeScope() == &b->treeScope();
 }
 
 unsigned short Node::compareDocumentPosition(Node& otherNode)
