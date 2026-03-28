@@ -2664,8 +2664,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/controls/SearchFieldResultsPart.h
     platform/graphics/controls/SliderThumbPart.h
     platform/graphics/controls/SliderTrackPart.h
-    platform/graphics/controls/SwitchThumbPart.h
-    platform/graphics/controls/SwitchTrackPart.h
+    platform/graphics/controls/SwitchPart.h
     platform/graphics/controls/TextAreaPart.h
     platform/graphics/controls/TextFieldPart.h
     platform/graphics/controls/ToggleButtonPart.h

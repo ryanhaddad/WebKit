@@ -407,11 +407,8 @@ protected:
     virtual void adjustSearchFieldResultsButtonStyle(RenderStyle&, const Element*) const { }
     virtual bool paintSearchFieldResultsButton(const RenderBox&, const PaintInfo&, const FloatRect&) { return true; }
 
-    void NODELETE adjustSwitchStyleDisplay(RenderStyle&) const;
     virtual void adjustSwitchStyle(RenderStyle&, const Element*) const;
-    void adjustSwitchThumbOrSwitchTrackStyle(RenderStyle&) const;
-    virtual bool paintSwitchThumb(const RenderElement&, const PaintInfo&, const FloatRect&) { return true; }
-    virtual bool paintSwitchTrack(const RenderElement&, const PaintInfo&, const FloatRect&) { return true; }
+    virtual bool paintSwitch(const RenderElement&, const PaintInfo&, const FloatRect&) { return true; }
 
     // The font description result should have a zoomed font size.
     virtual std::optional<FontCascadeDescription> controlFont(StyleAppearance, const FontCascade&, float) const;

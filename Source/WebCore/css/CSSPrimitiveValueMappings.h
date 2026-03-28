@@ -373,8 +373,6 @@ constexpr CSSValueID toCSSValueID(StyleAppearance e)
     case StyleAppearance::SliderThumbHorizontal:
     case StyleAppearance::SliderThumbVertical:
     case StyleAppearance::Switch:
-    case StyleAppearance::SwitchThumb:
-    case StyleAppearance::SwitchTrack:
         ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT();
         return CSSValueNone;
     }

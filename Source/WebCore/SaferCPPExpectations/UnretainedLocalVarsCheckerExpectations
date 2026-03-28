@@ -52,8 +52,7 @@ platform/graphics/cocoa/MediaPlayerPrivateWebM.mm
 [ Mac ] platform/graphics/mac/controls/ProgressBarMac.mm
 [ Mac ] platform/graphics/mac/controls/SliderTrackMac.mm
 [ Mac ] platform/graphics/mac/controls/SwitchMacUtilities.mm
-[ Mac ] platform/graphics/mac/controls/SwitchThumbMac.mm
-[ Mac ] platform/graphics/mac/controls/SwitchTrackMac.mm
+[ Mac ] platform/graphics/mac/controls/SwitchMac.mm
 [ iOS ] platform/ios/DragImageIOS.mm
 [ iOS ] platform/ios/LegacyTileCache.mm
 [ iOS ] platform/ios/LegacyTileGrid.mm

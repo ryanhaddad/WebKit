@@ -555,8 +555,7 @@ platform/graphics/mac/controls/SearchFieldResultsMac.mm @nonARC
 platform/graphics/mac/controls/SliderThumbMac.mm @nonARC
 platform/graphics/mac/controls/SliderTrackMac.mm @nonARC
 platform/graphics/mac/controls/SwitchMacUtilities.mm @nonARC
-platform/graphics/mac/controls/SwitchThumbMac.mm @nonARC
-platform/graphics/mac/controls/SwitchTrackMac.mm @nonARC
+platform/graphics/mac/controls/SwitchMac.mm @nonARC
 platform/graphics/mac/controls/TextAreaMac.mm @nonARC
 platform/graphics/mac/controls/TextFieldMac.mm @nonARC
 platform/graphics/mac/controls/ToggleButtonMac.mm @nonARC

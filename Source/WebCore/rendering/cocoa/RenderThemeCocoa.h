@@ -184,8 +184,7 @@ protected:
     bool paintSearchFieldResultsButton(const RenderBox&, const PaintInfo&, const FloatRect&) override;
 
     void adjustSwitchStyle(RenderStyle&, const Element*) const final;
-    bool paintSwitchThumb(const RenderElement&, const PaintInfo&, const FloatRect&) final;
-    bool paintSwitchTrack(const RenderElement&, const PaintInfo&, const FloatRect&) final;
+    bool paintSwitch(const RenderElement&, const PaintInfo&, const FloatRect&) final;
 
     void paintPlatformResizer(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&) final;
     void paintPlatformResizerFrame(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&) final;

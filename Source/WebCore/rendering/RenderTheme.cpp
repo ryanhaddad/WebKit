@@ -82,8 +82,7 @@
 #include "StyleComputedStyle+InitialInlines.h"
 #include "StylePadding.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
-#include "SwitchThumbPart.h"
-#include "SwitchTrackPart.h"
+#include "SwitchPart.h"
 #include "TextAreaPart.h"
 #include "TextControlInnerElements.h"
 #include "TextFieldPart.h"
@@ -364,9 +363,6 @@ void RenderTheme::adjustStyle(RenderStyle& style, const RenderStyle& parentStyle
         return adjustSearchFieldResultsButtonStyle(style, element);
     case StyleAppearance::Switch:
         return adjustSwitchStyle(style, element);
-    case StyleAppearance::SwitchThumb:
-    case StyleAppearance::SwitchTrack:
-        return adjustSwitchThumbOrSwitchTrackStyle(style);
     case StyleAppearance::ProgressBar:
         return adjustProgressBarStyle(style, element);
     case StyleAppearance::Meter:
@@ -502,12 +498,6 @@ StyleAppearance RenderTheme::autoAppearanceForElement(RenderStyle& style, const 
 
         if (part == UserAgentParts::webkitColorSwatchWrapper())
             return StyleAppearance::ColorWellSwatchWrapper;
-
-        if (part == UserAgentParts::sliderThumb())
-            return StyleAppearance::SwitchThumb;
-
-        if (part == UserAgentParts::sliderTrack())
-            return StyleAppearance::SwitchTrack;
     }
 
     return StyleAppearance::None;
@@ -613,22 +603,13 @@ static void updateSliderTrackPartForRenderer(SliderTrackPart& sliderTrackPart, c
     sliderTrackPart.setTickRatios(WTF::move(tickRatios));
 }
 
-static void updateSwitchThumbPartForRenderer(SwitchThumbPart& switchThumbPart, const RenderElement& renderer)
+static void updateSwitchPartForRenderer(SwitchPart& switchPart, const RenderElement& renderer)
 {
-    Ref input = downcast<HTMLInputElement>(*renderer.element()->shadowHost());
+    Ref input = downcast<HTMLInputElement>(*renderer.element());
     ASSERT(input->isSwitch());
 
-    switchThumbPart.setIsOn(input->isSwitchVisuallyOn());
-    switchThumbPart.setProgress(input->switchAnimationVisuallyOnProgress());
-}
-
-static void updateSwitchTrackPartForRenderer(SwitchTrackPart& switchTrackPart, const RenderElement& renderer)
-{
-    Ref input = downcast<HTMLInputElement>(*renderer.element()->shadowHost());
-    ASSERT(input->isSwitch());
-
-    switchTrackPart.setIsOn(input->isSwitchVisuallyOn());
-    switchTrackPart.setProgress(input->switchAnimationVisuallyOnProgress());
+    switchPart.setIsOn(input->isSwitchVisuallyOn());
+    switchPart.setProgress(input->switchAnimationVisuallyOnProgress());
 }
 
 RefPtr<ControlPart> RenderTheme::createControlPart(const RenderElement& renderer) const
@@ -722,13 +703,7 @@ RefPtr<ControlPart> RenderTheme::createControlPart(const RenderElement& renderer
         return SliderThumbPart::create(appearance);
 
     case StyleAppearance::Switch:
-        break;
-
-    case StyleAppearance::SwitchThumb:
-        return SwitchThumbPart::create();
-
-    case StyleAppearance::SwitchTrack:
-        return SwitchTrackPart::create();
+        return SwitchPart::create();
     }
 
     ASSERT_NOT_REACHED();
@@ -752,13 +727,8 @@ void RenderTheme::updateControlPartForRenderer(ControlPart& part, const RenderEl
         return;
     }
 
-    if (auto* switchThumbPart = dynamicDowncast<SwitchThumbPart>(part)) {
-        updateSwitchThumbPartForRenderer(*switchThumbPart, renderer);
-        return;
-    }
-
-    if (auto* switchTrackPart = dynamicDowncast<SwitchTrackPart>(part)) {
-        updateSwitchTrackPartForRenderer(*switchTrackPart, renderer);
+    if (auto* switchPart = dynamicDowncast<SwitchPart>(part)) {
+        updateSwitchPartForRenderer(*switchPart, renderer);
         return;
     }
 
@@ -826,9 +796,7 @@ static const RenderElement* effectiveRendererForAppearance(const RenderObject& r
     }
 
     auto type = renderer->style().usedAppearance();
-    if (type == StyleAppearance::SearchFieldCancelButton
-        || type == StyleAppearance::SwitchTrack
-        || type == StyleAppearance::SwitchThumb) {
+    if (type == StyleAppearance::SearchFieldCancelButton) {
         auto* element = renderer->element();
         auto* input = element->shadowHost();
         if (!input)
@@ -957,11 +925,7 @@ bool RenderTheme::paint(const RenderBox& box, const PaintInfo& paintInfo, const 
     case StyleAppearance::SearchFieldResultsButton:
         return paintSearchFieldResultsButton(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::Switch:
-        return true;
-    case StyleAppearance::SwitchThumb:
-        return paintSwitchThumb(box, paintInfo, devicePixelSnappedRect);
-    case StyleAppearance::SwitchTrack:
-        return paintSwitchTrack(box, paintInfo, devicePixelSnappedRect);
+        return paintSwitch(box, paintInfo, devicePixelSnappedRect);
 #if ENABLE(SERVICE_CONTROLS)
     case StyleAppearance::ImageControlsButton:
         return paintImageControlsButton(box, paintInfo, snappedIntRect(rect));
@@ -1720,21 +1684,6 @@ void RenderTheme::adjustSliderThumbStyle(RenderStyle& style, const Element* elem
     adjustSliderThumbSize(style, element);
 }
 
-void RenderTheme::adjustSwitchStyleDisplay(RenderStyle& style) const
-{
-    // RenderTheme::adjustStyle() normalizes a bunch of display types to InlineBlock and Block.
-    switch (style.display().value) {
-    case Style::DisplayType::InlineFlowRoot:
-        style.setDisplayMaintainingOriginalDisplay(Style::DisplayType::InlineGrid);
-        break;
-    case Style::DisplayType::BlockFlow:
-        style.setDisplayMaintainingOriginalDisplay(Style::DisplayType::BlockGrid);
-        break;
-    default:
-        break;
-    }
-}
-
 void RenderTheme::adjustSwitchStyle(RenderStyle& style, const Element*) const
 {
     // FIXME: This probably has the same flaw as
@@ -1743,14 +1692,6 @@ void RenderTheme::adjustSwitchStyle(RenderStyle& style, const Element*) const
     auto controlSize = this->controlSize(StyleAppearance::Switch, protect(style.fontCascade()).get(), { style.logicalWidth(), style.logicalHeight() }, usedZoomForComputedStyle(style));
     style.setLogicalWidth(Style::PreferredSize { controlSize.width() });
     style.setLogicalHeight(Style::PreferredSize { controlSize.height() });
-
-    adjustSwitchStyleDisplay(style);
-}
-
-void RenderTheme::adjustSwitchThumbOrSwitchTrackStyle(RenderStyle& style) const
-{
-    style.setGridItemRowStart(Style::GridPosition::Explicit { { 1 } });
-    style.setGridItemColumnStart(Style::GridPosition::Explicit { { 1 } });
 }
 
 Style::PaddingBox RenderTheme::popupInternalPaddingBox(const RenderStyle&) const

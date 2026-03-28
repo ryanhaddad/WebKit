@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,7 +23,7 @@
  */
 
 #import "config.h"
-#import "SwitchTrackMac.h"
+#import "SwitchMac.h"
 
 #if PLATFORM(MAC)
 
@@ -41,30 +41,30 @@
 
 namespace WebCore {
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(SwitchTrackMac);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(SwitchMac);
 
-SwitchTrackMac::SwitchTrackMac(SwitchTrackPart& part, ControlFactoryMac& controlFactory)
+SwitchMac::SwitchMac(SwitchPart& part, ControlFactoryMac& controlFactory)
     : ControlMac(part, controlFactory)
 {
-    ASSERT(part.type() == StyleAppearance::SwitchTrack);
+    ASSERT(part.type() == StyleAppearance::Switch);
 }
 
-IntSize SwitchTrackMac::cellSize(NSControlSize controlSize, const ControlStyle&) const
+IntSize SwitchMac::cellSize(NSControlSize controlSize, const ControlStyle&) const
 {
     return SwitchMacUtilities::cellSize(controlSize);
 }
 
-IntOutsets SwitchTrackMac::cellOutsets(NSControlSize controlSize, const ControlStyle&) const
+IntOutsets SwitchMac::cellOutsets(NSControlSize controlSize, const ControlStyle&) const
 {
     return SwitchMacUtilities::cellOutsets(controlSize);
 }
 
-FloatRect SwitchTrackMac::rectForBounds(const FloatRect& bounds, const ControlStyle&) const
+FloatRect SwitchMac::rectForBounds(const FloatRect& bounds, const ControlStyle&) const
 {
     return SwitchMacUtilities::rectForBounds(bounds);
 }
 
-static RefPtr<ImageBuffer> trackImage(GraphicsContext& context, RefPtr<ImageBuffer> trackMaskImage, FloatSize trackRectSize, float deviceScaleFactor, const ControlStyle& style, bool isOn, bool isInlineFlipped, bool isVertical, bool isEnabled, bool isPressed, bool isInActiveWindow, bool needsOnOffLabels, NSString *coreUISize)
+static RefPtr<ImageBuffer> createTrackStateImage(GraphicsContext& context, RefPtr<ImageBuffer> trackMaskImage, FloatSize trackRectSize, float deviceScaleFactor, const ControlStyle& style, bool isOn, bool isInlineFlipped, bool isVertical, bool isEnabled, bool isPressed, bool isInActiveWindow, bool needsOnOffLabels, NSString *coreUISize)
 {
     LocalDefaultSystemAppearance localAppearance(style.states.contains(ControlStyle::State::DarkAppearance), style.accentColor);
 
@@ -135,11 +135,11 @@ static RefPtr<ImageBuffer> trackImage(GraphicsContext& context, RefPtr<ImageBuff
     return trackImage;
 }
 
-void SwitchTrackMac::draw(GraphicsContext& context, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle& style)
+void SwitchMac::drawTrack(GraphicsContext& context, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle& style)
 {
+    Ref owningPart = this->owningPart();
     GraphicsContextStateSaver stateSaver(context);
 
-    Ref owningPart = this->owningPart();
     auto isOn = owningPart->isOn();
     auto isInlineFlipped = style.states.contains(ControlStyle::State::InlineFlippedWritingMode);
     auto isVertical = style.states.contains(ControlStyle::State::VerticalWritingMode);
@@ -173,13 +173,13 @@ void SwitchTrackMac::draw(GraphicsContext& context, const FloatRoundedRect& bord
         return;
 
     auto createTrackImage = [&](bool isOn) {
-        return trackImage(context, maskImage, inflatedTrackRect.size(), deviceScaleFactor, style, isOn, isInlineFlipped, isVertical, isEnabled, isPressed, isInActiveWindow, needsOnOffLabels, coreUISize);
+        return createTrackStateImage(context, maskImage, inflatedTrackRect.size(), deviceScaleFactor, style, isOn, isInlineFlipped, isVertical, isEnabled, isPressed, isInActiveWindow, needsOnOffLabels, coreUISize);
     };
 
-    RefPtr<ImageBuffer> trackImage;
+    RefPtr<ImageBuffer> trackImageBuffer;
     if (progress == 0.0f || progress == 1.0f) {
-        trackImage = createTrackImage(progress == 0.0f ? !isOn : isOn);
-        if (!trackImage)
+        trackImageBuffer = createTrackImage(progress == 0.0f ? !isOn : isOn);
+        if (!trackImageBuffer)
             return;
     } else {
         auto fromImage = createTrackImage(!isOn);
@@ -188,29 +188,112 @@ void SwitchTrackMac::draw(GraphicsContext& context, const FloatRoundedRect& bord
         auto toImage = createTrackImage(isOn);
         if (!toImage)
             return;
-        trackImage = context.createImageBuffer(inflatedTrackRect.size(), deviceScaleFactor);
-        if (!trackImage)
+        trackImageBuffer = context.createImageBuffer(inflatedTrackRect.size(), deviceScaleFactor);
+        if (!trackImageBuffer)
             return;
         // This logic is from CrossfadeGeneratedImage.h, but we copy it to avoid some overhead and
         // also because that class is not supposed to be used in GPUP.
         // FIXME: As above, not using context().platformContext() here is likely dubious.
-        trackImage->context().setAlpha(1.0f - progress);
-        trackImage->context().drawConsumingImageBuffer(WTF::move(fromImage), IntPoint(), ImagePaintingOptions { CompositeOperator::SourceOver });
-        trackImage->context().setAlpha(progress);
-        trackImage->context().drawConsumingImageBuffer(WTF::move(toImage), IntPoint(), ImagePaintingOptions { CompositeOperator::PlusLighter });
+        trackImageBuffer->context().setAlpha(1.0f - progress);
+        trackImageBuffer->context().drawConsumingImageBuffer(WTF::move(fromImage), IntPoint(), ImagePaintingOptions { CompositeOperator::SourceOver });
+        trackImageBuffer->context().setAlpha(progress);
+        trackImageBuffer->context().drawConsumingImageBuffer(WTF::move(toImage), IntPoint(), ImagePaintingOptions { CompositeOperator::PlusLighter });
     }
 
     {
         GraphicsContextStateSaver rotationStateSaver(context);
         if (isVertical)
             SwitchMacUtilities::rotateContextForVerticalWritingMode(context, inflatedTrackRect);
-        context.drawConsumingImageBuffer(WTF::move(trackImage), inflatedTrackRect.location());
+        context.drawConsumingImageBuffer(WTF::move(trackImageBuffer), inflatedTrackRect.location());
     }
 
     if (isFocused) {
         auto color = colorFromCocoaColor([NSColor keyboardFocusIndicatorColor]).opaqueColor();
         context.drawFocusRing(Vector { trackRect }, 0, color, style.zoomFactor);
     }
+}
+
+void SwitchMac::drawThumb(GraphicsContext& context, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle& style)
+{
+    Ref owningPart = this->owningPart();
+    LocalDefaultSystemAppearance localAppearance(style.states.contains(ControlStyle::State::DarkAppearance), style.accentColor);
+
+    GraphicsContextStateSaver stateSaver(context);
+
+    auto isOn = owningPart->isOn();
+    auto isInlineFlipped = style.states.contains(ControlStyle::State::InlineFlippedWritingMode);
+    auto isVertical = style.states.contains(ControlStyle::State::VerticalWritingMode);
+    auto isEnabled = style.states.contains(ControlStyle::State::Enabled);
+    auto isPressed = style.states.contains(ControlStyle::State::Pressed);
+    auto progress = SwitchMacUtilities::easeInOut(owningPart->progress());
+
+    auto logicalBounds = SwitchMacUtilities::rectWithTransposedSize(borderRect.rect(), isVertical);
+    auto controlSize = controlSizeForSize(logicalBounds.size(), style);
+    auto logicalTrackSize = cellSize(controlSize, style);
+    auto logicalThumbSize = IntSize { logicalTrackSize.height(), logicalTrackSize.height() };
+    auto trackSize = SwitchMacUtilities::visualCellSize(logicalTrackSize, style);
+    auto thumbSize = SwitchMacUtilities::visualCellSize(logicalThumbSize, style);
+    auto outsets = SwitchMacUtilities::visualCellOutsets(controlSize, isVertical);
+
+    auto trackRect = SwitchMacUtilities::trackRectForBounds(logicalBounds, trackSize);
+    auto thumbRect = SwitchMacUtilities::trackRectForBounds(logicalBounds, thumbSize);
+
+    auto inflatedTrackRect = inflatedRect(trackRect, trackSize, outsets, style);
+    auto inflatedThumbRect = inflatedRect(thumbRect, thumbSize, outsets, style);
+    if (isVertical) {
+        inflatedTrackRect.setSize(inflatedTrackRect.size().transposedSize());
+        inflatedThumbRect.setSize(inflatedThumbRect.size().transposedSize());
+    }
+
+    if (style.zoomFactor != 1) {
+        inflatedTrackRect.scale(1 / style.zoomFactor);
+        inflatedThumbRect.scale(1 / style.zoomFactor);
+        context.scale(style.zoomFactor);
+    }
+
+    auto drawingThumbIsLogicallyLeft = (!isInlineFlipped && !isOn) || (isInlineFlipped && isOn);
+    auto drawingThumbLogicalXAxis = inflatedTrackRect.width() - inflatedThumbRect.width();
+    auto drawingThumbLogicalXAxisProgress = drawingThumbLogicalXAxis * progress;
+    auto drawingThumbLogicalX = drawingThumbIsLogicallyLeft ? drawingThumbLogicalXAxis - drawingThumbLogicalXAxisProgress : drawingThumbLogicalXAxisProgress;
+    auto drawingThumbRect = NSMakeRect(drawingThumbLogicalX, 0, inflatedThumbRect.width(), inflatedThumbRect.height());
+
+    auto coreUISize = SwitchMacUtilities::coreUISizeForControlSize(controlSize);
+
+    auto maskImage = SwitchMacUtilities::trackMaskImage(context, inflatedTrackRect.size(), deviceScaleFactor, isInlineFlipped, coreUISize);
+    if (!maskImage)
+        return;
+
+    auto thumbImage = context.createImageBuffer(inflatedTrackRect.size(), deviceScaleFactor);
+    if (!thumbImage)
+        return;
+
+    auto cgContext = thumbImage->context().platformContext();
+
+    {
+        CGContextStateSaver stateSaverTrack(cgContext);
+
+        // FIXME: clipping in context() might not always be accurate for context().platformContext().
+        thumbImage->context().clipToImageBuffer(*maskImage, NSMakeRect(0, 0, inflatedTrackRect.width(), inflatedTrackRect.height()));
+
+        [[NSAppearance currentDrawingAppearance] _drawInRect:drawingThumbRect context:cgContext options:@{
+            (__bridge NSString *)kCUIWidgetKey: (__bridge NSString *)kCUIWidgetSwitchKnob,
+            (__bridge NSString *)kCUIStateKey: (__bridge NSString *)(!isEnabled ? kCUIStateDisabled : isPressed ? kCUIStatePressed : kCUIStateActive),
+            (__bridge NSString *)kCUISizeKey: SwitchMacUtilities::coreUISizeForControlSize(controlSize),
+            (__bridge NSString *)kCUIUserInterfaceLayoutDirectionKey: (__bridge NSString *)(isInlineFlipped ? kCUIUserInterfaceLayoutDirectionRightToLeft : kCUIUserInterfaceLayoutDirectionLeftToRight),
+            (__bridge NSString *)kCUIScaleKey: @(deviceScaleFactor),
+        }];
+    }
+
+    if (isVertical)
+        SwitchMacUtilities::rotateContextForVerticalWritingMode(context, inflatedTrackRect);
+
+    context.drawConsumingImageBuffer(WTF::move(thumbImage), inflatedTrackRect.location());
+}
+
+void SwitchMac::draw(GraphicsContext& context, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle& style)
+{
+    drawTrack(context, borderRect, deviceScaleFactor, style);
+    drawThumb(context, borderRect, deviceScaleFactor, style);
 }
 
 } // namespace WebCore

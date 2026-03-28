@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,29 +24,51 @@
 
 #pragma once
 
-#if PLATFORM(MAC)
-
-#import "ControlMac.h"
-#import "SwitchTrackPart.h"
-#import <wtf/TZoneMalloc.h>
+#include <WebCore/ControlFactory.h>
+#include <WebCore/ControlPart.h>
 
 namespace WebCore {
 
-class SwitchTrackMac final : public ControlMac {
-    WTF_MAKE_TZONE_ALLOCATED(SwitchTrackMac);
+class SwitchPart final : public ControlPart {
 public:
-    SwitchTrackMac(SwitchTrackPart&, ControlFactoryMac&);
+    static Ref<SwitchPart> create()
+    {
+        return adoptRef(*new SwitchPart(false, 0.0f));
+    }
+
+    static Ref<SwitchPart> create(bool isOn, float progress)
+    {
+        return adoptRef(*new SwitchPart(isOn, progress));
+    }
+
+    SwitchPart(bool isOn, float progress)
+        : ControlPart(StyleAppearance::Switch)
+        , m_isOn(isOn)
+        , m_progress(progress)
+    {
+    }
+
+    bool isOn() const { return m_isOn; }
+    void setIsOn(bool isOn) { m_isOn = isOn; }
+
+    float progress() const { return m_progress; }
+    void setProgress(float progress) { m_progress = progress; }
 
 private:
-    Ref<const SwitchTrackPart> owningPart() const { return downcast<SwitchTrackPart>(m_owningPart.get()); }
+    SwitchPart()
+        : ControlPart(StyleAppearance::Switch)
+    {
+    }
 
-    IntSize cellSize(NSControlSize, const ControlStyle&) const override;
-    IntOutsets cellOutsets(NSControlSize, const ControlStyle&) const override;
-    FloatRect rectForBounds(const FloatRect&, const ControlStyle&) const override;
+    std::unique_ptr<PlatformControl> createPlatformControl() final
+    {
+        return controlFactory().createPlatformSwitch(*this);
+    }
 
-    void draw(GraphicsContext&, const FloatRoundedRect&, float, const ControlStyle&) override;
+    bool m_isOn;
+    float m_progress;
 };
 
 } // namespace WebCore
 
-#endif // PLATFORM(MAC)
+SPECIALIZE_TYPE_TRAITS_CONTROL_PART(Switch)

@@ -3773,9 +3773,7 @@ enum class WebCore::StyleAppearance : uint8_t {
     SearchFieldCancelButton,
     SliderThumbHorizontal,
     SliderThumbVertical,
-    Switch,
-    SwitchThumb,
-    SwitchTrack
+    Switch
 };
 
 header: <WebCore/ControlPart.h>
@@ -3792,8 +3790,7 @@ header: <WebCore/ControlPart.h>
     WebCore::SearchFieldCancelButtonPart,
     WebCore::SliderThumbPart,
     WebCore::SliderTrackPart,
-    WebCore::SwitchThumbPart,
-    WebCore::SwitchTrackPart,
+    WebCore::SwitchPart,
     WebCore::TextAreaPart,
     WebCore::TextFieldPart,
     WebCore::ToggleButtonPart,
@@ -3925,12 +3922,8 @@ enum class WebCore::ApplePayButtonStyle : uint8_t {
     double thumbPosition();
 }
 
-[RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::SwitchThumbPart {
-    bool isOn();
-    [Validator='progress >= 0.0f && progress <= 1.0f'] float progress();
-};
-
-[RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::SwitchTrackPart {
+header: <WebCore/SwitchPart.h>
+[RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::SwitchPart {
     bool isOn();
     [Validator='progress >= 0.0f && progress <= 1.0f'] float progress();
 };

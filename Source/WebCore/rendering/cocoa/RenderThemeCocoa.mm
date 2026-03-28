@@ -243,7 +243,7 @@ static const FloatRect switchTrackRect(const FloatRect& rect, float scale, bool 
 
 static HTMLInputElement& switchElement(const RenderObject& renderer)
 {
-    return downcast<HTMLInputElement>(*renderer.node()->shadowHost());
+    return downcast<HTMLInputElement>(*renderer.node());
 }
 
 static const FloatRoundedRect switchTrackRoundedRect(const FloatRect& trackRect, bool isVertical, float switchCornerRadiusFraction)
@@ -828,6 +828,12 @@ static bool renderThemePaintSwitchTrack(OptionSet<ControlStyle::State> states, c
     if (Theme::singleton().userPrefersOnOffLabels() && !isHeld)
         paintSwitchTrackOnOffLabels(states, renderer, paintInfo, trackScale, trackRect);
     return false;
+}
+
+static bool renderThemePaintSwitch(OptionSet<ControlStyle::State> states, const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect, const Color& outlineColor, float switchCornerRadiusFraction)
+{
+    renderThemePaintSwitchTrack(states, renderer, paintInfo, rect, switchCornerRadiusFraction);
+    return renderThemePaintSwitchThumb(states, renderer, paintInfo, rect, outlineColor, switchCornerRadiusFraction);
 }
 
 } // namespace WebCore
@@ -1529,8 +1535,7 @@ bool RenderThemeCocoa::canCreateControlPartForRendererForVectorBasedControls(con
         || type == StyleAppearance::Checkbox
         || type == StyleAppearance::Radio
         || type == StyleAppearance::ProgressBar
-        || type == StyleAppearance::SwitchThumb
-        || type == StyleAppearance::SwitchTrack
+        || type == StyleAppearance::Switch
         || type == StyleAppearance::SearchFieldCancelButton
         || type == StyleAppearance::SearchFieldResultsButton
         || type == StyleAppearance::SearchFieldResultsDecoration
@@ -4517,8 +4522,6 @@ bool RenderThemeCocoa::adjustSwitchStyleForVectorBasedControls(RenderStyle& styl
         style.setLogicalHeight(Style::PreferredSize::Fixed { logicalSwitchHeight * usedZoom });
     }
 
-    adjustSwitchStyleDisplay(style);
-
     return true;
 }
 
@@ -4690,14 +4693,13 @@ bool RenderThemeCocoa::mayNeedBleedAvoidance(const RenderStyle& style) const
     case StyleAppearance::SearchFieldResultsButton:
     case StyleAppearance::SearchFieldResultsDecoration:
     case StyleAppearance::SquareButton:
+    case StyleAppearance::Switch:
     case StyleAppearance::SliderHorizontal:
     case StyleAppearance::SliderThumbHorizontal:
     case StyleAppearance::SliderThumbVertical:
     case StyleAppearance::SliderVertical:
     case StyleAppearance::TextArea:
     case StyleAppearance::TextField:
-    case StyleAppearance::SwitchThumb:
-    case StyleAppearance::SwitchTrack:
         return false;
     default:
         return true;
@@ -4737,7 +4739,6 @@ std::optional<RoundedShape> RenderThemeCocoa::shapeForInteractionRegion(const Re
     case StyleAppearance::SliderThumbVertical:
         return shapeForSliderThumb(box, rect, computePath);
     case StyleAppearance::Switch:
-    case StyleAppearance::SwitchTrack:
         return shapeForSwitchTrack(box, rect, computePath);
     case StyleAppearance::TextField:
         return shapeForTextAreaOrTextField(box, rect, computePath);
@@ -5301,14 +5302,12 @@ void RenderThemeCocoa::adjustSwitchStyle(RenderStyle& style, const Element* elem
         style.setLogicalHeight(Style::PreferredSize::Fixed { logicalSwitchHeight * style.usedZoom() });
     }
 
-    adjustSwitchStyleDisplay(style);
-
     if (style.outlineStyle() == OutlineStyle::Auto)
         style.setOutlineStyle(OutlineStyle::None);
 #endif
 }
 
-bool RenderThemeCocoa::paintSwitchThumb(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
+bool RenderThemeCocoa::paintSwitch(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
 {
 #if PLATFORM(MAC)
     bool useDefaultImplementation = true;
@@ -5317,25 +5316,10 @@ bool RenderThemeCocoa::paintSwitchThumb(const RenderElement& renderer, const Pai
         useDefaultImplementation = false;
 #endif
     if (useDefaultImplementation)
-        return RenderTheme::paintSwitchThumb(renderer, paintInfo, rect);
+        return RenderTheme::paintSwitch(renderer, paintInfo, rect);
 #endif
 
-    return renderThemePaintSwitchThumb(extractControlStyleStatesForRenderer(renderer), renderer, paintInfo, rect, platformFocusRingColor(renderer.styleColorOptions()), switchCornerRadiusFraction);
-}
-
-bool RenderThemeCocoa::paintSwitchTrack(const RenderElement& renderer, const PaintInfo& paintInfo, const FloatRect& rect)
-{
-#if PLATFORM(MAC)
-    bool useDefaultImplementation = true;
-#if ENABLE(FORM_CONTROL_REFRESH)
-    if (renderer.settings().formControlRefreshEnabled())
-        useDefaultImplementation = false;
-#endif
-    if (useDefaultImplementation)
-        return RenderTheme::paintSwitchTrack(renderer, paintInfo, rect);
-#endif
-
-    return renderThemePaintSwitchTrack(extractControlStyleStatesForRenderer(renderer), renderer, paintInfo, rect, switchCornerRadiusFraction);
+    return renderThemePaintSwitch(extractControlStyleStatesForRenderer(renderer), renderer, paintInfo, rect, platformFocusRingColor(renderer.styleColorOptions()), switchCornerRadiusFraction);
 }
 
 void RenderThemeCocoa::paintPlatformResizer(const RenderLayerModelObject& renderer, GraphicsContext& context, const LayoutRect& resizerCornerRect)

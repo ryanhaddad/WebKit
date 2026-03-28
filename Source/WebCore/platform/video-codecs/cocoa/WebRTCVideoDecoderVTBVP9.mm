@@ -33,6 +33,8 @@
 #import "VP9UtilitiesCocoa.h"
 #import <wtf/BlockPtr.h>
 
+#import "CoreVideoSoftLink.h"
+
 namespace WebCore {
 
 static RetainPtr<CMVideoFormatDescriptionRef> createVP9FormatDescriptionFromData(std::span<const uint8_t> data, int32_t width, int32_t height)
@@ -85,5 +87,6 @@ int32_t WebRTCVideoDecoderVTBVP9::decodeFrame(int64_t timeStamp, std::span<const
     return decodeFrameInternal(timeStamp, data);
 }
 
-}
+} // namespace WebCore
+
 #endif // USE(LIBWEBRTC)

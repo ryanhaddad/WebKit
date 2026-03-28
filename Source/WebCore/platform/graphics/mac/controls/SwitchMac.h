@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,24 +27,27 @@
 #if PLATFORM(MAC)
 
 #import "ControlMac.h"
-#import "SwitchThumbPart.h"
+#import "SwitchPart.h"
 #import <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
-class SwitchThumbMac final : public ControlMac {
-    WTF_MAKE_TZONE_ALLOCATED(SwitchThumbMac);
+class SwitchMac final : public ControlMac {
+    WTF_MAKE_TZONE_ALLOCATED(SwitchMac);
 public:
-    SwitchThumbMac(SwitchThumbPart&, ControlFactoryMac&);
+    SwitchMac(SwitchPart&, ControlFactoryMac&);
 
 private:
-    Ref<const SwitchThumbPart> owningPart() const { return downcast<SwitchThumbPart>(m_owningPart.get()); }
+    Ref<const SwitchPart> owningPart() const { return downcast<SwitchPart>(m_owningPart.get()); }
 
     IntSize cellSize(NSControlSize, const ControlStyle&) const override;
     IntOutsets cellOutsets(NSControlSize, const ControlStyle&) const override;
     FloatRect rectForBounds(const FloatRect&, const ControlStyle&) const override;
 
     void draw(GraphicsContext&, const FloatRoundedRect&, float, const ControlStyle&) override;
+
+    void drawTrack(GraphicsContext&, const FloatRoundedRect&, float, const ControlStyle&);
+    void drawThumb(GraphicsContext&, const FloatRoundedRect&, float, const ControlStyle&);
 };
 
 } // namespace WebCore
