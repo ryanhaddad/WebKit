@@ -394,7 +394,7 @@ void HTMLDocumentParser::insert(SegmentedString&& source)
     Ref<HTMLDocumentParser> protectedThis(*this);
 
     source.setExcludeLineNumbers();
-    m_input.insertAtCurrentInsertionPoint(WTF::move(source));
+    m_input.insertAtCurrentInsertionPoint(source);
     pumpTokenizerIfPossible(SynchronousMode::ForceSynchronous);
 
     if (isWaitingForScripts() && !isDetached()) {
