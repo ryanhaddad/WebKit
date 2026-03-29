@@ -48,6 +48,11 @@ struct ScrollPropagationInfo {
     bool isHandled { false };
 };
 
+enum class AnimatedScrollType : uint8_t {
+    User,
+    Programmatic
+};
+
 class WEBCORE_EXPORT ScrollingTreeScrollingNode : public ScrollingTreeNode {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(ScrollingTreeScrollingNode, WEBCORE_EXPORT);
     friend class ScrollingTreeScrollingNodeDelegate;
@@ -94,7 +99,7 @@ public:
 #endif
 
     virtual bool startAnimatedScrollToPosition(FloatPoint);
-    virtual void stopAnimatedScroll();
+    virtual void stopAnimatedScroll(EnumSet<AnimatedScrollType>);
 
     virtual void serviceScrollAnimation(MonotonicTime);
 

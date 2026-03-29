@@ -124,10 +124,9 @@ void RemoteScrollingCoordinatorProxy::adjustMainFrameDelegatedScrollPosition(Scr
         case ScrollRequestType::DeltaUpdate:
         case ScrollRequestType::AnimatedDeltaUpdate:
         case ScrollRequestType::ImplicitDeltaUpdate: {
-            auto interruptScrollAnimation = request.requestType == ScrollRequestType::ImplicitDeltaUpdate ? InterruptScrollAnimation::No : InterruptScrollAnimation::Yes;
             scrollPosition = request.destinationPosition(scrollPosition);
-            LOG_WITH_STREAM(Scrolling, stream << "RemoteScrollingCoordinatorProxy::adjustViewScrollPosition requesting scroll to " << scrollPosition << " animated " << isAnimatedUpdate(request.requestType) << " interrupting " << (interruptScrollAnimation == InterruptScrollAnimation::Yes));
-            protect(webPageProxy())->requestScroll(scrollPosition, scrollOrigin(), isAnimatedUpdate(request.requestType) ? ScrollIsAnimated::Yes : ScrollIsAnimated::No, interruptScrollAnimation);
+            LOG_WITH_STREAM(Scrolling, stream << "RemoteScrollingCoordinatorProxy::adjustViewScrollPosition requesting scroll to " << scrollPosition << " animated " << isAnimatedUpdate(request.requestType));
+            protect(webPageProxy())->requestScroll(scrollPosition, scrollOrigin(), isAnimatedUpdate(request.requestType) ? ScrollIsAnimated::Yes : ScrollIsAnimated::No, InterruptScrollAnimation::No);
             break;
         }
         case ScrollRequestType::CancelAnimatedScroll:

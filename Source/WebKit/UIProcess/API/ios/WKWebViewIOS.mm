@@ -1515,7 +1515,7 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
         if (WTF::areEssentiallyEqual<float>(scrollPosition.y(), 0) && scrollViewContentOffset.y < 0)
             contentOffsetInScrollViewCoordinates.y = scrollViewContentOffset.y;
 
-        if (interruptAnimation)
+        if (interruptAnimation || animated)
             [_scrollView setContentOffset:contentOffsetInScrollViewCoordinates animated:animated];
         else
             [_scrollView setContentOffset:contentOffsetInScrollViewCoordinates];
