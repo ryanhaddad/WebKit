@@ -426,7 +426,7 @@ public:
             using Type = NativePromise<T, E>;
         };
 
-        using RejectValueType = std::remove_reference_t<decltype(PC::convertError(std::declval<IPC::Error>()).value())>;
+        using RejectValueType = std::remove_reference_t<decltype(PC::convertError(std::declval<IPC::Error>()).error())>;
         using Type = typename Promise<typename BasePromise::ResolveValueType, RejectValueType>::Type;
     };
     struct NoOpPromiseConverter {

@@ -79,16 +79,16 @@ public:
     unexpected() = delete;
     template <class U = E>
     constexpr explicit unexpected(U&& u) : val(std::forward<U>(u)) { }
-    constexpr const E& value() const & { return val; }
-    constexpr E& value() & { return val; }
-    constexpr E&& value() && { return WTF::move(val); }
-    constexpr const E&& value() const && { return WTF::move(val); }
+    constexpr const E& error() const & { return val; }
+    constexpr E& error() & { return val; }
+    constexpr E&& error() && { return WTF::move(val); }
+    constexpr const E&& error() const && { return WTF::move(val); }
 
 private:
     E val;
 };
 
-template<class E> constexpr bool operator==(const unexpected<E>& lhs, const unexpected<E>& rhs) { return lhs.value() == rhs.value(); }
+template<class E> constexpr bool operator==(const unexpected<E>& lhs, const unexpected<E>& rhs) { return lhs.error() == rhs.error(); }
 
 }}} // namespace std::experimental::fundamentals_v3
 
