@@ -2000,10 +2000,10 @@
     "imported/w3c/web-platform-tests/css/selectors/focus-visible-018-2.html": [
         "slow"
     ],
-    "imported/w3c/web-platform-tests/css/selectors/invalidation/media-loading-pseudo-classes-in-has.html": [
+    "imported/w3c/web-platform-tests/css/selectors/invalidation/media-loading-pseudo-classes-in-has.sub.html": [
         "slow"
     ],
-    "imported/w3c/web-platform-tests/css/selectors/media/media-loading-state.html": [
+    "imported/w3c/web-platform-tests/css/selectors/media/media-loading-state.sub.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/custom-elements/ElementInternals-role.html": [

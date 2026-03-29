@@ -8351,3 +8351,7 @@ imported/w3c/web-platform-tests/css/css-text/line-breaking/segment-break-transfo
 
 imported/w3c/web-platform-tests/html/semantics/document-metadata/the-style-element/tentative/style-element-csp-allowed.html [ Skip ] # timeout
 imported/w3c/web-platform-tests/html/semantics/document-metadata/the-style-element/tentative/style-element-csp-blocked.html [ Skip ] # timeout - two subtests pass
+
+imported/w3c/web-platform-tests/css/selectors/media/media-loading-state.sub.html [ Skip ] # timeout, passes first subtest
+imported/w3c/web-platform-tests/css/selectors/media/media-loading-state-timing.sub.html [ Skip ] # timeout
+imported/w3c/web-platform-tests/css/selectors/invalidation/media-loading-pseudo-classes-in-has.sub.html [ Skip ] # timeout
