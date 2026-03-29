@@ -106,18 +106,15 @@ public:
 
     template<size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename VectorMalloc>
     explicit FixedVector(Vector<T, inlineCapacity, OverflowHandler, minCapacity, VectorMalloc>&& other)
-    {
-        auto target = WTF::move(other);
-        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(target)).moveToUniquePtr();
-    }
+        : m_storage(other.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(other)).moveToUniquePtr())
+    { }
 
     // FIXME: Should we remove this now that it's not required for HashTable::add? This assignment is non-trivial and
     // should probably go through the explicit constructor.
     template<size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename VectorMalloc>
     FixedVector& operator=(Vector<T, inlineCapacity, OverflowHandler, minCapacity, VectorMalloc>&& other)
     {
-        auto target = WTF::move(other);
-        m_storage = target.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(target)).moveToUniquePtr();
+        m_storage = other.isEmpty() ? nullptr : Storage::createFromVector(WTF::move(other)).moveToUniquePtr();
         return *this;
     }
 
@@ -184,12 +181,12 @@ public:
     bool operator==(const Self& other) const
     {
         if (!m_storage) {
-            if (!other.m_storage)
-                return true;
-            return other.m_storage->isEmpty();
+            ASSERT(!other.m_storage || !other.m_storage->isEmpty());
+            return !other.m_storage;
         }
+        ASSERT(!m_storage->isEmpty());
         if (!other.m_storage)
-            return m_storage->isEmpty();
+            return false;
         return *m_storage == *other.m_storage;
     }
 

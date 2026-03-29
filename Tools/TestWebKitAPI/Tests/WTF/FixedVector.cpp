@@ -498,4 +498,56 @@ TEST(WTF_FixedVector, MoveAssignEmptyToEmpty)
     EXPECT_TRUE(vec2.isEmpty());
 }
 
+TEST(WTF_FixedVector, MoveVectorEmpty)
+{
+    Vector<unsigned> vec1;
+    FixedVector<unsigned> vec2(WTF::move(vec1));
+    EXPECT_TRUE(vec2.isEmpty());
+}
+
+TEST(WTF_FixedVector, MoveAssignVectorEmpty)
+{
+    FixedVector<unsigned> vec(3);
+    vec[0] = 0;
+    vec[1] = 1;
+    vec[2] = 2;
+
+    Vector<unsigned> empty;
+    vec = WTF::move(empty);
+    EXPECT_TRUE(vec.isEmpty());
+}
+
+TEST(WTF_FixedVector, MoveAssignVectorOverNonEmpty)
+{
+    Vector<bool> flags(3, false);
+    {
+        FixedVector<DestructorObserver> vec(3);
+        for (unsigned i = 0; i < 3; ++i)
+            vec[i] = DestructorObserver(&flags[i]);
+
+        // Move-assigning a Vector over a non-empty FixedVector must destroy old elements.
+        auto source = Vector<DestructorObserver>::from(DestructorObserver());
+        vec = WTF::move(source);
+        EXPECT_EQ(1U, vec.size());
+        for (unsigned i = 0; i < 3; ++i)
+            EXPECT_TRUE(flags[i]);
+    }
+}
+
+TEST(WTF_FixedVector, EqualDifferentSizes)
+{
+    FixedVector<unsigned> vec1 = { 1, 2, 3 };
+    FixedVector<unsigned> vec2 = { 1, 2 };
+    EXPECT_NE(vec1, vec2);
+    EXPECT_NE(vec2, vec1);
+}
+
+TEST(WTF_FixedVector, EqualEmptyAndNonEmpty)
+{
+    FixedVector<unsigned> empty;
+    FixedVector<unsigned> nonEmpty = { 1 };
+    EXPECT_NE(empty, nonEmpty);
+    EXPECT_NE(nonEmpty, empty);
+}
+
 } // namespace TestWebKitAPI
