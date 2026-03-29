@@ -307,7 +307,8 @@ NS_REQUIRES_PROPERTY_DEFINITIONS
 @interface _WKTextExtractionInteraction : NSObject
 
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithAction:(_WKTextExtractionAction)action NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithAction:(_WKTextExtractionAction)action;
+- (instancetype)initWithAction:(_WKTextExtractionAction)action extractionContext:(nullable _WKTextExtractionResult *)extractionContext NS_DESIGNATED_INITIALIZER;
 
 - (void)debugDescriptionInWebView:(WKWebView *)webView completionHandler:(void (^)(NSString * _Nullable, NSError * _Nullable))completionHandler;
 
@@ -317,6 +318,7 @@ NS_REQUIRES_PROPERTY_DEFINITIONS
 @property (nonatomic) BOOL replaceAll;
 @property (nonatomic) BOOL scrollToVisible;
 @property (nonatomic) CGSize scrollDelta;
+@property (nonatomic, readonly, strong, nullable) _WKTextExtractionResult *extractionContext;
 
 // Must be within the visible bounds of the web view.
 @property (nonatomic) CGPoint location;

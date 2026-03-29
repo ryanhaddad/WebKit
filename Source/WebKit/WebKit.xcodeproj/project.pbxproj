@@ -2586,6 +2586,7 @@
 		F46C34332DCD369200B476F8 /* WKIdentityDocumentPresentmentRawRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46C34322DCD369200B476F8 /* WKIdentityDocumentPresentmentRawRequest.swift */; };
 		F46C34352DCD369B00B476F8 /* WKIdentityDocumentPresentmentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46C34342DCD369B00B476F8 /* WKIdentityDocumentPresentmentController.swift */; };
 		F46CCD912EDD1B9C00D4BA3E /* SafeBrowsingUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = F46CCD8E2EDD1B9C00D4BA3E /* SafeBrowsingUtilities.h */; };
+		F47FD8B52F7854C5008BF1DD /* FrameAndNodeIdentifiers.h in Headers */ = {isa = PBXBuildFile; fileRef = F47FD8B42F7854A8008BF1DD /* FrameAndNodeIdentifiers.h */; };
 		F48523B62C76962C00C71FC2 /* CoreIPCNSURLProtectionSpace.mm in Sources */ = {isa = PBXBuildFile; fileRef = F48523B52C76961C00C71FC2 /* CoreIPCNSURLProtectionSpace.mm */; };
 		F48523B72C769D8700C71FC2 /* CoreIPCNSURLProtectionSpace.h in Headers */ = {isa = PBXBuildFile; fileRef = F48523B42C76961C00C71FC2 /* CoreIPCNSURLProtectionSpace.h */; };
 		F48570A32644BEC500C05F71 /* Timeout.h in Headers */ = {isa = PBXBuildFile; fileRef = F48570A22644BEC400C05F71 /* Timeout.h */; };
@@ -8881,6 +8882,7 @@
 		F46CCD8E2EDD1B9C00D4BA3E /* SafeBrowsingUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SafeBrowsingUtilities.h; sourceTree = "<group>"; };
 		F46CCD8F2EDD1B9C00D4BA3E /* SafeBrowsingUtilities.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SafeBrowsingUtilities.mm; sourceTree = "<group>"; };
 		F476894628D2B5CD00073641 /* LayerTreeContext.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = LayerTreeContext.serialization.in; sourceTree = "<group>"; };
+		F47FD8B42F7854A8008BF1DD /* FrameAndNodeIdentifiers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FrameAndNodeIdentifiers.h; sourceTree = "<group>"; };
 		F48523B42C76961C00C71FC2 /* CoreIPCNSURLProtectionSpace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreIPCNSURLProtectionSpace.h; sourceTree = "<group>"; };
 		F48523B52C76961C00C71FC2 /* CoreIPCNSURLProtectionSpace.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CoreIPCNSURLProtectionSpace.mm; sourceTree = "<group>"; };
 		F48570A22644BEC400C05F71 /* Timeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Timeout.h; sourceTree = "<group>"; };
@@ -10244,6 +10246,7 @@
 				86BAAFD829A3D4040013F9A9 /* FileSystemSyncAccessHandleInfo.serialization.in */,
 				C59C4A5718B81174007BDCB6 /* FocusedElementInformation.h */,
 				86DA60C628EAE9C00044FE4D /* FocusedElementInformation.serialization.in */,
+				F47FD8B42F7854A8008BF1DD /* FrameAndNodeIdentifiers.h */,
 				FA87D9B42D8BDC2B00B609D4 /* FrameInfoData.cpp */,
 				1A14F8E01D74C834006CBEC6 /* FrameInfoData.h */,
 				5C4AB4AF28BD65A50059E6CD /* FrameInfoData.serialization.in */,
@@ -18187,6 +18190,7 @@
 				DD4DB78A280F9471001700D4 /* FormElementClear.js in Headers */,
 				DD4DB78B280F9471001700D4 /* FormSubmit.js in Headers */,
 				1C62900F28EF4A1D00C26B60 /* FoundationSPI.h in Headers */,
+				F47FD8B52F7854C5008BF1DD /* FrameAndNodeIdentifiers.h in Headers */,
 				1A14F8E21D74C834006CBEC6 /* FrameInfoData.h in Headers */,
 				F30EE46E2E721ED600935B60 /* FrameInspectorTarget.h in Headers */,
 				F30EE4742E72227500935B60 /* FrameInspectorTargetProxy.h in Headers */,

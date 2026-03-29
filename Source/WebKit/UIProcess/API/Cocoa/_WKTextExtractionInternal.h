@@ -27,6 +27,12 @@
 
 #import <WebKit/_WKTextExtraction.h>
 
+#if !__has_feature(modules) || WK_SUPPORTS_SWIFT_OBJCXX_INTEROP
+#import "FrameAndNodeIdentifiers.h"
+#import <wtf/Expected.h>
+#import <wtf/Vector.h>
+#endif
+
 @class _WKJSHandle;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -55,7 +61,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface _WKTextExtractionResult ()
 
-- (instancetype)initWithWebView:(nullable WKWebView *)webView textContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText shortenedURLs:(NSDictionary<NSString *, NSURL *> *)shortenedURLs;
+#if !__has_feature(modules) || WK_SUPPORTS_SWIFT_OBJCXX_INTEROP
+- (instancetype)initWithWebView:(nullable WKWebView *)webView textContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText shortenedURLs:(NSDictionary<NSString *, NSURL *> *)shortenedURLs textToContainerMap:(HashMap<String, Vector<WebKit::FrameAndNodeIdentifiers>>&&)textToContainerMap;
+- (Expected<std::optional<WebKit::FrameAndNodeIdentifiers>, String>)resolveContainerForSearchText:(NSString *)searchText;
+#endif
 
 @end
 

@@ -413,7 +413,7 @@ public:
         addNativeMenuItemsIfNeeded();
         addVersionNumberIfNeeded();
 
-        m_completion({ takeResults(), m_filteredOutAnyText, WTF::move(m_shortenedURLStrings) });
+        m_completion({ takeResults(), m_filteredOutAnyText, std::exchange(m_shortenedURLStrings, { }), std::exchange(m_textToContainerMap, { }) });
     }
 
     String takeResults()
@@ -704,6 +704,19 @@ public:
         return makeString(frameIdentifierValue >> 32, '_', (frameIdentifierValue & 0xFFFFFFFF), '_', nodeIdentifier.toUInt64());
     }
 
+    void collectTextMapping(const String& text, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& nodeIdentifier)
+    {
+        if (text.isEmpty() || !nodeIdentifier)
+            return;
+
+        auto& containers = m_textToContainerMap.ensure(text, [&] {
+            return Vector<FrameAndNodeIdentifiers> { };
+        }).iterator->value;
+
+        if (auto identifiers = FrameAndNodeIdentifiers { frameIdentifier, *nodeIdentifier }; containers.isEmpty() || containers.last() != identifiers)
+            containers.append(WTF::move(identifiers));
+    }
+
 private:
     void filterRecursive(const String& originalText, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& identifier, size_t index, CompletionHandler<void(String&&)>&& completion)
     {
@@ -804,6 +817,7 @@ private:
     TextExtractionVersionBehaviors m_versionBehaviors;
     bool m_filteredOutAnyText { false };
     Vector<String> m_shortenedURLStrings;
+    HashMap<String, Vector<FrameAndNodeIdentifiers>> m_textToContainerMap;
     RefPtr<JSON::Object> m_rootJSONObject;
 };
 
@@ -998,6 +1012,7 @@ static void populateJSONForItem(JSON::Object& jsonObject, const TextExtraction::
 
     WTF::switchOn(item.data,
         [&](const TextExtraction::TextItemData& textData) {
+            aggregator.collectTextMapping(textData.content, item.frameIdentifier, identifier);
             addJSONTextContent(Ref { jsonObject }, textData, item.frameIdentifier, identifier, aggregator);
         },
         [&](const TextExtraction::ScrollableItemData& scrollableData) {
@@ -1583,6 +1598,9 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
     if (!identifier)
         identifier = enclosingNode;
 
+    if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
+        aggregator.collectTextMapping(std::get<TextExtraction::TextItemData>(item.data).content, item.frameIdentifier, identifier);
+
     if (aggregator.usePlainTextOutput()) {
         if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
             addPartsForText(std::get<TextExtraction::TextItemData>(item.data), { }, item.frameIdentifier, identifier, { aggregator.advanceToNextLine(), depth }, aggregator, HasLineThroughStyle::No, { }, hasAdjacentLinkAfter);
@@ -1656,6 +1674,8 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
 
     if (item.children.size() == 1) {
         if (auto text = item.children[0].dataAs<TextExtraction::TextItemData>()) {
+            aggregator.collectTextMapping(text->content.trim(isASCIIWhitespace), item.frameIdentifier, identifier);
+
             if (omitChildTextNode)
                 return;
 

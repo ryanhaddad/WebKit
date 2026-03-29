@@ -6905,7 +6905,7 @@ static WebKit::TextExtractionOutputFormat textExtractionOutputFormat(_WKTextExtr
 
 static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
 {
-    return adoptNS([[_WKTextExtractionResult alloc] initWithWebView:nil textContent:@"" filteredOutAnyText:NO shortenedURLs:@{ }]);
+    return adoptNS([[_WKTextExtractionResult alloc] initWithWebView:nil textContent:@"" filteredOutAnyText:NO shortenedURLs:@{ } textToContainerMap:{ }]);
 }
 
 - (void)_extractDebugTextWithConfiguration:(_WKTextExtractionConfiguration *)configuration completionHandler:(void(^)(_WKTextExtractionResult *))completionHandler
@@ -7125,7 +7125,7 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
                 return completionHandler(createEmptyTextExtractionResult().get());
 
             RELEASE_LOG(TextExtraction, "<%@: %p> Extraction complete (%.0f ms)", [strongSelf class], strongSelf.get(), (MonotonicTime::now() - startTime).milliseconds());
-            auto [text, filteredOutAnyText, shortenedURLStrings] = result;
+            auto [text, filteredOutAnyText, shortenedURLStrings, textToContainerMap] = result;
             RetainPtr shortenedURLs = adoptNS([[NSMutableDictionary alloc] initWithCapacity:shortenedURLStrings.size()]);
             for (auto& string : shortenedURLStrings) {
                 if (auto url = urlCache->urlForShortenedString(string); url.isValid()) {
@@ -7137,12 +7137,13 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
                 initWithWebView:strongSelf.get()
                 textContent:text.createNSString().get()
                 filteredOutAnyText:filteredOutAnyText
-                shortenedURLs:shortenedURLs.get()]).get());
+                shortenedURLs:shortenedURLs.get()
+                textToContainerMap:WTF::move(textToContainerMap)]).get());
         });
     }];
 }
 
-- (std::pair<RefPtr<WebKit::WebFrameProxy>, WebCore::TextExtraction::Interaction>)_convertToWebCoreInteraction:(_WKTextExtractionInteraction *)wkInteraction
+- (Expected<std::pair<RefPtr<WebKit::WebFrameProxy>, WebCore::TextExtraction::Interaction>, RetainPtr<NSString>>)_convertToWebCoreInteraction:(_WKTextExtractionInteraction *)wkInteraction
 {
     std::optional<WebCore::FrameIdentifier> frameIdentifier;
     WebCore::TextExtraction::Interaction interaction;
@@ -7184,8 +7185,21 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
     interaction.replaceAll = wkInteraction.replaceAll;
     interaction.scrollToVisible = wkInteraction.scrollToVisible;
     interaction.scrollDelta = WebCore::FloatSize { wkInteraction.scrollDelta };
-    return {
-        { WebKit::WebFrameProxy::webFrame(frameIdentifier) ?: _page->mainFrame() },
+    if (!interaction.nodeIdentifier) {
+        if (RetainPtr context = [wkInteraction extractionContext]) {
+            auto result = [context resolveContainerForSearchText:wkInteraction.text];
+            if (!result.has_value())
+                return makeUnexpected(result.error().createNSString());
+
+            if (auto container = *result) {
+                interaction.nodeIdentifier = container->nodeIdentifier;
+                if (container->frameIdentifier)
+                    frameIdentifier = *container->frameIdentifier;
+            }
+        }
+    }
+    return std::pair {
+        RefPtr { WebKit::WebFrameProxy::webFrame(frameIdentifier) ?: _page->mainFrame() },
         WTF::move(interaction)
     };
 }
@@ -7223,7 +7237,12 @@ static NSString *nameForAction(_WKTextExtractionAction action)
     if (!protect(page->preferences())->textExtractionEnabled())
         return completionHandler(adoptNS([[_WKTextExtractionInteractionResult alloc] initWithErrorDescription:@"Text extraction is unavailable"]).get());
 
-    auto [targetFrame, interaction] = [self _convertToWebCoreInteraction:wkInteraction];
+    auto conversionResult = [self _convertToWebCoreInteraction:wkInteraction];
+    if (!conversionResult) {
+        RELEASE_LOG_ERROR(TextExtraction, "<%@: %p> Interaction conversion failed", [self class], self);
+        return completionHandler(adoptNS([[_WKTextExtractionInteractionResult alloc] initWithErrorDescription:conversionResult.error().get()]).get());
+    }
+    auto& [targetFrame, interaction] = *conversionResult;
     if (!targetFrame) {
         RELEASE_LOG_ERROR(TextExtraction, "<%@: %p> Invalid frame for interaction", [self class], self);
         return completionHandler(adoptNS([[_WKTextExtractionInteractionResult alloc] initWithErrorDescription:@"Browsing context is invalid"]).get());
@@ -7615,7 +7634,11 @@ static OptionSet<WebCore::DataDetectorType> NODELETE coreDataDetectorTypes(_WKTe
     if (!protect(page->preferences())->textExtractionEnabled())
         return completionHandler(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
 
-    auto [targetFrame, interaction] = [self _convertToWebCoreInteraction:wkInteraction];
+    auto conversionResult = [self _convertToWebCoreInteraction:wkInteraction];
+    if (!conversionResult)
+        return completionHandler(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSDebugDescriptionErrorKey: conversionResult.error().get() }]);
+
+    auto& [targetFrame, interaction] = *conversionResult;
     if (!targetFrame)
         return completionHandler(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
 

@@ -1299,4 +1299,39 @@ TEST(TextExtractionTests, AuthorShadowDOMText)
     EXPECT_TRUE([debugText containsString:@"Shadow link"]);
 }
 
+TEST(TextExtractionTests, ClickInteractionWithExtractionContext)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [[configuration preferences] _setTextExtractionEnabled:YES];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView synchronouslyLoadHTMLString:@R"HTML(
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name='viewport' content='width=device-width, initial-scale=1'>
+        </head>
+        <body>
+            <button onclick="document.getElementById('result').textContent = 'original'">Edit</button>
+            <div id='result'>none</div>
+        </body>
+        </html>
+    )HTML"];
+
+    RetainPtr extractionResult = [webView synchronouslyExtractDebugTextResult:nil];
+    EXPECT_TRUE([[extractionResult textContent] containsString:@"Edit"]);
+
+    [webView objectByEvaluatingJavaScript:
+        @"let btn = document.createElement('button');"
+        "btn.textContent = 'Edit';"
+        "btn.onclick = () => document.getElementById('result').textContent = 'new';"
+        "document.body.insertBefore(btn, document.body.firstChild); true;"];
+
+    RetainPtr click = adoptNS([[_WKTextExtractionInteraction alloc] initWithAction:_WKTextExtractionActionClick extractionContext:extractionResult.get()]);
+    [click setText:@"Edit"];
+    [webView synchronouslyPerformInteraction:click.get()];
+
+    EXPECT_WK_STREQ("original", [webView stringByEvaluatingJavaScript:@"document.getElementById('result').textContent"]);
+}
+
 } // namespace TestWebKitAPI
