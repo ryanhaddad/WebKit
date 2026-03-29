@@ -1433,6 +1433,13 @@ LayoutUnit RenderBlockFlow::collapseMargins(RenderBox& child, MarginInfo& margin
 {
     auto beforeCollapseLogicalTop = logicalHeight();
     auto logicalTop = collapseMarginsWithChildInfo(&child, marginInfo);
+    auto logicalTopIntrudesIntoFloat = logicalTop < beforeCollapseLogicalTop;
+    // If margin collapsing with the child does not move the parent up, we don't have to recalculate intruding floats.
+    // This should be handled in `rebuildFloatingObjectSetFromIntrudingFloats`.
+    if (!logicalTopIntrudesIntoFloat)
+        return logicalTop;
+
+    // Search for and handle potential intruding floats from previous siblings if margin collapsing moves the parent upward.
     auto addIntrudingFloatsFromPreviousBlocks = [&] {
         for (auto* previousSibling = child.previousSibling(); previousSibling; previousSibling = previousSibling->previousSibling()) {
             CheckedPtr previousBlockSibling = dynamicDowncast<RenderBlockFlow>(previousSibling);
@@ -1453,8 +1460,8 @@ LayoutUnit RenderBlockFlow::collapseMargins(RenderBox& child, MarginInfo& margin
     // If |child|'s previous sibling is or contains a self-collapsing block that cleared a float and margin collapsing resulted in |child| moving up
     // into the margin area of the self-collapsing block then the float it clears is now intruding into |child|. Layout again so that we can look for
     // floats in the parent that overhang |child|'s new logical top.
-    auto logicalTopIntrudesIntoFloat = logicalTop < beforeCollapseLogicalTop;
-    if (logicalTopIntrudesIntoFloat && containsFloats() && !child.avoidsFloats() && lowestFloatLogicalBottom() > logicalTop)
+    ASSERT(logicalTopIntrudesIntoFloat);
+    if (containsFloats() && !child.avoidsFloats() && lowestFloatLogicalBottom() > logicalTop)
         child.setNeedsLayout(MarkOnlyThis);
     return logicalTop;
 }
