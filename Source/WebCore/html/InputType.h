@@ -48,6 +48,7 @@ class BeforeTextInsertedEvent;
 class Chrome;
 class DOMFormData;
 class DateComponents;
+class Decimal;
 class DragData;
 class Event;
 class FileList;
@@ -264,6 +265,10 @@ public:
     virtual String visibleValue() const;
     virtual bool isEmptyValue() const;
 
+    // Returns true if the value violates any step/range constraint (stepMismatch,
+    // rangeUnderflow, or rangeOverflow). Creates the StepRange only once.
+    bool hasStepRangeViolation(const String&) const;
+
     // Type check for the current input value. We do nothing for some types
     // though typeMismatchFor() does something for them because of value sanitization.
     virtual bool typeMismatch() const { return false; }
@@ -414,6 +419,7 @@ protected:
 private:
     // Helper for stepUp()/stepDown(). Adds step value * count to the current value.
     ExceptionOr<void> applyStep(int count, AnyStepHandling, TextFieldEventBehavior);
+    std::optional<std::pair<Decimal, StepRange>> parsedValueAndStepRange(const String&) const;
 
     const Type m_type;
     bool m_hasCreatedShadowSubtree { false };
