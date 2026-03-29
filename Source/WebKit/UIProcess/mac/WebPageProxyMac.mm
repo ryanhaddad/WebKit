@@ -38,6 +38,7 @@
 #import "MenuUtilities.h"
 #import "MessageSenderInlines.h"
 #import "NativeWebKeyboardEvent.h"
+#import "NativeWebWheelEvent.h"
 #import "NetworkProcessMessages.h"
 #import "PDFContextMenu.h"
 #import "PageClient.h"
@@ -80,6 +81,7 @@
 #import <wtf/FileHandle.h>
 #import <wtf/FileSystem.h>
 #import <wtf/ProcessPrivilege.h>
+#import <wtf/UUID.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/text/cf/StringConcatenateCF.h>
@@ -1146,6 +1148,29 @@ void WebPageProxy::platformUnlockPointer()
 }
 
 #endif
+
+void WebPageProxy::interruptSyntheticMomentumScrolling()
+{
+    auto timestamp = MonotonicTime::now();
+    WebWheelEvent cancelEvent {
+        { WebEventType::Wheel, { }, timestamp, WTF::UUID::createVersion4() },
+        WebCore::IntPoint { },
+        WebCore::IntPoint { },
+        WebCore::FloatSize { },
+        WebCore::FloatSize { },
+        WebWheelEvent::Granularity::ScrollByPixelWheelEvent,
+        false,
+        WebWheelEvent::Phase::Cancelled,
+        WebWheelEvent::Phase::None,
+        true,
+        1,
+        WebCore::FloatSize { },
+        timestamp,
+        std::nullopt,
+        WebWheelEvent::MomentumEndType::Interrupted
+    };
+    handleNativeWheelEvent(NativeWebWheelEvent { cancelEvent });
+}
 
 } // namespace WebKit
 
