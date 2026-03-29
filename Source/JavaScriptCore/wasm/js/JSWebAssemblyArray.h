@@ -40,7 +40,7 @@ namespace JSC {
 
 // Ideally this would just subclass TrailingArray<JSWebAssemblyArray, uint8_t> but we need the m_size field to be in units
 // of element size rather than byte size.
-class JSWebAssemblyArray final : public WebAssemblyGCObjectBase {
+class alignas(8) JSWebAssemblyArray final : public WebAssemblyGCObjectBase {
 public:
     using Base = WebAssemblyGCObjectBase;
 
@@ -96,16 +96,16 @@ public:
     void setIsUnpopulated(bool value) { m_isUnpopulated = value; }
 #endif
 
-    // We add 8 bytes for v128 arrays since a non-PreciseAllocation will have the wrong alignment as the base pointer for a PreciseAllocation is shifted by 8.
+    // We add padding for v128 arrays since a non-PreciseAllocation will have the wrong alignment as the base pointer for a PreciseAllocation is shifted by 8.
     // Note: Technically this isn't needed since the GC/malloc always allocates 16 byte chunks so for non-precise v128 allocations
-    // there will be a 8 spare bytes at the end. This is just a bit more explicit and shouldn't make a difference.
-    static constexpr ptrdiff_t v128AlignmentShift = 8;
+    // there will be spare bytes at the end. This is just a bit more explicit and shouldn't make a difference.
+    static constexpr ptrdiff_t v128AlignmentShift() { return (16 - (offsetOfData() % 16)) % 16; }
     static std::optional<unsigned> allocationSizeInBytes(Wasm::FieldType fieldType, unsigned size)
     {
         unsigned elementSize = fieldType.type.elementSize();
         if (productOverflows<uint32_t>(elementSize, size) || elementSize * size > Wasm::maxArraySizeInBytes) [[unlikely]]
             return std::nullopt;
-        return sizeof(JSWebAssemblyArray) + size * elementSize + static_cast<size_t>(needsAlignmentCheck(fieldType.type) * v128AlignmentShift);
+        return sizeof(JSWebAssemblyArray) + size * elementSize + static_cast<size_t>(needsAlignmentCheck(fieldType.type) * v128AlignmentShift());
     }
 
     static constexpr ptrdiff_t offsetOfSize() { return OBJECT_OFFSETOF(JSWebAssemblyArray, m_size); }
@@ -133,7 +133,7 @@ private:
 static_assert(std::is_final_v<JSWebAssemblyArray>, "JSWebAssemblyArray is a TrailingArray-like object so must know about all members");
 // We still have to check for PreciseAllocations since those are correctly aligned for v128 but this asserts our shifted offset will be correct.
 // FIXME: Fix this check for 32-bit.
-static_assert(isAddress32Bit() || !((JSWebAssemblyArray::offsetOfData() + JSWebAssemblyArray::v128AlignmentShift) % 16), "JSWebAssemblyArray storage needs to be aligned for v128_t");
+static_assert(isAddress32Bit() || !((JSWebAssemblyArray::offsetOfData() + JSWebAssemblyArray::v128AlignmentShift()) % 16), "JSWebAssemblyArray storage needs to be aligned for v128_t");
 
 } // namespace JSC
 

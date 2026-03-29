@@ -1409,18 +1409,18 @@ end)
 macro loadPropertyAtVariableOffsetKnownNotInline(propertyOffset, objectAndStorage, tag, payload)
     assert(macro (ok) bigteq propertyOffset, firstOutOfLineOffset, ok end)
     negi propertyOffset
-    loadp JSObject::m_butterfly[objectAndStorage], objectAndStorage
+    loadp JSObjectWithButterfly::m_butterfly[objectAndStorage], objectAndStorage
     loadi TagOffset + (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffset, 8], tag
     loadi PayloadOffset + (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffset, 8], payload
 end
 
 macro loadPropertyAtVariableOffset(propertyOffset, objectAndStorage, tag, payload)
     bilt propertyOffset, firstOutOfLineOffset, .isInline
-    loadp JSObject::m_butterfly[objectAndStorage], objectAndStorage
+    loadp JSObjectWithButterfly::m_butterfly[objectAndStorage], objectAndStorage
     negi propertyOffset
     jmp .ready
 .isInline:
-    addp sizeof JSObject - (firstOutOfLineOffset - 2) * 8, objectAndStorage
+    addp sizeof JSObjectWithButterfly - (firstOutOfLineOffset - 2) * 8, objectAndStorage
 .ready:
     loadi TagOffset + (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffset, 8], tag
     loadi PayloadOffset + (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffset, 8], payload
@@ -1428,11 +1428,11 @@ end
 
 macro storePropertyAtVariableOffset(propertyOffsetAsInt, objectAndStorage, tag, payload)
     bilt propertyOffsetAsInt, firstOutOfLineOffset, .isInline
-    loadp JSObject::m_butterfly[objectAndStorage], objectAndStorage
+    loadp JSObjectWithButterfly::m_butterfly[objectAndStorage], objectAndStorage
     negi propertyOffsetAsInt
     jmp .ready
 .isInline:
-    addp sizeof JSObject - (firstOutOfLineOffset - 2) * 8, objectAndStorage
+    addp sizeof JSObjectWithButterfly - (firstOutOfLineOffset - 2) * 8, objectAndStorage
 .ready:
     storeJSValueConcurrent(
         macro(val, offset)
@@ -1521,7 +1521,7 @@ macro performGetByIDHelper(opcodeStruct, modeMetadataName, valueProfileName, slo
     loadb JSCell::m_indexingTypeAndMisc[t3], t0
     btiz t0, IsArray, slowLabel
     btiz t0, IndexingShapeMask, slowLabel
-    loadp JSObject::m_butterfly[t3], t0
+    loadp JSObjectWithButterfly::m_butterfly[t3], t0
     loadi -sizeof IndexingHeader + IndexingHeader::u.lengths.publicLength[t0], t0
     bilt t0, 0, slowLabel
     valueProfile(size, opcodeStruct, valueProfileName, Int32Tag, t0, t2)
@@ -1558,7 +1558,7 @@ llintOpWithMetadata(op_get_by_id, OpGetById, macro (size, get, dispatch, metadat
     loadb JSCell::m_indexingTypeAndMisc[t3], t2
     btiz t2, IsArray, .opGetByIdSlow
     btiz t2, IndexingShapeMask, .opGetByIdSlow
-    loadp JSObject::m_butterfly[t3], t0
+    loadp JSObjectWithButterfly::m_butterfly[t3], t0
     loadi -sizeof IndexingHeader + IndexingHeader::u.lengths.publicLength[t0], t0
     bilt t0, 0, .opGetByIdSlow
     valueProfile(size, OpGetById, m_valueProfile, Int32Tag, t0, t5)
@@ -1613,7 +1613,7 @@ llintOpWithMetadata(op_get_length, OpGetLength, macro (size, get, dispatch, meta
     loadb JSCell::m_indexingTypeAndMisc[t3], t2
     btiz t2, IsArray, .opGetLengthSlow
     btiz t2, IndexingShapeMask, .opGetLengthSlow
-    loadp JSObject::m_butterfly[t3], t0
+    loadp JSObjectWithButterfly::m_butterfly[t3], t0
     loadi -sizeof IndexingHeader + IndexingHeader::u.lengths.publicLength[t0], t0
     bilt t0, 0, .opGetLengthSlow
     valueProfile(size, OpGetLength, m_valueProfile, Int32Tag, t0, t5)
@@ -1740,7 +1740,7 @@ llintOpWithMetadata(op_get_by_val, OpGetByVal, macro (size, get, dispatch, metad
     loadb JSCell::m_indexingTypeAndMisc[t2], t2
     get(m_property, t3)
     loadConstantOrVariablePayload(size, t3, Int32Tag, t1, .opGetByValSlow)
-    loadp JSObject::m_butterfly[t0], t3
+    loadp JSObjectWithButterfly::m_butterfly[t0], t3
     andi IndexingShapeMask, t2
     bieq t2, Int32Shape, .opGetByValIsContiguous
     bineq t2, ContiguousShape, .opGetByValNotContiguous
@@ -1885,7 +1885,7 @@ macro putByValOp(opcodeName, opcodeStruct, osrExitPoint)
         loadb JSCell::m_indexingTypeAndMisc[t2], t2
         get(m_property, t0)
         loadConstantOrVariablePayload(size, t0, Int32Tag, t3, .opPutByValSlow)
-        loadp JSObject::m_butterfly[t1], t0
+        loadp JSObjectWithButterfly::m_butterfly[t1], t0
         btinz t2, CopyOnWrite, .opPutByValSlow
         andi IndexingShapeMask, t2
         bineq t2, Int32Shape, .opPutByValNotInt32

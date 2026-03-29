@@ -1559,19 +1559,19 @@ end)
 
 
 macro loadInlineOffset(propertyOffsetAsInt, objectAndStorage, value)
-    addp sizeof JSObject - (firstOutOfLineOffset - 2) * 8, objectAndStorage
+    addp sizeof JSObjectWithButterfly - (firstOutOfLineOffset - 2) * 8, objectAndStorage
     loadq (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffsetAsInt, 8], value
 end
 
 
 macro loadPropertyAtVariableOffset(propertyOffsetAsInt, objectAndStorage, value)
     bilt propertyOffsetAsInt, firstOutOfLineOffset, .isInline
-    loadp JSObject::m_butterfly[objectAndStorage], objectAndStorage
+    loadp JSObjectWithButterfly::m_butterfly[objectAndStorage], objectAndStorage
     negi propertyOffsetAsInt
     sxi2q propertyOffsetAsInt, propertyOffsetAsInt
     jmp .ready
 .isInline:
-    addp sizeof JSObject - (firstOutOfLineOffset - 2) * 8, objectAndStorage
+    addp sizeof JSObjectWithButterfly - (firstOutOfLineOffset - 2) * 8, objectAndStorage
 .ready:
     loadq (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffsetAsInt, 8], value
 end
@@ -1579,12 +1579,12 @@ end
 
 macro storePropertyAtVariableOffset(propertyOffsetAsInt, objectAndStorage, value)
     bilt propertyOffsetAsInt, firstOutOfLineOffset, .isInline
-    loadp JSObject::m_butterfly[objectAndStorage], objectAndStorage
+    loadp JSObjectWithButterfly::m_butterfly[objectAndStorage], objectAndStorage
     negi propertyOffsetAsInt
     sxi2q propertyOffsetAsInt, propertyOffsetAsInt
     jmp .ready
 .isInline:
-    addp sizeof JSObject - (firstOutOfLineOffset - 2) * 8, objectAndStorage
+    addp sizeof JSObjectWithButterfly - (firstOutOfLineOffset - 2) * 8, objectAndStorage
 .ready:
     storeq value, (firstOutOfLineOffset - 2) * 8[objectAndStorage, propertyOffsetAsInt, 8]
 end
@@ -1660,7 +1660,7 @@ macro performGetByIDHelper(opcodeStruct, modeMetadataName, valueProfileName, slo
     loadb JSCell::m_indexingTypeAndMisc[t3], t0
     btiz t0, IsArray, slowLabel
     btiz t0, IndexingShapeMask, slowLabel
-    loadCagedJSValue(JSObject::m_butterfly[t3], t0, t1)
+    loadCagedJSValue(JSObjectWithButterfly::m_butterfly[t3], t0, t1)
     loadi -sizeof IndexingHeader + IndexingHeader::u.lengths.publicLength[t0], t0
     bilt t0, 0, slowLabel
     orq numberTag, t0
@@ -1847,7 +1847,7 @@ llintOpWithMetadata(op_get_by_val, OpGetByVal, macro (size, get, dispatch, metad
     # This sign-extension makes the bounds-checking in getByValTypedArray work even on 4GB TypedArray.
     sxi2q t1, t1
 
-    loadCagedJSValue(JSObject::m_butterfly[t0], t3, numberTag)
+    loadCagedJSValue(JSObjectWithButterfly::m_butterfly[t0], t3, numberTag)
     move TagNumber, numberTag
 
     andi IndexingShapeMask, t2
@@ -2034,7 +2034,7 @@ macro putByValOp(opcodeName, opcodeStruct, osrExitPoint)
         get(m_property, t0)
         loadConstantOrVariableInt32(size, t0, t3, .opPutByValSlow)
         sxi2q t3, t3
-        loadCagedJSValue(JSObject::m_butterfly[t1], t0, numberTag)
+        loadCagedJSValue(JSObjectWithButterfly::m_butterfly[t1], t0, numberTag)
         move TagNumber, numberTag
         btinz t2, CopyOnWrite, .opPutByValSlow
         andi IndexingShapeMask, t2
@@ -3497,11 +3497,11 @@ llintOpWithMetadata(op_enumerator_get_by_val, OpEnumeratorGetByVal, macro (size,
     biaeq t2, t1, .outOfLine
 
     zxi2q t2, t2
-    loadq sizeof JSObject[t0, t2, 8], t2
+    loadq sizeof JSObjectWithButterfly[t0, t2, 8], t2
     jmp .done
 
 .outOfLine:
-    loadp JSObject::m_butterfly[t0], t0
+    loadp JSObjectWithButterfly::m_butterfly[t0], t0
     subi t1, t2
     negi t2
     sxi2q t2, t2
@@ -3550,12 +3550,12 @@ llintOpWithMetadata(op_enumerator_put_by_val, OpEnumeratorPutByVal, macro (size,
     biaeq t2, t1, .outOfLine
 
     zxi2q t2, t2
-    storeq t3, sizeof JSObject[t0, t2, 8]
+    storeq t3, sizeof JSObjectWithButterfly[t0, t2, 8]
     jmp .done
 
 .outOfLine:
     subi t1, t2
-    loadp JSObject::m_butterfly[t0], t1
+    loadp JSObjectWithButterfly::m_butterfly[t0], t1
     negi t2
     sxi2q t2, t2
     storeq t3, constexpr ((offsetInButterfly(firstOutOfLineOffset)) * sizeof(EncodedJSValue))[t1, t2, 8]

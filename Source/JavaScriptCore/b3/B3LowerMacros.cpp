@@ -835,7 +835,6 @@ private:
                     Value* typeInfo = fastPathContinuation->appendNew<Const32Value>(m_proc, m_origin, JSWebAssemblyStruct::typeInfoBlob().blob());
                     fastPathContinuation->appendNew<MemoryValue>(m_proc, Store, m_origin, structureID, cell, static_cast<int32_t>(JSCell::structureIDOffset()));
                     fastPathContinuation->appendNew<MemoryValue>(m_proc, Store, m_origin, typeInfo, cell, static_cast<int32_t>(JSCell::indexingTypeAndMiscOffset()));
-                    fastPathContinuation->appendNew<MemoryValue>(m_proc, Store, m_origin, fastPathContinuation->appendIntConstant(m_proc, m_origin, pointerType(), 0), cell, static_cast<int32_t>(JSObject::butterflyOffset()));
 
                     fastUpsilon = fastPathContinuation->appendNew<UpsilonValue>(m_proc, m_origin, cell);
                     fastPathContinuation->appendNew<Value>(m_proc, Jump, m_origin);

@@ -452,7 +452,7 @@ void AssemblyHelpers::loadProperty(GPRReg object, GPRReg offset, JSValueRegs res
     isInline.link(this);
     addPtr(
         TrustedImm32(
-            static_cast<int32_t>(sizeof(JSObject)) -
+            static_cast<int32_t>(JSObject::offsetOfInlineStorage()) -
             (static_cast<int32_t>(firstOutOfLineOffset) - 2) * static_cast<int32_t>(sizeof(EncodedJSValue))),
         object, result.payloadGPR());
 
@@ -479,7 +479,7 @@ void AssemblyHelpers::storeProperty(JSValueRegs value, GPRReg object, GPRReg off
     isInline.link(this);
     addPtr(
         TrustedImm32(
-            static_cast<int32_t>(sizeof(JSObject)) -
+            static_cast<int32_t>(JSObject::offsetOfInlineStorage()) -
             (static_cast<int32_t>(firstOutOfLineOffset) - 2) * static_cast<int32_t>(sizeof(EncodedJSValue))),
         object, scratch);
 

@@ -4143,9 +4143,6 @@ Value* OMGIRGenerator::allocateWasmGCObject(Value* allocator, Value* structureID
     auto* storeUsefulBytes = m_currentBlock->appendNew<B3::MemoryValue>(m_proc, B3::Store, origin(), typeInfo, cell, safeCast<int32_t>(JSCell::indexingTypeAndMiscOffset()));
     m_heaps.decorateMemory(&m_heaps.JSCell_usefulBytes, storeUsefulBytes);
 
-    auto* storeButterfly = m_currentBlock->appendNew<B3::MemoryValue>(m_proc, B3::Store, origin(), constant(pointerType(), 0), cell, safeCast<int32_t>(JSObject::butterflyOffset()));
-    m_heaps.decorateMemory(&m_heaps.JSObject_butterfly, storeButterfly);
-
     return cell;
 }
 

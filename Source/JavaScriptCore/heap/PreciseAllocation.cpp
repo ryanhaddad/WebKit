@@ -49,9 +49,9 @@ constexpr size_t dataCacheLineSize()
 static_assert(PreciseAllocation::cacheLineAdjustment == 2 * PreciseAllocation::halfAlignment);
 
 // The purpose of cacheLineAdjustment is to ensure that the JSObject header word and its butterfly
-// are both in the same cache line. Therefore, cacheLineAdjustment must be greater than sizeof(JSObject)
+// are both in the same cache line. Therefore, cacheLineAdjustment must be greater than sizeof(JSObjectWithButterfly)
 // in order for the adjustment to adequately push the start of the object into the next cache line.
-static_assert(PreciseAllocation::cacheLineAdjustment >= sizeof(JSObject));
+static_assert(PreciseAllocation::cacheLineAdjustment >= sizeof(JSObjectWithButterfly));
 
 // Also, by definition, cacheLineAdjustment must be smaller than dataCacheLineSize. Otherwise, there's
 // not way to fit the JSObject header word and its butterfly in a cache line.
