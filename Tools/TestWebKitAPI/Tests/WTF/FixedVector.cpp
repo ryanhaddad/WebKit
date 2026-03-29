@@ -467,4 +467,35 @@ TEST(WTF_FixedVector, SizeAndValueConstructorSingleElement)
     EXPECT_EQ(99U, vec[0]);
 }
 
+TEST(WTF_FixedVector, MoveAssignNonEmptyToNonEmpty)
+{
+    Vector<bool> flags(3, false);
+    {
+        FixedVector<DestructorObserver> vec1(3);
+        for (unsigned i = 0; i < 3; ++i)
+            vec1[i] = DestructorObserver(&flags[i]);
+
+        FixedVector<DestructorObserver> vec2(2);
+
+        // Move-assigning over vec2 must destroy its old storage.
+        vec2 = WTF::move(vec1);
+        EXPECT_EQ(3U, vec2.size());
+
+        // The original objects should still be alive (now owned by vec2).
+        for (unsigned i = 0; i < 3; ++i)
+            EXPECT_FALSE(flags[i]);
+    }
+    // After vec2 goes out of scope, all observers should be destructed.
+    for (unsigned i = 0; i < 3; ++i)
+        EXPECT_TRUE(flags[i]);
+}
+
+TEST(WTF_FixedVector, MoveAssignEmptyToEmpty)
+{
+    FixedVector<unsigned> vec1;
+    FixedVector<unsigned> vec2;
+    vec2 = WTF::move(vec1);
+    EXPECT_TRUE(vec2.isEmpty());
+}
+
 } // namespace TestWebKitAPI

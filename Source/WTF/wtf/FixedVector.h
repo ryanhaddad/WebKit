@@ -53,7 +53,7 @@ public:
     FixedVector(const FixedVector& other)
         : m_storage(other.m_storage ? other.m_storage->clone().moveToUniquePtr() : nullptr)
     { }
-    FixedVector(FixedVector&& other) = default;
+    FixedVector(FixedVector&&) = default;
 
     FixedVector(std::initializer_list<T> initializerList)
         : m_storage(initializerList.size() ? Storage::create(initializerList).moveToUniquePtr() : nullptr)
@@ -80,12 +80,7 @@ public:
         return *this;
     }
 
-    FixedVector& operator=(FixedVector&& other)
-    {
-        FixedVector tmp(WTF::move(other));
-        swap(tmp);
-        return *this;
-    }
+    FixedVector& operator=(FixedVector&&) = default;
 
     explicit FixedVector(size_t size)
         : m_storage(size ? Storage::create(size).moveToUniquePtr() : nullptr)
