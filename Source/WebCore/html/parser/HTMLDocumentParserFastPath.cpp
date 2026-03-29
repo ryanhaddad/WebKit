@@ -602,6 +602,30 @@ private:
             didFail(HTMLFastPathResult::FailedDidntReachEndOfInput);
     }
 
+    // Shared SIMD helper: given a low-nibble lookup table (as a vectorEquals8Bit
+    // callable) and a scalar fallback, find the first special character in |span|.
+    // https://lemire.me/blog/2024/06/08/scan-html-faster-with-simd-instructions-chrome-edition/
+    template<typename VectorEquals8BitFunction, typename ScalarMatchFunction>
+    ALWAYS_INLINE static std::span<const CharacterType> findSpecialCharacter(std::span<const CharacterType> span, VectorEquals8BitFunction&& vectorEquals8Bit, ScalarMatchFunction&& scalarMatch)
+    {
+        if constexpr (sizeof(CharacterType) == 1) {
+            auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+                return SIMD::findFirstNonZeroIndex(vectorEquals8Bit(input));
+            };
+            auto* it = SIMD::find(span, vectorMatch, scalarMatch);
+            return span.subspan(it - span.data());
+        } else {
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
+            auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
+                constexpr simde_uint8x16_t zeros = SIMD::splat8(0);
+                return SIMD::findFirstNonZeroIndex(SIMD::bitAnd(vectorEquals8Bit(input.val[0]), SIMD::equal(input.val[1], zeros)));
+            };
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+            auto* it = SIMD::findInterleaved(span, vectorMatch, scalarMatch);
+            return span.subspan(it - span.data());
+        }
+    }
+
     // We first try to scan text as an unmodified subsequence of the input.
     // However, if there are escape sequences, we have to copy the text to a
     // separate buffer and we might go outside of `Char` range if we are in an
@@ -627,7 +651,6 @@ private:
         };
 
         auto vectorEquals8Bit = [&](auto input) ALWAYS_INLINE_LAMBDA {
-            // https://lemire.me/blog/2024/06/08/scan-html-faster-with-simd-instructions-chrome-edition/
             // By looking up the table via lower 4bit, we can identify the category.
             // '\0' => 0000 0000
             // '&'  => 0010 0110
@@ -638,23 +661,7 @@ private:
             return SIMD::equal(simde_vqtbl1q_u8(lowNibbleMask, SIMD::bitAnd(input, v0f)), input);
         };
 
-        std::span<const CharacterType> cursor;
-        if constexpr (sizeof(CharacterType) == 1) {
-            auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
-                return SIMD::findFirstNonZeroIndex(vectorEquals8Bit(input));
-            };
-            auto* it = SIMD::find(start, vectorMatch, scalarMatch);
-            cursor = start.subspan(it - start.data());
-        } else {
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-            auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
-                constexpr simde_uint8x16_t zeros = SIMD::splat8(0);
-                return SIMD::findFirstNonZeroIndex(SIMD::bitAnd(vectorEquals8Bit(input.val[0]), SIMD::equal(input.val[1], zeros)));
-            };
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-            auto* it = SIMD::findInterleaved(start, vectorMatch, scalarMatch);
-            cursor = start.subspan(it - start.data());
-        }
+        auto cursor = findSpecialCharacter(start, vectorEquals8Bit, scalarMatch);
         m_parsingBuffer.setPosition(cursor);
 
         if (!cursor.empty()) {
@@ -785,7 +792,6 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
                 };
 
                 auto vectorEquals8Bit = [&](auto input) ALWAYS_INLINE_LAMBDA {
-                    // https://lemire.me/blog/2024/06/08/scan-html-faster-with-simd-instructions-chrome-edition/
                     // By looking up the table via lower 4bit, we can identify the category.
                     // '\0' => 0000 0000
                     // '&'  => 0010 0110
@@ -803,22 +809,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
                     return SIMD::equal(simde_vqtbl1q_u8(lowNibbleMask, SIMD::bitAnd(input, v0f)), input);
                 };
 
-                if constexpr (sizeof(CharacterType) == 1) {
-                    auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
-                        return SIMD::findFirstNonZeroIndex(vectorEquals8Bit(input));
-                    };
-                    auto* it = SIMD::find(span, vectorMatch, scalarMatch);
-                    return span.subspan(it - span.data());
-                } else {
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-                    auto vectorMatch = [&](auto input) ALWAYS_INLINE_LAMBDA {
-                        constexpr simde_uint8x16_t zeros = SIMD::splat8(0);
-                        return SIMD::findFirstNonZeroIndex(SIMD::bitAnd(vectorEquals8Bit(input.val[0]), SIMD::equal(input.val[1], zeros)));
-                    };
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-                    auto* it = SIMD::findInterleaved(span, vectorMatch, scalarMatch);
-                    return span.subspan(it - span.data());
-                }
+                return findSpecialCharacter(span, vectorEquals8Bit, scalarMatch);
             };
 
             start = m_parsingBuffer.span();
