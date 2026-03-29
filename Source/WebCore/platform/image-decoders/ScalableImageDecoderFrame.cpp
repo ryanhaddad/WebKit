@@ -30,9 +30,7 @@
 
 namespace WebCore {
 
-ScalableImageDecoderFrame::ScalableImageDecoderFrame()
-{
-}
+ScalableImageDecoderFrame::ScalableImageDecoderFrame() = default;
 
 ScalableImageDecoderFrame::~ScalableImageDecoderFrame() = default;
 

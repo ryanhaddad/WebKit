@@ -30,9 +30,7 @@
 
 namespace WebCore {
 
-ImageFrame::ImageFrame()
-{
-}
+ImageFrame::ImageFrame() = default;
 
 ImageFrame::ImageFrame(Ref<NativeImage>&& nativeImage)
 {

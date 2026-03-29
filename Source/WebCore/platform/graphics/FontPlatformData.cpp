@@ -41,9 +41,7 @@ FontPlatformData::FontPlatformData(WTF::HashTableDeletedValueType)
 {
 }
 
-FontPlatformData::FontPlatformData()
-{
-}
+FontPlatformData::FontPlatformData() = default;
 
 FontPlatformData::FontPlatformData(float size, bool syntheticBold, bool syntheticOblique, FontOrientation orientation, FontWidthVariant widthVariant, TextRenderingMode textRenderingMode, const FontCustomPlatformData* customPlatformData)
     : m_size(size)

@@ -7449,9 +7449,7 @@ String Internals::highlightPseudoElementColor(const AtomString& highlightName, E
     return serializationForCSS(resolvedStyle->style->color());
 }
     
-Internals::TextIndicatorInfo::TextIndicatorInfo()
-{
-}
+Internals::TextIndicatorInfo::TextIndicatorInfo() = default;
 
 Internals::TextIndicatorInfo::TextIndicatorInfo(const WebCore::TextIndicatorData& data)
     : textBoundingRectInRootViewCoordinates(DOMRect::create(data.textBoundingRectInRootViewCoordinates))

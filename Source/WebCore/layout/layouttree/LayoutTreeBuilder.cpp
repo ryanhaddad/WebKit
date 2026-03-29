@@ -121,9 +121,7 @@ std::unique_ptr<Layout::LayoutTree> TreeBuilder::buildLayoutTree(const RenderVie
     return makeUnique<LayoutTree>(WTF::move(rootLayoutBox));
 }
 
-TreeBuilder::TreeBuilder()
-{
-}
+TreeBuilder::TreeBuilder() = default;
 
 std::unique_ptr<Box> TreeBuilder::createReplacedBox(Box::ElementAttributes elementAttributes, ElementBox::ReplacedAttributes&& replacedAttributes, RenderStyle&& style)
 {

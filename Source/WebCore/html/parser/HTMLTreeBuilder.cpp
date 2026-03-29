@@ -296,9 +296,7 @@ HTMLTreeBuilder::HTMLTreeBuilder(HTMLDocumentParser& parser, DocumentFragment& f
 #endif
 }
 
-HTMLTreeBuilder::FragmentParsingContext::FragmentParsingContext()
-{
-}
+HTMLTreeBuilder::FragmentParsingContext::FragmentParsingContext() = default;
 
 HTMLTreeBuilder::FragmentParsingContext::FragmentParsingContext(DocumentFragment& fragment, Element& contextElement)
     : m_fragment(&fragment)

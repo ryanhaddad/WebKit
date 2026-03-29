@@ -36,9 +36,7 @@
 
 namespace WebCore {
 
-DatagramByteSource::DatagramByteSource()
-{
-}
+DatagramByteSource::DatagramByteSource() = default;
 
 DatagramByteSource::~DatagramByteSource() = default;
 

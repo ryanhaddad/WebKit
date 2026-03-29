@@ -1890,9 +1890,7 @@ bool Editor::commandIsSupportedFromMenuOrKeyBinding(const String& commandName)
     return internalCommand(commandName);
 }
 
-Editor::Command::Command()
-{
-}
+Editor::Command::Command() = default;
 
 Editor::Command::Command(const EditorInternalCommand* command, EditorCommandSource source, Document& document)
     : m_command(command)

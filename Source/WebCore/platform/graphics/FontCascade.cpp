@@ -68,9 +68,7 @@ static std::atomic<unsigned> lastFontCascadeGeneration { 0 };
 // FontCascade Implementation (Cross-Platform Portion)
 // ============================================================================================
 
-FontCascade::FontCascade()
-{
-}
+FontCascade::FontCascade() = default;
 
 FontCascade::FontCascade(FontCascadeDescription&& description)
     : m_fontDescription(WTF::move(description))

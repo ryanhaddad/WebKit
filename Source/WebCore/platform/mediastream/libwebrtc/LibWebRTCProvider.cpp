@@ -75,9 +75,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(LibWebRTCProvider);
 
-LibWebRTCProvider::LibWebRTCProvider()
-{
-}
+LibWebRTCProvider::LibWebRTCProvider() = default;
 
 LibWebRTCProvider::~LibWebRTCProvider() = default;
 

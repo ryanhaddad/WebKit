@@ -37,9 +37,7 @@
 
 namespace WebCore {
 
-WebTransportReceiveStreamSource::WebTransportReceiveStreamSource()
-{
-}
+WebTransportReceiveStreamSource::WebTransportReceiveStreamSource() = default;
 
 WebTransportReceiveStreamSource::WebTransportReceiveStreamSource(WebTransport& transport, WebTransportStreamIdentifier identifier)
     : m_transport(transport)

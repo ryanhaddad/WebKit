@@ -32,9 +32,7 @@
 
 namespace WebCore {
 
-IDBResultData::IDBResultData()
-{
-}
+IDBResultData::IDBResultData() = default;
 
 IDBResultData::IDBResultData(const IDBResourceIdentifier& requestIdentifier)
     : m_requestIdentifier(requestIdentifier)
