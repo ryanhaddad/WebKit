@@ -2699,7 +2699,7 @@ $(JS_DOM_HEADERS_PATTERNS) $(JS_DOM_IMPLEMENTATIONS_PATTERNS): $(JS_BINDING_IDLS
 		--idlAttributesFile $(IDL_ATTRIBUTES_FILE) \
 		--defines "$(FEATURE_AND_PLATFORM_DEFINES) LANGUAGE_JAVASCRIPT" \
 		--generator JS \
-		$(addprefix --generatorDependency ,$(JS_BINDINGS_SCRIPTS)) \
+		$(addprefix --generatorDependency ,$(JS_BINDINGS_SCRIPTS) $(WEB_PREFERENCES_INPUT_FILES)) \
 		--exclude EventListener.idl
 # -------------------------------------------------
 
