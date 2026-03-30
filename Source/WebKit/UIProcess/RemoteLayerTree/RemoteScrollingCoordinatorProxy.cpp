@@ -90,22 +90,24 @@ ScrollRequestData RemoteScrollingCoordinatorProxy::commitScrollingTreeState(IPC:
 
     auto stateTree = WTF::move(const_cast<RemoteScrollingCoordinatorTransaction&>(transaction).scrollingStateTree());
 
-    auto* layerTreeHost = this->layerTreeHost();
-    if (!layerTreeHost) {
-        ASSERT_NOT_REACHED();
-        return { };
+    if (stateTree->hasChangedProperties()) {
+        auto* layerTreeHost = this->layerTreeHost();
+        if (!layerTreeHost) {
+            ASSERT_NOT_REACHED();
+            return { };
+        }
+
+        stateTree->setRootFrameIdentifier(transaction.rootFrameIdentifier());
+
+        ASSERT(stateTree);
+        connectStateNodeLayers(*stateTree, *layerTreeHost);
+        bool succeeded = m_scrollingTree->commitTreeState(WTF::move(stateTree), identifier);
+
+        MESSAGE_CHECK_WITH_RETURN_VALUE(succeeded, ScrollRequestData());
+
+        establishLayerTreeScrollingRelations(*layerTreeHost);
     }
 
-    stateTree->setRootFrameIdentifier(transaction.rootFrameIdentifier());
-
-    ASSERT(stateTree);
-    connectStateNodeLayers(*stateTree, *layerTreeHost);
-    bool succeeded = m_scrollingTree->commitTreeState(WTF::move(stateTree), identifier);
-
-    MESSAGE_CHECK_WITH_RETURN_VALUE(succeeded, ScrollRequestData());
-
-    establishLayerTreeScrollingRelations(*layerTreeHost);
-    
     if (transaction.clearScrollLatching())
         m_scrollingTree->clearLatchedNode();
 
