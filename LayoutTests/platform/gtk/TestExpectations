@@ -1341,6 +1341,8 @@ media/media-source/media-detachablemse-append.html [ Skip ]
 # Tests failing while still having the right values in expected related to the import in webkit.org/b/252516
 imported/w3c/web-platform-tests/css/css-tables/table-model-fixup-2.html [ Failure ]
 
+imported/w3c/web-platform-tests/css/CSS2/tables/table-cell-dynamic-color.html [ ImageOnlyFailure ]
+
 imported/w3c/web-platform-tests/css/css-color/system-color-consistency.html [ Failure ]
 
 webkit.org/b/234726 imported/w3c/web-platform-tests/css/css-color/parsing/color-valid-relative-color.html [ ImageOnlyFailure ]
