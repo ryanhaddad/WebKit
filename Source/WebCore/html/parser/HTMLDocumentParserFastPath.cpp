@@ -845,19 +845,21 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
             return didFail(HTMLFastPathResult::FailedParsingUnquotedEscapedAttributeValue, emptyAtom());
 
         auto quoteChar = m_parsingBuffer.consume();
-        if (m_parsingBuffer.hasCharactersRemaining() && *m_parsingBuffer != quoteChar) {
+        while (m_parsingBuffer.hasCharactersRemaining() && *m_parsingBuffer != quoteChar) {
             if (parsingFailed())
                 return emptyAtom();
             auto c = *m_parsingBuffer;
             if (c == '&')
-                scanHTMLCharacterReference(m_ucharBuffer);
+                scanHTMLCharacterReference(m_ucharBuffer, quoteChar);
             else if (c == '\r') {
                 m_parsingBuffer.advance();
                 // Normalize "\r\n" to "\n" according to https://infra.spec.whatwg.org/#normalize-newlines.
                 if (m_parsingBuffer.hasCharactersRemaining() && *m_parsingBuffer == '\n')
                     m_parsingBuffer.advance();
                 m_ucharBuffer.append('\n');
-            } else {
+            } else if (c == '\0') [[unlikely]]
+                return didFail(HTMLFastPathResult::FailedContainsNull, emptyAtom());
+            else {
                 m_ucharBuffer.append(c);
                 m_parsingBuffer.advance();
             }
@@ -868,13 +870,13 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         return HTMLNameCache::makeAttributeValue(m_ucharBuffer.span());
     }
 
-    void scanHTMLCharacterReference(Vector<char16_t>& out)
+    void scanHTMLCharacterReference(Vector<char16_t>& out, char16_t additionalAllowedCharacter = 0)
     {
         ASSERT(*m_parsingBuffer == '&');
         m_parsingBuffer.advance();
 
         if (m_parsingBuffer.lengthRemaining() >= 2) [[likely]] {
-            if (auto entity = consumeHTMLEntity(m_parsingBuffer); !entity.failed()) {
+            if (auto entity = consumeHTMLEntity(m_parsingBuffer, additionalAllowedCharacter); !entity.failed()) {
                 out.append(entity.span());
                 return;
             }
