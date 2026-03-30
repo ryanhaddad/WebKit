@@ -363,13 +363,6 @@ public:
 
     virtual void exceededDatabaseQuota(LocalFrame&, const String& databaseName, DatabaseDetails) = 0;
 
-    // Callback invoked when the application cache fails to save a cache object
-    // because storing it would grow the database file past its defined maximum
-    // size or past the amount of free space on the device. 
-    // The chrome client would need to take some action such as evicting some
-    // old caches.
-    virtual void reachedMaxAppCacheSize(int64_t) { }
-
     WEBCORE_EXPORT virtual std::unique_ptr<WorkerClient> createWorkerClient(SerialFunctionDispatcher&);
 
 #if ENABLE(IOS_TOUCH_EVENTS)
