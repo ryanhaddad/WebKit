@@ -840,6 +840,15 @@ void emitRandomThunkImpl(AssemblyHelpers& jit, GPRReg scratch0, GPRReg scratch1,
     // m_low = y;
     storeToLow(scratch1);
 
+#if CPU(ARM64)
+    // x ^= x << 23;
+    jit.xorLeftShift64(scratch0, scratch0, AssemblyHelpers::TrustedImm32(23), scratch0);
+    // x ^= x >> 17;
+    jit.xorUnsignedRightShift64(scratch0, scratch0, AssemblyHelpers::TrustedImm32(17), scratch0);
+    // x ^= y ^ (y >> 26);
+    jit.xorUnsignedRightShift64(scratch1, scratch1, AssemblyHelpers::TrustedImm32(26), scratch2);
+    jit.xor64(scratch2, scratch0);
+#else
     // x ^= x << 23;
     jit.lshift64(scratch0, AssemblyHelpers::TrustedImm32(23), scratch2);
     jit.xor64(scratch2, scratch0);
@@ -852,6 +861,7 @@ void emitRandomThunkImpl(AssemblyHelpers& jit, GPRReg scratch0, GPRReg scratch1,
     jit.urshift64(scratch1, AssemblyHelpers::TrustedImm32(26), scratch2);
     jit.xor64(scratch1, scratch2);
     jit.xor64(scratch2, scratch0);
+#endif
 
     // m_high = x;
     storeToHigh(scratch0);
@@ -1235,7 +1245,28 @@ void AssemblyHelpers::emitVirtualCallWithoutMovingGlobalObject(VM& vm, GPRReg ca
 void AssemblyHelpers::wangsInt64Hash(GPRReg inputAndResult, GPRReg scratch)
 {
     GPRReg input = inputAndResult;
-    // key += ~(key << 32);
+#if CPU(ARM64)
+    // key += ~(key << 32) => key = key - (key << 32) - 1
+    subLeftShift64(input, input, TrustedImm32(32), input);
+    sub64(TrustedImm32(1), input);
+    // key ^= (key >> 22)
+    xorUnsignedRightShift64(input, input, TrustedImm32(22), input);
+    // key += ~(key << 13) => key = key - (key << 13) - 1
+    subLeftShift64(input, input, TrustedImm32(13), input);
+    sub64(TrustedImm32(1), input);
+    // key ^= (key >> 8)
+    xorUnsignedRightShift64(input, input, TrustedImm32(8), input);
+    // key += (key << 3)
+    addLeftShift64(input, input, TrustedImm32(3), input);
+    // key ^= (key >> 15)
+    xorUnsignedRightShift64(input, input, TrustedImm32(15), input);
+    // key += ~(key << 27) => key = key - (key << 27) - 1
+    subLeftShift64(input, input, TrustedImm32(27), input);
+    sub64(TrustedImm32(1), input);
+    // key ^= (key >> 31)
+    xorUnsignedRightShift64(input, input, TrustedImm32(31), input);
+    UNUSED_PARAM(scratch);
+#else
     lshift64(input, TrustedImm32(32), scratch);
     not64(scratch);
     add64(scratch, input);
@@ -1262,6 +1293,7 @@ void AssemblyHelpers::wangsInt64Hash(GPRReg inputAndResult, GPRReg scratch)
     // key ^= (key >> 31);
     urshift64(input, TrustedImm32(31), scratch);
     xor64(scratch, input);
+#endif // CPU(ARM64)
 
     // return static_cast<unsigned>(result)
     void* mask = std::bit_cast<void*>(static_cast<uintptr_t>(UINT_MAX));
