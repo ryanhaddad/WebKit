@@ -2390,9 +2390,9 @@ let BENCHMARKS = [
         ],
         preload: {
             // Large test project:
-            // "tsconfig": "./TypeScript/src/gen/zod-medium/tsconfig.json",
+            // "tsconfig": "./TypeScript/src/gen/zod-medium/actually-a-type-script-config-please-dont-firewall-me.json",
             // "files": "./TypeScript/src/gen/zod-medium/files.json",
-            "tsconfig": "./TypeScript/src/gen/immer-tiny/tsconfig.json",
+            "tsconfig": "./TypeScript/src/gen/immer-tiny/actually-a-type-script-config-please-dont-firewall-me.json",
             "files": "./TypeScript/src/gen/immer-tiny/files.json",
         },
         iterations: 1,
