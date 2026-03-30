@@ -388,8 +388,8 @@ private:
     MediaTime m_lastSeekTime WTF_GUARDED_BY_CAPABILITY(runningQueue());
     std::optional<SeekTarget> m_pendingSeek WTF_GUARDED_BY_CAPABILITY(mainThread);
     std::atomic<bool> m_hasPendingSeek { false };
-    std::optional<GenericPromise::Producer> m_waitForTimeBufferedPromise WTF_GUARDED_BY_CAPABILITY(runningQueue());
-    const Ref<NativePromiseRequest> m_rendererSeekRequest;
+    std::optional<GenericPromise::AutoRejectProducer> m_waitForTimeBufferedPromise WTF_GUARDED_BY_CAPABILITY(runningQueue());
+    Ref<NativePromiseRequest> m_rendererSeekRequest;
     std::atomic<bool> m_seeking { false };
 #if HAVE(SPATIAL_TRACKING_LABEL)
     String m_defaultSpatialTrackingLabel WTF_GUARDED_BY_CAPABILITY(mainThread);
