@@ -268,12 +268,6 @@
             },
             "ImageBufferTests/AnyTwoImageBufferOptionsTest.PutPixelBufferAffectsDrawOutput/1byteobject011byteobject01": {
                 "expected": {"all": {"status": ["SKIP"], "bug":"webkit.org/b/286456"}}
-            },
-            "GStreamerTest.gstStructureGetters": {
-                "expected": {"wpe:arm64": {"status": ["FAIL"], "bug": "webkit.org/b/309745"}}
-            },
-            "GStreamerTest.gstStructureJSONSerializing": {
-                "expected": {"wpe:arm64": {"status": ["FAIL"], "bug": "webkit.org/b/309745"}}
             }
         }
     },
