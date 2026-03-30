@@ -574,7 +574,7 @@ void IconDatabase::loadIconsForPageURL(const String& pageURL, AllowDatabaseWrite
         RELEASE_ASSERT(iconDatas.size() == iconURLs.size());
 
         startPruneTimer();
-        RunLoop::mainSingleton().dispatch([this, protectedThis = Ref { *this }, iconURLs = WTF::move(iconURLs), iconDatas = WTF::move(iconDatas), completionHandler = WTF::move(completionHandler)]() mutable {
+        RunLoop::mainSingleton().dispatch([this, protectedThis = WTF::move(protectedThis), iconURLs = WTF::move(iconURLs), iconDatas = WTF::move(iconDatas), completionHandler = WTF::move(completionHandler)]() mutable {
             RELEASE_ASSERT(iconURLs.size() == iconDatas.size());
 
             Vector<PlatformImagePtr> icons;
