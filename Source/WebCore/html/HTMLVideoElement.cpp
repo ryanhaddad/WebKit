@@ -316,7 +316,7 @@ bool HTMLVideoElement::isURLAttribute(const Attribute& attribute) const
     return attribute.name() == posterAttr || HTMLMediaElement::isURLAttribute(attribute);
 }
 
-const AtomString& HTMLVideoElement::imageSourceURL() const
+String HTMLVideoElement::imageSourceURL() const
 {
     const auto& url = attributeWithoutSynchronization(posterAttr);
     if (!StringView(url).containsOnly<isASCIIWhitespace<char16_t>>())
@@ -515,7 +515,7 @@ unsigned HTMLVideoElement::webkitDroppedFrameCount() const
 
 URL HTMLVideoElement::posterImageURL() const
 {
-    auto url = imageSourceURL().string().trim(isASCIIWhitespace);
+    auto url = imageSourceURL().trim(isASCIIWhitespace);
     if (url.isEmpty())
         return URL();
     return protect(document())->completeURL(url);

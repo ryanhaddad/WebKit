@@ -210,7 +210,7 @@ bool HTMLEmbedElement::isURLAttribute(const Attribute& attribute) const
     return attribute.name() == srcAttr || HTMLPlugInElement::isURLAttribute(attribute);
 }
 
-const AtomString& HTMLEmbedElement::imageSourceURL() const
+String HTMLEmbedElement::imageSourceURL() const
 {
     return attributeWithoutSynchronization(srcAttr);
 }

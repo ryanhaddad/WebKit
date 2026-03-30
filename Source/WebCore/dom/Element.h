@@ -582,7 +582,7 @@ public:
     inline URL getURLAttributeForBindings(const QualifiedName&) const;
     URL getNonEmptyURLAttribute(const QualifiedName&) const;
 
-    virtual const AtomString& imageSourceURL() const;
+    virtual String imageSourceURL() const;
     virtual AtomString target() const { return nullAtom(); }
 
     static RefPtr<Element> findFocusDelegateForTarget(ContainerNode&, FocusTrigger);

@@ -232,7 +232,7 @@ void HTMLImageElement::collectExtraStyleForPresentationalHints(MutableStylePrope
         addPropertyToPresentationalHintStyle(style, CSSPropertyAspectRatio, CSSValueAuto);
 }
 
-const AtomString& HTMLImageElement::imageSourceURL() const
+String HTMLImageElement::imageSourceURL() const
 {
     return m_bestFitImageURL.isEmpty() ? attributeWithoutSynchronization(srcAttr) : m_bestFitImageURL;
 }
@@ -250,7 +250,7 @@ void HTMLImageElement::setBestFitURLAndDPRFromImageCandidate(const ImageCandidat
 {
     m_bestFitImageURL = candidate.string.toAtomString();
 
-    auto& sourceURL = imageSourceURL();
+    auto sourceURL = imageSourceURL();
     // Only complete the URL if it's non-empty to avoid resolving "" to the document base URL.
     m_currentURL = sourceURL.isEmpty() ? URL() : protect(document())->completeURL(sourceURL);
 

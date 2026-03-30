@@ -213,7 +213,7 @@ void ImageLoader::updateFromElement(RelevantMutation relevantMutation)
     if (!document->hasLivingRenderTree())
         return;
 
-    AtomString attr = element->imageSourceURL();
+    auto attr = element->imageSourceURL();
 
     LOG_WITH_STREAM(LazyLoading, stream << "ImageLoader " << this << " updateFromElement, current URL is " << attr);
 
@@ -724,7 +724,7 @@ void ImageLoader::elementDidMoveToNewDocument(Document& oldDocument)
 
 inline void ImageLoader::clearFailedLoadURL()
 {
-    m_failedLoadURL = nullAtom();
+    m_failedLoadURL = { };
 }
 
 void ImageLoader::loadDeferredImage()

@@ -273,7 +273,7 @@ bool HTMLObjectElement::isURLAttribute(const Attribute& attribute) const
     return attribute.name() == dataAttr || attribute.name() == codebaseAttr || HTMLPlugInElement::isURLAttribute(attribute);
 }
 
-const AtomString& HTMLObjectElement::imageSourceURL() const
+String HTMLObjectElement::imageSourceURL() const
 {
     return attributeWithoutSynchronization(dataAttr);
 }

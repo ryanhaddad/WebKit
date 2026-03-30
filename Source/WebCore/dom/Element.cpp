@@ -3055,7 +3055,7 @@ ExceptionOr<void> Element::setPrefix(const AtomString& prefix)
     return { };
 }
 
-const AtomString& Element::imageSourceURL() const
+String Element::imageSourceURL() const
 {
     return attributeWithoutSynchronization(srcAttr);
 }
