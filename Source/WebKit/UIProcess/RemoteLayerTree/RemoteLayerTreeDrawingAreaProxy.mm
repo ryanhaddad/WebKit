@@ -451,9 +451,9 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
 WebCore::TrackingType RemoteLayerTreeDrawingAreaProxy::eventTrackingTypeForPoint(WebCore::EventTrackingRegions::EventType eventType, IntPoint location)
 {
     FloatPoint localLocation = location;
-    if (auto* eventRegion = eventRegionForPoint(remoteLayerTreeHost().rootLayer(), localLocation))
-        return eventRegion->eventTrackingTypeForPoint(eventType, roundedIntPoint(localLocation));
-    return WebCore::TrackingType::NotTracking;
+    return eventRegionForPoint(remoteLayerTreeHost().rootLayer(), localLocation).transform([eventType, &localLocation](const WebCore::EventRegion& eventRegion) {
+        return eventRegion.eventTrackingTypeForPoint(eventType, roundedIntPoint(localLocation));
+    }).value_or(WebCore::TrackingType::NotTracking);
 }
 #endif
 

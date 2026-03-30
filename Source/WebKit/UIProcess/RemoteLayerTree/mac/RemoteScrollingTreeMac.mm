@@ -540,11 +540,9 @@ OptionSet<EventListenerRegionType> RemoteScrollingTreeMac::eventListenerRegionTy
 
     auto rootContentsLayer = rootScrollingNode->rootContentsLayer();
 
-    auto* eventRegion = eventRegionForPoint(rootScrollingNode->rootContentsLayer().get(), point);
-    if (!eventRegion)
-        return { };
-
-    return eventRegion->eventListenerRegionTypesForPoint(roundedIntPoint(point));
+    return eventRegionForPoint(rootScrollingNode->rootContentsLayer().get(), point).transform([&point](const WebCore::EventRegion& eventRegion) {
+        return eventRegion.eventListenerRegionTypesForPoint(roundedIntPoint(point));
+    }).value_or(OptionSet<EventListenerRegionType> { });
 }
 #endif
 
