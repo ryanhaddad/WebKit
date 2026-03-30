@@ -238,20 +238,20 @@ static inline LayoutUnit contentLogicalHeightForRenderer(const RenderBox& render
     return renderer.parent()->writingMode().isHorizontal() ? renderer.contentBoxHeight() : renderer.contentBoxWidth();
 }
 
-Layout::BoxGeometry::HorizontalEdges BoxGeometryUpdater::horizontalLogicalMargin(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode, bool retainMarginStart, bool retainMarginEnd)
+Layout::BoxGeometry::HorizontalEdges BoxGeometryUpdater::horizontalLogicalMargin(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode)
 {
     auto& style = renderer.style();
     const auto& zoomFactor = style.usedZoomForLength();
 
     if (writingMode.isHorizontal()) {
-        auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginLeft() : style.marginRight(), availableWidth, zoomFactor) : 0_lu;
-        auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginRight() : style.marginLeft(), availableWidth, zoomFactor) : 0_lu;
+        auto marginInlineStart = usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginLeft() : style.marginRight(), availableWidth, zoomFactor);
+        auto marginInlineEnd = usedValueOrZero(writingMode.isInlineLeftToRight() ? style.marginRight() : style.marginLeft(), availableWidth, zoomFactor);
 
         return { marginInlineStart, marginInlineEnd };
     }
 
-    auto marginInlineStart = retainMarginStart ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginTop() : style.marginBottom(), availableWidth, zoomFactor) : 0_lu;
-    auto marginInlineEnd = retainMarginEnd ? usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginBottom() : style.marginTop(), availableWidth, zoomFactor) : 0_lu;
+    auto marginInlineStart = usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginTop() : style.marginBottom(), availableWidth, zoomFactor);
+    auto marginInlineEnd = usedValueOrZero(writingMode.isInlineTopToBottom() ? style.marginBottom() : style.marginTop(), availableWidth, zoomFactor);
 
     return { marginInlineStart, marginInlineEnd };
 }
@@ -266,7 +266,7 @@ Layout::BoxGeometry::VerticalEdges BoxGeometryUpdater::verticalLogicalMargin(con
     return { usedValueOrZero(style.marginRight(), availableWidth, style.usedZoomForLength()), usedValueOrZero(style.marginLeft(), availableWidth, style.usedZoomForLength()) };
 }
 
-Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxModelObject& renderer, WritingMode writingMode, bool isIntrinsicWidthMode, bool retainBorderStart, bool retainBorderEnd)
+Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxModelObject& renderer, WritingMode writingMode, bool isIntrinsicWidthMode)
 {
     auto& style = renderer.style();
 
@@ -278,19 +278,19 @@ Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalBorder(const RenderBoxMode
         adjustBorderForTableAndFieldset(renderer, borderWidths);
 
     if (writingMode.isHorizontal()) {
-        auto borderInlineStart = retainBorderStart ? writingMode.isInlineLeftToRight() ? borderWidths.left() : borderWidths.right() : 0_lu;
-        auto borderInlineEnd = retainBorderEnd ? writingMode.isInlineLeftToRight() ? borderWidths.right() : borderWidths.left() : 0_lu;
+        auto borderInlineStart = writingMode.isInlineLeftToRight() ? borderWidths.left() : borderWidths.right();
+        auto borderInlineEnd = writingMode.isInlineLeftToRight() ? borderWidths.right() : borderWidths.left();
         return { { borderInlineStart, borderInlineEnd }, { borderWidths.top(), borderWidths.bottom() } };
     }
 
-    auto borderInlineStart = retainBorderStart ? writingMode.isInlineTopToBottom() ? borderWidths.top() : borderWidths.bottom() : 0_lu;
-    auto borderInlineEnd = retainBorderEnd ? writingMode.isInlineTopToBottom() ? borderWidths.bottom() : borderWidths.top() : 0_lu;
+    auto borderInlineStart = writingMode.isInlineTopToBottom() ? borderWidths.top() : borderWidths.bottom();
+    auto borderInlineEnd = writingMode.isInlineTopToBottom() ? borderWidths.bottom() : borderWidths.top();
     auto borderLineOver = writingMode.isLineOverRight() ? borderWidths.right() : borderWidths.left();
     auto borderLineUnder = writingMode.isLineOverRight() ? borderWidths.left() : borderWidths.right();
     return { { borderInlineStart, borderInlineEnd }, { borderLineOver, borderLineUnder } };
 }
 
-Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalPadding(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode, bool retainPaddingStart, bool retainPaddingEnd)
+Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalPadding(const RenderBoxModelObject& renderer, std::optional<LayoutUnit> availableWidth, WritingMode writingMode)
 {
     auto& style = renderer.style();
     auto usedZoom = style.usedZoomForLength();
@@ -301,13 +301,13 @@ Layout::BoxGeometry::Edges BoxGeometryUpdater::logicalPadding(const RenderBoxMod
     auto paddingBottom = usedValueOrZero(style.paddingBottom(), availableWidth, usedZoom);
 
     if (writingMode.isHorizontal()) {
-        auto paddingInlineStart = retainPaddingStart ? writingMode.isInlineLeftToRight() ? paddingLeft : paddingRight : 0_lu;
-        auto paddingInlineEnd = retainPaddingEnd ? writingMode.isInlineLeftToRight() ? paddingRight : paddingLeft : 0_lu;
+        auto paddingInlineStart = writingMode.isInlineLeftToRight() ? paddingLeft : paddingRight;
+        auto paddingInlineEnd = writingMode.isInlineLeftToRight() ? paddingRight : paddingLeft;
         return { { paddingInlineStart, paddingInlineEnd }, { paddingTop, paddingBottom } };
     }
 
-    auto paddingInlineStart = retainPaddingStart ? writingMode.isInlineTopToBottom() ? paddingTop : paddingBottom : 0_lu;
-    auto paddingInlineEnd = retainPaddingEnd ? writingMode.isInlineTopToBottom() ? paddingBottom : paddingTop : 0_lu;
+    auto paddingInlineStart = writingMode.isInlineTopToBottom() ? paddingTop : paddingBottom;
+    auto paddingInlineEnd = writingMode.isInlineTopToBottom() ? paddingBottom : paddingTop;
     auto paddingLineOver = writingMode.isLineOverRight() ? paddingRight : paddingLeft;
     auto paddingLineUnder = writingMode.isLineOverRight() ? paddingLeft : paddingRight;
     return { { paddingInlineStart, paddingInlineEnd }, { paddingLineOver, paddingLineUnder } };
@@ -725,9 +725,9 @@ void BoxGeometryUpdater::updateInlineBoxDimensions(const RenderInline& renderInl
 
     auto writingMode = renderInline.writingMode();
 
-    auto inlineMargin = horizontalLogicalMargin(renderInline, availableWidth, writingMode, true, true);
-    auto border = logicalBorder(renderInline, writingMode, intrinsicWidthMode.has_value(), true, true);
-    auto padding = logicalPadding(renderInline, availableWidth, writingMode, true, true);
+    auto inlineMargin = horizontalLogicalMargin(renderInline, availableWidth, writingMode);
+    auto border = logicalBorder(renderInline, writingMode, intrinsicWidthMode.has_value());
+    auto padding = logicalPadding(renderInline, availableWidth, writingMode);
 
     if (intrinsicWidthMode) {
         boxGeometry.setHorizontalMargin(inlineMargin);
