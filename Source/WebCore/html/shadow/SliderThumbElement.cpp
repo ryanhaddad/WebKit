@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -439,9 +439,14 @@ void SliderThumbElement::handleTouchStart(TouchEvent& touchEvent)
     RefPtr<Touch> touch = targetTouches->item(0);
     if (!renderer())
         return;
-    IntRect boundingBox = renderer()->absoluteBoundingBoxRect();
-    // Ignore the touch if it is not really inside the thumb.
-    if (!boundingBox.contains(touch->pageX(), touch->pageY()))
+
+    FloatRect thumbBoundingBox = renderer()->absoluteBoundingBoxRect();
+    // These values were chosen to match UIKit.
+    static constexpr float thumbMinDimension = 48;
+    static constexpr float thumbHitAreaExpansion = 12.5;
+    if (thumbBoundingBox.width() < thumbMinDimension || thumbBoundingBox.height() < thumbMinDimension)
+        thumbBoundingBox.inflate(thumbHitAreaExpansion);
+    if (!thumbBoundingBox.contains(touch->pageX(), touch->pageY()))
         return;
 
     setExclusiveTouchIdentifier(touch->identifier());
