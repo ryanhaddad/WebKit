@@ -104,6 +104,7 @@ class Port(object):
     DEVICE_TYPE = None
     DEFAULT_DEVICE_TYPES = []
     DRIVER_NAMES = ('WebKitTestRunner',)
+    DEFAULT_SUPPORTED_DRIVERS = DRIVER_NAMES
 
     # Do test runners support alias hostnames such as web-platform.test
     supports_localhost_aliases = False
@@ -145,11 +146,10 @@ class Port(object):
         # options defined on it.
         self._options = options or optparse.Values()
 
-        if self._name and '-wk2' in self._name:
-            self._options.driver_names = [self.DRIVER_NAMES[0]]
-
-        if not self.driver_name().startswith(self.DRIVER_NAMES):
-            raise UnsupportedDriverError(f'{self.driver_name()} is not supported on this platform.')
+        self._options.driver_names = getattr(self._options, 'driver_names', None) or list(self.DEFAULT_SUPPORTED_DRIVERS)
+        for driver in self._options.driver_names:
+            if not driver.startswith(self.DRIVER_NAMES):
+                raise Port.UnsupportedDriverError(f'{self.driver_name()} is not supported on this platform.')
 
         self.host = host
         self._executive = host.executive

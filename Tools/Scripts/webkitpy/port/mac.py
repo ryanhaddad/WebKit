@@ -53,6 +53,7 @@ class MacPort(DarwinPort):
     ARCHITECTURES = ['x86_64', 'x86', 'arm64']
     DEFAULT_ARCHITECTURE = 'x86_64'
     DRIVER_NAMES = ('WebKitTestRunner', 'DumpRenderTree')
+    DEFAULT_SUPPORTED_DRIVERS = DRIVER_NAMES
 
     def __init__(self, host, port_name, **kwargs):
         super(MacPort, self).__init__(host, port_name, **kwargs)
