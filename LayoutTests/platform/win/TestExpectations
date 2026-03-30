@@ -1245,6 +1245,9 @@ fast/css/accent-color/text.html [ Pass ]
 
 fast/css/caret-color-with-inherited-color-property.html [ Skip ] # ImageOnlyFailure
 fast/css/caret-color-with-initial-color-property.html [ Skip ] # ImageOnlyFailure
+fast/css/caret-color-inherit.html [ ImageOnlyFailure ]
+fast/css/caret-color-span-inside-editable-parent.html [ ImageOnlyFailure ]
+fast/css/caret-color.html [ ImageOnlyFailure ]
 
 # GPU process hangs. Makes the subsequent test Timeout
 fast/css/repeating-conic-gradient-small-range.html [ Skip ]
@@ -2073,6 +2076,7 @@ fast/images/pdf-in-canvas.html [ Skip ] # Timeout
 fast/images/pixel-crack-image-background-webkit-transform-scale.html [ Skip ] # Failure
 fast/images/sprite-sheet-image-draw.html [ Skip ] # Timeout
 fast/images/imagebitmap-memory.html [ Failure Pass ]
+fast/images/imagemap-focus-ring-zoom-style.html [ ImageOnlyFailure ]
 
 fast/inline [ Skip ]
 fast/invalid [ Skip ]
@@ -4225,6 +4229,7 @@ compositing/overflow/clipping-behaviour-change-is-not-propagated-to-descendants2
 compositing/overflow/composited-scrolling-paint-phases.html [ Skip ]
 compositing/overflow/content-gains-scrollbars.html [ Skip ]
 compositing/overflow/content-loses-scrollbars.html [ Skip ]
+compositing/overflow/non-contained-descendant-clipping-absolute.html [ Skip ]
 compositing/overflow/overflow-auto-with-touch-toggle.html [ Skip ]
 compositing/overflow/overflow-auto-with-touch.html [ Skip ]
 compositing/overflow/overflow-overlay-with-touch.html [ Skip ]
@@ -4605,6 +4610,8 @@ imported/w3c/web-platform-tests/css/css-mixins/function-attr.html [ Failure ]
 webgl/2.0.y/conformance2/wasm/teximage2d-2gb-in-4gb-wasm-memory.html [ Skip ]
 # Flaky crash due to running out of commit space
 workers/btoa-oom.html [ Skip ]
+
+webgl/2.0.y/conformance2/textures/webgl_canvas/tex-2d-rg16f-rg-half_float.html [ Skip ] # Crash
 
 webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-1.html [ Skip ]
 webkit.org/b/298727 css3/text-decoration/text-decoration-line-spelling-error-2.html [ Skip ]
