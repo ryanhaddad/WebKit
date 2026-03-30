@@ -23,6 +23,10 @@ find_package(Unifdef REQUIRED)
 find_package(WebP REQUIRED COMPONENTS demux)
 find_package(ZLIB REQUIRED)
 
+if (NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif ()
+
 if (ANDROID)
     find_package(Android REQUIRED COMPONENTS Android Log)
 

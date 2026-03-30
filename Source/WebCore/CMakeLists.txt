@@ -2132,7 +2132,7 @@ set(WebCore_USER_AGENT_STYLE_SHEETS
 set(WebCore_LIBRARIES
     ICU::uc
     LibXml2::LibXml2
-    SQLite::SQLite3
+    SQLite3::SQLite3
     ZLIB::ZLIB
 )
 set(WebCore_FRAMEWORKS

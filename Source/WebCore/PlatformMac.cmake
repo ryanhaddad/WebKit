@@ -27,6 +27,10 @@ find_library(XML2_LIBRARY XML2)
 find_package(SQLite3 REQUIRED)
 find_package(ZLIB REQUIRED)
 
+if (NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif ()
+
 list(APPEND WebCore_UNIFIED_SOURCE_LIST_FILES
     "SourcesCocoa.txt"
 )
