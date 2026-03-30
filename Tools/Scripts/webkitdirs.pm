@@ -2958,6 +2958,7 @@ sub generateBuildSystemFromCMakeProject
     push @args, @cmakeArgs if @cmakeArgs;
 
     my $cmakeSourceDir = isCygwin() ? windowsSourceDir() : sourceDir();
+    $cmakeSourceDir .= "\\\\" if $cmakeSourceDir =~ /^[A-Za-z]:$/;
     push @args, '"' . $cmakeSourceDir . '"';
 
     # We call system("cmake @args") instead of system("cmake", @args) so that @args is
