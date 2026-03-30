@@ -160,13 +160,21 @@ void FontCascadeDescription::resolveFontSizeAdjustFromFontIfNeeded(const Font& f
     setFontSizeAdjust({ fontSizeAdjust.metric, FontSizeAdjust::ValueType::FromFont, aspectValue });
 }
 
+TextStream& operator<<(TextStream& ts, const FontFamily& family)
+{
+    ts << family.name;
+    if (family.isGeneric())
+        ts << " (generic)"_s;
+    return ts;
+}
+
 TextStream& operator<<(TextStream& ts, const FontCascadeDescription& fontCascadeDescription)
 {
     bool first = true;
     for (auto& family : fontCascadeDescription.families()) {
         if (!first)
             ts << ", "_s;
-        ts << family.name;
+        ts << family;
         first = false;
     }
 

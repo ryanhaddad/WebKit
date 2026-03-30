@@ -173,6 +173,7 @@ inline bool FontCascadeDescription::operator==(const FontCascadeDescription& oth
         && m_hasAuthorSpecifiedNonGenericPrimaryFont == other.m_hasAuthorSpecifiedNonGenericPrimaryFont;
 }
 
+WTF::TextStream& operator<<(WTF::TextStream&, const FontFamily&);
 WTF::TextStream& operator<<(WTF::TextStream&, const FontCascadeDescription&);
 
 }

@@ -142,6 +142,10 @@ private:
 
 template<> struct CSSValueConversion<FontFamilies> { auto operator()(BuilderState&, const CSSValue&) -> FontFamilies; };
 
+// MARK: - Logging
+
+TextStream& operator<<(TextStream&, const FontFamily&);
+
 } // namespace Style
 } // namespace WebCore
 

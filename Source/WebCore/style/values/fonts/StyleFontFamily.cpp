@@ -31,6 +31,7 @@
 #include "Settings.h"
 #include "StyleBuilderChecking.h"
 #include "SystemFontDatabase.h"
+#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
@@ -113,6 +114,13 @@ auto CSSValueConversion<FontFamilies>::operator()(BuilderState& state, const CSS
         RefCountedFixedVector<WebCore::FontFamily>::createFromVector(WTF::move(families)),
         *firstFontKind
     };
+}
+
+// MARK: - Logging
+
+TextStream& operator<<(TextStream& ts, const FontFamily& fontFamily)
+{
+    return ts << fontFamily.value;
 }
 
 } // namespace Style
