@@ -32,10 +32,15 @@
 
 namespace JSC { namespace Yarr {
 
+enum class MatchMode : uint8_t {
+    Partial, // Default: match anywhere in the string.
+    EntireInput // Anchored: pattern must match the entire input (equivalent to ^(?:pattern)$).
+};
+
 class JS_EXPORT_PRIVATE RegularExpression {
     WTF_MAKE_TZONE_ALLOCATED(RegularExpression);
 public:
-    explicit RegularExpression(StringView, OptionSet<Flags> = { });
+    explicit RegularExpression(StringView, OptionSet<Flags> = { }, MatchMode = MatchMode::Partial);
     ~RegularExpression();
 
     RegularExpression(const RegularExpression&);
