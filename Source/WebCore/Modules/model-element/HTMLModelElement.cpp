@@ -461,11 +461,11 @@ void HTMLModelElement::didUpdateBoundingBox(ModelPlayer&, const FloatPoint3D& ce
 
 RefPtr<GraphicsLayer> HTMLModelElement::graphicsLayer() const
 {
-    RefPtr page = document().page();
+    auto* page = document().page();
     if (!page)
         return nullptr;
 
-    CheckedPtr renderLayerModelObject = dynamicDowncast<RenderLayerModelObject>(this->renderer());
+    auto* renderLayerModelObject = dynamicDowncast<RenderLayerModelObject>(this->renderer());
     if (!renderLayerModelObject)
         return nullptr;
 

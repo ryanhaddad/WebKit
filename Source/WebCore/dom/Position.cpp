@@ -338,7 +338,7 @@ Position::AnchorType Position::anchorTypeForLegacyEditingPosition(Node* anchorNo
 // FIXME: This method is confusing (does it return anchorNode() or containerNode()?) and should be renamed or removed
 RefPtr<Element> Position::anchorElementAncestor() const
 {
-    for (RefPtr node = anchorNode(); node; node = node->parentNode()) {
+    for (auto* node = anchorNode(); node; node = node->parentNode()) {
         if (auto* element = dynamicDowncast<Element>(*node))
             return element;
     }

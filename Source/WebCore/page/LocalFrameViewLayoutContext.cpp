@@ -114,13 +114,13 @@ private:
 RepaintBlocker::RepaintBlocker(Document& document)
     : m_document(document)
 {
-    if (CheckedPtr view = m_document->view())
+    if (auto* view = m_document->view())
         view->layoutContext().blockRepaints();
 }
 
 RepaintBlocker::~RepaintBlocker()
 {
-    if (CheckedPtr view = m_document->view())
+    if (auto* view = m_document->view())
         view->layoutContext().allowRepaints();
 }
 
@@ -473,7 +473,7 @@ bool LocalFrameViewLayoutContext::needsLayoutInternal() const
     // This can return true in cases where the document does not have a body yet.
     // Document::shouldScheduleLayout takes care of preventing us from scheduling
     // layout in that case.
-    CheckedPtr renderView = this->renderView();
+    auto* renderView = this->renderView();
     return isLayoutPending()
         || (renderView && renderView->needsLayout())
         || subtreeLayoutRoot()
