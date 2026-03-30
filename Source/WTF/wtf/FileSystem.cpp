@@ -534,7 +534,6 @@ std::optional<uint64_t> directorySize(const String& path)
     for (auto& entry : std::filesystem::recursive_directory_iterator(stdPath, ec)) {
         if (ec)
             return std::nullopt;
-        auto filePath = fromStdFileSystemPath(entry.path());
         if (entry.is_regular_file(ec) && !ec)
             size += entry.file_size(ec);
         if (ec)
