@@ -9427,35 +9427,6 @@ WebContentRestrictionsTransitiveTrustEnabled:
       default: true
   sharedPreferenceForWebProcess: true
 
-
-WebCryptoSafeCurvesEnabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "Web Crypto Safe Curves"
-  humanReadableDescription: "Enable Web Crypto Safe Curves"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
-WebCryptoX25519Enabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "Web Crypto X25519 algorithm"
-  humanReadableDescription: "Enable Web Crypto X25519 algorithm"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 WebExtensionBookmarksEnabled:
   type: bool
   status: testable
