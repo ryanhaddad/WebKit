@@ -5402,10 +5402,7 @@ webkit.org/b/310278 media/video-pause-play-resolve.html [ Pass Timeout ]
 webkit.org/b/310543 fast/css/outline-auto-zoom-canvas.html [ Failure ]
 webkit.org/b/310543 fast/images/imagemap-focus-ring-zoom-style.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/images/image-map-outline-with-scale-transform.html [ ImageOnlyFailure ]
-webkit.org/b/310543 fast/images/image-map-outline-with-paint-root-offset.html [ ImageOnlyFailure ]
-webkit.org/b/310543 fast/inline/hidpi-outline-auto-with-border-radius-horizontal-ltr.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/inline/hidpi-outline-auto-with-border-radius-vertical-ltr.html [ Pass ImageOnlyFailure ]
-webkit.org/b/310543 fast/inline/hidpi-outline-auto-with-fractional-radius.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/repaint/outline-auto-with-default-width-and-offset-repaint.html [ Failure ]
 webkit.org/b/310543 fast/repaint/outline-auto-with-width-less-than-focus-ring-width-and-offset-repaint.html [ Failure ]
 webkit.org/b/310543 fast/repaint/outline-with1px-auto-repaint-rect.html [ Failure ]
@@ -5419,9 +5416,7 @@ webkit.org/b/310543 fast/css/caret-color-inherit.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/css/caret-color-span-inside-editable-parent.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/css/caret-color-with-inherited-color-property.html [ ImageOnlyFailure ]
 webkit.org/b/310543 fast/css/caret-color-with-initial-color-property.html [ ImageOnlyFailure ]
-webkit.org/b/310543 fast/repaint/body-innerhtml-quirks-mode.html [ ImageOnlyFailure ]
-webkit.org/b/310543 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-082.html [ ImageOnlyFailure ]
-webkit.org/b/310543 imported/w3c/web-platform-tests/css/css-contain/content-visibility/scrollIntoView-with-focus-target-with-contents-hidden.html [ ImageOnlyFailure ]
+webkit.org/b/310543 fast/repaint/body-innerhtml-quirks-mode.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/310742 imported/w3c/web-platform-tests/IndexedDB/blob-valid-before-commit.any.html [ Pass Failure ]
 webkit.org/b/90980 fast/forms/textarea/textarea-state-restore.html [ Pass Timeout Failure ]
@@ -5435,6 +5430,11 @@ webkit.org/b/309872 imported/w3c/web-platform-tests/permissions-policy/reporting
 webkit.org/b/311032 imported/w3c/web-platform-tests/mediacapture-streams/MediaStream-removetrack.https.html [ Failure Timeout Pass ]
 webkit.org/b/311032 media/media-fragments/TC0009.html [ Timeout ]
 webkit.org/b/311032 media/media-fragments/TC0014.html [ Timeout ]
+
+imported/w3c/web-platform-tests/css/css-overflow/scrollbar-gutter-root.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-overflow/scrollbar-gutter-root-both-edges.html [ ImageOnlyFailure ]
+
+webkit.org/b/311093 media/video-src-blob-replay.html [ Pass Timeout ]
 
 # End: Common failures between GTK and WPE.
 
