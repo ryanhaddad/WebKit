@@ -46,6 +46,11 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(CustomProperty);
 
 bool CustomProperty::operator==(const CustomProperty& other) const
 {
+    return m_isAttrTainted == other.m_isAttrTainted && valueEquals(other);
+}
+
+bool CustomProperty::valueEquals(const CustomProperty& other) const
+{
     if (m_name != other.m_name || m_value.index() != other.m_value.index())
         return false;
 
@@ -196,7 +201,7 @@ const Vector<CSSParserToken>& CustomProperty::tokens() const
         [&](auto&) -> const Vector<CSSParserToken>& {
             if (!m_cachedTokens) {
                 CSSTokenizer tokenizer { propertyValueSerializationForTokenization(CSS::defaultSerializationContext(), RenderStyle::defaultStyleSingleton()) };
-                m_cachedTokens = CSSVariableData::create(tokenizer.tokenRange());
+                m_cachedTokens = CSSVariableData::create(tokenizer.tokenRange(), m_isAttrTainted);
             }
             return m_cachedTokens->tokens();
         }

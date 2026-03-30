@@ -30,6 +30,7 @@
 #include "config.h"
 #include "StyleBuilder.h"
 
+#include "CSSCustomPropertySyntax.h"
 #include "CSSCustomPropertyValue.h"
 #include "CSSFontSelector.h"
 #include "CSSPaintImageValue.h"
@@ -724,7 +725,18 @@ std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> Builder
     if (isFontDependent)
         m_state->updateFont();
 
-    return CSSPropertyParser::parseTypedCustomPropertyValue(name, registered->syntax, resolvedData->tokens(), m_state, resolvedData->context());
+    auto isAttrTainted = resolvedData->isAttrTainted();
+
+    // https://drafts.csswg.org/css-values-5/#attr-security
+    // A registered custom property with <url> or <image> syntax resolved from attr()-tainted data is IACVT.
+    if (isAttrTainted == IsAttrTainted::Yes) {
+        for (auto& component : registered->syntax.definition) {
+            if (component.type == CSSCustomPropertySyntax::Type::URL || component.type == CSSCustomPropertySyntax::Type::Image)
+                return { };
+        }
+    }
+
+    return CSSPropertyParser::parseTypedCustomPropertyValue(name, registered->syntax, resolvedData->tokens(), m_state, resolvedData->context(), isAttrTainted);
 }
 
 void Builder::applyPageSizeDescriptor(CSSValue& value)

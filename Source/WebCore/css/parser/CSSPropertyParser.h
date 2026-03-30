@@ -47,6 +47,7 @@ struct PropertyParserState;
 namespace Style {
 class BuilderState;
 class CustomProperty;
+enum class IsAttrTainted : bool;
 }
 
 class CSSPropertyParser {
@@ -62,7 +63,7 @@ public:
     static RefPtr<CSSValue> parseCounterStyleDescriptor(CSSPropertyID, const String&, const CSSParserContext&);
 
     static RefPtr<const Style::CustomProperty> parseTypedCustomPropertyInitialValue(const AtomString&, const CSSCustomPropertySyntax&, CSSParserTokenRange, Style::BuilderState&, const CSSParserContext&);
-    static std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> parseTypedCustomPropertyValue(const AtomString& name, const CSSCustomPropertySyntax&, CSSParserTokenRange, Style::BuilderState&, const CSSParserContext&);
+    static std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> parseTypedCustomPropertyValue(const AtomString& name, const CSSCustomPropertySyntax&, CSSParserTokenRange, Style::BuilderState&, const CSSParserContext&, Style::IsAttrTainted);
 
     static ComputedStyleDependencies collectParsedCustomPropertyValueDependencies(const CSSCustomPropertySyntax&, CSSParserTokenRange, const CSSParserContext&);
     static bool isValidCustomPropertyValueForSyntax(const CSSCustomPropertySyntax&, CSSParserTokenRange, const CSSParserContext&);

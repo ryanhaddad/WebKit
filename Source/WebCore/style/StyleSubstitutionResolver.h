@@ -71,11 +71,16 @@ private:
     RefPtr<const CustomProperty> propertyValueForVariableName(const AtomString&, CSSValueID);
     RefPtr<CSSVariableData> trySimpleSubstitution(const CSSSubstitutionValue&);
     bool isBaseAppearance();
+    bool isInURLContext() const { return m_urlContextDepth; }
+    void updateURLContext(const CSSParserToken&);
+    void propagateAttrTaint(IsAttrTainted, std::span<const CSSParserToken>);
 
     Builder& m_styleBuilder;
     Vector<String> m_intermediateTokenStrings;
-
+    unsigned m_urlContextDepth { 0 };
     bool m_isInAttrTypeSyntax { false };
+    bool m_isAttrTainted { false };
+    bool m_hasTaintedURL { false };
 };
 
 } // namespace Style
