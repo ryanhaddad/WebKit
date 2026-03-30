@@ -350,6 +350,13 @@ enum class DefaultedOperatorEqual : bool { No, Yes };
 // DO NOT make use of this enum in new code. An object which supports CanMakeCheckedPtr must be heap allocated on its own.
 enum class CheckedPtrDeleteCheckException : bool { No, Yes };
 
+template<typename T>
+concept AtomicLike = requires(T t) {
+    t.load(std::memory_order_relaxed);
+    t.fetch_add(1, std::memory_order_relaxed);
+    t.fetch_sub(1, std::memory_order_relaxed);
+};
+
 template <typename StorageType, typename PtrCounterType, typename DeletionFlagType, CheckedPtrDeleteCheckException deleteException> class CanMakeCheckedPtrBase {
 public:
     CanMakeCheckedPtrBase() = default;
@@ -364,7 +371,13 @@ public:
     }
 
     PtrCounterType checkedPtrCount() const { return m_checkedPtrCount; }
-    void incrementCheckedPtrCount() const { ++m_checkedPtrCount; }
+    void incrementCheckedPtrCount() const
+    {
+        if constexpr (AtomicLike<StorageType>)
+            m_checkedPtrCount.fetch_add(1, std::memory_order_relaxed);
+        else
+            ++m_checkedPtrCount;
+    }
     ALWAYS_INLINE void decrementCheckedPtrCount() const
     {
         // In normal execution, a CheckedPtr always points to an object with a non-zero checkedPtrCount().
@@ -372,13 +385,16 @@ public:
         // When we check checkedPtrCountWithoutThreadCheck() here, we're checking for a scribbled object.
         if (!checkedPtrCountWithoutThreadCheck()) [[unlikely]]
             crashDueToCheckedPtrToDeadObject();
-        --m_checkedPtrCount;
+        if constexpr (AtomicLike<StorageType>)
+            m_checkedPtrCount.fetch_sub(1, std::memory_order_release);
+        else
+            --m_checkedPtrCount;
     }
 
     ALWAYS_INLINE PtrCounterType checkedPtrCountWithoutThreadCheck() const
     {
-        if constexpr (std::is_same_v<StorageType, std::atomic<uint32_t>>)
-            return m_checkedPtrCount;
+        if constexpr (AtomicLike<StorageType>)
+            return m_checkedPtrCount.load(std::memory_order_acquire);
         else
             return m_checkedPtrCount.valueWithoutThreadCheck();
     }
