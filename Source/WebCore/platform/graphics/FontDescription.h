@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Nicholas Shanks <webkit@nickshanks.com>
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
@@ -96,7 +96,7 @@ public:
     FontVariantLigaturesValues NODELETE variantLigatures() const;
     FontVariantSettings variantSettings() const;
     FontOpticalSizing opticalSizing() const { return static_cast<FontOpticalSizing>(m_opticalSizing); }
-    FontStyleAxis fontStyleAxis() const { return static_cast<FontStyleAxis>(m_fontStyleAxis); }
+    FontStyleAxis fontStyleAxis() const { return m_fontSelectionRequest.slopeAxis; }
     AllowUserInstalledFonts shouldAllowUserInstalledFonts() const { return static_cast<AllowUserInstalledFonts>(m_shouldAllowUserInstalledFonts); }
     bool shouldDisableLigaturesForSpacing() const { return m_shouldDisableLigaturesForSpacing; }
     const FontPalette& fontPalette() const LIFETIME_BOUND { return m_fontPalette; }
@@ -105,7 +105,7 @@ public:
     void setComputedSize(float s, float zoom = 1.0f) { m_computedSize = clampToFloat(s); m_usedZoomFactor = zoom; }
     void setTextSpacingTrim(TextSpacingTrim v) { m_textSpacingTrim = v; }
     void setTextAutospace(TextAutospace v) { m_textAutospace = v; }
-    void setFontStyleAxis(FontStyleAxis axis) { m_fontStyleAxis = std::to_underlying(axis); }
+    void setFontStyleAxis(FontStyleAxis axis) { m_fontSelectionRequest.slopeAxis = axis; }
     void setFontStyleSlope(std::optional<FontSelectionValue> slope) { m_fontSelectionRequest.slope = slope; }
     void setIsItalic(bool isItalic) { setFontStyleSlope(isItalic ? std::optional<FontSelectionValue> { italicValue() } : std::optional<FontSelectionValue> { }); }
     void setWeight(FontSelectionValue weight) { m_fontSelectionRequest.weight = weight; }
@@ -190,7 +190,6 @@ private:
     PREFERRED_TYPE(FontVariantEastAsianRuby) unsigned m_variantEastAsianRuby : 1;
     PREFERRED_TYPE(FontVariantEmoji) unsigned m_variantEmoji : 2;
     PREFERRED_TYPE(FontOpticalSizing) unsigned m_opticalSizing : 1;
-    PREFERRED_TYPE(FontStyleAxis) unsigned m_fontStyleAxis : 1;
     PREFERRED_TYPE(AllowUserInstalledFonts) unsigned m_shouldAllowUserInstalledFonts : 1; // If this description is allowed to match a user-installed font
     PREFERRED_TYPE(bool) unsigned m_shouldDisableLigaturesForSpacing : 1; // If letter-spacing is nonzero, we need to disable ligatures, which affects font preparation
     PREFERRED_TYPE(bool) unsigned m_evaluationTimeZoomEnabled : 1;

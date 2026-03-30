@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Nicholas Shanks <contact@nickshanks.com>
- * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,6 @@ FontDescription::FontDescription()
     , m_variantEastAsianRuby(std::to_underlying(FontVariantEastAsianRuby::Normal))
     , m_variantEmoji(std::to_underlying(FontVariantEmoji::Normal))
     , m_opticalSizing(std::to_underlying(FontOpticalSizing::Auto))
-    , m_fontStyleAxis(std::to_underlying(FontStyleAxis::slnt))
     , m_shouldAllowUserInstalledFonts(std::to_underlying(AllowUserInstalledFonts::No))
     , m_shouldDisableLigaturesForSpacing(false)
     , m_evaluationTimeZoomEnabled(false)

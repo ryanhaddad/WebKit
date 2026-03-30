@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2008 Torch Mobile, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -147,10 +147,9 @@ struct FontDescriptionKey {
 private:
     static std::array<unsigned, 2> makeFlagsKey(const FontDescription& description)
     {
-        unsigned first = static_cast<unsigned>(description.script()) << 15
-            | static_cast<unsigned>(description.shouldDisableLigaturesForSpacing()) << 14
-            | static_cast<unsigned>(description.shouldAllowUserInstalledFonts()) << 13
-            | static_cast<unsigned>(description.fontStyleAxis() == FontStyleAxis::slnt) << 12
+        unsigned first = static_cast<unsigned>(description.script()) << 14
+            | static_cast<unsigned>(description.shouldDisableLigaturesForSpacing()) << 13
+            | static_cast<unsigned>(description.shouldAllowUserInstalledFonts()) << 12
             | static_cast<unsigned>(description.opticalSizing()) << 11
             | static_cast<unsigned>(description.textRenderingMode()) << 9
             | static_cast<unsigned>(description.fontSynthesisSmallCaps()) << 8

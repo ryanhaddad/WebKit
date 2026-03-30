@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -379,7 +379,8 @@ enum class FontOpticalSizing : bool {
 WTF::TextStream& operator<<(WTF::TextStream&, FontOpticalSizing);
 
 // https://www.microsoft.com/typography/otspec/fvar.htm#VAT
-enum class FontStyleAxis : bool {
+enum class FontStyleAxis : uint8_t {
+    normal,
     slnt,
     ital
 };

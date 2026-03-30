@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
- * Copyright (C) 2014-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2026 Apple Inc. All rights reserved.
  * Copyright (C) 2020 Metrological Group B.V.
  * Copyright (C) 2020 Igalia S.L.
  * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
@@ -170,7 +170,7 @@ static ResolvedFontStyle fontStyleFromUnresolvedFontStyle(const CSSPropertyParse
             case CSSValueNormal:
                 return {
                     .slope = std::nullopt,
-                    .axis = FontStyleAxis::slnt
+                    .axis = FontStyleAxis::normal
                 };
 
             case CSSValueItalic:
@@ -190,12 +190,12 @@ static ResolvedFontStyle fontStyleFromUnresolvedFontStyle(const CSSPropertyParse
             }
 
             ASSERT_NOT_REACHED();
-            return { .slope = std::nullopt, .axis = FontStyleAxis::slnt };
+            return { .slope = std::nullopt, .axis = FontStyleAxis::normal };
         },
         [](const CSSPropertyParserHelpers::UnresolvedFontStyleObliqueAngle& angle) -> ResolvedFontStyle {
             // FIXME: Figure out correct behavior when conversion data is required.
             if (requiresConversionData(angle))
-                return { .slope = std::nullopt, .axis = FontStyleAxis::slnt };
+                return { .slope = std::nullopt, .axis = FontStyleAxis::normal };
 
             return {
                 .slope = FontSelectionValue::clampFloat(Style::toStyleNoConversionDataRequired(angle).value),
