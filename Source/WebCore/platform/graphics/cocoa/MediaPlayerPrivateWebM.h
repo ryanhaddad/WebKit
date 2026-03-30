@@ -382,7 +382,7 @@ private:
     // WorkQueue on which the player is running.
     WorkQueue& runningQueue() const { return m_runningQueue.get(); }
     void ensureOnRunningQueue(Function<void()>&&);
-    MediaTime durationOnRunningQueue() const;
+    MediaTime NODELETE durationOnRunningQueue() const;
 
     Timer m_seekTimer WTF_GUARDED_BY_CAPABILITY(mainThread);
     MediaTime m_lastSeekTime WTF_GUARDED_BY_CAPABILITY(runningQueue());

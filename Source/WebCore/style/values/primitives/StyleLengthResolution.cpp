@@ -48,7 +48,7 @@
 namespace WebCore {
 namespace Style {
 
-static double adjustValueForPageZoom(double dimension, const CSSToLengthConversionData& conversionData)
+static double NODELETE adjustValueForPageZoom(double dimension, const CSSToLengthConversionData& conversionData)
 {
     if (conversionData.rangeZoomOption() != CSS::RangeZoomOptions::Unzoomed)
         return dimension;
@@ -76,7 +76,7 @@ static double NODELETE lengthOfViewportPhysicalAxisForLogicalAxis(LogicalBoxAxis
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-static double lengthOfViewportPhysicalAxisForLogicalAxis(LogicalBoxAxis logicalAxis, const FloatSize& size, const RenderView& renderView)
+static double NODELETE lengthOfViewportPhysicalAxisForLogicalAxis(LogicalBoxAxis logicalAxis, const FloatSize& size, const RenderView& renderView)
 {
     auto* rootElement = renderView.document().documentElement();
     if (!rootElement)

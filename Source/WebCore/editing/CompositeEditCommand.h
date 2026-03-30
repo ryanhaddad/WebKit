@@ -119,7 +119,7 @@ public:
 
     void apply();
     bool isFirstCommand(EditCommand* command) { return !m_commands.isEmpty() && m_commands.first() == command; }
-    EditCommandComposition* composition() const;
+    EditCommandComposition* NODELETE composition() const;
     Ref<EditCommandComposition> ensureComposition();
 
     virtual bool isTypingCommand() const;

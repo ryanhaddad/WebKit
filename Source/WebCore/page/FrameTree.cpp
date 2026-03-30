@@ -132,7 +132,7 @@ void FrameTree::replaceChild(Frame& oldChild, Frame& newChild)
         oldPreviousSibling->tree().m_nextSibling = &newChild;
 }
 
-static bool inScope(Frame& frame, TreeScope& scope)
+static bool NODELETE inScope(Frame& frame, TreeScope& scope)
 {
     auto* localFrame = dynamicDowncast<LocalFrame>(frame);
     if (!localFrame)

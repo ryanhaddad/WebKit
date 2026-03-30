@@ -295,8 +295,8 @@ public:
         return !!m_polyProtoAccessChain;
     }
 
-    bool requiresIdentifierNameMatch() const;
-    bool requiresInt32PropertyCheck() const;
+    bool NODELETE requiresIdentifierNameMatch() const;
+    bool NODELETE requiresInt32PropertyCheck() const;
 
     UniquedStringImpl* uid() const { return m_identifier.uid(); }
     CacheableIdentifier identifier() const { return m_identifier; }
@@ -349,7 +349,7 @@ protected:
     JSObject* tryGetAlternateBaseImpl() const;
     void dumpImpl(PrintStream&, CommaPrinter&, Indenter&) const { }
 
-    bool guardedByStructureCheckSkippingConstantIdentifierCheck() const;
+    bool NODELETE guardedByStructureCheckSkippingConstantIdentifierCheck() const;
 
 private:
     friend class CodeBlock;

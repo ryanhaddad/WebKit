@@ -35,7 +35,6 @@ bytecode/PropertyInlineCache.cpp
 bytecode/PutByStatus.cpp
 bytecode/Repatch.cpp
 bytecode/SetPrivateBrandStatus.cpp
-bytecode/SharedJITStubSet.h
 bytecode/UnlinkedFunctionExecutable.cpp
 bytecompiler/BytecodeGenerator.cpp
 bytecompiler/BytecodeGenerator.h
@@ -51,7 +50,6 @@ dfg/DFGJITCompiler.cpp
 dfg/DFGJITCompiler.h
 dfg/DFGJITFinalizer.cpp
 dfg/DFGLazyJSValue.cpp
-dfg/DFGLoopUnrollingPhase.cpp
 dfg/DFGOperations.cpp
 dfg/DFGPlan.cpp
 dfg/DFGSpeculativeJIT.cpp
@@ -75,7 +73,6 @@ heap/ParallelSourceAdapter.h
 heap/SubspaceInlines.h
 inspector/ConsoleMessage.cpp
 inspector/JSGlobalObjectInspectorController.cpp
-inspector/JSInjectedScriptHost.cpp
 inspector/JSJavaScriptCallFrame.cpp
 inspector/ScriptCallStack.cpp
 inspector/agents/InspectorAgent.cpp
@@ -101,7 +98,6 @@ llint/LLIntSlowPaths.cpp
 parser/Lexer.cpp
 parser/Parser.cpp
 parser/Parser.h
-parser/SourceCode.h
 parser/SourceProvider.h
 parser/UnlinkedSourceCode.cpp
 parser/UnlinkedSourceCode.h
@@ -162,7 +158,6 @@ wasm/WasmFormat.h
 wasm/WasmFunctionParser.h
 wasm/WasmIPIntGenerator.cpp
 wasm/WasmIPIntPlan.cpp
-wasm/WasmIPIntSlowPaths.cpp
 wasm/WasmMemory.cpp
 wasm/WasmMemory.h
 wasm/WasmOMGIRGenerator.cpp

@@ -142,7 +142,7 @@ static constexpr OptionSet behaviorsForTextExtraction {
     TextIteratorBehavior::TraversesFlatTree
 };
 
-static bool hasEnclosingAutoFilledInput(Node& node)
+static bool NODELETE hasEnclosingAutoFilledInput(Node& node)
 {
     auto* input = dynamicDowncast<HTMLInputElement>(node.shadowHost());
     if (!input)
@@ -203,7 +203,7 @@ static inline TextNodesAndText collectText(const SimpleRange& range, IncludeText
     return nodesAndText;
 }
 
-static String stringOnlyIfHumanReadable(const String& string)
+static String NODELETE stringOnlyIfHumanReadable(const String& string)
 {
     if (StringEntropyHelpers::isProbablyHumanReadable(string))
         return string;
@@ -259,7 +259,7 @@ struct TraversalContext {
     bool includeAccessibilityAttributes { false };
     unsigned visibleTextLength { 0 };
 
-    inline bool shouldIncludeNodeWithRect(const FloatRect& rect) const
+    inline bool NODELETE shouldIncludeNodeWithRect(const FloatRect& rect) const
     {
         return !rectInRootView || rectInRootView->intersects(rect);
     }
@@ -467,7 +467,7 @@ enum class SkipExtraction : bool {
     SelfAndSubtree
 };
 
-static bool shouldTreatAsPasswordField(const Element* element)
+static bool NODELETE shouldTreatAsPasswordField(const Element* element)
 {
     auto* input = dynamicDowncast<HTMLInputElement>(element);
     return input && input->hasEverBeenPasswordField();
@@ -1760,7 +1760,7 @@ static SelectOptionResult selectOptionByValue(NodeIdentifier identifier, const S
     return { };
 }
 
-static HTMLElement* documentBodyElement(const LocalFrame& frame)
+static HTMLElement* NODELETE documentBodyElement(const LocalFrame& frame)
 {
     if (auto* document = frame.document())
         return document->body();
@@ -1768,7 +1768,7 @@ static HTMLElement* documentBodyElement(const LocalFrame& frame)
     return nullptr;
 }
 
-static RefPtr<Node> resolveNodeWithBodyAsFallback(const LocalFrame& frame, std::optional<NodeIdentifier> identifier)
+static RefPtr<Node> NODELETE resolveNodeWithBodyAsFallback(const LocalFrame& frame, std::optional<NodeIdentifier> identifier)
 {
     if (identifier)
         return Node::fromIdentifier(WTF::move(*identifier));

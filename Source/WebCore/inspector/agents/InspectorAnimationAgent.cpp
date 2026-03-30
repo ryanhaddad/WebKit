@@ -420,7 +420,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorAnimationAgent::stopTracking()
     return { };
 }
 
-static bool isDelayed(const ComputedEffectTiming& computedTiming)
+static bool NODELETE isDelayed(const ComputedEffectTiming& computedTiming)
 {
     if (!computedTiming.localTime)
         return false;

@@ -255,7 +255,7 @@ Protocol::ErrorStringOr<Ref<Protocol::Runtime::RemoteObject>> InspectorHeapAgent
     return object.releaseNonNull();
 }
 
-static Protocol::Heap::GarbageCollection::Type protocolTypeForHeapOperation(CollectionScope scope)
+static Protocol::Heap::GarbageCollection::Type NODELETE protocolTypeForHeapOperation(CollectionScope scope)
 {
     switch (scope) {
     case CollectionScope::Full:

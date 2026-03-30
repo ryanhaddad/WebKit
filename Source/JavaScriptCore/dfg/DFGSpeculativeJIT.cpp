@@ -12956,7 +12956,7 @@ void SpeculativeJIT::emitSwitchChar(Node* node, SwitchData* data)
 namespace {
 
 struct CharacterCase {
-    bool operator<(const CharacterCase& other) const
+    bool NODELETE operator<(const CharacterCase& other) const
     {
         return character < other.character;
     }

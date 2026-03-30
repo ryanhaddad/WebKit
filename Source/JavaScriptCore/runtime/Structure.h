@@ -247,7 +247,7 @@ protected:
 private:
     inline void finishCreation(VM&, CreatingEarlyCellTag); // Defined in StructureInlines.h
 
-    void validateFlags();
+    void NODELETE validateFlags();
 
 public:
     StructureID id() const { return StructureID::encode(this); }
@@ -689,10 +689,10 @@ public:
     void setContainsReadOnlyProperties() { setHasReadOnlyOrGetterSetterPropertiesExcludingProto(true); }
     
     void setCachedPropertyNameEnumerator(VM&, JSPropertyNameEnumerator*, StructureChain*);
-    JSPropertyNameEnumerator* cachedPropertyNameEnumerator() const;
-    uintptr_t cachedPropertyNameEnumeratorAndFlag() const;
-    bool canCachePropertyNameEnumerator(VM&) const;
-    bool canAccessPropertiesQuicklyForEnumeration() const;
+    JSPropertyNameEnumerator* NODELETE cachedPropertyNameEnumerator() const;
+    uintptr_t NODELETE cachedPropertyNameEnumeratorAndFlag() const;
+    bool NODELETE canCachePropertyNameEnumerator(VM&) const;
+    bool NODELETE canAccessPropertiesQuicklyForEnumeration() const;
 
     JSCellButterfly* cachedPropertyNames(CachedPropertyNamesKind) const;
     JSCellButterfly* cachedPropertyNamesIgnoringSentinel(CachedPropertyNamesKind) const;
@@ -813,7 +813,7 @@ public:
         m_transitionWatchpointSet.add(watchpoint);
     }
     
-    void didTransitionFromThisStructureWithoutFiringWatchpoint() const;
+    void NODELETE didTransitionFromThisStructureWithoutFiringWatchpoint() const;
     void fireStructureTransitionWatchpoint(DeferredStructureTransitionWatchpointFire*) const;
 
     InlineWatchpointSet& transitionWatchpointSet() const
@@ -1057,7 +1057,7 @@ private:
 
     void clearCachedPrototypeChain();
 
-    bool holesMustForwardToPrototypeSlow(JSObject*) const;
+    bool NODELETE holesMustForwardToPrototypeSlow(JSObject*) const;
 
     // These need to be properly aligned at the beginning of the 'Structure'
     // part of the object.

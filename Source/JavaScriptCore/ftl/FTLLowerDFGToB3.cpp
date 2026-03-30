@@ -22114,7 +22114,7 @@ IGNORE_CLANG_WARNINGS_END
         {
         }
 
-        bool operator<(const CharacterCase& other) const
+        bool NODELETE operator<(const CharacterCase& other) const
         {
             return character < other.character;
         }

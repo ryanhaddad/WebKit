@@ -154,7 +154,7 @@ public:
     void exitImmersivePresentation(CompletionHandler<void()>&&);
 #endif
 
-    bool supportsDragging() const;
+    bool NODELETE supportsDragging() const;
     bool isDraggableIgnoringAttributes() const final;
 
     bool NODELETE isInteractive() const;

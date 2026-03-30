@@ -821,8 +821,8 @@ public:
 
     inline const SettingsValues& settingsValues() const final; // Defined in DocumentSettingsValues.h.
 
-    void suspendDeviceMotionAndOrientationUpdates();
-    void resumeDeviceMotionAndOrientationUpdates();
+    void NODELETE suspendDeviceMotionAndOrientationUpdates();
+    void NODELETE resumeDeviceMotionAndOrientationUpdates();
 
     void suspendFontLoading();
 
@@ -961,7 +961,7 @@ public:
     void setParsing(bool);
     bool parsing() const { return m_bParsing; }
 
-    bool shouldScheduleLayout() const;
+    bool NODELETE shouldScheduleLayout() const;
     bool NODELETE isLayoutPending() const;
 #if !LOG_DISABLED
     Seconds timeSinceDocumentCreation() const { return MonotonicTime::now() - m_documentCreationTime; };
@@ -1063,7 +1063,7 @@ public:
     void parentlessNodeMovedToNewDocument(Node&);
 
     enum class AcceptChildOperation : bool { Replace, InsertOrAdd };
-    bool canAcceptChild(const Node& newChild, const Node* refChild, AcceptChildOperation) const;
+    bool NODELETE canAcceptChild(const Node& newChild, const Node* refChild, AcceptChildOperation) const;
 
     void textInserted(Node&, unsigned offset, unsigned length);
     void textRemoved(Node&, unsigned offset, unsigned length);
@@ -1210,7 +1210,7 @@ public:
     WEBCORE_EXPORT String domain() const;
     ExceptionOr<void> setDomain(const String& newDomain);
 
-    void overrideLastModified(const std::optional<WallTime>&);
+    void NODELETE overrideLastModified(const std::optional<WallTime>&);
     WEBCORE_EXPORT String lastModified() const;
 
     // The cookieURL is used to query the cookie database for this document's
@@ -1259,7 +1259,7 @@ public:
 
     // This is the "body element" as defined by HTML5, the first body or frameset child of the
     // document element. See https://html.spec.whatwg.org/multipage/dom.html#the-body-element-2.
-    WEBCORE_EXPORT HTMLElement* bodyOrFrameset() const;
+    WEBCORE_EXPORT HTMLElement* NODELETE bodyOrFrameset() const;
     WEBCORE_EXPORT ExceptionOr<void> setBodyOrFrameset(RefPtr<HTMLElement>&&);
 
     Location* location() const;
@@ -1286,7 +1286,7 @@ public:
     WEBCORE_EXPORT String NODELETE designMode() const;
     WEBCORE_EXPORT void setDesignMode(const String&);
 
-    WEBCORE_EXPORT Document* parentDocument() const;
+    WEBCORE_EXPORT Document* NODELETE parentDocument() const;
 
     WEBCORE_EXPORT Document* mainFrameDocument() const;
     bool isTopDocument() const { return mainFrameDocument() == this; }
@@ -1333,7 +1333,7 @@ public:
     // Extension for manipulating canvas drawing contexts for use in CSS
     std::optional<RenderingContext> getCSSCanvasContext(const String& type, const String& name, int width, int height);
     HTMLCanvasElement& getCSSCanvasElement(const String& name);
-    String nameForCSSCanvasElement(const HTMLCanvasElement&) const;
+    String NODELETE nameForCSSCanvasElement(const HTMLCanvasElement&) const;
 
     WEBCORE_EXPORT void postTask(Task&&) final; // Executes the task on context's thread asynchronously.
 
@@ -1371,9 +1371,9 @@ public:
     void unregisterMediaElement(HTMLMediaElement&);
 #endif
 
-    bool requiresUserGestureForAudioPlayback() const;
-    bool requiresUserGestureForVideoPlayback() const;
-    bool mediaDataLoadsAutomatically() const;
+    bool NODELETE requiresUserGestureForAudioPlayback() const;
+    bool NODELETE requiresUserGestureForVideoPlayback() const;
+    bool NODELETE mediaDataLoadsAutomatically() const;
 
     void privateBrowsingStateDidChange(PAL::SessionID);
 
@@ -1384,7 +1384,7 @@ public:
     void unregisterForCaptionPreferencesChangedCallbacks(HTMLMediaElement&);
     void captionPreferencesChanged();
     void NODELETE setMediaElementShowingTextTrack(const HTMLMediaElement&);
-    void clearMediaElementShowingTextTrack();
+    void NODELETE clearMediaElementShowingTextTrack();
     void updateTextTrackRepresentationImageIfNeeded();
     WEBCORE_EXPORT void shouldSuppressHDRDidChange();
 #endif
@@ -1406,7 +1406,7 @@ public:
     void updateAccessibilityObjectRegions();
     void updateEventRegions();
 
-    void invalidateRenderingDependentRegions();
+    void NODELETE invalidateRenderingDependentRegions();
     void invalidateEventRegionsForFrame(HTMLFrameOwnerElement&);
 
     void invalidateEventListenerRegions();
@@ -1542,7 +1542,7 @@ public:
     void userActivatedMediaFinishedPlaying() { m_userActivatedMediaFinishedPlayingTimestamp = MonotonicTime::now(); }
 
     // Used for testing. Count handlers in the main document, and one per frame which contains handlers.
-    WEBCORE_EXPORT unsigned wheelEventHandlerCount() const;
+    WEBCORE_EXPORT unsigned NODELETE wheelEventHandlerCount() const;
     WEBCORE_EXPORT unsigned NODELETE touchEventHandlerCount() const;
 
     WEBCORE_EXPORT void NODELETE startTrackingStyleRecalcs();
@@ -2227,7 +2227,7 @@ private:
 
     bool shouldEnforceHTTP09Sandbox() const;
 
-    void platformSuspendOrStopActiveDOMObjects();
+    void NODELETE platformSuspendOrStopActiveDOMObjects();
 
     void collectHighlightRangesFromRegister(Vector<WeakPtr<HighlightRange>>&, const HighlightRegistry&);
 

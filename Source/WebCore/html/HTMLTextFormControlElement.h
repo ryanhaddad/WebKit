@@ -87,7 +87,7 @@ public:
 
     void scheduleSelectionChangeEvent();
 
-    TextFieldSelectionDirection computeSelectionDirection() const;
+    TextFieldSelectionDirection NODELETE computeSelectionDirection() const;
 
     std::optional<SimpleRange> selection() const;
     String selectedText() const;
@@ -198,7 +198,7 @@ private:
     String m_textAsOfLastFormControlChangeEvent;
 };
 
-WEBCORE_EXPORT HTMLTextFormControlElement* enclosingTextFormControl(const Position&);
+WEBCORE_EXPORT HTMLTextFormControlElement* NODELETE enclosingTextFormControl(const Position&);
 
 } // namespace WebCore
 

@@ -269,7 +269,7 @@ private:
     void platformInit();
     void platformGlyphInit();
     void platformCharWidthInit();
-    void platformDestroy();
+    void NODELETE platformDestroy();
 
     void initCharWidths();
 

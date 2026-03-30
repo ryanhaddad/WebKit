@@ -41,12 +41,12 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ContentSecurityPolicyDirectiveList);
 
-template<typename CharacterType> static bool isDirectiveNameCharacter(CharacterType c)
+template<typename CharacterType> static bool NODELETE isDirectiveNameCharacter(CharacterType c)
 {
     return isASCIIAlphanumeric(c) || c == '-';
 }
 
-template<typename CharacterType> static bool isDirectiveValueCharacter(CharacterType c)
+template<typename CharacterType> static bool NODELETE isDirectiveValueCharacter(CharacterType c)
 {
     return isASCIIWhitespace(c) || (c >= 0x21 && c <= 0x7e); // Whitespace + VCHAR
 }

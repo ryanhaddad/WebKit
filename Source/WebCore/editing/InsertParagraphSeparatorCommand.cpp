@@ -149,7 +149,7 @@ Ref<Element> InsertParagraphSeparatorCommand::cloneHierarchyUnderNewBlock(const 
     return parent.releaseNonNull();
 }
 
-static bool isPhrasingContent(const Node& node)
+static bool NODELETE isPhrasingContent(const Node& node)
 {
     auto* element = dynamicDowncast<Element>(node);
     if (!element)

@@ -393,7 +393,7 @@ private:
 #endif
 
     // Return the opacity value that this layer should use for compositing.
-    float compositingOpacity(float rendererOpacity) const;
+    float NODELETE compositingOpacity(float rendererOpacity) const;
     Color rendererBackgroundColor() const;
 
     bool isMainFrameRenderViewLayer() const;

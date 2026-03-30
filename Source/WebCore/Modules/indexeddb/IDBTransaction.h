@@ -231,7 +231,7 @@ private:
     void iterateCursorOnServer(IDBClient::TransactionOperation&, const IDBIterateCursorData&);
     void didIterateCursorOnServer(IDBRequest&, const IDBResultData&);
 
-    void transitionedToFinishing(IndexedDB::TransactionState);
+    void NODELETE transitionedToFinishing(IndexedDB::TransactionState);
 
     void establishOnServer();
 

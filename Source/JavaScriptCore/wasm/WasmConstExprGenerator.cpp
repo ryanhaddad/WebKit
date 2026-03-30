@@ -88,41 +88,41 @@ public:
             , m_bits(JSValue::encode(value))
         { }
 
-        bool isInvalid()
+        bool NODELETE isInvalid()
         {
             return m_type == ConstExprValueType::Invalid;
         }
 
-        uint64_t getValue()
+        uint64_t NODELETE getValue()
         {
             ASSERT(m_type == ConstExprValueType::Numeric || m_type == ConstExprValueType::Ref);
             return m_bits;
         }
 
-        v128_t getVector()
+        v128_t NODELETE getVector()
         {
             ASSERT(m_type == ConstExprValueType::Vector);
             return m_vector;
         }
 
-        ConstExprValueType type()
+        ConstExprValueType NODELETE type()
         {
             return m_type;
         }
 
-        ConstExprValue operator+(ConstExprValue value)
+        ConstExprValue NODELETE operator+(ConstExprValue value)
         {
             ASSERT(m_type == ConstExprValueType::Numeric);
             return ConstExprValue(m_bits + value.getValue());
         }
 
-        ConstExprValue operator-(ConstExprValue value)
+        ConstExprValue NODELETE operator-(ConstExprValue value)
         {
             ASSERT(m_type == ConstExprValueType::Numeric);
             return ConstExprValue(m_bits - value.getValue());
         }
 
-        ConstExprValue operator*(ConstExprValue value)
+        ConstExprValue NODELETE operator*(ConstExprValue value)
         {
             ASSERT(m_type == ConstExprValueType::Numeric);
             return ConstExprValue(m_bits * value.getValue());
@@ -142,14 +142,14 @@ public:
     // Structured blocks should not appear in the constant expression except
     // for a dummy top-level block from parseBody() that cannot be jumped to.
     struct ControlData {
-        static bool isIf(const ControlData&) { return false; }
-        static bool isElse(const ControlData&) { return false; }
-        static bool isTry(const ControlData&) { return false; }
-        static bool isAnyCatch(const ControlData&) { return false; }
-        static bool isCatch(const ControlData&) { return false; }
-        static bool isTopLevel(const ControlData&) { return true; }
-        static bool isLoop(const ControlData&) { return false; }
-        static bool isBlock(const ControlData&) { return false; }
+        static bool NODELETE isIf(const ControlData&) { return false; }
+        static bool NODELETE isElse(const ControlData&) { return false; }
+        static bool NODELETE isTry(const ControlData&) { return false; }
+        static bool NODELETE isAnyCatch(const ControlData&) { return false; }
+        static bool NODELETE isCatch(const ControlData&) { return false; }
+        static bool NODELETE isTopLevel(const ControlData&) { return true; }
+        static bool NODELETE isLoop(const ControlData&) { return false; }
+        static bool NODELETE isBlock(const ControlData&) { return false; }
 
         ControlData()
         { }
@@ -157,9 +157,9 @@ public:
             : m_signature(WTF::move(signature))
         { }
 
-        const BlockSignature& signature() const { return m_signature; }
-        FunctionArgCount branchTargetArity() const { return 0; }
-        Type branchTargetType(unsigned) const { return Types::Void; }
+        const BlockSignature& NODELETE signature() const { return m_signature; }
+        FunctionArgCount NODELETE branchTargetArity() const { return 0; }
+        Type NODELETE branchTargetType(unsigned) const { return Types::Void; }
     private:
         BlockSignature m_signature;
     };
@@ -178,9 +178,9 @@ public:
     };
 
     static constexpr bool shouldFuseBranchCompare = false;
-    static constexpr bool tierSupportsSIMD() { return true; }
+    static constexpr bool NODELETE tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = false;
-    static ExpressionType emptyExpression() { return { }; };
+    static ExpressionType NODELETE emptyExpression() { return { }; };
 
 protected:
     template <typename ...Args>
@@ -211,13 +211,13 @@ public:
         ASSERT(mode == Mode::Evaluate);
     }
 
-    ExpressionType result() const { return m_result; }
-    const Vector<FunctionSpaceIndex>& declaredFunctions() const { return m_declaredFunctions; }
-    void setParser(FunctionParser<ConstExprGenerator>* parser) { m_parser = parser; };
+    ExpressionType NODELETE result() const { return m_result; }
+    const Vector<FunctionSpaceIndex>& NODELETE declaredFunctions() const { return m_declaredFunctions; }
+    void NODELETE setParser(FunctionParser<ConstExprGenerator>* parser) { m_parser = parser; };
 
-    bool addArguments(const TypeDefinition&) { RELEASE_ASSERT_NOT_REACHED(); }
+    bool NODELETE addArguments(const TypeDefinition&) { RELEASE_ASSERT_NOT_REACHED(); }
 
-    ExpressionType addConstant(Type type, uint64_t value)
+    ExpressionType NODELETE addConstant(Type type, uint64_t value)
     {
         switch (type.kind) {
         case TypeKind::I32:
@@ -247,7 +247,7 @@ public:
 #define CONST_EXPR_STUB { return fail("Invalid instruction for constant expression"); }
 
     PartialResult addDrop(ExpressionType) CONST_EXPR_STUB
-    PartialResult addLocal(Type, uint32_t) { RELEASE_ASSERT_NOT_REACHED(); }
+    PartialResult NODELETE addLocal(Type, uint32_t) { RELEASE_ASSERT_NOT_REACHED(); }
     [[nodiscard]] PartialResult addTableGet(unsigned, ExpressionType, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addTableSet(unsigned, ExpressionType, ExpressionType) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addTableInit(unsigned, unsigned, ExpressionType, ExpressionType, ExpressionType) CONST_EXPR_STUB
@@ -295,7 +295,7 @@ public:
     [[nodiscard]] PartialResult truncTrapping(OpType, ExpressionType, ExpressionType&, Type, Type) CONST_EXPR_STUB
     [[nodiscard]] PartialResult truncSaturated(Ext1OpType, ExpressionType, ExpressionType&, Type, Type) CONST_EXPR_STUB
 
-    [[nodiscard]] PartialResult addRefI31(ExpressionType value, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addRefI31(ExpressionType value, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate) {
             JSValue i31 = JSValue((((static_cast<int32_t>(value.getValue()) & 0x7fffffff) << 1) >> 1));
@@ -438,7 +438,7 @@ public:
         return { };
     }
 
-    [[nodiscard]] PartialResult addExternConvertAny(ExpressionType reference, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addExternConvertAny(ExpressionType reference, ExpressionType& result)
     {
         result = reference;
         return { };
@@ -446,13 +446,13 @@ public:
 
     [[nodiscard]] PartialResult addSelect(ExpressionType, ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
 
-    [[nodiscard]] PartialResult addI32Add(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI32Add(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs + rhs;
         return { };
     }
-    [[nodiscard]] PartialResult addI64Add(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI64Add(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs + rhs;
@@ -462,14 +462,14 @@ public:
     [[nodiscard]] PartialResult addF32Add(ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addF64Add(ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
 
-    [[nodiscard]] PartialResult addI32Sub(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI32Sub(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs - rhs;
         return { };
     }
 
-    [[nodiscard]] PartialResult addI64Sub(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI64Sub(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs - rhs;
@@ -479,14 +479,14 @@ public:
     [[nodiscard]] PartialResult addF32Sub(ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addF64Sub(ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
 
-    [[nodiscard]] PartialResult addI32Mul(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI32Mul(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs * rhs;
         return { };
     }
 
-    [[nodiscard]] PartialResult addI64Mul(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
+    [[nodiscard]] PartialResult NODELETE addI64Mul(ExpressionType lhs, ExpressionType rhs, ExpressionType& result)
     {
         if (m_mode == Mode::Evaluate)
             result = lhs * rhs;
@@ -629,7 +629,7 @@ public:
         return { };
     }
 
-    ControlData addTopLevel(BlockSignature&& signature)
+    ControlData NODELETE addTopLevel(BlockSignature&& signature)
     {
         return ControlData(WTF::move(signature));
     }
@@ -660,7 +660,7 @@ public:
     [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature, Stack&, ControlType&, Stack&) CONST_EXPR_STUB
 
-    [[nodiscard]] PartialResult endBlock(ControlEntry& entry, Stack& expressionStack)
+    [[nodiscard]] PartialResult NODELETE endBlock(ControlEntry& entry, Stack& expressionStack)
     {
         ASSERT(expressionStack.size() == 1);
         ASSERT_UNUSED(entry, ControlType::isTopLevel(entry.controlData));
@@ -684,8 +684,8 @@ public:
     [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addUnreachable() CONST_EXPR_STUB
     [[nodiscard]] PartialResult addCrash() CONST_EXPR_STUB
-    bool usesSIMD() { return false; }
-    void notifyFunctionUsesSIMD() { }
+    bool NODELETE usesSIMD() { return false; }
+    void NODELETE notifyFunctionUsesSIMD() { }
     [[nodiscard]] PartialResult addSIMDLoad(ExpressionType, uint32_t, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addSIMDStore(ExpressionType, ExpressionType, uint32_t) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addSIMDSplat(SIMDLane, ExpressionType, ExpressionType&) CONST_EXPR_STUB
@@ -697,7 +697,7 @@ public:
     [[nodiscard]] PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType, ExpressionType, uint32_t, uint8_t) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType, uint32_t, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType, uint32_t, ExpressionType&) CONST_EXPR_STUB
-    [[nodiscard]] ExpressionType addSIMDConstant(v128_t vector)
+    [[nodiscard]] ExpressionType NODELETE addSIMDConstant(v128_t vector)
     {
         RELEASE_ASSERT(Options::useWasmSIMD());
         if (m_mode == Mode::Evaluate)
@@ -715,15 +715,15 @@ public:
     [[nodiscard]] PartialResult addSIMDV_VV(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
     [[nodiscard]] PartialResult addSIMDRelaxedFMA(SIMDLaneOperation, SIMDInfo, ExpressionType, ExpressionType, ExpressionType, ExpressionType&) CONST_EXPR_STUB
 
-    void dump(const ControlStack&, const Stack*) { }
+    void NODELETE dump(const ControlStack&, const Stack*) { }
     ALWAYS_INLINE void willParseOpcode() { }
     ALWAYS_INLINE void willParseExtendedOpcode() { }
     ALWAYS_INLINE void didParseOpcode() {
         if (m_parser->currentOpcode() == Nop)
             m_shouldError = true;
     }
-    void didFinishParsingLocals() { }
-    void didPopValueFromStack(ExpressionType, ASCIILiteral) { }
+    void NODELETE didFinishParsingLocals() { }
+    void NODELETE didPopValueFromStack(ExpressionType, ASCIILiteral) { }
 
 private:
     FunctionParser<ConstExprGenerator>* m_parser { nullptr };

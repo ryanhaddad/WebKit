@@ -216,7 +216,7 @@ HTMLSelectElement* HTMLSelectElement::findOwnerSelect(ContainerNode* startNode, 
     return findOwnerSelect(startNode->parentNode(), excludeOptGroup);
 }
 
-static bool hasBaseAppearance(const RenderStyle* style)
+static bool NODELETE hasBaseAppearance(const RenderStyle* style)
 {
     return style && style->usedAppearance() == StyleAppearance::Base;
 }

@@ -143,7 +143,7 @@ public:
     };
     using PDFElementTypes = OptionSet<PDFElementType>;
 
-    WebCore::LocalFrameView* frameView() const;
+    WebCore::LocalFrameView* NODELETE frameView() const;
     WebCore::FrameView* mainFrameView() const;
 
     CGRect pluginBoundsForAnnotation(PDFAnnotation*) const final;

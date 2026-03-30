@@ -703,7 +703,7 @@ void ExecutionHandler::handleThreadStopInfo(StringView packet)
     sendStopReplyForThread(locker, threadId);
 }
 
-static uint64_t getStopPC(const DebugState& state)
+static uint64_t NODELETE getStopPC(const DebugState& state)
 {
     if (state.atBreakpointOrTrap() || state.atPrologue())
         return state.stopData->address;

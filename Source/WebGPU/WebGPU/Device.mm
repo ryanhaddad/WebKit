@@ -91,7 +91,7 @@ struct GPUFrameCapture {
             captureFrame(captureObject);
     }
 
-    static bool shouldStopCaptureAfterSubmit()
+    static bool NODELETE shouldStopCaptureAfterSubmit()
     {
         ++submitCallsCaptured;
         auto result = submitCallsCaptured >= maxSubmitCallsToCapture;

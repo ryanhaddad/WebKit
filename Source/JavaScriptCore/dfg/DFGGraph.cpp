@@ -473,8 +473,8 @@ bool Graph::terminalsAreValid()
     return true;
 }
 
-static BasicBlock* unboxLoopNode(const CPSCFG::Node& node) { return node.node(); }
-static BasicBlock* unboxLoopNode(BasicBlock* block) { return block; }
+static BasicBlock* NODELETE unboxLoopNode(const CPSCFG::Node& node) { return node.node(); }
+static BasicBlock* NODELETE unboxLoopNode(BasicBlock* block) { return block; }
 
 void Graph::dumpBlockHeader(PrintStream& out, const char* prefixStr, BasicBlock* block, PhiNodeDumpMode phiNodeDumpMode, DumpContext* context)
 {

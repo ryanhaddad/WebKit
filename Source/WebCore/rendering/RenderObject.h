@@ -606,7 +606,7 @@ public:
     // FIXME: Those belong into a SVG specific base-class for all renderers (see above)
     // Unfortunately we don't have such a class yet, because it's not possible for all renderers
     // to inherit from RenderSVGObject -> RenderObject (some need RenderBlock inheritance for instance)
-    void invalidateCachedBoundaries();
+    void NODELETE invalidateCachedBoundaries();
     bool usesBoundaryCaching() const;
     virtual void NODELETE setNeedsBoundariesUpdate();
     virtual void setNeedsTransformUpdate() { }
@@ -1159,8 +1159,8 @@ private:
     virtual RepaintRects localRectsForRepaint(RepaintOutlineBounds) const;
 
     void addAbsoluteRectForLayer(LayoutRect& result);
-    void setLayerNeedsFullRepaint();
-    void setLayerNeedsFullRepaintForOutOfFlowMovementLayout();
+    void NODELETE setLayerNeedsFullRepaint();
+    void NODELETE setLayerNeedsFullRepaintForOutOfFlowMovementLayout();
 
     void invalidateContainerPreferredLogicalWidths();
 

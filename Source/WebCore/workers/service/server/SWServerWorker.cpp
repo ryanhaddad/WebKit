@@ -507,7 +507,7 @@ void SWServerWorker::unregisterServiceWorkerConnection(SWServerConnectionIdentif
 }
 
 // https://w3c.github.io/ServiceWorker/#check-router-registration-limit-algorithm
-static bool checkRouterRegistrationLimit(const Vector<ServiceWorkerRoute>& currentRoutes, const Vector<ServiceWorkerRoute>& newRoutes)
+static bool NODELETE checkRouterRegistrationLimit(const Vector<ServiceWorkerRoute>& currentRoutes, const Vector<ServiceWorkerRoute>& newRoutes)
 {
     size_t result = 1024;
     for (auto& route : currentRoutes) {

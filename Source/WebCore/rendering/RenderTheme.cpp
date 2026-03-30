@@ -787,7 +787,7 @@ OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRenderer
     return states;
 }
 
-static const RenderElement* effectiveRendererForAppearance(const RenderObject& renderObject)
+static const RenderElement* NODELETE effectiveRendererForAppearance(const RenderObject& renderObject)
 {
     auto* renderer = dynamicDowncast<RenderElement>(renderObject);
     if (!renderer) {

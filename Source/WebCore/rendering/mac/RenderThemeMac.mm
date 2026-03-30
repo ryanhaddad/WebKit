@@ -1355,7 +1355,7 @@ void RenderThemeMac::adjustMenuListStyle(RenderStyle& style, const Element* elem
     style.setBoxShadow(CSS::Keyword::None { });
 }
 
-static Style::PaddingEdge toTruncatedPaddingEdge(auto value)
+static Style::PaddingEdge NODELETE toTruncatedPaddingEdge(auto value)
 {
     return Style::PaddingEdge::Fixed { static_cast<float>(std::trunc(value)) };
 }

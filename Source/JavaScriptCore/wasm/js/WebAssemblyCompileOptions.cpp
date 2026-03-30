@@ -78,7 +78,7 @@ std::optional<WebAssemblyCompileOptions> WebAssemblyCompileOptions::tryCreate(JS
     return options;
 }
 
-static bool namesInclude(const String& expected, const Vector<String>& names)
+static bool NODELETE namesInclude(const String& expected, const Vector<String>& names)
 {
     for (auto& name : names) {
         if (name == expected)

@@ -242,7 +242,7 @@ void FileInputType::createShadowSubtree()
     disabledStateChanged();
 }
 
-static RefPtr<HTMLInputElement> fileSelectorButton(const Element& element)
+static RefPtr<HTMLInputElement> NODELETE fileSelectorButton(const Element& element)
 {
     auto* root = element.userAgentShadowRoot();
     return root ? downcast<HTMLInputElement>(root->firstChild()) : nullptr;

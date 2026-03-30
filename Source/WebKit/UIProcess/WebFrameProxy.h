@@ -231,7 +231,7 @@ public:
     WebFrameProxy* parentFrame() const { return m_parentFrame; }
     Ref<WebFrameProxy> rootFrame();
     RefPtr<WebFrameProxy> childFrame(uint64_t index) const;
-    std::optional<uint64_t> indexInFrameTreeSiblings() const;
+    std::optional<uint64_t> NODELETE indexInFrameTreeSiblings() const;
 
     WebProcessProxy& NODELETE process() const;
     void setProcess(FrameProcess&);
@@ -240,7 +240,7 @@ public:
     void removeChildFrames();
     ProvisionalFrameProxy* provisionalFrame() { return m_provisionalFrame.get(); }
     RefPtr<ProvisionalFrameProxy> takeProvisionalFrame();
-    WebProcessProxy& provisionalLoadProcess();
+    WebProcessProxy& NODELETE provisionalLoadProcess();
     std::optional<WebCore::PageIdentifier> webPageIDInCurrentProcess();
     void notifyParentOfLoadCompletion(WebProcessProxy&);
 
@@ -322,7 +322,7 @@ private:
     std::optional<SharedPreferencesForWebProcess> NODELETE sharedPreferencesForWebProcess() const;
 
     std::optional<WebCore::PageIdentifier> NODELETE pageIdentifier() const;
-    Ref<WebCore::SecurityOrigin> securityOrigin() const;
+    Ref<WebCore::SecurityOrigin> NODELETE securityOrigin() const;
     void updateDocumentSecurityOrigin(WebFrameProxy*);
 
     RefPtr<WebFrameProxy> deepLastChild();

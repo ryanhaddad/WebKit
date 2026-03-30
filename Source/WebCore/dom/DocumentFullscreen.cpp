@@ -728,7 +728,7 @@ void DocumentFullscreen::fullyExitFullscreen()
     });
 }
 
-static bool hasJSEventListener(Node& node, const AtomString& eventType)
+static bool NODELETE hasJSEventListener(Node& node, const AtomString& eventType)
 {
     for (const auto& listener : node.eventListeners(eventType)) {
         if (listener->callback().type() == EventListener::JSEventListenerType)

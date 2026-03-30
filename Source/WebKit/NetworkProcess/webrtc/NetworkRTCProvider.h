@@ -119,7 +119,7 @@ public:
     void closeSocket(WebCore::LibWebRTCSocketIdentifier);
 
 #if PLATFORM(COCOA)
-    bool webRTCInterfaceMonitoringViaNWEnabled() const;
+    bool NODELETE webRTCInterfaceMonitoringViaNWEnabled() const;
     const std::optional<audit_token_t>& sourceApplicationAuditToken() const LIFETIME_BOUND { return m_sourceApplicationAuditToken; }
     const char* applicationBundleIdentifier() const LIFETIME_BOUND { return m_applicationBundleIdentifier.data(); }
 #endif

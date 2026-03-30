@@ -128,7 +128,7 @@ static String restrictionNames(MediaElementSession::BehaviorRestrictions restric
 
 #endif
 
-static bool pageExplicitlyAllowsElementToAutoplayInline(const HTMLMediaElement& element)
+static bool NODELETE pageExplicitlyAllowsElementToAutoplayInline(const HTMLMediaElement& element)
 {
     auto& document = element.document();
     auto* page = document.page();

@@ -180,7 +180,7 @@ JSObject* JSCell::toObjectSlow(JSGlobalObject* globalObject) const
     return jsSecureCast<const Symbol*>(this)->toObject(globalObject);
 }
 
-void slowValidateCell(JSCell* cell)
+void NODELETE slowValidateCell(JSCell* cell)
 {
     ASSERT_GC_OBJECT_LOOKS_VALID(cell);
 }

@@ -279,7 +279,7 @@ void linkPolymorphicCall(VM& vm, JSCell* owner, CallFrame* callFrame, CallLinkIn
 
 #if ENABLE(JIT)
 
-static ECMAMode ecmaModeFor(PutByKind putByKind)
+static ECMAMode NODELETE ecmaModeFor(PutByKind putByKind)
 {
     switch (putByKind) {
     case PutByKind::ByIdSloppy:
@@ -359,7 +359,7 @@ static InlineCacheAction actionForCell(VM& vm, JSCell* cell)
     return AttemptToCache;
 }
 
-static bool forceICFailure(JSGlobalObject*)
+static bool NODELETE forceICFailure(JSGlobalObject*)
 {
     return Options::forceICFailure();
 }
@@ -376,7 +376,7 @@ ALWAYS_INLINE static void fireWatchpointsAndClearStubIfNeeded(VM& vm, PropertyIn
     }
 }
 
-inline CodePtr<CFunctionPtrTag> appropriateGetByOptimizeFunction(GetByKind kind)
+inline CodePtr<CFunctionPtrTag> NODELETE appropriateGetByOptimizeFunction(GetByKind kind)
 {
     switch (kind) {
     case GetByKind::ById:
@@ -399,7 +399,7 @@ inline CodePtr<CFunctionPtrTag> appropriateGetByOptimizeFunction(GetByKind kind)
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-inline CodePtr<CFunctionPtrTag> appropriateGetByGaveUpFunction(GetByKind kind)
+inline CodePtr<CFunctionPtrTag> NODELETE appropriateGetByGaveUpFunction(GetByKind kind)
 {
     switch (kind) {
     case GetByKind::ById:
@@ -897,7 +897,7 @@ void repatchArrayGetByVal(JSGlobalObject* globalObject, CodeBlock* codeBlock, JS
     }
 }
 
-static CodePtr<CFunctionPtrTag> appropriatePutByGaveUpFunction(PutByKind putByKind)
+static CodePtr<CFunctionPtrTag> NODELETE appropriatePutByGaveUpFunction(PutByKind putByKind)
 {
     switch (putByKind) {
     case PutByKind::ByIdStrict:
@@ -937,7 +937,7 @@ void repatchPutBySlowPathCall(CodeBlock* codeBlock, PropertyInlineCache& propert
     repatchSlowPathCall(codeBlock, propertyCache, appropriatePutByGaveUpFunction(kind));
 }
 
-static CodePtr<CFunctionPtrTag> appropriatePutByOptimizeFunction(PutByKind putByKind)
+static CodePtr<CFunctionPtrTag> NODELETE appropriatePutByOptimizeFunction(PutByKind putByKind)
 {
     switch (putByKind) {
     case PutByKind::ByIdStrict:
@@ -1515,7 +1515,7 @@ void repatchDeleteBy(JSGlobalObject* globalObject, CodeBlock* codeBlock, DeleteP
     }
 }
 
-inline CodePtr<CFunctionPtrTag> appropriateInByOptimizeFunction(InByKind kind)
+inline CodePtr<CFunctionPtrTag> NODELETE appropriateInByOptimizeFunction(InByKind kind)
 {
     switch (kind) {
     case InByKind::ById:
@@ -1528,7 +1528,7 @@ inline CodePtr<CFunctionPtrTag> appropriateInByOptimizeFunction(InByKind kind)
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-inline CodePtr<CFunctionPtrTag> appropriateInByGaveUpFunction(InByKind kind)
+inline CodePtr<CFunctionPtrTag> NODELETE appropriateInByGaveUpFunction(InByKind kind)
 {
     switch (kind) {
     case InByKind::ById:

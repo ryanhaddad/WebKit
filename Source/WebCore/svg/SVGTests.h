@@ -60,7 +60,7 @@ public:
     static void addSupportedAttributes(MemoryCompactLookupOnlyRobinHoodHashSet<QualifiedName>&);
 
     SVGConditionalProcessingAttributes& conditionalProcessingAttributes();
-    SVGConditionalProcessingAttributes* conditionalProcessingAttributesIfExists() const;
+    SVGConditionalProcessingAttributes* NODELETE conditionalProcessingAttributesIfExists() const;
 
     // These methods are called from DOM through the super classes.
     SVGStringList& requiredExtensions() { return conditionalProcessingAttributes().requiredExtensions(); }

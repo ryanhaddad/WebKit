@@ -726,7 +726,7 @@ static ALWAYS_INLINE bool splitStringByOneCharacterImpl(Indice& result, StringIm
     return false;
 }
 
-static bool isASCIIIdentifierStart(char16_t ch)
+static bool NODELETE isASCIIIdentifierStart(char16_t ch)
 {
     return isASCIIAlpha(ch) || ch == '_' || ch == '$';
 }
@@ -1327,7 +1327,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncTrimEnd, (JSGlobalObject* globalObject, 
     return JSValue::encode(trimString<TrimKind::TrimEnd>(globalObject, thisValue));
 }
 
-static inline unsigned clampAndTruncateToUnsigned(double value, unsigned min, unsigned max)
+static inline unsigned NODELETE clampAndTruncateToUnsigned(double value, unsigned min, unsigned max)
 {
     if (value < min)
         return min;

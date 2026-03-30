@@ -190,7 +190,7 @@ bool CryptoKeyEC::platformAddFieldElements(JsonWebKey& jwk) const
     return true;
 }
 
-static std::span<const uint8_t> getOID(CryptoKeyEC::NamedCurve curve)
+static std::span<const uint8_t> NODELETE getOID(CryptoKeyEC::NamedCurve curve)
 {
     switch (curve) {
     case CryptoKeyEC::NamedCurve::P256:

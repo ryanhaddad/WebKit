@@ -115,7 +115,7 @@ protected:
 
     bool parseAndValidateModule(std::span<const uint8_t>);
 
-    const char* stateString(State);
+    const char* NODELETE stateString(State);
     void moveToState(State);
     bool isComplete() const override { return m_state == State::Completed; }
     void complete() WTF_REQUIRES_LOCK(m_lock) override;

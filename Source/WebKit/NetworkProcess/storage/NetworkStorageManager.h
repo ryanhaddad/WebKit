@@ -221,7 +221,7 @@ private:
     void openDBRequestCancelled(const WebCore::IDBOpenRequestData&);
     void deleteDatabase(IPC::Connection&, const WebCore::IDBOpenRequestData&);
     void establishTransaction(WebCore::IDBDatabaseConnectionIdentifier, const WebCore::IDBTransactionInfo&);
-    void databaseConnectionPendingClose(WebCore::IDBDatabaseConnectionIdentifier);
+    void NODELETE databaseConnectionPendingClose(WebCore::IDBDatabaseConnectionIdentifier);
     void databaseConnectionClosed(WebCore::IDBDatabaseConnectionIdentifier);
     void abortOpenAndUpgradeNeeded(WebCore::IDBDatabaseConnectionIdentifier, const std::optional<WebCore::IDBResourceIdentifier>& transactionIdentifier);
     void didFireVersionChangeEvent(WebCore::IDBDatabaseConnectionIdentifier, const WebCore::IDBResourceIdentifier& requestIdentifier, const WebCore::IndexedDB::ConnectionClosedOnBehalfOfServer);

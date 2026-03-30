@@ -483,7 +483,7 @@ public:
 
     WebCore::ShouldRelaxThirdPartyCookieBlocking NODELETE shouldRelaxThirdPartyCookieBlockingForPage(std::optional<WebPageProxyIdentifier>) const;
 
-    void setDefaultRequestTimeoutInterval(double);
+    void NODELETE setDefaultRequestTimeoutInterval(double);
 
 #if HAVE(WEBCONTENTRESTRICTIONS)
     void allowEvaluatedURL(const WebCore::ParentalControlsURLFilterParameters&, CompletionHandler<void(bool)>&&);

@@ -218,7 +218,7 @@ public:
     }
 
 private:
-    template<bool characterPredicate(char16_t)> void skipLeading()
+    template<bool characterPredicate(char16_t)> void NODELETE skipLeading()
     {
         ASSERT(!isEmpty());
         while (characterPredicate(m_text[0])) {

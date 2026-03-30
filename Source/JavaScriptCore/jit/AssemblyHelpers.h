@@ -111,7 +111,7 @@ public:
 #endif
 
 #if ENABLE(WEBASSEMBLY)
-    void prepareWasmCallOperation(GPRReg instanceGPR);
+    void NODELETE prepareWasmCallOperation(GPRReg instanceGPR);
 #endif
 
     void checkStackPointerAlignment()

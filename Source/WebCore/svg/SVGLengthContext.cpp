@@ -341,7 +341,7 @@ static inline const RenderStyle* NODELETE renderStyleForLengthResolving(const SV
     return nullptr;
 }
 
-static inline const RenderStyle* rootRenderStyleForLengthResolving(const SVGElement* svgElement)
+static inline const RenderStyle* NODELETE rootRenderStyleForLengthResolving(const SVGElement* svgElement)
 {
     if (!svgElement)
         return nullptr;

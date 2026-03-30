@@ -273,8 +273,8 @@ inline bool isThrow(OpcodeID opcodeID)
     }
 }
 
-unsigned metadataSize(OpcodeID);
-unsigned metadataAlignment(OpcodeID);
+unsigned NODELETE metadataSize(OpcodeID);
+unsigned NODELETE metadataAlignment(OpcodeID);
 
 } // namespace JSC
 

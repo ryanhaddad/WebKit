@@ -114,7 +114,7 @@ public:
     {
     }
 
-    int32_t frequency(char16_t character) const
+    int32_t NODELETE frequency(char16_t character) const
     {
         if (!m_size)
             return 1;
@@ -143,7 +143,7 @@ public:
             dataLogLn("    [", makeString(pad(' ', 3, i)), "] ", m_samples[i]);
     }
 
-    bool is8Bit() const { return m_is8Bit; }
+    bool NODELETE is8Bit() const { return m_is8Bit; }
 
 private:
     inline void add(char16_t character)
@@ -179,8 +179,8 @@ public:
         ASSERT(this->length() <= maxLength);
     }
 
-    unsigned length() const { return m_characters.size(); }
-    void shortenLength(unsigned length)
+    unsigned NODELETE length() const { return m_characters.size(); }
+    void NODELETE shortenLength(unsigned length)
     {
         if (length <= this->length())
             m_characters.shrink(length);
@@ -206,7 +206,7 @@ public:
         m_characters[index].addRanges(m_charSize, range);
     }
 
-    static UniqueRef<BoyerMooreInfo> create(CharSize charSize, unsigned length)
+    static UniqueRef<BoyerMooreInfo> NODELETE create(CharSize charSize, unsigned length)
     {
         return makeUniqueRef<BoyerMooreInfo>(charSize, length);
     }
@@ -653,23 +653,23 @@ class YarrGenerator final : public YarrJITInfo {
             , m_preferredTarget(preferredTarget)
         { }
 
-        PreferredTarget preferredTarget()
+        PreferredTarget NODELETE preferredTarget()
         {
             return m_preferredTarget;
         }
 
-        bool hasSucceedTarget()
+        bool NODELETE hasSucceedTarget()
         {
             return m_matchSucceededTargets != nullptr;
         }
 
-        bool hasFailedTarget()
+        bool NODELETE hasFailedTarget()
         {
             return m_matchFailedTargets != nullptr;
         }
 
-        MacroAssembler::JumpList& matchSucceeded() { return *m_matchSucceededTargets; }
-        MacroAssembler::JumpList& matchFailed() { return *m_matchFailedTargets; }
+        MacroAssembler::JumpList& NODELETE matchSucceeded() { return *m_matchSucceededTargets; }
+        MacroAssembler::JumpList& NODELETE matchFailed() { return *m_matchFailedTargets; }
 
         void appendSucceeded(MacroAssembler::Jump jump)
         {
@@ -702,11 +702,11 @@ class YarrGenerator final : public YarrJITInfo {
         {
         }
 
-        size_t numSubpatterns() { return m_numSubpatterns; }
+        size_t NODELETE numSubpatterns() { return m_numSubpatterns; }
 
-        size_t numDuplicateNamedCaptures() { return m_numDuplicateNamedCaptures; }
+        size_t NODELETE numDuplicateNamedCaptures() { return m_numDuplicateNamedCaptures; }
 
-        size_t frameSlots() { return m_frameSlots; }
+        size_t NODELETE frameSlots() { return m_frameSlots; }
     };
 
     struct ParenContext {
@@ -724,47 +724,47 @@ class YarrGenerator final : public YarrJITInfo {
         unsigned duplicateNamedCaptures[0];
         uintptr_t frameSlots[0];
 
-        static size_t sizeFor(ParenContextSizes& parenContextSizes)
+        static size_t NODELETE sizeFor(ParenContextSizes& parenContextSizes)
         {
             return sizeof(ParenContext) + sizeof(Subpatterns) * parenContextSizes.numSubpatterns() + sizeof(unsigned) * (parenContextSizes.numDuplicateNamedCaptures()) + sizeof(uintptr_t) * parenContextSizes.frameSlots();
         }
 
-        static constexpr ptrdiff_t nextOffset()
+        static constexpr ptrdiff_t NODELETE nextOffset()
         {
             return offsetof(ParenContext, next);
         }
 
-        static constexpr ptrdiff_t beginOffset()
+        static constexpr ptrdiff_t NODELETE beginOffset()
         {
             return offsetof(ParenContext, beginAndMatchAmount) + offsetof(BeginAndMatchAmount, begin);
         }
 
-        static constexpr ptrdiff_t matchAmountOffset()
+        static constexpr ptrdiff_t NODELETE matchAmountOffset()
         {
             return offsetof(ParenContext, beginAndMatchAmount) + offsetof(BeginAndMatchAmount, matchAmount);
         }
 
-        static constexpr ptrdiff_t endOffset()
+        static constexpr ptrdiff_t NODELETE endOffset()
         {
             return offsetof(ParenContext, end);
         }
 
-        static constexpr ptrdiff_t returnAddressOffset()
+        static constexpr ptrdiff_t NODELETE returnAddressOffset()
         {
             return offsetof(ParenContext, returnAddress);
         }
 
-        static constexpr ptrdiff_t subpatternOffset(size_t subpattern)
+        static constexpr ptrdiff_t NODELETE subpatternOffset(size_t subpattern)
         {
             return offsetof(ParenContext, subpatterns) + (subpattern - 1) * sizeof(Subpatterns);
         }
 
-        static constexpr ptrdiff_t duplicateNamedCaptureOffset(ParenContextSizes& parenContextSizes, size_t namedCapture)
+        static constexpr ptrdiff_t NODELETE duplicateNamedCaptureOffset(ParenContextSizes& parenContextSizes, size_t namedCapture)
         {
             return offsetof(ParenContext, subpatterns) + (parenContextSizes.numSubpatterns()) * sizeof(Subpatterns) + (namedCapture - 1) * sizeof(unsigned);
         }
 
-        static ptrdiff_t savedFrameOffset(ParenContextSizes& parenContextSizes)
+        static ptrdiff_t NODELETE savedFrameOffset(ParenContextSizes& parenContextSizes)
         {
             return offsetof(ParenContext, subpatterns) + (parenContextSizes.numSubpatterns()) * sizeof(Subpatterns) + (parenContextSizes.numDuplicateNamedCaptures()) * sizeof(unsigned);
         }
@@ -902,7 +902,7 @@ class YarrGenerator final : public YarrJITInfo {
     }
 #endif
 
-    void optimizeAlternative(PatternAlternative* alternative)
+    void NODELETE optimizeAlternative(PatternAlternative* alternative)
     {
         if (!alternative->m_terms.size())
             return;
@@ -1409,43 +1409,43 @@ class YarrGenerator final : public YarrJITInfo {
         m_jit.farJump(frameAddress().withOffset(frameLocation * sizeof(void*)), YarrBacktrackPtrTag);
     }
 
-    CCallHelpers::Address frameAddress()
+    CCallHelpers::Address NODELETE frameAddress()
     {
         size_t stackSizeForCalleeSaves = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(m_calleeSaves.registerCount() * sizeof(UCPURegister));
         return CCallHelpers::Address(GPRInfo::callFrameRegister, -(stackSizeForCalleeSaves + m_callFrameSizeInBytes));
     }
 
-    CCallHelpers::Address internalSubpatternOutputAddress(unsigned byteOffset)
+    CCallHelpers::Address NODELETE internalSubpatternOutputAddress(unsigned byteOffset)
     {
         ASSERT(m_needsInternalSubpatternOutput);
         return frameAddress().withOffset(m_internalSubpatternOutputOffsetInFrame * sizeof(void*) + byteOffset);
     }
 
-    MacroAssembler::Address subpatternStartAddress(unsigned subpatternId)
+    MacroAssembler::Address NODELETE subpatternStartAddress(unsigned subpatternId)
     {
         if (m_needsInternalSubpatternOutput)
             return internalSubpatternOutputAddress((subpatternId << 1) * sizeof(int));
         return MacroAssembler::Address(m_regs.output, (subpatternId << 1) * sizeof(int));
     }
 
-    MacroAssembler::Address subpatternEndAddress(unsigned subpatternId)
+    MacroAssembler::Address NODELETE subpatternEndAddress(unsigned subpatternId)
     {
         return subpatternStartAddress(subpatternId).withOffset(sizeof(int));
     }
 
-    MacroAssembler::Address duplicateNamedGroupAddress(unsigned duplicateNamedGroupId)
+    MacroAssembler::Address NODELETE duplicateNamedGroupAddress(unsigned duplicateNamedGroupId)
     {
         if (m_needsInternalSubpatternOutput)
             return internalSubpatternOutputAddress(offsetForDuplicateNamedGroupId(duplicateNamedGroupId) * sizeof(int));
         return MacroAssembler::Address(m_regs.output, offsetForDuplicateNamedGroupId(duplicateNamedGroupId) * sizeof(int));
     }
 
-    static bool needsSubpatternRecording(JITCompileMode compileMode, const YarrPattern& pattern)
+    static bool NODELETE needsSubpatternRecording(JITCompileMode compileMode, const YarrPattern& pattern)
     {
         return compileMode == JITCompileMode::IncludeSubpatterns || (compileMode == JITCompileMode::MatchOnly && pattern.m_containsBackreferences);
     }
 
-    static unsigned alignCallFrameSizeInBytes(unsigned originalCallFrameSize)
+    static unsigned NODELETE alignCallFrameSizeInBytes(unsigned originalCallFrameSize)
     {
         unsigned callFrameSize = originalCallFrameSize;
         if (!callFrameSize)
@@ -1529,7 +1529,7 @@ class YarrGenerator final : public YarrJITInfo {
         m_jit.load32(duplicateNamedGroupAddress(duplicateNamedGroupId), reg);
     }
 
-    bool shouldRecordSubpatterns() const
+    bool NODELETE shouldRecordSubpatterns() const
     {
         return m_compileMode == JITCompileMode::IncludeSubpatterns || m_needsInternalSubpatternOutput;
     }
@@ -1735,7 +1735,7 @@ class YarrGenerator final : public YarrJITInfo {
         {
             m_pendingReturns.append(returnAddress);
         }
-        void fallthrough()
+        void NODELETE fallthrough()
         {
             ASSERT(!m_pendingFallthrough);
             m_pendingFallthrough = true;
@@ -1802,7 +1802,7 @@ class YarrGenerator final : public YarrJITInfo {
             return m_laterFailures.empty() && m_pendingReturns.isEmpty() && !m_pendingFallthrough;
         }
 
-        BacktrackRecords& backtrackRecords()
+        BacktrackRecords& NODELETE backtrackRecords()
         {
             return m_backtrackRecords;
         }
@@ -1833,7 +1833,7 @@ class YarrGenerator final : public YarrJITInfo {
         Vector<ReturnAddressRecord, 4> m_backtrackRecords;
     };
 
-    unsigned offsetForDuplicateNamedGroupId(unsigned duplicateNamedGroupId)
+    unsigned NODELETE offsetForDuplicateNamedGroupId(unsigned duplicateNamedGroupId)
     {
         ASSERT(duplicateNamedGroupId);
         return ((m_pattern.m_numSubpatterns + 1) << 1) + duplicateNamedGroupId - 1;
@@ -6449,7 +6449,7 @@ class YarrGenerator final : public YarrJITInfo {
     }
 #endif
 
-    RegisterSet calleeSaveRegisters()
+    RegisterSet NODELETE calleeSaveRegisters()
     {
         RegisterSet registers;
 #if CPU(X86_64)
@@ -6613,7 +6613,7 @@ public:
         initializeInternalSubpatternStorageIfNeeded();
     }
 
-    void initializeInternalSubpatternStorageIfNeeded()
+    void NODELETE initializeInternalSubpatternStorageIfNeeded()
     {
 #if ENABLE(YARR_JIT_BACKREFERENCES)
         // For MatchOnly mode with backreferences, we need internal storage for subpattern results
@@ -6671,7 +6671,7 @@ public:
 
     // Check if a disjunction contains terms that could require within-iteration backtracking.
     // This includes multiple alternatives (switching between them) and backtrackable content.
-    static bool disjunctionContainsBacktrackableContent(PatternDisjunction* disjunction)
+    static bool NODELETE disjunctionContainsBacktrackableContent(PatternDisjunction* disjunction)
     {
         // Multiple alternatives require backtracking to try the next alternative
         if (disjunction->m_alternatives.size() > 1)
@@ -6698,13 +6698,13 @@ public:
         return false;
     }
 
-    void setStackChecker(StackCheck* stackChecker)
+    void NODELETE setStackChecker(StackCheck* stackChecker)
     {
         m_compilationThreadStackChecker = stackChecker;
     }
 
     template<typename OperationType>
-    static constexpr void functionChecks()
+    static constexpr void NODELETE functionChecks()
     {
         static_assert(FunctionTraits<OperationType>::cCallArity() == 5, "YarrJITCode takes 5 arguments");
         static_assert(std::is_same<MatchingContextHolder*, typename FunctionTraits<OperationType>::template ArgumentType<4>>::value, "MatchingContextHolder* is expected as the function 5th argument");
@@ -7242,7 +7242,7 @@ public:
         return 0;
     }
 
-    bool mayCall() const
+    bool NODELETE mayCall() const
     {
         return m_decodeSurrogatePairs || m_decode16BitForBackreferencesWithCalls;
     }

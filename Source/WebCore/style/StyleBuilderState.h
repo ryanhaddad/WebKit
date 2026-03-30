@@ -136,7 +136,7 @@ public:
     bool applyPropertyToRegularStyle() const { return m_linkMatch != SelectorChecker::MatchVisited; }
     bool applyPropertyToVisitedLinkStyle() const { return m_linkMatch != SelectorChecker::MatchLink; }
 
-    float zoomWithTextZoomFactor();
+    float NODELETE zoomWithTextZoomFactor();
 
     bool NODELETE useSVGZoomRules() const;
     bool NODELETE useSVGZoomRulesForLength() const;
@@ -169,8 +169,8 @@ public:
     double lookupCSSRandomBaseValue(const CSSCalc::RandomCachingKey&, std::optional<CSS::Keyword::ElementShared>) const;
 
     // Accessors for sibling information used by the sibling-count() and sibling-index() CSS functions.
-    unsigned siblingCount();
-    unsigned siblingIndex();
+    unsigned NODELETE siblingCount();
+    unsigned NODELETE siblingIndex();
 
     AnchorPositionedStates* anchorPositionedStates() LIFETIME_BOUND { return m_context.treeResolutionState ? &m_context.treeResolutionState->anchorPositionedStates : nullptr; }
     const std::optional<BuilderPositionTryFallback>& positionTryFallback() const LIFETIME_BOUND { return m_context.positionTryFallback; }

@@ -81,7 +81,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(FocusController);
 
 using namespace HTMLNames;
 
-static HTMLElement* invokerForOpenPopover(const Node* candidatePopover)
+static HTMLElement* NODELETE invokerForOpenPopover(const Node* candidatePopover)
 {
     auto* popover = dynamicDowncast<HTMLElement>(candidatePopover);
     if (popover && popover->isPopoverShowing())
@@ -89,7 +89,7 @@ static HTMLElement* invokerForOpenPopover(const Node* candidatePopover)
     return nullptr;
 }
 
-static RefPtr<Element> openPopoverForInvoker(const Node* candidateInvoker)
+static RefPtr<Element> NODELETE openPopoverForInvoker(const Node* candidateInvoker)
 {
     auto* invoker = dynamicDowncast<HTMLElement>(candidateInvoker);
     if (!invoker)
@@ -100,13 +100,13 @@ static RefPtr<Element> openPopoverForInvoker(const Node* candidateInvoker)
     return nullptr;
 }
 
-static inline bool hasCustomFocusLogic(const Element& element)
+static inline bool NODELETE hasCustomFocusLogic(const Element& element)
 {
     auto* htmlElement = dynamicDowncast<HTMLElement>(element);
     return htmlElement && htmlElement->hasCustomFocusLogic();
 }
 
-static inline bool isFocusScopeOwner(const Element& element)
+static inline bool NODELETE isFocusScopeOwner(const Element& element)
 {
     if (element.shadowRoot() && !hasCustomFocusLogic(element))
         return true;
@@ -164,23 +164,23 @@ public:
     Variant<RefPtr<Element>, RefPtr<Frame>> owner() const;
     WEBCORE_EXPORT static FocusNavigationScope scopeOf(Node&);
     static FocusNavigationScope scopeOwnedByScopeOwner(Element&);
-    static FocusNavigationScope scopeOwnedByIFrame(HTMLFrameOwnerElement&);
+    static FocusNavigationScope NODELETE scopeOwnedByIFrame(HTMLFrameOwnerElement&);
 
     Node* firstNodeInScope() const;
     Node* lastNodeInScope() const;
-    Node* nextInScope(const Node*) const;
+    Node* NODELETE nextInScope(const Node*) const;
     Node* previousInScope(const Node*) const;
-    Node* lastChildInScope(const Node&) const;
+    Node* NODELETE lastChildInScope(const Node&) const;
 
 private:
     enum class SlotKind : uint8_t { Assigned, Fallback };
 
-    Node* firstChildInScope(const Node&) const;
+    Node* NODELETE firstChildInScope(const Node&) const;
 
-    Node* parentInScope(const Node&) const;
+    Node* NODELETE parentInScope(const Node&) const;
 
-    Node* nextSiblingInScope(const Node&) const;
-    Node* previousSiblingInScope(const Node&) const;
+    Node* NODELETE nextSiblingInScope(const Node&) const;
+    Node* NODELETE previousSiblingInScope(const Node&) const;
 
     explicit FocusNavigationScope(TreeScope&);
     explicit FocusNavigationScope(HTMLSlotElement&, SlotKind);

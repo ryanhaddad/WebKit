@@ -94,8 +94,8 @@ public:
 
     bool isRounded() const { return m_borderRect.isRounded(); }
 
-    bool outerShapeIsRectangular() const;
-    bool innerShapeIsRectangular() const;
+    bool NODELETE outerShapeIsRectangular() const;
+    bool NODELETE innerShapeIsRectangular() const;
 
     bool isEmpty() const { return m_borderRect.rect().isEmpty(); }
 

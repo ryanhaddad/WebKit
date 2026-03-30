@@ -118,7 +118,7 @@ void RenderListMarker::willBeDestroyed()
     RenderBox::willBeDestroyed();
 }
 
-static Style::Difference adjustedStyleDifference(Style::Difference diff, const RenderStyle& oldStyle, const RenderStyle& newStyle)
+static Style::Difference NODELETE adjustedStyleDifference(Style::Difference diff, const RenderStyle& oldStyle, const RenderStyle& newStyle)
 {
     if (diff >= Style::DifferenceResult::Layout)
         return diff;

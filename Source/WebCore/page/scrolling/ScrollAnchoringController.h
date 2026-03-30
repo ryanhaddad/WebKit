@@ -71,7 +71,7 @@ public:
     void NODELETE willDispatchScrollEvent();
     void NODELETE didDispatchScrollEvent();
 
-    void notifyChildHadSuppressingStyleChange(RenderElement&);
+    void NODELETE notifyChildHadSuppressingStyleChange(RenderElement&);
 
     bool hasAnchorElement() const { return !!m_anchorObject; }
 
@@ -95,7 +95,7 @@ private:
     AnchorSearchStatus findAnchorInOutOfFlowObjects(RenderObject&);
     AnchorSearchStatus findAnchorRecursive(RenderObject*);
 
-    RenderBox* scrollableAreaBox() const;
+    RenderBox* NODELETE scrollableAreaBox() const;
 
     struct Rects {
         FloatRect boundsRelativeToScrolledContent;
@@ -108,7 +108,7 @@ private:
 
     void invalidate();
     void chooseAnchorElement(Document&, RenderBox& scrollerBox);
-    bool anchoringSuppressedByStyleChange() const;
+    bool NODELETE anchoringSuppressedByStyleChange() const;
     void updateScrollableAreaRegistration();
 
     CheckedRef<ScrollableArea> m_owningScrollableArea;

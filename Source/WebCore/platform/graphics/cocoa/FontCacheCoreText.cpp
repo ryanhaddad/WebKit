@@ -229,7 +229,7 @@ bool FontCache::isSystemFontForbiddenForEditing(const String& fontFamily)
     return isSystemFont(fontFamily);
 }
 
-static CTFontSymbolicTraits computeTraits(const FontDescription& fontDescription)
+static CTFontSymbolicTraits NODELETE computeTraits(const FontDescription& fontDescription)
 {
     CTFontSymbolicTraits traits = 0;
     if (fontDescription.fontStyleSlope())

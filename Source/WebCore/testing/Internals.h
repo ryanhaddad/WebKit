@@ -234,7 +234,7 @@ public:
     void markFrontBufferVolatile(Element&);
 
     bool isFullyActive(Document&);
-    bool isPaintingFrequently(Element&);
+    bool NODELETE isPaintingFrequently(Element&);
     void incrementFrequentPaintCounter(Element&);
     void purgeFrontBuffer(Element&);
     void purgeBackBuffer(Element&);
@@ -256,7 +256,7 @@ public:
     ExceptionOr<void> setCanShowModalDialogOverride(bool allow);
     enum class ResourceLoadPriority { ResourceLoadPriorityVeryLow, ResourceLoadPriorityLow, ResourceLoadPriorityMedium, ResourceLoadPriorityHigh, ResourceLoadPriorityVeryHigh };
     void NODELETE setOverrideResourceLoadPriority(ResourceLoadPriority);
-    void setStrictRawResourceValidationPolicyDisabled(bool);
+    void NODELETE setStrictRawResourceValidationPolicyDisabled(bool);
     std::optional<ResourceLoadPriority> getResourcePriority(const String& url);
 
     using FetchObject = Variant<Ref<FetchRequest>, Ref<FetchResponse>>;
@@ -306,7 +306,7 @@ public:
     Node& ensureUserAgentShadowRoot(Element& host);
     Node* shadowRoot(Element& host);
     ExceptionOr<String> shadowRootType(const Node&) const;
-    const AtomString& userAgentPart(Element&);
+    const AtomString& NODELETE userAgentPart(Element&);
     void setUserAgentPart(Element&, const AtomString&);
 
     // DOMTimers throttling testing.
@@ -536,7 +536,7 @@ public:
     static constexpr ASCIILiteral internalsId = "internals"_s;
 
     InternalSettings* settings() const;
-    unsigned workerThreadCount() const;
+    unsigned NODELETE workerThreadCount() const;
     ExceptionOr<bool> areSVGAnimationsPaused() const;
     ExceptionOr<double> svgAnimationsInterval(SVGSVGElement&) const;
     // Some SVGSVGElements are not accessible via JavaScript (e.g. those in CSS `background: url(data:image/svg+xml;utf8,<svg>...)`, but we need access to them for testing.
@@ -650,7 +650,7 @@ public:
     uint64_t storageAreaMapCount() const;
 
     uint64_t elementIdentifier(Element&) const;
-    bool isElementAlive(uint64_t elementIdentifier) const;
+    bool NODELETE isElementAlive(uint64_t elementIdentifier) const;
 
     uint64_t NODELETE pageIdentifier(const Document&) const;
 
@@ -701,7 +701,7 @@ public:
         RGBA16F,
 #endif
     };
-    void setScreenContentsFormatsForTesting(const Vector<Internals::ContentsFormat>&);
+    void NODELETE setScreenContentsFormatsForTesting(const Vector<Internals::ContentsFormat>&);
 
 #if ENABLE(VIDEO)
     bool NODELETE isChangingPresentationMode(HTMLVideoElement&) const;
@@ -789,7 +789,7 @@ public:
     Ref<MockCDMFactory> registerMockCDM();
 #endif
 
-    void enableMockMediaCapabilities();
+    void NODELETE enableMockMediaCapabilities();
 
 #if ENABLE(SPEECH_SYNTHESIS)
     void simulateSpeechSynthesizerVoiceListChange();
@@ -811,7 +811,7 @@ public:
     void emulateRTCPeerConnectionPlatformEvent(RTCPeerConnection&, const String& action);
     void useMockRTCPeerConnectionFactory(const String&);
     void setICECandidateFiltering(bool);
-    void setEnumeratingAllNetworkInterfacesEnabled(bool);
+    void NODELETE setEnumeratingAllNetworkInterfacesEnabled(bool);
     void stopPeerConnection(RTCPeerConnection&);
     void clearPeerConnectionFactory();
     void applyRotationForOutgoingVideoSources(RTCPeerConnection&);
@@ -918,7 +918,7 @@ public:
     ExceptionOr<void> postRemoteControlCommand(const String&, float argument);
     void activeAudioRouteDidChange(bool shouldPause);
     bool NODELETE elementIsBlockingDisplaySleep(const HTMLMediaElement&) const;
-    bool isPlayerVisibleInViewport(const HTMLMediaElement&) const;
+    bool NODELETE isPlayerVisibleInViewport(const HTMLMediaElement&) const;
     bool isPlayerMuted(const HTMLMediaElement&) const;
     bool isPlayerPaused(const HTMLMediaElement&) const;
     void NODELETE forceStereoDecoding(HTMLMediaElement&);
@@ -994,7 +994,7 @@ public:
     void NODELETE setShowAllPlugins(bool);
 
     String resourceLoadStatisticsForURL(const DOMURL&);
-    void setTrackingPreventionEnabled(bool);
+    void NODELETE setTrackingPreventionEnabled(bool);
 
     bool isReadableStreamDisturbed(ReadableStream&);
     void observeReadableStreamLifetime(ReadableStream&);
@@ -1015,7 +1015,7 @@ public:
 
     bool consumeTransientActivation();
 
-    bool hasHistoryActionActivation();
+    bool NODELETE hasHistoryActionActivation();
 
     bool consumeHistoryActionUserActivation();
 
@@ -1079,12 +1079,12 @@ public:
     void simulateMediaStreamTrackCaptureSourceFailure(MediaStreamTrack&);
     void setMediaStreamTrackIdentifier(MediaStreamTrack&, String&& id);
     void setMediaStreamSourceInterrupted(MediaStreamTrack&, bool);
-    const String& mediaStreamTrackPersistentId(const MediaStreamTrack&);
+    const String& NODELETE mediaStreamTrackPersistentId(const MediaStreamTrack&);
     size_t audioCaptureSourceCount() const;
     bool NODELETE supportsMultiMicrophoneCaptureWithoutEchoCancellation() const;
     bool isMediaStreamSourceInterrupted(MediaStreamTrack&) const;
-    bool isMediaStreamSourceEnded(MediaStreamTrack&) const;
-    bool isMockRealtimeMediaSourceCenterEnabled();
+    bool NODELETE isMediaStreamSourceEnded(MediaStreamTrack&) const;
+    bool NODELETE isMockRealtimeMediaSourceCenterEnabled();
     bool NODELETE shouldAudioTrackPlay(const AudioTrack&);
 #endif // ENABLE(MEDIA_STREAM)
 #if ENABLE(WEB_RTC)
@@ -1325,7 +1325,7 @@ public:
 
     void notifyResourceLoadObserver();
 
-    unsigned primaryScreenDisplayID();
+    unsigned NODELETE primaryScreenDisplayID();
 
     bool capsLockIsOn();
         
@@ -1680,13 +1680,13 @@ public:
     using ImageBufferResourceLimitsPromise = DOMPromiseDeferred<IDLDictionary<ImageBufferResourceLimits>>;
     void getImageBufferResourceLimits(ImageBufferResourceLimitsPromise&&);
 
-    void setResourceCachingDisabledByWebInspector(bool);
+    void NODELETE setResourceCachingDisabledByWebInspector(bool);
     ExceptionOr<void> lowerAllFrameMemoryMonitorLimits();
 
 #if ENABLE(CONTENT_EXTENSIONS)
     void setResourceMonitorNetworkUsageThreshold(size_t threshold, double randomness = ResourceMonitorChecker::defaultNetworkUsageThresholdRandomness);
-    bool shouldSkipResourceMonitorThrottling() const;
-    void setShouldSkipResourceMonitorThrottling(bool);
+    bool NODELETE shouldSkipResourceMonitorThrottling() const;
+    void NODELETE setShouldSkipResourceMonitorThrottling(bool);
 #endif
 
 #if ENABLE(DAMAGE_TRACKING)
@@ -1702,14 +1702,14 @@ public:
     ExceptionOr<Ref<WritableStream>> writableStreamFromMessagePort(JSDOMGlobalObject&, MessagePort&);
 
 #if ENABLE(MODEL_ELEMENT)
-    void disableModelLoadDelaysForTesting();
+    void NODELETE disableModelLoadDelaysForTesting();
     String modelElementState(HTMLModelElement&);
     bool NODELETE isModelElementIntersectingViewport(HTMLModelElement&);
 #endif
 
     ExceptionOr<void> copyImageAtLocation(int x, int y);
 
-    bool hasMediaSessionManager() const;
+    bool NODELETE hasMediaSessionManager() const;
 
     size_t NODELETE fileConnectionHandleCount(const FileSystemHandle&) const;
 

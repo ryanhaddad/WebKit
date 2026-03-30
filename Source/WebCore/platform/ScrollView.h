@@ -420,7 +420,7 @@ public:
     void setAllowsUnclampedScrollPositionForTesting(bool allowsUnclampedScrollPosition) { m_allowsUnclampedScrollPosition = allowsUnclampedScrollPosition; }
     bool allowsUnclampedScrollPosition() const { return m_allowsUnclampedScrollPosition; }
 
-    bool managesScrollbars() const;
+    bool NODELETE managesScrollbars() const;
     virtual void updateScrollbarSteps();
 
     // Called to update the scrollbars to accurately reflect the state of the view.
@@ -475,7 +475,7 @@ public:
     WEBCORE_EXPORT NSView* documentView() const;
 
 private:
-    PlatformScrollView* scrollView() const;
+    PlatformScrollView* NODELETE scrollView() const;
 #endif
 
 private:

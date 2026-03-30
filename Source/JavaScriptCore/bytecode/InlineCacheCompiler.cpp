@@ -83,7 +83,7 @@ static constexpr bool traceHandlerStats = false || ICStatsInternal::traceHandler
 }
 
 template<typename... Args>
-static void traceHandler(CCallHelpers& jit, ICEvent::Kind kind, Args&&... args)
+static void NODELETE traceHandler(CCallHelpers& jit, ICEvent::Kind kind, Args&&... args)
 {
     if constexpr (InlineCacheCompilerInternal::traceHandlerExecution) {
 #if CPU(ARM64)
@@ -113,7 +113,7 @@ void AccessGenerationResult::dump(PrintStream& out) const
         out.print(":", *m_handler);
 }
 
-static TypedArrayType toTypedArrayType(AccessCase::AccessType accessType)
+static TypedArrayType NODELETE toTypedArrayType(AccessCase::AccessType accessType)
 {
     switch (accessType) {
     case AccessCase::IndexedTypedArrayInt8Load:
@@ -191,7 +191,7 @@ static TypedArrayType toTypedArrayType(AccessCase::AccessType accessType)
     }
 }
 
-static bool forResizableTypedArray(AccessCase::AccessType accessType)
+static bool NODELETE forResizableTypedArray(AccessCase::AccessType accessType)
 {
     switch (accessType) {
     case AccessCase::IndexedResizableTypedArrayInt8Load:
@@ -230,7 +230,7 @@ static bool forResizableTypedArray(AccessCase::AccessType accessType)
     }
 }
 
-static bool needsScratchFPR(AccessCase::AccessType type)
+static bool NODELETE needsScratchFPR(AccessCase::AccessType type)
 {
     switch (type) {
     case AccessCase::Load:
@@ -362,7 +362,7 @@ static bool needsScratchFPR(AccessCase::AccessType type)
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-static bool forInBy(AccessCase::AccessType type)
+static bool NODELETE forInBy(AccessCase::AccessType type)
 {
     switch (type) {
     case AccessCase::Load:
@@ -493,7 +493,7 @@ static bool forInBy(AccessCase::AccessType type)
 }
 
 #if CPU(ADDRESS64)
-static bool isStateless(AccessCase::AccessType type)
+static bool NODELETE isStateless(AccessCase::AccessType type)
 {
     switch (type) {
     case AccessCase::Load:
@@ -626,7 +626,7 @@ static bool isStateless(AccessCase::AccessType type)
 }
 #endif
 
-static bool doesJSCalls(AccessCase::AccessType type)
+static bool NODELETE doesJSCalls(AccessCase::AccessType type)
 {
     switch (type) {
     case AccessCase::Getter:
@@ -759,7 +759,7 @@ static bool doesJSCalls(AccessCase::AccessType type)
 }
 
 
-static bool isMegamorphic(AccessCase::AccessType type)
+static bool NODELETE isMegamorphic(AccessCase::AccessType type)
 {
     switch (type) {
     case AccessCase::LoadMegamorphic:
@@ -4529,7 +4529,7 @@ void InlineCacheCompiler::emitIntrinsicGetter(IntrinsicGetterAccessCase& accessC
     RELEASE_ASSERT_NOT_REACHED();
 }
 
-static inline bool canUseMegamorphicPutFastPath(Structure* structure)
+static inline bool NODELETE canUseMegamorphicPutFastPath(Structure* structure)
 {
     while (true) {
         if (structure->hasReadOnlyOrGetterSetterPropertiesExcludingProto() || structure->typeInfo().overridesGetPrototype() || structure->typeInfo().overridesPut() || structure->hasPolyProto())

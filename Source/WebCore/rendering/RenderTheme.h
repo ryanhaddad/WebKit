@@ -439,14 +439,14 @@ private:
 
 public:
     bool NODELETE isWindowActive(const RenderElement&) const;
-    bool isChecked(const RenderElement&) const;
+    bool NODELETE isChecked(const RenderElement&) const;
     bool isIndeterminate(const RenderElement&) const;
     bool isEnabled(const RenderElement&) const;
     bool isFocused(const RenderElement&) const;
     bool isPressed(const RenderElement&) const;
     bool isSpinUpButtonPartPressed(const RenderElement&) const;
     bool isHovered(const RenderElement&) const;
-    bool isSpinUpButtonPartHovered(const RenderElement&) const;
+    bool NODELETE isSpinUpButtonPartHovered(const RenderElement&) const;
     bool isPresenting(const RenderElement&) const;
     bool isReadOnlyControl(const RenderElement&) const;
     bool NODELETE isDefault(const RenderElement&) const;

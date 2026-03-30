@@ -108,7 +108,7 @@ private:
         dataLogLnIf(verboseFixPointLoops, "Iterated ", counter, " times in propagateToFixpoint.");
     }
     
-    bool setPrediction(SpeculatedType prediction)
+    bool NODELETE setPrediction(SpeculatedType prediction)
     {
         ASSERT(m_currentNode->hasResult());
         
@@ -121,14 +121,14 @@ private:
         return m_currentNode->predict(prediction);
     }
     
-    bool mergePrediction(SpeculatedType prediction)
+    bool NODELETE mergePrediction(SpeculatedType prediction)
     {
         ASSERT(m_currentNode->hasResult());
         
         return m_currentNode->predict(prediction);
     }
 
-    bool setTuplePrediction(SpeculatedType prediction, unsigned index)
+    bool NODELETE setTuplePrediction(SpeculatedType prediction, unsigned index)
     {
         ASSERT(index < m_currentNode->tupleSize());
 
@@ -141,7 +141,7 @@ private:
         return mergeSpeculation(speculation, prediction);
     }
 
-    bool mergeTuplePrediction(SpeculatedType prediction, unsigned index)
+    bool NODELETE mergeTuplePrediction(SpeculatedType prediction, unsigned index)
     {
         ASSERT(index < m_currentNode->tupleSize());
 
@@ -159,7 +159,7 @@ private:
         return updatedPrediction;
     }
     
-    SpeculatedType speculatedDoubleTypeForPrediction(SpeculatedType value)
+    SpeculatedType NODELETE speculatedDoubleTypeForPrediction(SpeculatedType value)
     {
         SpeculatedType result = SpecDoubleReal;
         if (value & SpecDoubleImpureNaN)
@@ -171,7 +171,7 @@ private:
         return result;
     }
 
-    SpeculatedType speculatedDoubleTypeForPredictions(SpeculatedType left, SpeculatedType right)
+    SpeculatedType NODELETE speculatedDoubleTypeForPredictions(SpeculatedType left, SpeculatedType right)
     {
         return speculatedDoubleTypeForPrediction(mergeSpeculations(left, right));
     }

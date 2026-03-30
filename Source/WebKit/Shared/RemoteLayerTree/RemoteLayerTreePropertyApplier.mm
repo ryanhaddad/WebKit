@@ -257,7 +257,7 @@ static MTCoreMaterialVisualStyleCategory materialVisualStyleCategoryForAppleVisu
 
 #if HAVE(MATERIAL_HOSTING)
 
-static WKHostedMaterialEffectType hostedMaterialEffectTypeForAppleVisualEffect(AppleVisualEffect effect)
+static WKHostedMaterialEffectType NODELETE hostedMaterialEffectTypeForAppleVisualEffect(AppleVisualEffect effect)
 {
     switch (effect) {
     case AppleVisualEffect::GlassMaterial:
@@ -289,7 +289,7 @@ static WKHostedMaterialEffectType hostedMaterialEffectTypeForAppleVisualEffect(A
     }
 }
 
-static WKHostedMaterialColorScheme hostedMaterialColorSchemeForAppleVisualEffectData(const AppleVisualEffectData& data)
+static WKHostedMaterialColorScheme NODELETE hostedMaterialColorSchemeForAppleVisualEffectData(const AppleVisualEffectData& data)
 {
     switch (data.colorScheme) {
     case AppleVisualEffectData::ColorScheme::Light:

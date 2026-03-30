@@ -194,12 +194,12 @@ public:
     }
 
     template<typename T>
-    static IntRange top()
+    static IntRange NODELETE top()
     {
         return IntRange(std::numeric_limits<T>::min(), std::numeric_limits<T>::max());
     }
 
-    static IntRange top(Type type)
+    static IntRange NODELETE top(Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -213,7 +213,7 @@ public:
     }
 
     template<typename T>
-    static IntRange rangeForMask(T mask)
+    static IntRange NODELETE rangeForMask(T mask)
     {
         if (mask == static_cast<T>(-1))
             return top<T>();
@@ -224,7 +224,7 @@ public:
         return IntRange(0, mask);
     }
 
-    static IntRange rangeForMask(int64_t mask, Type type)
+    static IntRange NODELETE rangeForMask(int64_t mask, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -238,7 +238,7 @@ public:
     }
 
     template<typename T>
-    static IntRange rangeForZShr(int32_t shiftAmount)
+    static IntRange NODELETE rangeForZShr(int32_t shiftAmount)
     {
         std::make_unsigned_t<T> mask = 0;
         mask--;
@@ -246,7 +246,7 @@ public:
         return rangeForMask<T>(static_cast<T>(mask));
     }
 
-    static IntRange rangeForZShr(int32_t shiftAmount, Type type)
+    static IntRange NODELETE rangeForZShr(int32_t shiftAmount, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -259,8 +259,8 @@ public:
         }
     }
 
-    int64_t min() const { return m_min; }
-    int64_t max() const { return m_max; }
+    int64_t NODELETE min() const { return m_min; }
+    int64_t NODELETE max() const { return m_max; }
 
     void dump(PrintStream& out) const
     {
@@ -268,7 +268,7 @@ public:
     }
 
     template<typename T>
-    bool couldOverflowAdd(const IntRange& other)
+    bool NODELETE couldOverflowAdd(const IntRange& other)
     {
         return sumOverflows<T>(m_min, other.m_min)
             || sumOverflows<T>(m_min, other.m_max)
@@ -276,7 +276,7 @@ public:
             || sumOverflows<T>(m_max, other.m_max);
     }
 
-    bool couldOverflowAdd(const IntRange& other, Type type)
+    bool NODELETE couldOverflowAdd(const IntRange& other, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -289,7 +289,7 @@ public:
     }
 
     template<typename T>
-    bool couldOverflowSub(const IntRange& other)
+    bool NODELETE couldOverflowSub(const IntRange& other)
     {
         return differenceOverflows<T>(m_min, other.m_min)
             || differenceOverflows<T>(m_min, other.m_max)
@@ -297,7 +297,7 @@ public:
             || differenceOverflows<T>(m_max, other.m_max);
     }
 
-    bool couldOverflowSub(const IntRange& other, Type type)
+    bool NODELETE couldOverflowSub(const IntRange& other, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -310,7 +310,7 @@ public:
     }
 
     template<typename T>
-    bool couldOverflowMul(const IntRange& other)
+    bool NODELETE couldOverflowMul(const IntRange& other)
     {
         return productOverflows<T>(m_min, other.m_min)
             || productOverflows<T>(m_min, other.m_max)
@@ -318,7 +318,7 @@ public:
             || productOverflows<T>(m_max, other.m_max);
     }
 
-    bool couldOverflowMul(const IntRange& other, Type type)
+    bool NODELETE couldOverflowMul(const IntRange& other, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -331,7 +331,7 @@ public:
     }
 
     template<typename T>
-    IntRange shl(int32_t shiftAmount)
+    IntRange NODELETE shl(int32_t shiftAmount)
     {
         T newMin = static_cast<T>(m_min) << static_cast<T>(shiftAmount);
         T newMax = static_cast<T>(m_max) << static_cast<T>(shiftAmount);
@@ -345,7 +345,7 @@ public:
         return IntRange(newMin, newMax);
     }
 
-    IntRange shl(int32_t shiftAmount, Type type)
+    IntRange NODELETE shl(int32_t shiftAmount, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -359,7 +359,7 @@ public:
     }
 
     template<typename T>
-    IntRange sShr(int32_t shiftAmount)
+    IntRange NODELETE sShr(int32_t shiftAmount)
     {
         T newMin = static_cast<T>(m_min) >> static_cast<T>(shiftAmount);
         T newMax = static_cast<T>(m_max) >> static_cast<T>(shiftAmount);
@@ -367,7 +367,7 @@ public:
         return IntRange(newMin, newMax);
     }
 
-    IntRange sShr(int32_t shiftAmount, Type type)
+    IntRange NODELETE sShr(int32_t shiftAmount, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -381,7 +381,7 @@ public:
     }
 
     template<typename T>
-    IntRange zShr(int32_t shiftAmount)
+    IntRange NODELETE zShr(int32_t shiftAmount)
     {
         // This is an awkward corner case for all of the other logic.
         if (!shiftAmount)
@@ -400,7 +400,7 @@ public:
         return IntRange(newMin, newMax);
     }
 
-    IntRange zShr(int32_t shiftAmount, Type type)
+    IntRange NODELETE zShr(int32_t shiftAmount, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -414,14 +414,14 @@ public:
     }
 
     template<typename T>
-    IntRange add(const IntRange& other)
+    IntRange NODELETE add(const IntRange& other)
     {
         if (couldOverflowAdd<T>(other))
             return top<T>();
         return IntRange(m_min + other.m_min, m_max + other.m_max);
     }
 
-    IntRange add(const IntRange& other, Type type)
+    IntRange NODELETE add(const IntRange& other, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -435,14 +435,14 @@ public:
     }
 
     template<typename T>
-    IntRange sub(const IntRange& other)
+    IntRange NODELETE sub(const IntRange& other)
     {
         if (couldOverflowSub<T>(other))
             return top<T>();
         return IntRange(m_min - other.m_max, m_max - other.m_min);
     }
 
-    IntRange sub(const IntRange& other, Type type)
+    IntRange NODELETE sub(const IntRange& other, Type type)
     {
         switch (type.kind()) {
         case Int32:
@@ -483,7 +483,7 @@ public:
     }
 
     template<typename T>
-    IntRange sExt()
+    IntRange NODELETE sExt()
     {
         ASSERT(m_min >= INT32_MIN);
         ASSERT(m_max <= INT32_MAX);
@@ -537,7 +537,7 @@ public:
         return top<T>();
     }
 
-    IntRange zExt32()
+    IntRange NODELETE zExt32()
     {
         ASSERT(m_min >= INT32_MIN);
         ASSERT(m_max <= INT32_MAX);

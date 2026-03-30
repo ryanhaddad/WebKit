@@ -523,10 +523,10 @@ Ref<CSSValue> makePrimitiveCSSValue(const WTF::AtomString&);
 Ref<CSSValue> makePrimitiveCSSValue(const WTF::String&);
 Ref<CSSValue> makeFunctionCSSValue(CSSValueID, Ref<CSSValue>&&);
 
-template<SerializationSeparatorType> Ref<CSSValue> makeCoalescingPairCSSValue(Ref<CSSValue>&&, Ref<CSSValue>&&);
+template<SerializationSeparatorType> Ref<CSSValue> NODELETE makeCoalescingPairCSSValue(Ref<CSSValue>&&, Ref<CSSValue>&&);
 template<> Ref<CSSValue> makeCoalescingPairCSSValue<SerializationSeparatorType::Space>(Ref<CSSValue>&&, Ref<CSSValue>&&);
 
-template<SerializationSeparatorType> Ref<CSSValue> makeCoalescingQuadCSSValue(Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&);
+template<SerializationSeparatorType> Ref<CSSValue> NODELETE makeCoalescingQuadCSSValue(Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&);
 template<> Ref<CSSValue> makeCoalescingQuadCSSValue<SerializationSeparatorType::Space>(Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&, Ref<CSSValue>&&);
 
 template<SerializationSeparatorType> Ref<CSSValue> makeListCSSValue(CSSValueListBuilder&&);

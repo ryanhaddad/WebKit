@@ -1238,7 +1238,7 @@ void JSObject::notifyPresenceOfIndexedAccessors(VM& vm)
     globalObject->haveABadTime(vm);
 }
 
-static inline size_t nextLength(size_t length)
+static inline size_t NODELETE nextLength(size_t length)
 {
     return length + length / 2;
 }

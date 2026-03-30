@@ -139,7 +139,7 @@ public:
     // The following functions are used when the render tree hierarchy changes to make sure layers get
     // properly added and removed. Since containership can be implemented by any subclass, and since a hierarchy
     // can contain a mixture of boxes and other object types, these functions need to be in the base class.
-    RenderLayer* layerParent() const;
+    RenderLayer* NODELETE layerParent() const;
     RenderLayer* layerNextSibling(RenderLayer& parentLayer) const;
     void removeLayers();
     void moveLayers(RenderLayer& newParent);
@@ -407,7 +407,7 @@ private:
 
     inline bool mayContainOutOfFlowPositionedObjects(const RenderStyle* styleToUse = nullptr) const; // Defined in RenderElementStyleInlines.h.
 
-    RenderElement* rendererForPseudoStyleAcrossShadowBoundary() const;
+    RenderElement* NODELETE rendererForPseudoStyleAcrossShadowBoundary() const;
 
     // Called when an object that was floating or positioned becomes a normal flow object
     // again.  We have to make sure the render tree updates as needed to accommodate the new

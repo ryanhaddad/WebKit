@@ -441,7 +441,7 @@ static size_t NODELETE vertexFormatSize(WGPUVertexFormat vertexFormat)
     }
 }
 
-static MTLVertexStepFunction stepFunction(WGPUVertexStepMode stepMode, auto arrayStride)
+static MTLVertexStepFunction NODELETE stepFunction(WGPUVertexStepMode stepMode, auto arrayStride)
 {
     if (!arrayStride)
         return MTLVertexStepFunctionConstant;

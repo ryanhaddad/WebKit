@@ -85,7 +85,7 @@ RenderPtr<RenderElement> TextControlInnerContainer::createElementRenderer(Render
     return createRenderer<RenderTextControlInnerContainer>(*this, WTF::move(style));
 }
 
-static inline bool isStrongPasswordTextField(const Element* element)
+static inline bool NODELETE isStrongPasswordTextField(const Element* element)
 {
     auto* inputElement = dynamicDowncast<HTMLInputElement>(element);
     return inputElement && inputElement->hasAutofillStrongPasswordButton();

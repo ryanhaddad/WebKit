@@ -212,7 +212,7 @@ public:
     static bool putInlineForJSObject(JSCell*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&);
     
     JS_EXPORT_PRIVATE static bool put(JSCell*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&);
-    static bool mightBeSpecialProperty(VM&, JSType, UniquedStringImpl*);
+    static bool NODELETE mightBeSpecialProperty(VM&, JSType, UniquedStringImpl*);
     JS_EXPORT_PRIVATE NEVER_INLINE static bool definePropertyOnReceiver(JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&);
     // putByIndex assumes that the receiver is this JSCell object.
     JS_EXPORT_PRIVATE static bool putByIndex(JSCell*, JSGlobalObject*, unsigned propertyName, JSValue, bool shouldThrow);
@@ -625,7 +625,7 @@ public:
     static constexpr unsigned maximumPrototypeChainDepth = 40000;
     JS_EXPORT_PRIVATE void getPropertyNames(JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
     JS_EXPORT_PRIVATE static void getOwnPropertyNames(JSObject*, JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
-    JS_EXPORT_PRIVATE static void getOwnSpecialPropertyNames(JSObject*, JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
+    JS_EXPORT_PRIVATE static void NODELETE getOwnSpecialPropertyNames(JSObject*, JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
     JS_EXPORT_PRIVATE void getOwnIndexedPropertyNames(JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
     JS_EXPORT_PRIVATE void getOwnNonIndexPropertyNames(JSGlobalObject*, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
     void getNonReifiedStaticPropertyNames(VM&, PropertyNameArrayBuilder&, DontEnumPropertiesMode);
@@ -775,15 +775,15 @@ public:
     JS_EXPORT_PRIVATE void seal(VM&);
     JS_EXPORT_PRIVATE void freeze(VM&);
     JS_EXPORT_PRIVATE static bool preventExtensions(JSObject*, JSGlobalObject*);
-    JS_EXPORT_PRIVATE static bool isExtensible(JSObject*, JSGlobalObject*);
+    JS_EXPORT_PRIVATE static bool NODELETE isExtensible(JSObject*, JSGlobalObject*);
     bool isSealed(VM& vm) { return structure()->isSealed(vm); }
     bool isFrozen(VM& vm) { return structure()->isFrozen(vm); }
 
-    JS_EXPORT_PRIVATE bool anyObjectInChainMayInterceptIndexedAccesses() const;
-    bool needsSlowPutIndexing() const;
+    JS_EXPORT_PRIVATE bool NODELETE anyObjectInChainMayInterceptIndexedAccesses() const;
+    bool NODELETE needsSlowPutIndexing() const;
 
 private:
-    TransitionKind suggestedArrayStorageTransition() const;
+    TransitionKind NODELETE suggestedArrayStorageTransition() const;
 public:
     // You should only call isStructureExtensible() when:
     // - Performing this check in a way that isn't described in the specification 
@@ -1032,7 +1032,7 @@ protected:
     bool putByIndexBeyondVectorLengthWithArrayStorage(JSGlobalObject*, unsigned propertyName, JSValue, bool shouldThrow, ArrayStorage*);
 
     bool increaseVectorLength(VM&, unsigned newLength);
-    void deallocateSparseIndexMap();
+    void NODELETE deallocateSparseIndexMap();
     bool defineOwnIndexedProperty(JSGlobalObject*, unsigned, const PropertyDescriptor&, bool throwException);
     SparseArrayValueMap* allocateSparseIndexMap(VM&);
         
@@ -1062,7 +1062,7 @@ protected:
     void reallocateAndShrinkButterfly(VM&, unsigned length);
     
     template<IndexingType indexingShape>
-    unsigned countElements(Butterfly*);
+    unsigned NODELETE countElements(Butterfly*);
         
     // This is relevant to undecided, int32, double, and contiguous.
     unsigned countElements();

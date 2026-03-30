@@ -47,7 +47,7 @@ static void moveAllChildrenToInternal(RenderBoxModelObject& from, RenderElement&
         newParent.attachRendererInternal(from.detachRendererInternal(*from.firstChild()), &from);
 }
 
-static bool canDropAnonymousBlock(const RenderBlock& anonymousBlock)
+static bool NODELETE canDropAnonymousBlock(const RenderBlock& anonymousBlock)
 {
     if (anonymousBlock.beingDestroyed())
         return false;

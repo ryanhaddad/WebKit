@@ -4054,7 +4054,7 @@ static bool NODELETE hasSimpleStaticPositionForInlineLevelOutOfFlowChildrenBySty
     return true;
 }
 
-static void setFullRepaintOnParentInlineBoxLayerIfNeeded(const RenderText& renderer)
+static void NODELETE setFullRepaintOnParentInlineBoxLayerIfNeeded(const RenderText& renderer)
 {
     // Repaints (on self) are normally issued either during layout using LayoutRepainter inside ::layout() functions (#1)
     // or after layout, while recursing the layer tree (#2).
@@ -4387,7 +4387,7 @@ static inline bool isVisibleRenderText(const RenderObject& renderer)
     return !renderText->linesBoundingBox().isEmpty() && !renderText->text().containsOnly<isASCIIWhitespace>();
 }
 
-static inline bool resizeTextPermitted(const RenderObject& renderer)
+static inline bool NODELETE resizeTextPermitted(const RenderObject& renderer)
 {
     // We disallow resizing for text input fields and textarea to address <rdar://problem/5792987> and <rdar://problem/8021123>
     for (auto* ancestor = renderer.parent(); ancestor; ancestor = ancestor->parent()) {

@@ -83,8 +83,8 @@ public:
     void startLoadingDynamicSheet();
 
     StyleSheetContents* NODELETE rootStyleSheet() const;
-    Node* singleOwnerNode() const;
-    Document* singleOwnerDocument() const;
+    Node* NODELETE singleOwnerNode() const;
+    Document* NODELETE singleOwnerDocument() const;
 
     ASCIILiteral charset() const { return m_parserContext.charset; }
 
@@ -131,7 +131,7 @@ public:
 
     bool usesStyleBasedEditability() const { return m_usesStyleBasedEditability; }
 
-    unsigned estimatedSizeInBytes() const;
+    unsigned NODELETE estimatedSizeInBytes() const;
     
     bool wrapperInsertRule(Ref<StyleRuleBase>&&, unsigned index);
     bool wrapperDeleteRule(unsigned index);

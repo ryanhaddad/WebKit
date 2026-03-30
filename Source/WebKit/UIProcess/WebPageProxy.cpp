@@ -540,7 +540,7 @@ private:
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(StorageRequests);
 
-StorageRequests& StorageRequests::singleton()
+StorageRequests& NODELETE StorageRequests::singleton()
 {
     static NeverDestroyed<StorageRequests> requests;
     return requests;

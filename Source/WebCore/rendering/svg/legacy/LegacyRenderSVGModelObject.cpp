@@ -181,7 +181,7 @@ static void getElementCTM(SVGElement* element, AffineTransform& transform)
 
 // FloatRect::intersects does not consider horizontal or vertical lines (because of isEmpty()).
 // So special-case handling of such lines.
-static bool intersectsAllowingEmpty(const FloatRect& r, const FloatRect& other)
+static bool NODELETE intersectsAllowingEmpty(const FloatRect& r, const FloatRect& other)
 {
     if (r.isEmpty() && other.isEmpty())
         return false;

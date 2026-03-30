@@ -233,7 +233,7 @@ public:
     virtual RefPtr<FontLoadRequest> fontLoadRequest(const String& url, bool isSVG, bool isInitiatingElementInUserAgentShadowTree, LoadedFromOpaqueSource);
     virtual void beginLoadingFontSoon(FontLoadRequest&) { }
 
-    WEBCORE_EXPORT static void setCrossOriginMode(CrossOriginMode);
+    WEBCORE_EXPORT static void NODELETE setCrossOriginMode(CrossOriginMode);
     static CrossOriginMode NODELETE crossOriginMode();
 
     WEBCORE_EXPORT void NODELETE ref();

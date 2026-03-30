@@ -115,7 +115,7 @@ static FloatSize NODELETE deltaAlignedToDominantAxis(FloatSize delta)
     return deltaAlignedToAxis(delta, dominantAxis);
 }
 
-static std::optional<BoxSide> affectedSideOnDominantAxis(FloatSize delta)
+static std::optional<BoxSide> NODELETE affectedSideOnDominantAxis(FloatSize delta)
 {
     auto dominantAxis = dominantAxisFavoringVertical(delta);
     return ScrollableArea::targetSideForScrollDelta(delta, dominantAxis);

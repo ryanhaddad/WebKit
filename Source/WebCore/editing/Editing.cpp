@@ -554,7 +554,7 @@ RefPtr<Node> highestEnclosingNodeOfType(const Position& position, bool (*nodeIsO
     return highest;
 }
 
-static bool hasARenderedDescendant(Node* node, Node* excludedNode)
+static bool NODELETE hasARenderedDescendant(Node* node, Node* excludedNode)
 {
     for (auto* n = node->firstChild(); n;) {
         if (n == excludedNode) {

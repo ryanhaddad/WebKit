@@ -61,7 +61,7 @@ public:
     bool isOrderedList() const final;
     bool isDescriptionList() const final;
     bool isMultiSelectable() const override;
-    bool isNativeImage() const;
+    bool NODELETE isNativeImage() const;
     bool isNativeTextControl() const final;
     bool isSecureField() const final;
     bool isSearchField() const final;

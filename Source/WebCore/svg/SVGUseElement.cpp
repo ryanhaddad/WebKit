@@ -258,7 +258,7 @@ static inline bool NODELETE isDisallowedElement(const SVGElement& element)
     return true;
 }
 
-static inline bool isDisallowedElement(const Element& element)
+static inline bool NODELETE isDisallowedElement(const Element& element)
 {
     auto* svgElement = dynamicDowncast<SVGElement>(element);
     return !svgElement || isDisallowedElement(*svgElement);

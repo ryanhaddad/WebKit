@@ -191,7 +191,7 @@ static OSStatus readProc(void* clientData, SInt64 position, UInt32 requestCount,
     return noErr;
 }
 
-static SInt64 getSizeProc(void* clientData)
+static SInt64 NODELETE getSizeProc(void* clientData)
 {
     return static_cast<std::span<const uint8_t>*>(clientData)->size();
 }
@@ -569,7 +569,7 @@ static OSStatus passthroughInputDataCallback(AudioConverterRef, UInt32* numDataP
     return noErr;
 }
 
-static UInt32 SMPTEEquivalentLayout(UInt32 layout)
+static UInt32 NODELETE SMPTEEquivalentLayout(UInt32 layout)
 {
     // https://webaudio.github.io/web-audio-api/#ChannelOrdering
     // WebAudio API requires SMPTE channel ordering. However webkit has been returning

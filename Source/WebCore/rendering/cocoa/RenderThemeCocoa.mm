@@ -108,12 +108,12 @@ static constexpr auto switchCornerRadiusFraction = 0.f;
 
 #if ENABLE(FORM_CONTROL_REFRESH)
 
-static bool formControlRefreshEnabled(const RenderObject& renderer)
+static bool NODELETE formControlRefreshEnabled(const RenderObject& renderer)
 {
     return renderer.settings().formControlRefreshEnabled();
 }
 
-static bool formControlRefreshEnabled(const Element* element)
+static bool NODELETE formControlRefreshEnabled(const Element* element)
 {
     if (!element)
         return false;
@@ -1871,7 +1871,7 @@ static constexpr auto searchFieldDecorationWithDropdownEmSizeLTR = 1.5f;
 static constexpr auto searchFieldDecorationWithDropdownEmSizeRTL = 1.7f;
 #endif
 
-static bool searchFieldCanBeCapsule(const RenderElement& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
+static bool NODELETE searchFieldCanBeCapsule(const RenderElement& box, const FloatRect& rect, float pixelsPerEm, bool supportsResults)
 {
     // Depending on dimensions and styles, it might not be possible to make the control
     // capsule-shaped in a reasonable manner, or it may look especially strange with a
@@ -2570,7 +2570,7 @@ static PathWithSize spinButtonIndicatorPath(ControlSize controlSize)
     }
 }
 
-static float spinButtonDividerWidthRatioForControlSize(ControlSize controlSize)
+static float NODELETE spinButtonDividerWidthRatioForControlSize(ControlSize controlSize)
 {
     switch (controlSize) {
     case ControlSize::Micro:
@@ -2587,7 +2587,7 @@ static float spinButtonDividerWidthRatioForControlSize(ControlSize controlSize)
     }
 }
 
-static ControlSize spinButtonControlSizeForHeight(float size)
+static ControlSize NODELETE spinButtonControlSizeForHeight(float size)
 {
     if (size < 16)
         return ControlSize::Micro;
@@ -2603,7 +2603,7 @@ static ControlSize spinButtonControlSizeForHeight(float size)
     return ControlSize::ExtraLarge;
 }
 
-static float spinButtonIndicatorWidthRatio(ControlSize controlSize)
+static float NODELETE spinButtonIndicatorWidthRatio(ControlSize controlSize)
 {
     switch (controlSize) {
     case ControlSize::Micro:
@@ -2865,7 +2865,7 @@ bool RenderThemeCocoa::adjustTextFieldStyleForVectorBasedControls(RenderStyle& s
     return true;
 }
 
-static ControlSize listButtonControlSizeForBlockSize(float size)
+static ControlSize NODELETE listButtonControlSizeForBlockSize(float size)
 {
     if (size < 9)
         return ControlSize::Micro;
@@ -2881,7 +2881,7 @@ static ControlSize listButtonControlSizeForBlockSize(float size)
     return ControlSize::ExtraLarge;
 }
 
-static FloatSize listButtonIndicatorSize(ControlSize controlSize)
+static FloatSize NODELETE listButtonIndicatorSize(ControlSize controlSize)
 {
     switch (controlSize) {
     case ControlSize::Micro:
@@ -2897,7 +2897,7 @@ static FloatSize listButtonIndicatorSize(ControlSize controlSize)
 }
 
 #if PLATFORM(MAC)
-static float listButtonCornerRadius(ControlSize controlSize)
+static float NODELETE listButtonCornerRadius(ControlSize controlSize)
 {
     switch (controlSize) {
     case ControlSize::Micro:

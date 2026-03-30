@@ -518,7 +518,7 @@ MacroAssemblerCodeRef<JITThunkPtrTag> wasmFunctionThunkGenerator(VM&)
     return createJSToWasmJITShared();
 }
 
-static size_t trampolineReservedStackSize()
+static size_t NODELETE trampolineReservedStackSize()
 {
     // If we are jumping to the function which can have stack-overflow check,
     // then, trampoline does not need to do the check again if it is smaller than a threshold.

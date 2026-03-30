@@ -821,7 +821,7 @@ static bool eventTargetIsPlatformWidget(Element* eventTarget)
     return widget && widget->platformWidget();
 }
 
-static WeakPtr<ScrollableArea> scrollableAreaForContainerNode(ContainerNode& container)
+static WeakPtr<ScrollableArea> NODELETE scrollableAreaForContainerNode(ContainerNode& container)
 {
     auto* box = container.renderBox();
     if (!box)

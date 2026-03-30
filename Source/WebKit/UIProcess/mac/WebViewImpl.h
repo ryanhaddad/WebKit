@@ -315,7 +315,7 @@ public:
     bool NODELETE automaticallyAdjustsContentInsets() const;
     void updateContentInsetsIfAutomatic();
     void setObscuredContentInsets(const WebCore::FloatBoxExtent&);
-    WebCore::FloatBoxExtent obscuredContentInsets() const;
+    WebCore::FloatBoxExtent NODELETE obscuredContentInsets() const;
     void flushPendingObscuredContentInsetChanges();
 
     void prepareContentInRect(CGRect);

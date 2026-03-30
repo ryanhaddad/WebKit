@@ -39,7 +39,7 @@
 
 namespace WebCore {
 
-static inline const RenderObject* rendererFromPosition(const Position& position)
+static inline const RenderObject* NODELETE rendererFromPosition(const Position& position)
 {
     ASSERT(position.isNotNull());
     Node* rendererNode = nullptr;

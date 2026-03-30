@@ -619,7 +619,7 @@ static CharacterToGlyphMapping buildCharacterToGlyphMapping(const GlyphBuffer& g
     return mapping;
 }
 
-static void applyHorizontalGlyphStretch(GlyphBuffer& glyphBuffer, unsigned glyphBufferStartIndex, const TextRun& run)
+static void NODELETE applyHorizontalGlyphStretch(GlyphBuffer& glyphBuffer, unsigned glyphBufferStartIndex, const TextRun& run)
 {
     if (run.horizontalGlyphStretch() == 1)
         return;

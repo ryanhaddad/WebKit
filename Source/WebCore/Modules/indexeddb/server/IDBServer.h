@@ -82,7 +82,7 @@ public:
     WEBCORE_EXPORT void iterateCursor(const IDBRequestData&, const IDBIterateCursorData&);
 
     WEBCORE_EXPORT void establishTransaction(IDBDatabaseConnectionIdentifier, const IDBTransactionInfo&);
-    WEBCORE_EXPORT void databaseConnectionPendingClose(IDBDatabaseConnectionIdentifier);
+    WEBCORE_EXPORT void NODELETE databaseConnectionPendingClose(IDBDatabaseConnectionIdentifier);
     WEBCORE_EXPORT void databaseConnectionClosed(IDBDatabaseConnectionIdentifier);
     WEBCORE_EXPORT void abortOpenAndUpgradeNeeded(IDBDatabaseConnectionIdentifier, const std::optional<IDBResourceIdentifier>& transactionIdentifier);
     WEBCORE_EXPORT void didFireVersionChangeEvent(IDBDatabaseConnectionIdentifier, const IDBResourceIdentifier& requestIdentifier, IndexedDB::ConnectionClosedOnBehalfOfServer);

@@ -1351,7 +1351,7 @@ public:
 #endif
 
 #if PLATFORM(COCOA)
-    const String& presentingApplicationBundleIdentifier() const LIFETIME_BOUND;
+    const String& NODELETE presentingApplicationBundleIdentifier() const LIFETIME_BOUND;
     WEBCORE_EXPORT void setPresentingApplicationBundleIdentifier(String&&);
 #endif
 

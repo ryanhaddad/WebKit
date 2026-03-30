@@ -311,7 +311,7 @@ public:
     RenderBox& NODELETE gridItem() const { return m_gridItem; }
     GridSpan NODELETE span() const { return m_span; }
 
-    bool operator<(const GridItemWithSpan other) const { return m_span.integerSpan() < other.m_span.integerSpan(); }
+    bool NODELETE operator<(const GridItemWithSpan other) const { return m_span.integerSpan() < other.m_span.integerSpan(); }
 
 private:
     std::reference_wrapper<RenderBox> m_gridItem;

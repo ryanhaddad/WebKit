@@ -193,7 +193,7 @@ bool BitStack::top() const
 // --------
 
 // This function is like Range::pastLastNode, except for the fact that it can climb up out of shadow trees.
-static RefPtr<Node> nextInPreOrderCrossingShadowBoundaries(Node& rangeEndContainer, int rangeEndOffset)
+static RefPtr<Node> NODELETE nextInPreOrderCrossingShadowBoundaries(Node& rangeEndContainer, int rangeEndOffset)
 {
     if (rangeEndOffset >= 0 && !rangeEndContainer.isCharacterDataNode()) {
         if (auto* next = rangeEndContainer.traverseToChildAt(rangeEndOffset))
@@ -437,7 +437,7 @@ static inline Node* NODELETE parentNodeOrShadowHost(TextIteratorBehaviors option
     return node.parentOrShadowHostNode();
 }
 
-static inline bool hasDisplayContents(Node& node)
+static inline bool NODELETE hasDisplayContents(Node& node)
 {
     auto* element = dynamicDowncast<Element>(node);
     return element && element->hasDisplayContents();
@@ -963,7 +963,7 @@ static bool shouldEmitNewlineAfterNode(Node& node, bool emitsCharactersBetweenAl
     return false;
 }
 
-static bool shouldEmitNewlineBeforeNode(Node& node)
+static bool NODELETE shouldEmitNewlineBeforeNode(Node& node)
 {
     return shouldEmitNewlinesBeforeAndAfterNode(node); 
 }
@@ -1779,7 +1779,7 @@ inline size_t SearchBuffer::append(StringView text)
     return usableLength;
 }
 
-inline bool SearchBuffer::needsMoreContext() const
+inline bool NODELETE SearchBuffer::needsMoreContext() const
 {
     return m_needsMoreContext;
 }
@@ -1813,7 +1813,7 @@ inline bool SearchBuffer::atBreak() const
     return m_atBreak;
 }
 
-inline void SearchBuffer::reachedBreak()
+inline void NODELETE SearchBuffer::reachedBreak()
 {
     m_atBreak = true;
 }

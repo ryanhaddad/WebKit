@@ -135,7 +135,7 @@ JSC_DEFINE_HOST_FUNCTION(typedArrayViewPrivateFuncIsResizableOrGrowableSharedTyp
     return JSValue::encode(jsBoolean(jsCast<JSArrayBufferView*>(value)->isResizableOrGrowableShared()));
 }
 
-static inline std::optional<JSType> isTypedArrayViewConstructor(JSValue value)
+static inline std::optional<JSType> NODELETE isTypedArrayViewConstructor(JSValue value)
 {
     if (!value.isCell()) [[unlikely]]
         return std::nullopt;

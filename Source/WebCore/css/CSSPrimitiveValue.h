@@ -55,7 +55,7 @@ public:
     template<CSS::FrequencyUnit, typename T = double> static T computeFrequency(CSSUnitType, T frequency);
     template<CSS::ResolutionUnit, typename T = double> static T computeResolution(CSSUnitType, T resolution);
 
-    // FIXME: Some of these use primitiveUnitType() and some use primitiveType(). Many that use primitiveUnitType() are likely broken with calc().
+    // FIXME: Some of these use primitiveUnitType() and some use NODELETE primitiveType(). Many that use primitiveUnitType() are likely broken with calc().
     bool isAngle() const { return unitCategory(primitiveType()) == CSSUnitCategory::Angle; }
     bool isAttr() const { return primitiveUnitType() == CSSUnitType::CSS_ATTR; }
     bool isFontIndependentLength() const { return isFontIndependentLength(primitiveUnitType()); }
@@ -82,7 +82,7 @@ public:
     bool isContainerPercentageLength() const { return isContainerPercentageLength(primitiveUnitType()); }
     bool isFlex() const { return primitiveType() == CSSUnitType::CSS_FR; }
 
-    bool conversionToCanonicalUnitRequiresConversionData() const;
+    bool NODELETE conversionToCanonicalUnitRequiresConversionData() const;
 
     static Ref<CSSPrimitiveValue> create(double);
     static Ref<CSSPrimitiveValue> create(double, CSSUnitType);
@@ -223,7 +223,7 @@ private:
     double doubleValueNoConversionDataRequired() const { ASSERT(!isCalculated()); return m_value.number; }
     double doubleValueDeprecated() const;
     double doubleValueDividingBy100IfPercentage(const CSSToLengthConversionData&) const;
-    double doubleValueDividingBy100IfPercentageNoConversionDataRequired() const;
+    double NODELETE doubleValueDividingBy100IfPercentageNoConversionDataRequired() const;
     double doubleValueDividingBy100IfPercentageDeprecated() const;
     template<typename T = double> inline T valueDeprecated() const { return clampTo<T>(doubleValueDeprecated()); }
 

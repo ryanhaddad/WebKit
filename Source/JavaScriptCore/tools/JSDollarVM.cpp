@@ -148,7 +148,7 @@ class JSDollarVMCallFrame : public JSNonFinalObject {
     using Base = JSNonFinalObject;
 public:
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -238,12 +238,12 @@ public:
 
     typedef JSNonFinalObject Base;
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
 
-    Root* root() const { return m_root.get(); }
+    Root* NODELETE root() const { return m_root.get(); }
     void setRoot(VM& vm, Root* root) { m_root.set(vm, this, root); }
 
     static Element* create(VM& vm, JSGlobalObject* globalObject, Root* root)
@@ -304,7 +304,7 @@ class Root final : public JSDestructibleObject {
 public:
     using Base = JSDestructibleObject;
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.destructibleObjectSpace();
     }
@@ -315,7 +315,7 @@ public:
         DollarVMAssertScope assertScope;
     }
 
-    Element* element()
+    Element* NODELETE element()
     {
         return m_element.get();
     }
@@ -371,7 +371,7 @@ public:
 
     typedef JSNonFinalObject Base;
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -393,7 +393,7 @@ public:
         return Structure::create(vm, globalObject, prototype, TypeInfo(ObjectType, StructureFlags), info());
     }
 
-    JSValue hiddenValue()
+    JSValue NODELETE hiddenValue()
     {
         return m_hiddenValue.get();
     }
@@ -404,7 +404,7 @@ public:
         m_hiddenValue.set(vm, this, value);
     }
 
-    static CallData getConstructData(JSCell*)
+    static CallData NODELETE getConstructData(JSCell*)
     {
         CallData constructData;
         constructData.type = CallData::Type::Native;
@@ -445,7 +445,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags | JSC::GetOwnPropertySlotIsImpure | JSC::OverridesGetOwnPropertySlot;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -527,7 +527,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags | JSC::OverridesGetOwnPropertySlot;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -609,7 +609,7 @@ IGNORE_WARNINGS_BEGIN("unused-const-variable")
 IGNORE_WARNINGS_END
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -627,7 +627,7 @@ IGNORE_WARNINGS_END
 
     ~RuntimeArray() { }
 
-    static void destroy(JSCell* cell)
+    static void NODELETE destroy(JSCell* cell)
     {
         DollarVMAssertScope assertScope;
         static_cast<RuntimeArray*>(cell)->RuntimeArray::~RuntimeArray();
@@ -664,21 +664,21 @@ IGNORE_WARNINGS_END
         return JSObject::getOwnPropertySlotByIndex(thisObject, globalObject, index, slot);
     }
 
-    static NO_RETURN_DUE_TO_CRASH bool put(JSCell*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&)
+    static NO_RETURN_DUE_TO_CRASH bool NODELETE put(JSCell*, JSGlobalObject*, PropertyName, JSValue, PutPropertySlot&)
     {
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    static NO_RETURN_DUE_TO_CRASH bool deleteProperty(JSCell*, JSGlobalObject*, PropertyName, DeletePropertySlot&)
+    static NO_RETURN_DUE_TO_CRASH bool NODELETE deleteProperty(JSCell*, JSGlobalObject*, PropertyName, DeletePropertySlot&)
     {
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    unsigned getLength() const { return m_vector.size(); }
+    unsigned NODELETE getLength() const { return m_vector.size(); }
 
     DECLARE_INFO;
 
-    static ArrayPrototype* createPrototype(VM&, JSGlobalObject* globalObject)
+    static ArrayPrototype* NODELETE createPrototype(VM&, JSGlobalObject* globalObject)
     {
         DollarVMAssertScope assertScope;
         return globalObject->arrayPrototype();
@@ -788,7 +788,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags | HasStaticPropertyTable | OverridesGetOwnPropertySlot;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -885,7 +885,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags | HasStaticPropertyTable;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -921,7 +921,7 @@ public:
     DECLARE_INFO;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -969,7 +969,7 @@ class ObjectDoingSideEffectPutWithoutCorrectSlotStatus : public JSNonFinalObject
     static constexpr unsigned StructureFlags = Base::StructureFlags | OverridesPut | HasStaticPropertyTable;
 public:
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -1020,7 +1020,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -1054,12 +1054,12 @@ public:
         return getter;
     }
 
-    int32_t value() const
+    int32_t NODELETE value() const
     {
         return m_value;
     }
 
-    static constexpr ptrdiff_t offsetOfValue() { return OBJECT_OFFSETOF(DOMJITNode, m_value); }
+    static constexpr ptrdiff_t NODELETE offsetOfValue() { return OBJECT_OFFSETOF(DOMJITNode, m_value); }
 
 private:
     int32_t m_value { 42 };
@@ -1647,8 +1647,8 @@ public:
     Message(ArrayBufferContents&&, int32_t);
     ~Message();
 
-    ArrayBufferContents&& releaseContents() { return WTF::move(m_contents); }
-    int32_t index() const { return m_index; }
+    ArrayBufferContents&& NODELETE releaseContents() { return WTF::move(m_contents); }
+    int32_t NODELETE index() const { return m_index; }
 
 private:
     ArrayBufferContents m_contents;
@@ -1661,7 +1661,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags;
 
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.cellSpace();
     }
@@ -1888,7 +1888,7 @@ const ClassInfo StaticCustomValue::s_info = { "StaticCustomValue"_s, &Base::s_in
 const ClassInfo StaticDontDeleteDontEnum::s_info = { "StaticDontDeleteDontEnum"_s, &Base::s_info, &staticDontDeleteDontEnumTable, nullptr, CREATE_METHOD_TABLE(StaticDontDeleteDontEnum) };
 const ClassInfo ObjectDoingSideEffectPutWithoutCorrectSlotStatus::s_info = { "ObjectDoingSideEffectPutWithoutCorrectSlotStatus"_s, &Base::s_info, &staticCustomAccessorTable, nullptr, CREATE_METHOD_TABLE(ObjectDoingSideEffectPutWithoutCorrectSlotStatus) };
 
-ElementHandleOwner* Element::handleOwner()
+ElementHandleOwner* NODELETE Element::handleOwner()
 {
     DollarVMAssertScope assertScope;
     static ElementHandleOwner* owner = nullptr;
@@ -1914,7 +1914,7 @@ class WasmStreamingParser : public JSDestructibleObject {
 public:
     using Base = JSDestructibleObject;
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.destructibleObjectSpace();
     }
@@ -1957,7 +1957,7 @@ public:
         return Structure::create(vm, globalObject, prototype, TypeInfo(ObjectType, StructureFlags), info());
     }
 
-    Wasm::StreamingParser& streamingParser() { return m_streamingParser; }
+    Wasm::StreamingParser& NODELETE streamingParser() { return m_streamingParser; }
 
     void finishCreation(VM& vm)
     {
@@ -2014,7 +2014,7 @@ class WasmStreamingCompiler : public JSDestructibleObject {
 public:
     using Base = JSDestructibleObject;
     template<typename CellType, SubspaceAccess>
-    static CompleteSubspace* subspaceFor(VM& vm)
+    static CompleteSubspace* NODELETE subspaceFor(VM& vm)
     {
         return &vm.destructibleObjectSpace();
     }
@@ -2043,9 +2043,9 @@ public:
         return Structure::create(vm, globalObject, prototype, TypeInfo(ObjectType, StructureFlags), info());
     }
 
-    Wasm::StreamingCompiler& streamingCompiler() { return m_streamingCompiler.get(); }
+    Wasm::StreamingCompiler& NODELETE streamingCompiler() { return m_streamingCompiler.get(); }
 
-    JSPromise* promise() const { return m_promise.get(); }
+    JSPromise* NODELETE promise() const { return m_promise.get(); }
 
     void finishCreation(VM& vm)
     {
@@ -2509,7 +2509,7 @@ public:
         DollarVMAssertScope assertScope;
     }
 
-    IterationStatus operator()(StackVisitor& visitor) const
+    IterationStatus NODELETE operator()(StackVisitor& visitor) const
     {
         unsigned index = m_currentFrame++;
         // First frame (index 0) is `llintTrue` etc. function itself.
@@ -2521,14 +2521,14 @@ public:
         return IterationStatus::Continue;
     }
     
-    JITType jitType() { return m_jitType; }
+    JITType NODELETE jitType() { return m_jitType; }
 
 private:
     mutable unsigned m_currentFrame { 0 };
     mutable JITType m_jitType { JITType::None };
 };
 
-static FunctionExecutable* getExecutableForFunction(JSValue theFunctionValue)
+static FunctionExecutable* NODELETE getExecutableForFunction(JSValue theFunctionValue)
 {
     DollarVMAssertScope assertScope;
     if (!theFunctionValue.isCell())

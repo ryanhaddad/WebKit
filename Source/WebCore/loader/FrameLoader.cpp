@@ -254,7 +254,7 @@ static bool NODELETE isDocumentSandboxed(LocalFrame& frame, SandboxFlag flag)
     return frame.document() && frame.document()->isSandboxed(flag);
 }
 
-static bool isInVisibleAndActivePage(const LocalFrame& frame)
+static bool NODELETE isInVisibleAndActivePage(const LocalFrame& frame)
 {
     auto* page = frame.page();
     return page && page->isVisibleAndActive();
@@ -3959,7 +3959,7 @@ void FrameLoader::dispatchUnloadEvents(UnloadEventPolicy unloadEventPolicy)
         protect(m_frame->document())->removeAllEventListeners();
 }
 
-static bool shouldAskForNavigationConfirmation(Document& document, const BeforeUnloadEvent& event)
+static bool NODELETE shouldAskForNavigationConfirmation(Document& document, const BeforeUnloadEvent& event)
 {
     // Confirmation dialog should not be displayed when the allow-modals flag is not set.
     if (document.isSandboxed(SandboxFlag::Modals))

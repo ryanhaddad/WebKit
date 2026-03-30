@@ -701,7 +701,7 @@ void RenderTableCell::styleDidChange(Style::Difference diff, const RenderStyle* 
 // (4) If border styles differ only in color, then a style set on a cell wins over one on a row, 
 // which wins over a row group, column, column group and, lastly, table. It is undefined which color 
 // is used when two elements of the same type disagree.
-static bool compareBorders(const CollapsedBorderValue& border1, const CollapsedBorderValue& border2)
+static bool NODELETE compareBorders(const CollapsedBorderValue& border1, const CollapsedBorderValue& border2)
 {
     // Sanity check the values passed in. The null border have lowest priority.
     if (!border2.exists())
@@ -733,7 +733,7 @@ static bool compareBorders(const CollapsedBorderValue& border1, const CollapsedB
     return border1.precedence() < border2.precedence();
 }
 
-static CollapsedBorderValue chooseBorder(const CollapsedBorderValue& border1, const CollapsedBorderValue& border2)
+static CollapsedBorderValue NODELETE chooseBorder(const CollapsedBorderValue& border1, const CollapsedBorderValue& border2)
 {
     const CollapsedBorderValue& border = compareBorders(border1, border2) ? border2 : border1;
     return border.style() == BorderStyle::Hidden ? CollapsedBorderValue() : border;

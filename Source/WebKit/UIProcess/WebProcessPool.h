@@ -374,7 +374,7 @@ public:
         GameControllerFramework,
     };
     size_t numberOfConnectedGamepadsForTesting(GamepadType);
-    void setUsesOnlyHIDGamepadProviderForTesting(bool);
+    void NODELETE setUsesOnlyHIDGamepadProviderForTesting(bool);
 
 #if PLATFORM(COCOA)
     static bool omitPDFSupport();
@@ -646,7 +646,7 @@ private:
     enum class NeedsGlobalStaticInitialization : bool { No, Yes };
     void platformInitialize(NeedsGlobalStaticInitialization);
 
-    RefPtr<WebProcessProxy> webProcessProxyFromConnection(const IPC::Connection&) const;
+    RefPtr<WebProcessProxy> NODELETE webProcessProxyFromConnection(const IPC::Connection&) const;
 
     void platformInitializeWebProcess(const WebProcessProxy&, WebProcessCreationParameters&);
     void platformInvalidateContext();

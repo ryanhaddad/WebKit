@@ -215,7 +215,7 @@ public:
 
     virtual void collectTransceivers(Vector<Ref<RTCRtpTransceiver>>&&) { };
 
-    ScriptExecutionContext* context() const;
+    ScriptExecutionContext* NODELETE context() const;
 
     virtual void suspend() { }
     virtual void resume() { }

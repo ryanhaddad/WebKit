@@ -886,7 +886,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     bool NODELETE parsingFailed() const { return m_parseResult != HTMLFastPathResult::Succeeded; }
 
-    void NODELETE didFail(HTMLFastPathResult result)
+    void didFail(HTMLFastPathResult result)
     {
         if (m_parseResult == HTMLFastPathResult::Succeeded)
             m_parseResult = result;
@@ -983,7 +983,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         return parseSpecificElements<Tags...>(tagName, parent);
     }
 
-    template<void* = nullptr> RefPtr<HTMLElement> parseSpecificElements(ElementName, ContainerNode&)
+    template<void* = nullptr> RefPtr<HTMLElement> NODELETE parseSpecificElements(ElementName, ContainerNode&)
     {
         return didFail(HTMLFastPathResult::FailedParsingSpecificElements, nullptr);
     }

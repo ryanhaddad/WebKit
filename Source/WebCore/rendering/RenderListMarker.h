@@ -64,7 +64,7 @@ public:
 
     bool NODELETE isInside() const;
     bool isDisclosureMarker() const;
-    bool shouldPaintInAssociatedListItemLayer() const;
+    bool NODELETE shouldPaintInAssociatedListItemLayer() const;
 
     void updateInlineMarginsAndContent();
 

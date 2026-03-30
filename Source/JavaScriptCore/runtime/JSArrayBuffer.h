@@ -48,8 +48,8 @@ public:
     
     static Structure* createStructure(VM&, JSGlobalObject*, JSValue prototype);
 
-    JS_EXPORT_PRIVATE bool isShared() const;
-    ArrayBufferSharingMode sharingMode() const;
+    JS_EXPORT_PRIVATE bool NODELETE isShared() const;
+    ArrayBufferSharingMode NODELETE sharingMode() const;
     bool isResizableOrGrowableShared() const { return m_impl->isResizableOrGrowableShared(); }
     
     DECLARE_EXPORT_INFO;

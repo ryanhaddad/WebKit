@@ -207,7 +207,7 @@ protected:
     bool overscrollBehaviorAllowsHorizontalRubberBand() const { return m_scrollableAreaParameters.horizontalOverscrollBehavior != OverscrollBehavior::None; }
     bool overscrollBehaviorAllowsVerticalRubberBand() const { return m_scrollableAreaParameters.verticalOverscrollBehavior != OverscrollBehavior::None; }
 
-    PlatformWheelEvent eventForPropagation(const PlatformWheelEvent&) const;
+    PlatformWheelEvent NODELETE eventForPropagation(const PlatformWheelEvent&) const;
     ScrollPropagationInfo NODELETE computeScrollPropagation(const FloatSize&) const;
     bool overscrollBehaviorAllowsRubberBand() const { return m_scrollableAreaParameters.horizontalOverscrollBehavior != OverscrollBehavior::None ||  m_scrollableAreaParameters.verticalOverscrollBehavior != OverscrollBehavior::None; }
 

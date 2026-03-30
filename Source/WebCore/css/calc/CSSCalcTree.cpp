@@ -271,7 +271,7 @@ template<typename Op> static std::optional<Type> getValidatedTypeFor(const Op&, 
     return std::nullopt;
 }
 
-template<typename Op> static std::optional<Type> mergeTypesFor(const Op&, std::optional<Type> a, std::optional<Type> b)
+template<typename Op> static std::optional<Type> NODELETE mergeTypesFor(const Op&, std::optional<Type> a, std::optional<Type> b)
 {
     return mergeTypes<Op::merge>(a, b);
 }

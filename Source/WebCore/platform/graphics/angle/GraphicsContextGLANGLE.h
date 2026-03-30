@@ -401,7 +401,7 @@ protected:
 #endif
     virtual bool reshapeDrawingBuffer() = 0;
 
-    static void platformReleaseThreadResources();
+    static void NODELETE platformReleaseThreadResources();
 
     virtual void invalidateKnownTextureContent(GCGLuint);
     bool supportsExtensionImpl(ASCIILiteral) const;

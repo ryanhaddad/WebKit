@@ -76,7 +76,7 @@ public:
     WEBCORE_EXPORT void requestUnblockAsync(DecisionHandlerFunction&&, std::optional<URL> requestURL = std::nullopt);
     void wrapWithDecisionHandler(const DecisionHandlerFunction&);
 #if HAVE(WEBCONTENTRESTRICTIONS)
-    WEBCORE_EXPORT bool needsNetworkProcess() const;
+    WEBCORE_EXPORT bool NODELETE needsNetworkProcess() const;
 #endif
 
     const String& unblockURLHost() const LIFETIME_BOUND { return m_unblockURLHost; }

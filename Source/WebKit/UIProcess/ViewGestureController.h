@@ -155,7 +155,7 @@ public:
 
     bool isPhysicallySwipingLeft(SwipeDirection) const;
 
-    double magnification() const;
+    double NODELETE magnification() const;
 
     void prepareMagnificationGesture(WebCore::FloatPoint);
     void applyMagnification();
@@ -250,7 +250,7 @@ private:
 #if ENABLE(BACK_FORWARD_LIST_SWIFT)
     std::optional<WebBackForwardList> NODELETE backForwardListForNavigation() const;
 #else
-    WebBackForwardList* backForwardListForNavigation() const;
+    WebBackForwardList* NODELETE backForwardListForNavigation() const;
 #endif
 #endif
 
@@ -332,7 +332,7 @@ private:
 
     void willEndSwipeGesture(WebBackForwardListItem& targetItem, bool cancelled);
     void endSwipeGesture(WebBackForwardListItem* targetItem, bool cancelled);
-    bool shouldUseSnapshotForSize(ViewSnapshot&, WebCore::FloatSize swipeLayerSize, WebCore::FloatBoxExtent obscuredContentInsets);
+    bool NODELETE shouldUseSnapshotForSize(ViewSnapshot&, WebCore::FloatSize swipeLayerSize, WebCore::FloatBoxExtent obscuredContentInsets);
 
 #if PLATFORM(MAC)
     static double resistanceForDelta(double deltaScale, double currentScale, double minMagnification, double maxMagnification);

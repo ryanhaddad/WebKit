@@ -249,7 +249,7 @@ static size_t NODELETE checkForValidDouble(std::span<const CharacterType> string
 // Returns the number of characters consumed for parsing a valid double
 // terminated by the given terminator character
 template <typename CharacterType>
-static size_t parseDouble(std::span<const CharacterType> string, char terminator, double& value)
+static size_t NODELETE parseDouble(std::span<const CharacterType> string, char terminator, double& value)
 {
     size_t length = checkForValidDouble(string, terminator);
     if (!length)
@@ -485,7 +485,7 @@ static std::optional<SRGBA<uint8_t>> NODELETE finishParsingHexColor(uint32_t val
 }
 
 template<typename CharacterType>
-static std::optional<SRGBA<uint8_t>> parseHexColorInternal(std::span<const CharacterType> characters)
+static std::optional<SRGBA<uint8_t>> NODELETE parseHexColorInternal(std::span<const CharacterType> characters)
 {
     if (characters.size() != 3 && characters.size() != 4 && characters.size() != 6 && characters.size() != 8)
         return std::nullopt;

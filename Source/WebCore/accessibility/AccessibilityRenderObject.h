@@ -225,7 +225,7 @@ private:
 
     bool inheritsPresentationalRole() const override;
 
-    bool shouldGetTextFromNode(const TextUnderElementMode&) const;
+    bool NODELETE shouldGetTextFromNode(const TextUnderElementMode&) const;
 
 #if ENABLE(APPLE_PAY)
     bool NODELETE isApplePayButton() const;

@@ -121,7 +121,7 @@ public:
 
         static Location NODELETE fromGlobal(int32_t globalOffset);
 
-        static Location fromArgumentLocation(ArgumentLocation argLocation, TypeKind type);
+        static Location NODELETE fromArgumentLocation(ArgumentLocation argLocation, TypeKind type);
 
         bool NODELETE isNone() const;
 
@@ -131,7 +131,7 @@ public:
 
         bool NODELETE isFPR() const;
 
-        bool isRegister() const;
+        bool NODELETE isRegister() const;
 
         bool NODELETE isStack() const;
 
@@ -707,7 +707,7 @@ public:
         }
 
         // This function is intentionally not using implicitSlots since arguments and results should not include implicit slot.
-        Location allocateArgumentOrResult(BBQJIT& generator, TypeKind type, unsigned i, RegisterSet& remainingGPRs, RegisterSet& remainingFPRs);
+        Location NODELETE allocateArgumentOrResult(BBQJIT& generator, TypeKind type, unsigned i, RegisterSet& remainingGPRs, RegisterSet& remainingFPRs);
 
         template<typename Stack>
         void flushAtBlockBoundary(BBQJIT& generator, unsigned targetArity, Stack& expressionStack, bool endOfWasmBlock)
@@ -1102,7 +1102,7 @@ public:
 
     PartialResult addLocal(Type type, uint32_t numberOfLocals);
 
-    Value instanceValue();
+    Value NODELETE instanceValue();
 
     // Tables
     [[nodiscard]] PartialResult addTableGet(unsigned tableIndex, Value index, Value& result);
@@ -2069,7 +2069,7 @@ public:
 
     bool NODELETE usesSIMD();
 
-    void notifyFunctionUsesSIMD();
+    void NODELETE notifyFunctionUsesSIMD();
 
     PartialResult addSIMDLoad(ExpressionType, uint32_t, ExpressionType&);
 

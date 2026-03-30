@@ -923,7 +923,7 @@ private:
         return block->appendNew<CCallValue>(m_proc, type, m_origin, Effects::none(), functionAddress, num, den);
     }
 #else
-    Value* callDivModHelper(BasicBlock*, Opcode, Value*, Value*)
+    Value* NODELETE callDivModHelper(BasicBlock*, Opcode, Value*, Value*)
     {
         RELEASE_ASSERT_NOT_REACHED();
     }

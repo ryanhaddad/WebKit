@@ -341,7 +341,7 @@ public:
 
     void capsLockStateMayHaveChanged();
 
-    bool shouldTruncateText(const RenderStyle&) const;
+    bool NODELETE shouldTruncateText(const RenderStyle&) const;
 
     String resultForDialogSubmit() const final;
 
@@ -399,7 +399,7 @@ private:
 
     void resignStrongPasswordAppearance();
 
-    bool canHaveSelection() const;
+    bool NODELETE canHaveSelection() const;
     bool canStartSelection() const final;
 
     bool accessKeyAction(bool sendMouseEvents) final;

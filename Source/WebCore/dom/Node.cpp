@@ -3002,7 +3002,7 @@ template<> ContainerNode* parent<ComposedTree>(const Node& node)
     return node.parentInComposedTree();
 }
 
-template<TreeType treeType> size_t depth(const Node& node)
+template<TreeType treeType> size_t NODELETE depth(const Node& node)
 {
     size_t depth = 0;
     SUPPRESS_UNCHECKED_LOCAL auto ancestor = &node;

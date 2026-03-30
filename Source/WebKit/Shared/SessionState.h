@@ -124,7 +124,7 @@ public:
 
     Vector<Ref<FrameState>> children;
 
-    bool isEqualForTesting(const FrameState&) const;
+    bool NODELETE isEqualForTesting(const FrameState&) const;
 
 private:
     // This is used to help debug <rdar://problem/48634553>.

@@ -58,7 +58,7 @@ public:
     ~StringView();
     StringView(StringView&&);
     StringView(const StringView&);
-    StringView& operator=(StringView&&);
+    StringView& NODELETE operator=(StringView&&);
     StringView& operator=(const StringView&);
 #endif
 

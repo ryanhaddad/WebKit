@@ -269,7 +269,7 @@ private:
     std::optional<Vector<String>> m_text;
 };
 
-static bool shouldExtractValueForTextManipulation(const HTMLInputElement& input)
+static bool NODELETE shouldExtractValueForTextManipulation(const HTMLInputElement& input)
 {
     // FIXME: Consider using `type()` instead of checking the attribute, so that plain text fields
     // with and without an explicit `type="text"` behave consistently.

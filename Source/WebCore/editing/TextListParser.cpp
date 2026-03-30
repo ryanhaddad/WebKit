@@ -57,7 +57,7 @@ namespace WebCore {
 // MARK: Helpers
 
 template<typename Character>
-constexpr std::optional<int> consumeNumber(StringParsingBuffer<Character>& input)
+constexpr std::optional<int> NODELETE consumeNumber(StringParsingBuffer<Character>& input)
 {
     // Parse the digits until there is no more input left or a non-ASCII digit character has been encountered.
     Checked<int, RecordOverflow> value;
@@ -75,7 +75,7 @@ constexpr std::optional<int> consumeNumber(StringParsingBuffer<Character>& input
 }
 
 template<typename Character>
-void skipToEnd(StringParsingBuffer<Character>& input)
+void NODELETE skipToEnd(StringParsingBuffer<Character>& input)
 {
     input.advanceBy(input.lengthRemaining());
 }

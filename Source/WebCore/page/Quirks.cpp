@@ -138,7 +138,7 @@ static constexpr auto nbaSeekBarFixScript = R"js(if (!window.__nbaSeekFix) {
 })js"_s;
 #endif
 
-static inline OptionSet<AutoplayQuirk> allowedAutoplayQuirks(Document& document)
+static inline OptionSet<AutoplayQuirk> NODELETE allowedAutoplayQuirks(Document& document)
 {
     auto* loader = document.loader();
     if (!loader)
@@ -147,7 +147,7 @@ static inline OptionSet<AutoplayQuirk> allowedAutoplayQuirks(Document& document)
     return loader->allowedAutoplayQuirks();
 }
 
-static inline OptionSet<AutoplayQuirk> allowedAutoplayQuirks(Document* document)
+static inline OptionSet<AutoplayQuirk> NODELETE allowedAutoplayQuirks(Document* document)
 {
     if (!document)
         return { };

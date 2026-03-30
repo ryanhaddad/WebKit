@@ -580,7 +580,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(jsRoundDouble, double, (double value))
     return roundDoubleImpl(value);
 }
 
-static ALWAYS_INLINE float roundFloatImpl(float value)
+static ALWAYS_INLINE float NODELETE roundFloatImpl(float value)
 {
     float integer = ceil(value);
     return integer - (integer - 0.5 > value);

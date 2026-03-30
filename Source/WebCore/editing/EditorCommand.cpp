@@ -1900,7 +1900,7 @@ Editor::Command::Command(const EditorInternalCommand* command, EditorCommandSour
     ASSERT(command || !m_document);
 }
 
-RefPtr<LocalFrame> Editor::Command::frame() const
+RefPtr<LocalFrame> NODELETE Editor::Command::frame() const
 {
     return m_document ? m_document->frame() : nullptr;
 }
@@ -1970,7 +1970,7 @@ String Editor::Command::value(Event* triggeringEvent) const
     return m_command->value(*frame, triggeringEvent);
 }
 
-bool Editor::Command::isTextInsertion() const
+bool NODELETE Editor::Command::isTextInsertion() const
 {
     return m_command && m_command->isTextInsertion;
 }

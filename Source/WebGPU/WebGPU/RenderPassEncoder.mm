@@ -755,7 +755,7 @@ void RenderPassEncoder::emitMemoryBarrier(id<MTLRenderCommandEncoder> renderComm
 }
 
 template <typename T>
-static T* typedCast(auto& s)
+static T* NODELETE typedCast(auto& s)
 {
     return static_cast<T*>(static_cast<void*>(&s));
 }

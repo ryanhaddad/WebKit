@@ -78,9 +78,9 @@ public:
             Namespace,
         };
 
-        static ExportEntry createLocal(const Identifier& exportName, const Identifier& localName);
-        static ExportEntry createIndirect(const Identifier& exportName, const Identifier& importName, const Identifier& moduleName);
-        static ExportEntry createNamespace(const Identifier& exportName, const Identifier& moduleName);
+        static ExportEntry NODELETE createLocal(const Identifier& exportName, const Identifier& localName);
+        static ExportEntry NODELETE createIndirect(const Identifier& exportName, const Identifier& importName, const Identifier& moduleName);
+        static ExportEntry NODELETE createNamespace(const Identifier& exportName, const Identifier& moduleName);
 
         Type type;
         Identifier exportName;
@@ -113,8 +113,8 @@ public:
     void addImportEntry(const ImportEntry&);
     void addExportEntry(const ExportEntry&);
 
-    std::optional<ImportEntry> tryGetImportEntry(UniquedStringImpl* localName);
-    std::optional<ExportEntry> tryGetExportEntry(UniquedStringImpl* exportName);
+    std::optional<ImportEntry> NODELETE tryGetImportEntry(UniquedStringImpl* localName);
+    std::optional<ExportEntry> NODELETE tryGetExportEntry(UniquedStringImpl* exportName);
 
     const Identifier& moduleKey() const { return m_moduleKey; }
     const Vector<ModuleRequest>& requestedModules() const LIFETIME_BOUND { return m_requestedModules; }
@@ -127,9 +127,9 @@ public:
     struct Resolution {
         enum class Type { Resolved, NotFound, Ambiguous, Error };
 
-        static Resolution notFound();
-        static Resolution error();
-        static Resolution ambiguous();
+        static Resolution NODELETE notFound();
+        static Resolution NODELETE error();
+        static Resolution NODELETE ambiguous();
 
         Type type;
         AbstractModuleRecord* moduleRecord;
@@ -170,7 +170,7 @@ protected:
 private:
     struct ResolveQuery;
     static Resolution resolveExportImpl(JSGlobalObject*, const ResolveQuery&);
-    std::optional<Resolution> tryGetCachedResolution(UniquedStringImpl* exportName);
+    std::optional<Resolution> NODELETE tryGetCachedResolution(UniquedStringImpl* exportName);
     void cacheResolution(UniquedStringImpl* exportName, const Resolution&);
 
     // The loader resolves the given module name to the module key. The module key is the unique value to represent this module.

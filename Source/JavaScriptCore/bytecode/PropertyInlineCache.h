@@ -139,8 +139,8 @@ public:
     ~PropertyInlineCache();
 
     void initGetByIdSelf(const ConcurrentJSLockerBase&, CodeBlock*, Structure* inlineAccessBaseStructure, PropertyOffset);
-    void initArrayLength(const ConcurrentJSLockerBase&);
-    void initStringLength(const ConcurrentJSLockerBase&);
+    void NODELETE initArrayLength(const ConcurrentJSLockerBase&);
+    void NODELETE initStringLength(const ConcurrentJSLockerBase&);
     void initPutByIdReplace(const ConcurrentJSLockerBase&, CodeBlock*, Structure* inlineAccessBaseStructure, PropertyOffset);
     void initInByIdSelf(const ConcurrentJSLockerBase&, CodeBlock*, Structure* inlineAccessBaseStructure, PropertyOffset);
 
@@ -151,7 +151,7 @@ public:
     void deref();
     void aboutToDie();
 
-    void initializePredefinedRegisters();
+    void NODELETE initializePredefinedRegisters();
 
     DECLARE_VISIT_AGGREGATE;
 
@@ -168,7 +168,7 @@ public:
 
     CacheableIdentifier identifier() const { return m_identifier; }
 
-    bool containsPC(void* pc) const;
+    bool NODELETE containsPC(void* pc) const;
 
     JSValueRegs valueRegs() const
     {

@@ -62,7 +62,7 @@ ScrollAnchoringController::~ScrollAnchoringController()
     invalidate();
 }
 
-static bool hasScrolledFromOriginInBlockDirection(ScrollPosition scrollPosition, WritingMode writingMode)
+static bool NODELETE hasScrolledFromOriginInBlockDirection(ScrollPosition scrollPosition, WritingMode writingMode)
 {
     if (writingMode.isVertical())
         return !!scrollPosition.x();
@@ -70,7 +70,7 @@ static bool hasScrolledFromOriginInBlockDirection(ScrollPosition scrollPosition,
     return !!scrollPosition.y();
 }
 
-static IntSize constrainedToBlockDirection(IntSize scrollDelta, WritingMode writingMode)
+static IntSize NODELETE constrainedToBlockDirection(IntSize scrollDelta, WritingMode writingMode)
 {
     if (writingMode.isVertical())
         return { scrollDelta.width(), 0 };
@@ -78,7 +78,7 @@ static IntSize constrainedToBlockDirection(IntSize scrollDelta, WritingMode writ
     return { 0, scrollDelta.height() };
 }
 
-static FloatPoint inlineAndBlockStartCorner(FloatRect box, WritingMode writingMode)
+static FloatPoint NODELETE inlineAndBlockStartCorner(FloatRect box, WritingMode writingMode)
 {
     switch (writingMode.blockDirection()) {
     case FlowDirection::TopToBottom:

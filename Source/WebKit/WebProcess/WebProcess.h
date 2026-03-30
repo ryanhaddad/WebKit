@@ -429,7 +429,7 @@ public:
 #if PLATFORM(MAC) || PLATFORM(MACCATALYST)
     static void setAllowAXAuthenticationForTesting(bool);
 #endif
-    void powerSourceDidChange(bool);
+    void NODELETE powerSourceDidChange(bool);
 #endif
 
 #if PLATFORM(MAC)
@@ -602,9 +602,9 @@ private:
     void registerURLSchemeAsWebExtension(const String&) const;
 #endif
 
-    void setDefaultRequestTimeoutInterval(double);
-    void setAlwaysUsesComplexTextCodePath(bool);
-    void setDisableFontSubpixelAntialiasingForTesting(bool);
+    void NODELETE setDefaultRequestTimeoutInterval(double);
+    void NODELETE setAlwaysUsesComplexTextCodePath(bool);
+    void NODELETE setDisableFontSubpixelAntialiasingForTesting(bool);
     void setTrackingPreventionEnabled(bool);
     void clearResourceLoadStatistics();
     void flushResourceLoadStatistics();
@@ -759,7 +759,7 @@ private:
     void resumeAllMediaBuffering();
 #endif
 
-    void clearCurrentModifierStateForTesting();
+    void NODELETE clearCurrentModifierStateForTesting();
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
     void sendMessageToWebProcessExtension(UserMessage&&);

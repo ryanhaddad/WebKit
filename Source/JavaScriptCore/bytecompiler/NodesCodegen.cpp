@@ -1544,7 +1544,7 @@ RegisterID* BytecodeIntrinsicNode::emit_intrinsic_getPrototypeOf(BytecodeGenerat
     return generator.emitGetPrototypeOf(generator.finalDestination(dst), value.get());
 }
 
-static JSPromise::Field promiseInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSPromise::Field NODELETE promiseInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_promiseFieldFlags)
@@ -1555,7 +1555,7 @@ static JSPromise::Field promiseInternalFieldIndex(BytecodeIntrinsicNode* node)
     return JSPromise::Field::Flags;
 }
 
-static JSGenerator::Field generatorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSGenerator::Field NODELETE generatorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_generatorFieldState)
@@ -1572,7 +1572,7 @@ static JSGenerator::Field generatorInternalFieldIndex(BytecodeIntrinsicNode* nod
     return JSGenerator::Field::State;
 }
 
-static JSIteratorHelper::Field iteratorHelperInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSIteratorHelper::Field NODELETE iteratorHelperInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_iteratorHelperFieldGenerator)
@@ -1583,7 +1583,7 @@ static JSIteratorHelper::Field iteratorHelperInternalFieldIndex(BytecodeIntrinsi
     return JSIteratorHelper::Field::Generator;
 }
 
-static JSAsyncGenerator::Field asyncGeneratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSAsyncGenerator::Field NODELETE asyncGeneratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_generatorFieldState)
@@ -1606,7 +1606,7 @@ static JSAsyncGenerator::Field asyncGeneratorInternalFieldIndex(BytecodeIntrinsi
     return JSAsyncGenerator::Field::State;
 }
 
-static AbstractModuleRecord::Field abstractModuleRecordInternalFieldIndex(BytecodeIntrinsicNode* node)
+static AbstractModuleRecord::Field NODELETE abstractModuleRecordInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_abstractModuleRecordFieldState)
@@ -1615,7 +1615,7 @@ static AbstractModuleRecord::Field abstractModuleRecordInternalFieldIndex(Byteco
     return AbstractModuleRecord::Field::State;
 }
 
-static JSArrayIterator::Field arrayIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSArrayIterator::Field NODELETE arrayIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_arrayIteratorFieldIndex)
@@ -1628,7 +1628,7 @@ static JSArrayIterator::Field arrayIteratorInternalFieldIndex(BytecodeIntrinsicN
     return JSArrayIterator::Field::Index;
 }
 
-static JSStringIterator::Field stringIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSStringIterator::Field NODELETE stringIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_stringIteratorFieldIndex)
@@ -1639,7 +1639,7 @@ static JSStringIterator::Field stringIteratorInternalFieldIndex(BytecodeIntrinsi
     return JSStringIterator::Field::Index;
 }
 
-static JSMapIterator::Field mapIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSMapIterator::Field NODELETE mapIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_mapIteratorFieldEntry)
@@ -1654,7 +1654,7 @@ static JSMapIterator::Field mapIteratorInternalFieldIndex(BytecodeIntrinsicNode*
     return JSMapIterator::Field::Entry;
 }
 
-static JSSetIterator::Field setIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSSetIterator::Field NODELETE setIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_setIteratorFieldEntry)
@@ -1669,7 +1669,7 @@ static JSSetIterator::Field setIteratorInternalFieldIndex(BytecodeIntrinsicNode*
     return JSSetIterator::Field::Entry;
 }
 
-static ProxyObject::Field proxyInternalFieldIndex(BytecodeIntrinsicNode* node)
+static ProxyObject::Field NODELETE proxyInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_proxyFieldTarget)
@@ -1680,7 +1680,7 @@ static ProxyObject::Field proxyInternalFieldIndex(BytecodeIntrinsicNode* node)
     return ProxyObject::Field::Target;
 }
 
-static JSAsyncFromSyncIterator::Field asyncFromSyncIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSAsyncFromSyncIterator::Field NODELETE asyncFromSyncIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncFromSyncIteratorFieldSyncIterator)
@@ -1691,7 +1691,7 @@ static JSAsyncFromSyncIterator::Field asyncFromSyncIteratorInternalFieldIndex(By
     return JSAsyncFromSyncIterator::Field::SyncIterator;
 }
 
-static JSWrapForValidIterator::Field wrapForValidIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSWrapForValidIterator::Field NODELETE wrapForValidIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_wrapForValidIteratorFieldIteratedIterator)
@@ -1702,7 +1702,7 @@ static JSWrapForValidIterator::Field wrapForValidIteratorInternalFieldIndex(Byte
     return JSWrapForValidIterator::Field::IteratedNextMethod;
 }
 
-static JSDisposableStack::Field disposableStackInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSDisposableStack::Field NODELETE disposableStackInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_disposableStackFieldState)
@@ -1713,7 +1713,7 @@ static JSDisposableStack::Field disposableStackInternalFieldIndex(BytecodeIntrin
     return JSDisposableStack::Field::State;
 }
 
-static JSAsyncDisposableStack::Field asyncDisposableStackInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSAsyncDisposableStack::Field NODELETE asyncDisposableStackInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_asyncDisposableStackFieldState)
@@ -1724,7 +1724,7 @@ static JSAsyncDisposableStack::Field asyncDisposableStackInternalFieldIndex(Byte
     return JSAsyncDisposableStack::Field::State;
 }
 
-static JSRegExpStringIterator::Field regExpStringIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
+static JSRegExpStringIterator::Field NODELETE regExpStringIteratorInternalFieldIndex(BytecodeIntrinsicNode* node)
 {
     ASSERT(node->entry().type() == BytecodeIntrinsicRegistry::Type::Emitter);
     if (node->entry().emitter() == &BytecodeIntrinsicNode::emit_intrinsic_regExpStringIteratorFieldRegExp)
@@ -3536,7 +3536,7 @@ void BinaryOpNode::emitBytecodeInConditionContext(BytecodeGenerator& generator, 
         generator.emitNodeInConditionContext(branchExpression, falseTarget, trueTarget, invert(fallThroughMode));
 }
 
-static inline bool canFoldToBranch(OpcodeID opcodeID, ExpressionNode* branchExpression, JSValue constant)
+static inline bool NODELETE canFoldToBranch(OpcodeID opcodeID, ExpressionNode* branchExpression, JSValue constant)
 {
     ResultType expressionType = branchExpression->resultDescriptor();
 
@@ -4116,7 +4116,7 @@ RegisterID* ShortCircuitReadModifyResolveNode::emitBytecode(BytecodeGenerator& g
 
 // ------------------------------ AssignResolveNode -----------------------------------
 
-static InitializationMode initializationModeForAssignmentContext(AssignmentContext assignmentContext)
+static InitializationMode NODELETE initializationModeForAssignmentContext(AssignmentContext assignmentContext)
 {
     switch (assignmentContext) {
     case AssignmentContext::DeclarationStatement:
@@ -4133,7 +4133,7 @@ static InitializationMode initializationModeForAssignmentContext(AssignmentConte
     return InitializationMode::NotInitialization;
 }
 
-static inline bool isUsingOrAwaitUsingAssignmentContext(AssignmentContext context)
+static inline bool NODELETE isUsingOrAwaitUsingAssignmentContext(AssignmentContext context)
 {
     return context == AssignmentContext::UsingDeclarationStatement || context == AssignmentContext::AwaitUsingDeclarationStatement;
 }

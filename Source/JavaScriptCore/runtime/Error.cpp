@@ -153,8 +153,8 @@ public:
         return IterationStatus::Done;
     }
 
-    CodeBlock* codeBlock() const { return m_codeBlock; }
-    BytecodeIndex bytecodeIndex() const { return m_bytecodeIndex; }
+    CodeBlock* NODELETE codeBlock() const { return m_codeBlock; }
+    BytecodeIndex NODELETE bytecodeIndex() const { return m_bytecodeIndex; }
 
 private:
     CallFrame* m_startCallFrame;

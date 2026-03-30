@@ -509,7 +509,7 @@ Lexer<T>::Lexer(VM& vm, JSParserBuiltinMode builtinMode, JSParserScriptMode scri
 {
 }
 
-static inline JSTokenType tokenTypeForIntegerLikeToken(double doubleValue)
+static inline JSTokenType NODELETE tokenTypeForIntegerLikeToken(double doubleValue)
 {
     if ((doubleValue || !std::signbit(doubleValue)) && static_cast<int64_t>(doubleValue) == doubleValue)
         return INTEGER;
@@ -1250,7 +1250,7 @@ static ALWAYS_INLINE bool characterRequiresParseStringSlowCase(Latin1Character c
     return character < 0xE;
 }
 
-static ALWAYS_INLINE bool characterRequiresParseStringSlowCase(char16_t character)
+static ALWAYS_INLINE bool NODELETE characterRequiresParseStringSlowCase(char16_t character)
 {
     return character < 0xE || !isLatin1(character);
 }
@@ -3140,7 +3140,7 @@ template <>
 inline void orCharacter<Latin1Character>(char16_t&, char16_t) { }
 
 template <>
-inline void orCharacter<char16_t>(char16_t& orAccumulator, char16_t character)
+inline void NODELETE orCharacter<char16_t>(char16_t& orAccumulator, char16_t character)
 {
     orAccumulator |= character;
 }

@@ -1487,7 +1487,7 @@ bool equal(const StringImpl* a, const StringImpl* b)
     return equalCommon(a, b);
 }
 
-template<typename CharacterType> inline bool equalInternal(const StringImpl* a, std::span<const CharacterType> b)
+template<typename CharacterType> inline bool NODELETE equalInternal(const StringImpl* a, std::span<const CharacterType> b)
 {
     if (!a)
         return !b.data();

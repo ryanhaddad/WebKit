@@ -866,7 +866,7 @@ String percentEncodeFragmentDirectiveSpecialCharacters(const String& input)
     return percentEncodeCharacters(input, URLParser::isSpecialCharacterForFragmentDirective);
 }
 
-static bool protocolIsInternal(StringView string, ASCIILiteral protocol)
+static bool NODELETE protocolIsInternal(StringView string, ASCIILiteral protocol)
 {
     assertProtocolIsGood(protocol);
     size_t protocolIndex = 0;
@@ -1171,7 +1171,7 @@ bool URL::isAboutSrcDoc() const
     return protocolIsAbout() && path() == "srcdoc"_s;
 }
 
-static bool isIPv4Address(StringView string)
+static bool NODELETE isIPv4Address(StringView string)
 {
     auto count = 0;
 

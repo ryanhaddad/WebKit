@@ -49,8 +49,8 @@ public:
     int match(StringView, unsigned startFrom = 0, int* matchLength = nullptr) const;
     int searchRev(StringView) const;
 
-    int matchedLength() const;
-    bool isValid() const;
+    int NODELETE matchedLength() const;
+    bool NODELETE isValid() const;
 
 private:
     class Private;

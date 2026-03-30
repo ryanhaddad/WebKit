@@ -139,28 +139,28 @@ struct IPIntControlType {
         , m_stackSize(stackSize)
     { }
 
-    static bool isIf(const IPIntControlType& control) { return control.blockType() == BlockType::If; }
-    static bool isElse(const IPIntControlType& control) { return control.blockType() == BlockType::Else; }
-    static bool isTry(const IPIntControlType& control) { return control.blockType() == BlockType::Try; }
-    static bool isTryTable(const IPIntControlType& control) { return control.blockType() == BlockType::TryTable; }
-    static bool isAnyCatch(const IPIntControlType& control) { return control.blockType() == BlockType::Catch; }
-    static bool isTopLevel(const IPIntControlType& control) { return control.blockType() == BlockType::TopLevel; }
-    static bool isLoop(const IPIntControlType& control) { return control.blockType() == BlockType::Loop; }
-    static bool isBlock(const IPIntControlType& control) { return control.blockType() == BlockType::Block; }
-    static bool isCatch(const IPIntControlType& control)
+    static bool NODELETE isIf(const IPIntControlType& control) { return control.blockType() == BlockType::If; }
+    static bool NODELETE isElse(const IPIntControlType& control) { return control.blockType() == BlockType::Else; }
+    static bool NODELETE isTry(const IPIntControlType& control) { return control.blockType() == BlockType::Try; }
+    static bool NODELETE isTryTable(const IPIntControlType& control) { return control.blockType() == BlockType::TryTable; }
+    static bool NODELETE isAnyCatch(const IPIntControlType& control) { return control.blockType() == BlockType::Catch; }
+    static bool NODELETE isTopLevel(const IPIntControlType& control) { return control.blockType() == BlockType::TopLevel; }
+    static bool NODELETE isLoop(const IPIntControlType& control) { return control.blockType() == BlockType::Loop; }
+    static bool NODELETE isBlock(const IPIntControlType& control) { return control.blockType() == BlockType::Block; }
+    static bool NODELETE isCatch(const IPIntControlType& control)
     {
         if (control.blockType() != BlockType::Catch)
             return false;
         return control.catchKind() == CatchKind::Catch;
     }
 
-    void dump(PrintStream&) const
+    void NODELETE dump(PrintStream&) const
     { }
 
-    BlockType blockType() const { return m_blockType; }
-    CatchKind catchKind() const { return m_catchKind; }
-    const BlockSignature& signature() const { return m_signature; }
-    unsigned stackSize() const { return m_stackSize; }
+    BlockType NODELETE blockType() const { return m_blockType; }
+    CatchKind NODELETE catchKind() const { return m_catchKind; }
+    const BlockSignature& NODELETE signature() const { return m_signature; }
+    unsigned NODELETE stackSize() const { return m_stackSize; }
 
     Type branchTargetType(unsigned i) const
     {
@@ -222,7 +222,7 @@ public:
     using CatchHandler = FunctionParser<IPIntGenerator>::CatchHandler;
     using ArgumentList = FunctionParser<IPIntGenerator>::ArgumentList;
 
-    static ExpressionType emptyExpression() { return { }; };
+    static ExpressionType NODELETE emptyExpression() { return { }; };
     [[nodiscard]] PartialResult addDrop(ExpressionType);
 
     template <typename ...Args>
@@ -244,8 +244,8 @@ public:
 
     // SIMD
 
-    bool usesSIMD() { return m_usesSIMD; }
-    void notifyFunctionUsesSIMD() { ASSERT(Options::useWasmSIMD()); m_usesSIMD = true; }
+    bool NODELETE usesSIMD() { return m_usesSIMD; }
+    void NODELETE notifyFunctionUsesSIMD() { ASSERT(Options::useWasmSIMD()); m_usesSIMD = true; }
     [[nodiscard]] PartialResult addSIMDLoad(ExpressionType, uint32_t, ExpressionType&);
     [[nodiscard]] PartialResult addSIMDStore(ExpressionType, ExpressionType, uint32_t);
     [[nodiscard]] PartialResult addSIMDSplat(SIMDLane, ExpressionType, ExpressionType&);
@@ -275,9 +275,9 @@ public:
 
     // References
 
-    [[nodiscard]] PartialResult addRefIsNull(ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult NODELETE addRefIsNull(ExpressionType, ExpressionType&);
     [[nodiscard]] PartialResult addRefFunc(FunctionSpaceIndex, ExpressionType&);
-    [[nodiscard]] PartialResult addRefAsNonNull(ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult NODELETE addRefAsNonNull(ExpressionType, ExpressionType&);
     [[nodiscard]] PartialResult addRefEq(ExpressionType, ExpressionType, ExpressionType&);
 
     // Tables
@@ -295,7 +295,7 @@ public:
 
     [[nodiscard]] PartialResult getLocal(uint32_t index, ExpressionType&);
     [[nodiscard]] PartialResult setLocal(uint32_t, ExpressionType);
-    [[nodiscard]] PartialResult teeLocal(uint32_t, ExpressionType, ExpressionType& result);
+    [[nodiscard]] PartialResult NODELETE teeLocal(uint32_t, ExpressionType, ExpressionType& result);
 
     // Globals
 
@@ -519,10 +519,10 @@ public:
     [[nodiscard]] PartialResult endTopLevel(const Stack&);
 
     // Fused comparison stubs (TODO: make use of these for better codegen)
-    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    [[nodiscard]] PartialResult addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
-    [[nodiscard]] PartialResult addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult NODELETE addFusedBranchCompare(OpType, ControlType&, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult NODELETE addFusedBranchCompare(OpType, ControlType&, ExpressionType, ExpressionType, const Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult NODELETE addFusedIfCompare(OpType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
+    [[nodiscard]] PartialResult NODELETE addFusedIfCompare(OpType, ExpressionType, ExpressionType, BlockSignature&&, Stack&, ControlType&, Stack&) { RELEASE_ASSERT_NOT_REACHED(); }
 
     // Calls
 
@@ -532,20 +532,20 @@ public:
     [[nodiscard]] PartialResult addUnreachable();
     [[nodiscard]] PartialResult addCrash();
 
-    void setParser(FunctionParser<IPIntGenerator>* parser) { m_parser = parser; };
-    size_t getCurrentInstructionLength()
+    void NODELETE setParser(FunctionParser<IPIntGenerator>* parser) { m_parser = parser; };
+    size_t NODELETE getCurrentInstructionLength()
     {
         return m_parser->offset() - m_parser->currentOpcodeStartingOffset();
     }
     void addCallCommonData(const FunctionSignature&, const CallInformation&);
     void addTailCallCommonData(const FunctionSignature&, const CallInformation&);
-    void didFinishParsingLocals()
+    void NODELETE didFinishParsingLocals()
     {
         m_metadata->m_bytecodeOffset = m_parser->offset();
     }
-    void didPopValueFromStack(ExpressionType, ASCIILiteral) { }
-    void willParseOpcode() { }
-    void willParseExtendedOpcode() { }
+    void NODELETE didPopValueFromStack(ExpressionType, ASCIILiteral) { }
+    void NODELETE willParseOpcode() { }
+    void NODELETE willParseExtendedOpcode() { }
     void didParseOpcode()
     {
         if (!m_parser->unreachableBlocks()) {
@@ -617,7 +617,7 @@ public:
         return m_cachedCallInformation;
     }
 
-    static constexpr bool tierSupportsSIMD() { return true; }
+    static constexpr bool NODELETE tierSupportsSIMD() { return true; }
     static constexpr bool validateFunctionBodySize = true;
 
 private:
@@ -659,9 +659,9 @@ private:
     // all jumps that go to the top level and return
     Vector<IPIntLocation> m_jumpLocationsAwaitingEnd;
 
-    inline uint32_t curPC() { return m_parser->currentOpcodeStartingOffset() - m_metadata->m_bytecodeOffset; }
-    inline uint32_t nextPC() { return m_parser->offset() - m_metadata->m_bytecodeOffset; }
-    inline uint32_t curMC() { return m_metadata->m_metadata.size(); }
+    inline uint32_t NODELETE curPC() { return m_parser->currentOpcodeStartingOffset() - m_metadata->m_bytecodeOffset; }
+    inline uint32_t NODELETE nextPC() { return m_parser->offset() - m_metadata->m_bytecodeOffset; }
+    inline uint32_t NODELETE curMC() { return m_metadata->m_metadata.size(); }
 
     CallInformation m_cachedCallInformation { };
     const FunctionSignature* m_cachedSignature { nullptr };

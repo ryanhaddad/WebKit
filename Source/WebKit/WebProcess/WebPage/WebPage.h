@@ -689,7 +689,7 @@ public:
     void updateRendering();
     bool NODELETE hasRootFrames();
     String rootFrameOriginString();
-    bool shouldTriggerRenderingUpdate(unsigned rescheduledRenderingUpdateCount) const;
+    bool NODELETE shouldTriggerRenderingUpdate(unsigned rescheduledRenderingUpdateCount) const;
     void finalizeRenderingUpdate(OptionSet<WebCore::FinalizeRenderingUpdateFlags>);
 
     void willStartRenderingUpdateDisplay();
@@ -700,7 +700,7 @@ public:
     void releaseMemory(WTF::Critical);
     void NODELETE willDestroyDecodedDataForAllImages();
 
-    unsigned remoteImagesCountForTesting() const;
+    unsigned NODELETE remoteImagesCountForTesting() const;
 
     enum class LazyCreationPolicy { UseExistingOnly, CreateIfNeeded };
 
@@ -842,7 +842,7 @@ public:
     WebCore::Frame* NODELETE mainFrame() const;
     WebCore::FrameView* mainFrameView() const;
     WebCore::LocalFrameView* localMainFrameView() const;
-    RefPtr<WebCore::LocalFrame> localMainFrame() const;
+    RefPtr<WebCore::LocalFrame> NODELETE localMainFrame() const;
     RefPtr<WebCore::Document> localTopDocument() const;
 
     void createRemoteSubframe(WebCore::FrameIdentifier parentID, WebCore::FrameIdentifier newChildID, const String& newChildFrameName, Ref<WebCore::FrameTreeSyncData>&&);
@@ -925,7 +925,7 @@ public:
     void setMinimumUnobscuredSize(const WebCore::FloatSize&);
     void setMaximumUnobscuredSize(const WebCore::FloatSize&);
 
-    void listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone>);
+    void NODELETE listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone>);
 
     void setSuppressScrollbarAnimations(bool);
 
@@ -1729,8 +1729,8 @@ public:
     std::optional<double> cpuLimit() const { return m_cpuLimit; }
 
 #if ENABLE(PDF_PLUGIN)
-    static PluginView* focusedPluginViewForFrame(WebCore::LocalFrame&);
-    static PluginView* pluginViewForFrame(WebCore::LocalFrame*);
+    static PluginView* NODELETE focusedPluginViewForFrame(WebCore::LocalFrame&);
+    static PluginView* NODELETE pluginViewForFrame(WebCore::LocalFrame*);
     PluginView* mainFramePlugIn() const;
 #endif
 
@@ -1809,7 +1809,7 @@ public:
     UnixFileDescriptor hostFileDescriptor() const { return m_hostFileDescriptor.duplicate(); }
 #endif
 
-    void updateCurrentModifierState(OptionSet<WebCore::PlatformEventModifier> modifiers);
+    void NODELETE updateCurrentModifierState(OptionSet<WebCore::PlatformEventModifier> modifiers);
 
     inline UserContentControllerIdentifier userContentControllerIdentifier() const;
 
@@ -2044,13 +2044,13 @@ public:
     bool needsScrollGeometryUpdates() { return m_needsScrollGeometryUpdates; }
     void setNeedsScrollGeometryUpdates(bool needsUpdates) { m_needsScrollGeometryUpdates = needsUpdates; }
 
-    void startDeferringResizeEvents();
+    void NODELETE startDeferringResizeEvents();
     void flushDeferredResizeEvents();
 
-    void startDeferringScrollEvents();
+    void NODELETE startDeferringScrollEvents();
     void flushDeferredScrollEvents();
 
-    void startDeferringIntersectionObservations();
+    void NODELETE startDeferringIntersectionObservations();
     void flushDeferredIntersectionObservations();
 
     void flushDeferredDidReceiveMouseEvent();
@@ -2175,7 +2175,7 @@ public:
     void setNeedsFixedContainerEdgesUpdate() { m_needsFixedContainerEdgesUpdate = true; }
 
     RefPtr<WebCore::MediaSessionManagerInterface> mediaSessionManager() const;
-    WebCore::MediaSessionManagerInterface* mediaSessionManagerIfExists() const;
+    WebCore::MediaSessionManagerInterface* NODELETE mediaSessionManagerIfExists() const;
 
 #if ENABLE(MODEL_ELEMENT)
     bool NODELETE shouldDisableModelLoadDelaysForTesting() const;
@@ -2300,7 +2300,7 @@ private:
     void testProcessIncomingSyncMessagesWhenWaitingForSyncReply(CompletionHandler<void(bool)>&&);
 
     void updateDrawingAreaLayerTreeFreezeState();
-    void updateAfterDrawingAreaCreation(const WebPageCreationParameters&);
+    void NODELETE updateAfterDrawingAreaCreation(const WebPageCreationParameters&);
 
     enum class MarkLayersVolatileDontRetryReason : uint8_t { None, SuspendedUnderLock, TimedOut };
     void markLayersVolatileOrRetry(MarkLayersVolatileDontRetryReason);
@@ -2473,7 +2473,7 @@ private:
 #if HAVE(APP_ACCENT_COLORS)
     void setAccentColor(WebCore::Color);
 #if PLATFORM(MAC)
-    void setAppUsesCustomAccentColor(bool);
+    void NODELETE setAppUsesCustomAccentColor(bool);
     bool appUsesCustomAccentColor();
 #endif
 #endif

@@ -37,7 +37,7 @@ class SelectPopoverElement final : public HTMLDivElement {
 public:
     static Ref<SelectPopoverElement> create(Document&);
 
-    HTMLSelectElement* selectElement() const;
+    HTMLSelectElement* NODELETE selectElement() const;
 
 private:
     explicit SelectPopoverElement(Document&);

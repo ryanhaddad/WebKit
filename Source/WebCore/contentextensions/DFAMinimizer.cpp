@@ -41,7 +41,7 @@ namespace ContentExtensions {
 namespace {
 
 template<typename VectorType, typename Iterable, typename Function>
-static inline void iterateIntersections(const VectorType& singularTransitionsFirsts, const Iterable& iterableTransitionList, NOESCAPE const Function& intersectionHandler)
+static inline void NODELETE iterateIntersections(const VectorType& singularTransitionsFirsts, const Iterable& iterableTransitionList, NOESCAPE const Function& intersectionHandler)
 {
     ASSERT(!singularTransitionsFirsts.isEmpty());
     auto otherIterator = iterableTransitionList.begin();

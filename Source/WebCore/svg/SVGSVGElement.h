@@ -74,8 +74,8 @@ public: // DOM
     void pauseAnimations();
     void unpauseAnimations();
     bool resumePausedAnimationsIfNeeded(const IntRect&);
-    bool animationsPaused() const;
-    bool hasActiveAnimation() const;
+    bool NODELETE animationsPaused() const;
+    bool NODELETE hasActiveAnimation() const;
     float getCurrentTime() const;
     void setCurrentTime(float);
     

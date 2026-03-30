@@ -149,7 +149,7 @@ public:
     using TopFrameDomain = RegistrableDomain;
     using SubResourceDomain = RegistrableDomain;
 
-    WEBCORE_EXPORT static void permitProcessToUseCookieAPI(bool);
+    WEBCORE_EXPORT static void NODELETE permitProcessToUseCookieAPI(bool);
     WEBCORE_EXPORT static bool NODELETE processMayUseCookieAPI();
 
     PAL::SessionID sessionID() const { return m_sessionID; }

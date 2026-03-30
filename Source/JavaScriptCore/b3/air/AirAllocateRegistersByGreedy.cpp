@@ -67,7 +67,7 @@ static constexpr unsigned splitMoveTo = 1;
 static constexpr unsigned splitMoveFrom = 2;
 static constexpr unsigned spillLoad = 3;
 
-static bool verbose() { return Options::airGreedyRegAllocVerbose(); }
+static bool NODELETE verbose() { return Options::airGreedyRegAllocVerbose(); }
 
 // Terminology / core data-structures:
 //
@@ -150,7 +150,7 @@ class LiveRange {
 public:
     LiveRange() = default;
 
-    inline void validate()
+    inline void NODELETE validate()
     {
 #if ASSERT_ENABLED
         size_t size = 0;
@@ -193,17 +193,17 @@ public:
         validate();
     }
 
-    const Deque<Interval>& intervals() const
+    const Deque<Interval>& NODELETE intervals() const
     {
         return m_intervals;
     }
 
-    size_t size() const
+    size_t NODELETE size() const
     {
         return m_size;
     }
 
-    bool overlaps(LiveRange& other)
+    bool NODELETE overlaps(LiveRange& other)
     {
         auto otherIter = other.intervals().begin();
         auto otherEnd = other.intervals().end();
@@ -346,7 +346,7 @@ private:
     static constexpr size_t tmpIndexShift = rangeSizeShift - tmpIndexBits;
     static_assert(!tmpIndexShift);
 
-    inline void packPriority(uint64_t val, size_t numBits, size_t shift, bool reverse)
+    inline void NODELETE packPriority(uint64_t val, size_t numBits, size_t shift, bool reverse)
     {
         const uint64_t mask = (1ull << numBits) - 1;
         val &= mask;
@@ -372,9 +372,9 @@ public:
         packPriority(tmp.tmpIndex(), tmpIndexBits, tmpIndexShift, true);
     }
 
-    Tmp tmp() { return m_tmp; }
+    Tmp NODELETE tmp() { return m_tmp; }
 
-    Stage stage() const
+    Stage NODELETE stage() const
     {
         const uint64_t mask = (1 << stageBits) - 1;
         uint64_t stageReversed = m_priority >> stageShift;
@@ -387,7 +387,7 @@ public:
         out.print("<", m_tmp, ", ", WTF::RawHex(m_priority), ">");
     }
 
-    static bool isHigherPriority(const TmpPriority& left, const TmpPriority& right)
+    static bool NODELETE isHigherPriority(const TmpPriority& left, const TmpPriority& right)
     {
         return left.m_priority > right.m_priority;
     }
@@ -417,7 +417,7 @@ public:
             , tmp(pair.second)
         { }
 
-        bool operator<(const AllocatedInterval& other) const
+        bool NODELETE operator<(const AllocatedInterval& other) const
         {
             return this->interval.end() < other.interval.end();
         }
@@ -449,7 +449,7 @@ public:
             m_allocations.erase(interval);
     }
 
-    bool hasConflict(LiveRange& range, Width width)
+    bool NODELETE hasConflict(LiveRange& range, Width width)
     {
         for (auto interval : range.intervals()) {
             if (m_allocations.hasOverlap(interval))
@@ -478,7 +478,7 @@ public:
         }
     }
 
-    bool isEmpty() const
+    bool NODELETE isEmpty() const
     {
         return m_allocations.isEmpty() && m_allocationsHigh64.isEmpty();
     }
@@ -658,7 +658,7 @@ struct TmpData {
         return std::min(cost, maxSpillableSpillCost);
     }
 
-    void validate()
+    void NODELETE validate()
     {
         ASSERT(!(spillSlot && assigned));
         ASSERT(!!assigned == (stage == Stage::Assigned));
@@ -691,7 +691,7 @@ public:
         }
     }
 
-    const List& useDefs() { return m_instPoints; }
+    const List& NODELETE useDefs() { return m_instPoints; }
 
 private:
     List m_instPoints;
@@ -835,7 +835,7 @@ private:
         });
     }
 
-    bool shouldSpillEverything()
+    bool NODELETE shouldSpillEverything()
     {
         if (!Options::airGreedyRegAllocSpillsEverything())
             return false;
@@ -859,7 +859,7 @@ private:
         ASSERT(m_allAllowedRegisters == m_code.mutableRegs().toScalarRegisterSet());
     }
 
-    void buildIndices()
+    void NODELETE buildIndices()
     {
         Point headPosition = 0;
         Point tailPosition = 0;
@@ -887,51 +887,51 @@ private:
         return block;
     }
 
-    Point positionOfHead(BasicBlock* block) const
+    Point NODELETE positionOfHead(BasicBlock* block) const
     {
         return m_blockToHeadPoint[block];
     }
 
-    Point positionOfTail(BasicBlock* block)
+    Point NODELETE positionOfTail(BasicBlock* block)
     {
         return positionOfHead(block) + block->size() * PointOffsets::PointsPerInst - 1;
     }
 
-    static size_t instIndex(Point positionOfHead, Point point)
+    static size_t NODELETE instIndex(Point positionOfHead, Point point)
     {
         return (point - positionOfHead) / PointOffsets::PointsPerInst;
     }
 
-    static Point pointAtOffset(Point point, PointOffsets offset)
+    static Point NODELETE pointAtOffset(Point point, PointOffsets offset)
     {
         static_assert(!(PointOffsets::PointsPerInst & (PointOffsets::PointsPerInst - 1)));
         return (point & ~(PointOffsets::PointsPerInst - 1)) + offset;
     }
 
-    static Point positionOfEarly(Point positionOfHead, unsigned instIndex)
+    static Point NODELETE positionOfEarly(Point positionOfHead, unsigned instIndex)
     {
         ASSERT(!(positionOfHead % PointOffsets::PointsPerInst));
         return positionOfHead + instIndex * PointOffsets::PointsPerInst + PointOffsets::Early;
     }
 
-    static Point positionOfLate(Point positionOfHead, unsigned instIndex)
+    static Point NODELETE positionOfLate(Point positionOfHead, unsigned instIndex)
     {
         ASSERT(!(positionOfHead % PointOffsets::PointsPerInst));
         return positionOfHead + instIndex * PointOffsets::PointsPerInst + PointOffsets::Late;
     }
 
-    static Point positionOfEarly(Interval interval)
+    static Point NODELETE positionOfEarly(Interval interval)
     {
         return pointAtOffset(interval.begin(), PointOffsets::Early);
     }
 
-    static Interval earlyInterval(Point positionOfEarly)
+    static Interval NODELETE earlyInterval(Point positionOfEarly)
     {
         ASSERT((positionOfEarly % PointOffsets::PointsPerInst) == PointOffsets::Early);
         return Interval(positionOfEarly);
     }
 
-    static Interval lateInterval(Point positionOfEarly)
+    static Interval NODELETE lateInterval(Point positionOfEarly)
     {
         ASSERT((positionOfEarly % PointOffsets::PointsPerInst) == PointOffsets::Early);
         return Interval(positionOfEarly + (PointOffsets::Late - PointOffsets::Early));
@@ -975,14 +975,14 @@ private:
         return Interval();
     }
 
-    Reg assignedReg(Tmp tmp)
+    Reg NODELETE assignedReg(Tmp tmp)
     {
         return m_map[tmp].assigned;
     }
 
     // Returns the stack slot a Tmp should use if spilled. Otherwise, returns nullptr.
     template<Bank bank>
-    StackSlot* spillSlot(Tmp tmp)
+    StackSlot* NODELETE spillSlot(Tmp tmp)
     {
         TmpData& tmpData = m_map.get<bank>(tmp);
         if (tmpData.stage == Stage::Spilled) {
@@ -992,13 +992,13 @@ private:
         return nullptr;
     }
 
-    StackSlot* spillSlot(Tmp tmp)
+    StackSlot* NODELETE spillSlot(Tmp tmp)
     {
         ASSERT(tmp.isGP() || tmp.isFP());
         return tmp.isGP() ? spillSlot<GP>(tmp) : spillSlot<FP>(tmp);
     }
 
-    float adjustedBlockFrequency(BasicBlock* block)
+    float NODELETE adjustedBlockFrequency(BasicBlock* block)
     {
         float freq = block->frequency();
         if (!m_fastBlocks.saw(block)) [[unlikely]]
@@ -1007,7 +1007,7 @@ private:
     }
 
     template<Bank bank>
-    Width widthForConflicts(Tmp tmp)
+    Width NODELETE widthForConflicts(Tmp tmp)
     {
         if constexpr (bank == GP)
             return Width64;
@@ -1478,34 +1478,34 @@ private:
         static constexpr uint32_t isIndexBit = 1u << 31;
         static constexpr uint32_t indexMask = isIndexBit - 1;
 
-        static bool isSingleton(EncodedTmpList idx) { return !(idx.m_value & isIndexBit); }
+        static bool NODELETE isSingleton(EncodedTmpList idx) { return !(idx.m_value & isIndexBit); }
 
-        static EncodedTmpList encodeSingleton(Tmp tmp)
+        static EncodedTmpList NODELETE encodeSingleton(Tmp tmp)
         {
             unsigned tIdx = tmp.tmpIndex();
             ASSERT(tIdx < isIndexBit);
             return { tIdx };
         }
 
-        static Tmp decodeSingleton(EncodedTmpList encoded)
+        static Tmp NODELETE decodeSingleton(EncodedTmpList encoded)
         {
             ASSERT(isSingleton(encoded));
             return Tmp::tmpForIndex(bank, encoded.m_value);
         }
 
-        static EncodedTmpList encodeIndex(size_t index)
+        static EncodedTmpList NODELETE encodeIndex(size_t index)
         {
             ASSERT(index <= indexMask);
             return { isIndexBit | static_cast<uint32_t>(index) };
         }
 
-        static unsigned decodeIndex(EncodedTmpList encoded)
+        static unsigned NODELETE decodeIndex(EncodedTmpList encoded)
         {
             ASSERT(!isSingleton(encoded));
             return encoded.m_value & indexMask;
         }
 
-        const TmpList& decodeTmpList(EncodedTmpList encodedList) const
+        const TmpList& NODELETE decodeTmpList(EncodedTmpList encodedList) const
         {
             if (isSingleton(encodedList)) [[likely]] {
                 m_singletonScratch[0] = decodeSingleton(encodedList);
@@ -1613,9 +1613,9 @@ private:
             other.m_members.clear();
         }
 
-        const Vector<Tmp>& members() const { return m_members; }
-        size_t size() const { return m_members.size(); }
-        bool isEmpty() const { return m_members.isEmpty(); }
+        const Vector<Tmp>& NODELETE members() const { return m_members; }
+        size_t NODELETE size() const { return m_members.size(); }
+        bool NODELETE isEmpty() const { return m_members.isEmpty(); }
         LiveRange buildLiveRange() const { return m_liveness.buildLiveRange(); }
 
         using TmpList = typename LivenessMap<bank>::TmpList;
@@ -2574,7 +2574,7 @@ private:
         return true;
     }
 
-    static unsigned stackSlotMinimumWidth(Width width)
+    static unsigned NODELETE stackSlotMinimumWidth(Width width)
     {
         if (width <= Width32)
             return 4;
@@ -2615,7 +2615,7 @@ private:
         tmpData.validate();
     }
 
-    bool queueContainsOnlySpills()
+    bool NODELETE queueContainsOnlySpills()
     {
         for (auto& elem : m_queue) {
             if (elem.stage() != Stage::Spill)
@@ -3010,7 +3010,7 @@ private:
         }
     }
 
-    bool mayBeCoalescable(Inst& inst)
+    bool NODELETE mayBeCoalescable(Inst& inst)
     {
         switch (inst.kind.opcode) {
         case Move:

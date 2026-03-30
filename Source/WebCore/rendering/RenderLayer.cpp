@@ -6518,7 +6518,7 @@ void RenderLayer::clearFilters()
         m_filters->clearFilter();
 }
 
-static RenderLayer* parentLayerCrossFrame(const RenderLayer& layer)
+static RenderLayer* NODELETE parentLayerCrossFrame(const RenderLayer& layer)
 {
     if (auto* parent = layer.parent())
         return parent;

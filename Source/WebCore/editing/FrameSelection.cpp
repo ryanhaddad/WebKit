@@ -614,7 +614,7 @@ void DragCaretController::clearCaretPositionWithoutUpdatingStyle()
     clearCaretRect();
 }
 
-static void setNodeContainsSelectionEndPoint(const Position& position, bool value)
+static void NODELETE setNodeContainsSelectionEndPoint(const Position& position, bool value)
 {
     // We use anchorNode instead of containerNode() because nodeWillBeRemoved must update position when anchored node is removed.
     for (auto* currentNode = position.anchorNode(); currentNode; currentNode = currentNode->parentOrShadowHostNode()) {
@@ -2634,7 +2634,7 @@ static RefPtr<HTMLFormElement> scanForForm(Element* start)
     return nullptr;
 }
 
-static ValidatedFormListedElement* findFormControlElementAncestor(Element& element)
+static ValidatedFormListedElement* NODELETE findFormControlElementAncestor(Element& element)
 {
     for (auto& ancestor : lineageOfType<Element>(element)) {
         if (auto* formControlAncestor = ancestor.asValidatedFormListedElement())

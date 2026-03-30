@@ -174,7 +174,7 @@ inline bool canUseMegamorphicPutById(VM& vm, UniquedStringImpl* uid)
     return !parseIndex(*uid) && uid != vm.propertyNames->underscoreProto;
 }
 
-bool canBeViaGlobalProxy(AccessCase::AccessType);
+bool NODELETE canBeViaGlobalProxy(AccessCase::AccessType);
 
 inline AccessGenerationResult::AccessGenerationResult(Kind kind, Ref<InlineCacheHandler>&& handler)
     : m_kind(kind)
@@ -223,12 +223,12 @@ public:
 
     const ScalarRegisterSet& liveRegistersForCall();
 
-    DisposableCallSiteIndex callSiteIndexForExceptionHandling();
+    DisposableCallSiteIndex NODELETE callSiteIndexForExceptionHandling();
 
     const HandlerInfo& originalExceptionHandler();
 
     bool needsToRestoreRegistersIfException() const { return m_needsToRestoreRegistersIfException; }
-    CallSiteIndex originalCallSiteIndex() const;
+    CallSiteIndex NODELETE originalCallSiteIndex() const;
 
     void emitExplicitExceptionHandler();
 
@@ -275,15 +275,15 @@ public:
     static MacroAssemblerCodeRef<JITThunkPtrTag> generateSlowPathCode(VM&, AccessType);
     static Ref<InlineCacheHandler> generateSlowPathHandler(VM&, AccessType);
 
-    static void emitDataICPrologue(CCallHelpers&);
-    static void emitDataICEpilogue(CCallHelpers&);
+    static void NODELETE emitDataICPrologue(CCallHelpers&);
+    static void NODELETE emitDataICEpilogue(CCallHelpers&);
     static void emitDataICPrepareForCall(CCallHelpers&);
     static void emitDataICRestoreAfterCall(CCallHelpers&);
     static CCallHelpers::Jump emitDataICCheckStructure(CCallHelpers&, GPRReg baseGPR, GPRReg scratchGPR);
     static CCallHelpers::JumpList emitDataICCheckUid(CCallHelpers&, bool isSymbol, JSValueRegs, GPRReg scratchGPR);
     static void emitDataICJumpNextHandler(CCallHelpers&);
 
-    bool useHandlerIC() const;
+    bool NODELETE useHandlerIC() const;
 
 private:
     CallSiteIndex callSiteIndexForExceptionHandlingOrOriginal();

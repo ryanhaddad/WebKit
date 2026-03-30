@@ -61,7 +61,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace JSC {
 
-static ALWAYS_INLINE JSCell* dynamicCastToCell(JSValue value)
+static ALWAYS_INLINE JSCell* NODELETE dynamicCastToCell(JSValue value)
 {
     if (value.isCell())
         return value.asCell();
@@ -499,7 +499,7 @@ static void promiseAnyResolveJob(JSGlobalObject* globalObject, VM& vm, JSPromise
     }
 }
 
-static bool isSuspendYieldState(int32_t state)
+static bool NODELETE isSuspendYieldState(int32_t state)
 {
     return state > 0 && (state & JSAsyncGenerator::reasonMask) == static_cast<int32_t>(JSAsyncGenerator::AsyncGeneratorSuspendReason::Yield);
 }

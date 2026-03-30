@@ -139,7 +139,7 @@ inline NSNumber *toWebAPI(size_t index)
 
 #endif // __OBJC__
 
-Markable<WTF::UUID> toDocumentIdentifier(WebFrame&);
+Markable<WTF::UUID> NODELETE toDocumentIdentifier(WebFrame&);
 
 } // namespace WebKit
 

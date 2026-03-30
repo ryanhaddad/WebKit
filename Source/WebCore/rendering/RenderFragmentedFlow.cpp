@@ -274,7 +274,7 @@ public:
     const LayoutUnit& NODELETE lowValue() const { return m_offset; }
     const LayoutUnit& NODELETE highValue() const { return m_offset; }
 
-    void collectIfNeeded(const PODInterval<LayoutUnit, SingleThreadWeakPtr<RenderFragmentContainer>>& interval)
+    void NODELETE collectIfNeeded(const PODInterval<LayoutUnit, SingleThreadWeakPtr<RenderFragmentContainer>>& interval)
     {
         if (m_result)
             return;
