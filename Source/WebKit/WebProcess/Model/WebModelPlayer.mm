@@ -355,12 +355,7 @@ void WebModelPlayer::notifyEntityTransformUpdated()
     if (!model || !client || !model->entityTransform())
         return;
 
-    auto scaledTransform = *model->entityTransform();
-    auto scale = m_currentScale;
-    scaledTransform.column0 *= scale;
-    scaledTransform.column1 *= scale;
-    scaledTransform.column2 *= scale;
-    client->didUpdateEntityTransform(*this, WebCore::TransformationMatrix(static_cast<simd_float4x4>(scaledTransform)));
+    client->didUpdateEntityTransform(*this, WebCore::TransformationMatrix(static_cast<simd_float4x4>(*model->entityTransform())));
 }
 
 void WebModelPlayer::sizeDidChange(WebCore::LayoutSize size)
@@ -393,7 +388,6 @@ void WebModelPlayer::sizeDidChange(WebCore::LayoutSize size)
             RefPtr { protectedThis->m_contentsDisplayDelegate }->setDisplayBuffer(*protectedThis->displayBuffer());
     });
 
-    m_currentScale = static_cast<float>(size.minDimension());
     if (RefPtr model = m_currentModel)
         model->setViewportSize(size.width().toFloat(), size.height().toFloat());
     notifyEntityTransformUpdated();
@@ -426,8 +420,10 @@ void WebModelPlayer::handleMouseMove(const WebCore::LayoutPoint& currentPoint, M
         return;
 
     [orbitSimulator gestureDidUpdateWithDeltaX:totalDeltaX deltaY:totalDeltaY];
-    if (RefPtr model = m_currentModel)
+    if (RefPtr model = m_currentModel) {
         model->setRotation([orbitSimulator currentYaw], [orbitSimulator currentPitch]);
+        notifyEntityTransformUpdated();
+    }
 }
 
 bool WebModelPlayer::supportsMouseInteraction()
@@ -549,8 +545,10 @@ void WebModelPlayer::simulate(float elapsedTime)
     RetainPtr orbitSimulator = m_orbitSimulator;
     if (!orbitSimulator)
         return;
-    if ([orbitSimulator stepWithElapsedTime:elapsedTime])
+    if ([orbitSimulator stepWithElapsedTime:elapsedTime]) {
         model->setRotation([orbitSimulator currentYaw], [orbitSimulator currentPitch]);
+        notifyEntityTransformUpdated();
+    }
 }
 
 void WebModelPlayer::setPlaybackRate(double newRate, CompletionHandler<void(double effectivePlaybackRate)>&& completion)

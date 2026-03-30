@@ -128,7 +128,6 @@ private:
     mutable RefPtr<ModelDisplayBufferDisplayDelegate> m_contentsDisplayDelegate;
     uint32_t m_currentTexture { 0 };
     WebCore::StageModeOperation m_stageMode { WebCore::StageModeOperation::None };
-    float m_currentScale { 1.f };
     WebCore::IntSize m_currentPixelSize;
     bool m_didFinishLoading { false };
     enum class PauseState {

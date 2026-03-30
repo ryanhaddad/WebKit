@@ -123,6 +123,7 @@ private:
     simd_float4 m_minCorner;
     simd_float4 m_maxCorner;
     std::optional<WebModel::Float4x4> m_transform;
+    std::optional<WebModel::Float4x4> m_computedTransform;
 #endif
 #if ENABLE(GPU_PROCESS_MODEL)
     float m_cameraDistance { 1.f };

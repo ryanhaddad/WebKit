@@ -243,7 +243,7 @@ void RemoteMeshProxy::sizeDidChange(unsigned width, unsigned height, CompletionH
 
 std::optional<WebModel::Float4x4> RemoteMeshProxy::entityTransform() const
 {
-    return m_transform;
+    return m_computedTransform;
 }
 #endif
 
@@ -370,7 +370,7 @@ void RemoteMeshProxy::computeTransform()
     }
 
     WebModel::Float4x4 result = matrix_identity_float4x4;
-    if (auto existingTransform = entityTransform())
+    if (auto existingTransform = m_transform)
         result = *existingTransform;
 
     result.column0 = scale * simd_normalize(result.column0);
@@ -384,6 +384,7 @@ void RemoteMeshProxy::computeTransform()
 
     setCameraDistance(viewportHeight / kVerticalFOVScale);
     setEntityTransformInternal(result);
+    m_computedTransform = result;
 }
 #endif
 
