@@ -83,6 +83,45 @@ TEST(WKBackForwardList, RemoveCurrentItem)
     EXPECT_STREQ([[newList.currentItem URL] absoluteString].UTF8String, loadableURL2.UTF8String);
 }
 
+TEST(WKBackForwardList, RemoveCurrentItemWithNeighbors)
+{
+    // Regression test: when the current item is filtered out, the currentIndex should
+    // be decremented (so the predecessor becomes current), not left unchanged (which
+    // would make the successor current).
+    auto webView = adoptNS([[WKWebView alloc] init]);
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:loadableURL1]]];
+    [webView _test_waitForDidFinishNavigation];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:loadableURL2]]];
+    [webView _test_waitForDidFinishNavigation];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:loadableURL3]]];
+    [webView _test_waitForDidFinishNavigation];
+
+    [webView goBack];
+    [webView _test_waitForDidFinishNavigation];
+
+    // entries = [A, B(current), C], currentIndex = 1
+    WKBackForwardList *list = [webView backForwardList];
+    EXPECT_EQ((NSUInteger)1, list.backList.count);
+    EXPECT_EQ((NSUInteger)1, list.forwardList.count);
+    EXPECT_STREQ([[list.currentItem URL] absoluteString].UTF8String, loadableURL2.UTF8String);
+
+    // Filter out B (the current item), keeping A and C.
+    _WKSessionState *sessionState = [webView _sessionStateWithFilter:^BOOL(WKBackForwardListItem *item) {
+        return ![item.URL isEqual:[NSURL URLWithString:loadableURL2]];
+    }];
+
+    [webView _restoreSessionState:sessionState andNavigate:NO];
+
+    // Restored list should be [A, C] with A as current (predecessor), not C (successor).
+    WKBackForwardList *newList = [webView backForwardList];
+    EXPECT_EQ((NSUInteger)0, newList.backList.count);
+    EXPECT_EQ((NSUInteger)1, newList.forwardList.count);
+    EXPECT_STREQ([[newList.currentItem URL] absoluteString].UTF8String, loadableURL1.UTF8String);
+}
+
 TEST(WKBackForwardList, CanNotGoBackAfterRestoringEmptySessionState)
 {
     auto webView = adoptNS([[WKWebView alloc] init]);
