@@ -138,7 +138,6 @@ $(PROJECT_DIR)/Modules/WebGPU/GPUPipelineErrorReason.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUPipelineLayout.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUPipelineLayoutDescriptor.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUPowerPreference.idl
-$(PROJECT_DIR)/Modules/WebGPU/GPUPredefinedColorSpace.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUPrimitiveState.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUPrimitiveTopology.idl
 $(PROJECT_DIR)/Modules/WebGPU/GPUProgrammablePassEncoder.idl
@@ -288,7 +287,6 @@ $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPipelineErrorReason.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPipelineLayout.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPipelineLayoutDescriptor.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPowerPreference.idl
-$(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPredefinedColorSpace.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPrimitiveState.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUPrimitiveTopology.idl
 $(PROJECT_DIR)/Modules/WebGPU/WebExposedAPI/GPUProgrammablePassEncoder.idl

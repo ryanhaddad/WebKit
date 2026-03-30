@@ -4260,7 +4260,6 @@ JSGPUPipelineErrorReason.cpp
 JSGPUPipelineLayout.cpp
 JSGPUPipelineLayoutDescriptor.cpp
 JSGPUPowerPreference.cpp
-JSGPUPredefinedColorSpace.cpp
 JSGPUPrimitiveState.cpp
 JSGPUPrimitiveTopology.cpp
 JSGPUProgrammablePassEncoder.cpp

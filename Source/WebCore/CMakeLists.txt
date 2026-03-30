@@ -2032,7 +2032,6 @@ list(APPEND WebCore_NON_SVG_IDL_FILES
     Modules/WebGPU/GPUPipelineLayout.idl
     Modules/WebGPU/GPUPipelineLayoutDescriptor.idl
     Modules/WebGPU/GPUPowerPreference.idl
-    Modules/WebGPU/GPUPredefinedColorSpace.idl
     Modules/WebGPU/GPUPrimitiveState.idl
     Modules/WebGPU/GPUPrimitiveTopology.idl
     Modules/WebGPU/GPUProgrammablePassEncoder.idl

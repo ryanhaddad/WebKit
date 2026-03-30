@@ -142,7 +142,6 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/WebGPU/GPUPipelineLayout.idl \
     $(WebCore)/Modules/WebGPU/GPUPipelineLayoutDescriptor.idl \
     $(WebCore)/Modules/WebGPU/GPUPowerPreference.idl \
-    $(WebCore)/Modules/WebGPU/GPUPredefinedColorSpace.idl \
     $(WebCore)/Modules/WebGPU/GPUPrimitiveState.idl \
     $(WebCore)/Modules/WebGPU/GPUPrimitiveTopology.idl \
     $(WebCore)/Modules/WebGPU/GPUProgrammablePassEncoder.idl \

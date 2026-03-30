@@ -1351,8 +1351,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPipelineLayoutDescriptor.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPipelineLayoutDescriptor.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPowerPreference.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPowerPreference.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPredefinedColorSpace.cpp
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPredefinedColorSpace.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPrimitiveState.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPrimitiveState.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSGPUPrimitiveTopology.cpp

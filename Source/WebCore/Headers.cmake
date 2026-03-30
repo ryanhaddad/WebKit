@@ -90,7 +90,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/WebGPU/GPUPipelineLayout.h
     Modules/WebGPU/GPUPipelineLayoutDescriptor.h
     Modules/WebGPU/GPUPowerPreference.h
-    Modules/WebGPU/GPUPredefinedColorSpace.h
     Modules/WebGPU/GPUPrimitiveState.h
     Modules/WebGPU/GPUPrimitiveTopology.h
     Modules/WebGPU/GPUProgrammableStage.h
