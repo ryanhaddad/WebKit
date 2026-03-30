@@ -8791,9 +8791,6 @@ Variant<Document::SkipTransition, Vector<AtomString>> Document::resolveViewTrans
 // https://html.spec.whatwg.org/multipage/browsing-the-web.html#revealing-the-document
 void Document::reveal()
 {
-    if (!settings().crossDocumentViewTransitionsEnabled())
-        return;
-
     if (m_hasBeenRevealed)
         return;
     m_hasBeenRevealed = true;
@@ -8823,9 +8820,6 @@ void Document::transferViewTransitionParams(Document& newDocument)
 
 void Document::dispatchPageswapEvent(CanTriggerCrossDocumentViewTransition canTriggerCrossDocumentViewTransition, RefPtr<NavigationActivation>&& activation)
 {
-    if (!settings().crossDocumentViewTransitionsEnabled())
-        return;
-
     RefPtr<ViewTransition> oldViewTransition;
 
     auto startTime = MonotonicTime::now();

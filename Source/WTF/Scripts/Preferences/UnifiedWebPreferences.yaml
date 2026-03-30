@@ -2101,20 +2101,6 @@ CoreMathMLEnabled:
     WebCore:
       default: false
 
-CrossDocumentViewTransitionsEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "Cross document view-transitions"
-  humanReadableDescription: "Enable support for view-transitions cross-document"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CrossOriginEmbedderPolicyEnabled:
   type: bool
   status: stable
@@ -9086,20 +9072,6 @@ ViewGestureDebuggingEnabled:
   defaultValue:
     WebKit:
       default: false
-
-ViewTransitionsEnabled:
-  type: bool
-  category: animation
-  status: stable
-  humanReadableName: "View Transitions"
-  humanReadableDescription: "Enable the View Transitions API"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
 
 VisibleDebugOverlayRegions:
   type: uint32_t

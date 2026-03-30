@@ -1058,9 +1058,6 @@ RefPtr<StyleRuleCounterStyle> CSSParser::consumeCounterStyleRule(CSSParserTokenR
 
 RefPtr<StyleRuleViewTransition> CSSParser::consumeViewTransitionRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
-    if (!m_context.propertySettings.crossDocumentViewTransitionsEnabled)
-        return nullptr;
-
     if (!prelude.atEnd())
         return nullptr; // Parse error; @view-transition prelude should be empty
 

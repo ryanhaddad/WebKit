@@ -53,7 +53,6 @@ static void NODELETE applyUASheetBehaviorsToContext(CSSParserContext& context)
     context.popoverAttributeEnabled = true;
     context.propertySettings.cssInputSecurityEnabled = true;
     context.propertySettings.supportHDRDisplayEnabled = true;
-    context.propertySettings.viewTransitionsEnabled = true;
     context.propertySettings.cssFieldSizingEnabled = true;
     context.cssMathDepthEnabled = true;
     context.propertySettings.cssMathDepthEnabled = true;

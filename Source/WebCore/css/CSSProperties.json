@@ -13024,7 +13024,6 @@
                 "none"
             ],
             "codegen-properties": {
-                "settings-flag": "viewTransitionsEnabled",
                 "computed-style-name-for-methods": "ViewTransitionClasses",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
@@ -13045,7 +13044,6 @@
                 "match-element"
             ],
             "codegen-properties": {
-                "settings-flag": "viewTransitionsEnabled",
                 "computed-style-storage-path": ["m_nonInheritedData", "rareData"],
                 "computed-style-storage-kind": "reference",
                 "computed-style-type": "Style::ViewTransitionName",
@@ -13782,7 +13780,6 @@
                     "auto"
                 ],
                 "codegen-properties": {
-                    "settings-flag": "crossDocumentViewTransitionsEnabled",
                     "parser-grammar": "<<values>>",
                     "parser-exported": true
                 },
@@ -13796,7 +13793,6 @@
                     "none"
                 ],
                 "codegen-properties": {
-                    "settings-flag": "crossDocumentViewTransitionsEnabled",
                     "parser-function": "consumeViewTransitionTypes",
                     "parser-grammar-unused": "none | <custom-ident excluding=none>+",
                     "parser-grammar-unused-reason": "Needs support for excluding from <custom-ident> based on prefixes."

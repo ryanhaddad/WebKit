@@ -766,8 +766,6 @@ bool consumePropertyDescriptor(CSSParserTokenRange& range, const CSSParserContex
 
 bool consumeViewTransitionDescriptor(CSSParserTokenRange& range, const CSSParserContext& context, CSSPropertyID property, CSS::PropertyParserResult& result)
 {
-    ASSERT(context.propertySettings.crossDocumentViewTransitionsEnabled);
-
     auto state = CSS::PropertyParserState {
         .context = context,
         .currentRule = StyleRuleType::ViewTransition,
