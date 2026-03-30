@@ -249,7 +249,7 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
     g_return_val_if_fail(g_task_is_valid(result, database), nullptr);
 
 #if USE(GTK4)
-    auto* image = static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error));
+    sk_sp image { static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error)) };
     auto texture = image ? skiaImageToGdkTexture(*image) : nullptr;
 
     if (texture)
@@ -259,7 +259,7 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
         g_set_error_literal(error, WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_FAVICON_UNKNOWN, _("Failed to create texture"));
     return nullptr;
 #else
-    auto* image = static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error));
+    sk_sp image { static_cast<SkImage*>(g_task_propagate_pointer(G_TASK(result), error)) };
     return image ? skiaImageToCairoSurface(*image).leakRef() : nullptr;
 #endif
 }
