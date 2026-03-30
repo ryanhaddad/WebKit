@@ -136,7 +136,7 @@ public:
             gsize read_count, bytes_read;
             read_count = sizeof(readBuffer);
             g_input_stream_read_all(body.get(), readBuffer, read_count, &bytes_read, NULL, NULL);
-            g_assert_cmpstr(readBuffer, ==, "X-Test=A");
+            g_assert_cmpmem(readBuffer, bytes_read, "X-Test=A", read_count);
         } else
             g_assert_cmpstr(method, ==, "GET");
 
