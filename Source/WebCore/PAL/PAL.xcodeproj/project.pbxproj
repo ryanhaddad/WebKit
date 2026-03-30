@@ -718,7 +718,7 @@
 		93DB7D3924626F86004BD8A3 /* NSUndoManagerSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSUndoManagerSPI.h; sourceTree = "<group>"; };
 		93E5909C1F93BF1E0067F8CF /* UnencodableHandling.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UnencodableHandling.h; sourceTree = "<group>"; };
 		94C759022B990D31000CC511 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
-		94F4AA012B730D2C006DFFDE /* CryptoKitShim.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CryptoKitShim.swift; path = pal/PALSwift/CryptoKitShim.swift; sourceTree = SOURCE_ROOT; };
+		94F4AA012B730D2C006DFFDE /* CryptoKitShim.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CryptoKitShim.swift; path = pal/crypto/CryptoKitShim.swift; sourceTree = SOURCE_ROOT; };
 		A10265881F56747A00B4C844 /* HIToolboxSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HIToolboxSPI.h; sourceTree = "<group>"; };
 		A102658D1F567E9D00B4C844 /* HIServicesSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HIServicesSPI.h; sourceTree = "<group>"; };
 		A1038D322AB12BF100F57BA4 /* WebAVContentKeyGrouping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebAVContentKeyGrouping.h; sourceTree = "<group>"; };
@@ -840,14 +840,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		07195DF52F0815E300583EC3 /* PALSwift */ = {
-			isa = PBXGroup;
-			children = (
-				94F4AA012B730D2C006DFFDE /* CryptoKitShim.swift */,
-			);
-			path = PALSwift;
-			sourceTree = "<group>";
-		};
 		0C00CFCC1F68CE2300AAC26D /* avfoundation */ = {
 			isa = PBXGroup;
 			children = (
@@ -1104,7 +1096,6 @@
 				1CC5E3C12737457D006F6FF4 /* graphics */,
 				2E87C06E215A993100D6CD32 /* ios */,
 				44E1A8AC21FA548F00C3048E /* mac */,
-				07195DF52F0815E300583EC3 /* PALSwift */,
 				0C2DA0651F33CA3300DBC317 /* spi */,
 				A3788E9F1F05B7CE00679425 /* system */,
 				A30D411D1F0DD0AC00B71954 /* text */,
@@ -1145,6 +1136,7 @@
 				07ED412C2F771D5100C91401 /* CryptoEDKeyBridging.cpp */,
 				07ED41272F771BC200C91401 /* CryptoEDKeyBridging.h */,
 				076E34C32F725D9D006A65D9 /* CryptoKit+UnsafeOverlays.swift */,
+				94F4AA012B730D2C006DFFDE /* CryptoKitShim.swift */,
 				07C9C8DB2EDAAABD007B579A /* CryptoTypes.h */,
 				076E34C82F725DD9006A65D9 /* CryptoTypes.swift */,
 				078D1F412F74FB5D00B6BFA9 /* PlatformECKey.cpp */,

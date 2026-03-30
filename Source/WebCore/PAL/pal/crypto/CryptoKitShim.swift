@@ -21,46 +21,30 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-public import CryptoKit
-public import Foundation
+private import CryptoKit
+import Foundation
 
 public import pal.Core.crypto.CryptoTypes
 
 // FIXME: (rdar://164560176) resolve the many 'unsafe' statements here
 
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public typealias CryptoOperationReturnValue = PAL.Crypto.CryptoOperationReturnValue
-
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public typealias ErrorCodes = PAL.Crypto.Error
-
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public typealias VectorUInt8 = PAL.Crypto.VectorUInt8
-
-// FIXME: PALSwift should have no public symbols.
-// swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public typealias SpanConstUInt8 = PAL.Crypto.SpanConstUInt8
+// FIXME: No symbols in this file should be `public`. Remove when support for compilers < 6.2.3 is no longer needed.
 
 private enum LocalErrors: Error {
     case invalidArgument
 }
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class AesGcm {
-    // FIXME: PALSwift should have no public symbols.
+public final class AesGcm {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func encrypt(
-        key: SpanConstUInt8,
-        iv: SpanConstUInt8,
-        ad: SpanConstUInt8,
-        message: SpanConstUInt8,
+        key: PAL.Crypto.SpanConstUInt8,
+        iv: PAL.Crypto.SpanConstUInt8,
+        ad: PAL.Crypto.SpanConstUInt8,
+        message: PAL.Crypto.SpanConstUInt8,
         desiredTagLengthInBytes: Int
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             if unsafe iv.size() == 0 {
                 returnValue.errorCode = .InvalidArgument
@@ -87,13 +71,14 @@ public class AesGcm {
     }
 }
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class AesKw {
-    // FIXME: PALSwift should have no public symbols.
+public final class AesKw {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func wrap(keyToWrap: SpanConstUInt8, using: SpanConstUInt8) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    public static func wrap(
+        keyToWrap: PAL.Crypto.SpanConstUInt8,
+        using: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             let result = try unsafe AES.KeyWrap.wrap(keyToWrap, using: using)
             returnValue.errorCode = .Success
@@ -104,8 +89,12 @@ public class AesKw {
         return returnValue
     }
 
-    public static func unwrap(wrappedKey: SpanConstUInt8, using: SpanConstUInt8) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+    public static func unwrap(
+        wrappedKey: PAL.Crypto.SpanConstUInt8,
+        using: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             let result = try unsafe AES.KeyWrap.unwrap(
                 wrappedKey,
@@ -118,90 +107,80 @@ public class AesKw {
         }
         return returnValue
     }
-} // AesKw
+}
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class Digest {
-    var ctx: any CryptoKit.HashFunction
+public final class Digest {
+    private var ctx: any CryptoKit.HashFunction
 
-    // FIXME: PALSwift should have no public symbols.
-    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public required init<T: CryptoKit.HashFunction>(_: T.Type) {
+    private init<T: CryptoKit.HashFunction>(_: T.Type) {
         ctx = T()
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sha1Init() -> Digest {
         Self(Insecure.SHA1.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sha256Init() -> Digest {
         Self(SHA256.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sha384Init() -> Digest {
         Self(SHA384.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sha512Init() -> Digest {
         Self(SHA512.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public func update(_ data: SpanConstUInt8) {
+    public func update(_ data: PAL.Crypto.SpanConstUInt8) {
         unsafe ctx.update(data: data)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public func finalize() -> VectorUInt8 {
+    public func finalize() -> PAL.Crypto.VectorUInt8 {
         ctx.finalize().copyToVectorUInt8()
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func sha1(_ data: SpanConstUInt8) -> VectorUInt8 {
+    public static func sha1(_ data: PAL.Crypto.SpanConstUInt8) -> PAL.Crypto.VectorUInt8 {
         unsafe digest(data, t: Insecure.SHA1.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func sha256(_ data: SpanConstUInt8) -> VectorUInt8 {
+    public static func sha256(_ data: PAL.Crypto.SpanConstUInt8) -> PAL.Crypto.VectorUInt8 {
         unsafe digest(data, t: SHA256.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func sha384(_ data: SpanConstUInt8) -> VectorUInt8 {
+    public static func sha384(_ data: PAL.Crypto.SpanConstUInt8) -> PAL.Crypto.VectorUInt8 {
         unsafe digest(data, t: SHA384.self)
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func sha512(_ data: SpanConstUInt8) -> VectorUInt8 {
+    public static func sha512(_ data: PAL.Crypto.SpanConstUInt8) -> PAL.Crypto.VectorUInt8 {
         unsafe digest(data, t: SHA512.self)
     }
 
-    fileprivate static func digest<T: CryptoKit.HashFunction>(_ data: SpanConstUInt8, _: T.Type) -> T.Digest {
+    fileprivate static func digest<T: CryptoKit.HashFunction>(_ data: PAL.Crypto.SpanConstUInt8, _: T.Type) -> T.Digest {
         var hasher = T()
         unsafe hasher.update(data: data)
         return hasher.finalize()
     }
 
-    fileprivate static func digest<T: CryptoKit.HashFunction>(_ data: SpanConstUInt8, t: T.Type) -> VectorUInt8 {
+    fileprivate static func digest<T: CryptoKit.HashFunction>(_ data: PAL.Crypto.SpanConstUInt8, t: T.Type) -> PAL.Crypto.VectorUInt8 {
         unsafe Self.digest(data, t).copyToVectorUInt8()
     }
 
-    fileprivate static func digest(_ data: SpanConstUInt8, hashFunction: PAL.Crypto.CryptoDigestHashFunction) -> any CryptoKit.Digest {
+    fileprivate static func digest(
+        _ data: PAL.Crypto.SpanConstUInt8,
+        hashFunction: PAL.Crypto.CryptoDigestHashFunction
+    ) -> any CryptoKit.Digest {
         switch hashFunction {
         case .SHA_256:
             return unsafe digest(data, SHA256.self)
@@ -219,29 +198,27 @@ public class Digest {
     }
 }
 
-enum ECPrivateKey {
+private enum ECPrivateKey {
     case p256(P256.Signing.PrivateKey)
     case p384(P384.Signing.PrivateKey)
     case p521(P521.Signing.PrivateKey)
 }
 
-enum ECPublicKey {
+private enum ECPublicKey {
     case p256(P256.Signing.PublicKey)
     case p384(P384.Signing.PublicKey)
     case p521(P521.Signing.PublicKey)
 }
 
-enum ECKeyInternal {
+private enum ECKeyInternal {
     case privateKey(ECPrivateKey)
     case publicKey(ECPublicKey)
 }
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
 public struct ECKey {
-    let key: ECKeyInternal
+    private let key: ECKeyInternal
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public init(curve: PAL.Crypto.ECNamedCurve) {
         switch curve {
@@ -268,7 +245,6 @@ public struct ECKey {
         key = internalKey
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public func toPub() -> ECKey {
         switch key {
@@ -286,9 +262,8 @@ public struct ECKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func importX963Pub(data: SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
+    public static func importX963Pub(data: PAL.Crypto.SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
         do {
             return switch curve {
             case .P256:
@@ -305,10 +280,9 @@ public struct ECKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public func exportX963Pub() -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    public func exportX963Pub() -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch try getInternalPublic() {
             case .p256(let k):
@@ -325,9 +299,8 @@ public struct ECKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func importCompressedPub(data: SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
+    public static func importCompressedPub(data: PAL.Crypto.SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
         do {
             return switch curve {
             case .P256:
@@ -344,9 +317,8 @@ public struct ECKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func importX963Private(data: SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
+    public static func importX963Private(data: PAL.Crypto.SpanConstUInt8, curve: PAL.Crypto.ECNamedCurve) -> ECKey? {
         do {
             return switch curve {
             case .P256:
@@ -363,10 +335,9 @@ public struct ECKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public func exportX963Private() -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    public func exportX963Private() -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch try getInternalPrivate() {
             case .p256(let k):
@@ -383,13 +354,12 @@ public struct ECKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public func sign(
-        message: SpanConstUInt8,
+        message: PAL.Crypto.SpanConstUInt8,
         hashFunction: PAL.Crypto.CryptoDigestHashFunction
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch try getInternalPrivate() {
             case .p256(let cryptoKey):
@@ -412,14 +382,13 @@ public struct ECKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public func verify(
-        message: SpanConstUInt8,
-        signature: SpanConstUInt8,
+        message: PAL.Crypto.SpanConstUInt8,
+        signature: PAL.Crypto.SpanConstUInt8,
         hashFunction: PAL.Crypto.CryptoDigestHashFunction
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             let internalPublic = try getInternalPublic()
             switch internalPublic {
@@ -469,10 +438,9 @@ public struct ECKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public func deriveBits(publicKey: ECKey) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    public func deriveBits(publicKey: ECKey) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             let internalPrivate = try getInternalPrivate()
             let internalPub = try publicKey.getInternalPublic()
@@ -528,12 +496,10 @@ public struct ECKey {
     }
 }
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class EdKey {
-    // FIXME: PALSwift should have no public symbols.
+public final class EdKey {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func generatePrivateKey(algo: PAL.Crypto.EdSigningAlgorithm) -> VectorUInt8 {
+    public static func generatePrivateKey(algo: PAL.Crypto.EdSigningAlgorithm) -> PAL.Crypto.VectorUInt8 {
         switch algo {
         case .ED25519:
             Curve25519.Signing.PrivateKey().rawRepresentation.copyToVectorUInt8()
@@ -544,9 +510,8 @@ public class EdKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func generatePrivateKeyKeyAgreement(algo: PAL.Crypto.EdKeyAgreementAlgorithm) -> VectorUInt8 {
+    public static func generatePrivateKeyKeyAgreement(algo: PAL.Crypto.EdKeyAgreementAlgorithm) -> PAL.Crypto.VectorUInt8 {
         switch algo {
         case .X25519:
             Curve25519.KeyAgreement.PrivateKey().rawRepresentation.copyToVectorUInt8()
@@ -557,10 +522,12 @@ public class EdKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func privateToPublic(algo: PAL.Crypto.EdSigningAlgorithm, privateKey: SpanConstUInt8) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    public static func privateToPublic(
+        algo: PAL.Crypto.EdSigningAlgorithm,
+        privateKey: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             if unsafe privateKey.size() != 32 {
                 throw LocalErrors.invalidArgument
@@ -584,13 +551,12 @@ public class EdKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func privateToPublicKeyAgreement(
         algo: PAL.Crypto.EdKeyAgreementAlgorithm,
-        privateKey: SpanConstUInt8
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+        privateKey: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             if unsafe privateKey.size() != 32 {
                 throw LocalErrors.invalidArgument
@@ -614,9 +580,12 @@ public class EdKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-    public static func validateKeyPair(algo: PAL.Crypto.EdSigningAlgorithm, privateKey: SpanConstUInt8, publicKey: SpanConstUInt8) -> Bool {
+    public static func validateKeyPair(
+        algo: PAL.Crypto.EdSigningAlgorithm,
+        privateKey: PAL.Crypto.SpanConstUInt8,
+        publicKey: PAL.Crypto.SpanConstUInt8
+    ) -> Bool {
         do {
             if unsafe (privateKey.size() != 32 || publicKey.size() != 32) {
                 throw LocalErrors.invalidArgument
@@ -636,12 +605,11 @@ public class EdKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func validateKeyPairKeyAgreement(
         algo: PAL.Crypto.EdKeyAgreementAlgorithm,
-        privateKey: SpanConstUInt8,
-        publicKey: SpanConstUInt8
+        privateKey: PAL.Crypto.SpanConstUInt8,
+        publicKey: PAL.Crypto.SpanConstUInt8
     ) -> Bool {
         do {
             if unsafe (privateKey.size() != 32 || publicKey.size() != 32) {
@@ -662,14 +630,13 @@ public class EdKey {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sign(
         algo: PAL.Crypto.EdSigningAlgorithm,
-        privateKey: SpanConstUInt8,
-        data: SpanConstUInt8
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+        privateKey: PAL.Crypto.SpanConstUInt8,
+        data: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch algo {
             case .ED25519:
@@ -687,15 +654,14 @@ public class EdKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func verify(
         algo: PAL.Crypto.EdSigningAlgorithm,
-        publicKey: SpanConstUInt8,
-        signature: SpanConstUInt8,
-        data: SpanConstUInt8
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+        publicKey: PAL.Crypto.SpanConstUInt8,
+        signature: PAL.Crypto.SpanConstUInt8,
+        data: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch algo {
             case .ED25519:
@@ -714,14 +680,13 @@ public class EdKey {
         return returnValue
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func deriveBits(
         algo: PAL.Crypto.EdKeyAgreementAlgorithm,
-        privateKey: SpanConstUInt8,
-        publicKey: SpanConstUInt8
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+        privateKey: PAL.Crypto.SpanConstUInt8,
+        publicKey: PAL.Crypto.SpanConstUInt8
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         do {
             switch algo {
             case .X25519:
@@ -740,16 +705,14 @@ public class EdKey {
     }
 }
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class HMAC {
-    // FIXME: PALSwift should have no public symbols.
+public final class HMAC {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func sign(
-        key: SpanConstUInt8,
-        data: SpanConstUInt8,
+        key: PAL.Crypto.SpanConstUInt8,
+        data: PAL.Crypto.SpanConstUInt8,
         hashFunction: PAL.Crypto.CryptoDigestHashFunction
-    ) -> VectorUInt8 {
+    ) -> PAL.Crypto.VectorUInt8 {
         switch hashFunction {
         case .SHA_1:
             return unsafe CryptoKit.HMAC<Insecure.SHA1>.authenticationCode(data: data, key: key)
@@ -766,12 +729,11 @@ public class HMAC {
         }
     }
 
-    // FIXME: PALSwift should have no public symbols.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func verify(
-        mac: SpanConstUInt8,
-        key: SpanConstUInt8,
-        data: SpanConstUInt8,
+        mac: PAL.Crypto.SpanConstUInt8,
+        key: PAL.Crypto.SpanConstUInt8,
+        data: PAL.Crypto.SpanConstUInt8,
         hashFunction: PAL.Crypto.CryptoDigestHashFunction
     ) -> Bool {
         switch hashFunction {
@@ -802,19 +764,17 @@ private let hkdfInputSizeLimitSHA256 = 255 * SHA256.byteCount * 8
 private let hkdfInputSizeLimitSHA384 = 255 * SHA384.byteCount * 8
 private let hkdfInputSizeLimitSHA512 = 255 * SHA512.byteCount * 8
 
-// FIXME: PALSwift should have no public symbols.
 // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-public class HKDF {
-    // FIXME: PALSwift should have no public symbols.
+public final class HKDF {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     public static func deriveBits(
-        key: SpanConstUInt8,
-        salt: SpanConstUInt8,
-        info: SpanConstUInt8,
+        key: PAL.Crypto.SpanConstUInt8,
+        salt: PAL.Crypto.SpanConstUInt8,
+        info: PAL.Crypto.SpanConstUInt8,
         outputBitCount: Int,
         hashFunction: PAL.Crypto.CryptoDigestHashFunction
-    ) -> CryptoOperationReturnValue {
-        var returnValue = CryptoOperationReturnValue()
+    ) -> PAL.Crypto.CryptoOperationReturnValue {
+        var returnValue = PAL.Crypto.CryptoOperationReturnValue()
         if outputBitCount <= 0 || outputBitCount % 8 != 0 {
             returnValue.errorCode = .InvalidArgument
             return returnValue
