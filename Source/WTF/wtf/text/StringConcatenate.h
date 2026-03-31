@@ -286,9 +286,10 @@ template<typename... StringTypes> class StringTypeAdapter<std::tuple<StringTypes
 public:
     StringTypeAdapter(const std::tuple<StringTypes...>& tuple)
         : m_tuple { tuple }
-        , m_length { std::apply(computeLength, tuple) }
-        , m_is8Bit { std::apply(computeIs8Bit, tuple) }
     {
+        std::apply([&](const StringTypes&... strings) {
+            (..., accumulateProperties(strings));
+        }, tuple);
     }
 
     unsigned length() const { return m_length; }
@@ -297,26 +298,30 @@ public:
     {
         std::apply([&](const StringTypes&... strings) {
             unsigned offset = 0;
-            (..., (
-                StringTypeAdapter<StringTypes>(strings).writeTo(destination.subspan(offset)),
-                offset += StringTypeAdapter<StringTypes>(strings).length()
-            ));
+            (..., (offset += writeOne(destination.subspan(offset), strings)));
         }, m_tuple);
     }
 
 private:
-    static unsigned computeLength(const StringTypes&... strings)
+    template<typename StringType>
+    void accumulateProperties(const StringType& string)
     {
-        return (... + StringTypeAdapter<StringTypes>(strings).length());
+        StringTypeAdapter<StringType> adapter(string);
+        m_length += adapter.length();
+        m_is8Bit = m_is8Bit && adapter.is8Bit();
     }
 
-    static bool computeIs8Bit(const StringTypes&... strings)
+    template<typename CharacterType, typename StringType>
+    static unsigned writeOne(std::span<CharacterType> destination, const StringType& string)
     {
-        return (... && StringTypeAdapter<StringTypes>(strings).is8Bit());
+        StringTypeAdapter<StringType> adapter(string);
+        adapter.writeTo(destination);
+        return adapter.length();
     }
+
     const std::tuple<StringTypes...>& m_tuple;
-    unsigned m_length;
-    bool m_is8Bit;
+    unsigned m_length { 0 };
+    bool m_is8Bit { true };
 };
 
 template<typename UnderlyingElementType> struct PaddingSpecification {
