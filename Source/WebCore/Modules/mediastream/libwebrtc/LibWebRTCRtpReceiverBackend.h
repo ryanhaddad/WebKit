@@ -63,6 +63,7 @@ private:
     Vector<RTCRtpSynchronizationSource> getSynchronizationSources() const final;
     Ref<RTCRtpTransformBackend> rtcRtpTransformBackend() final;
     std::unique_ptr<RTCDtlsTransportBackend> dtlsTransportBackend() final;
+    void setJitterBufferTarget(std::optional<double>) final;
 
     // webrtc::RtpReceiverObserverInterface
     void OnFirstPacketReceived(webrtc::MediaType) final { }

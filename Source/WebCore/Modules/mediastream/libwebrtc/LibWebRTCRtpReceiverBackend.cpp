@@ -172,6 +172,11 @@ std::unique_ptr<RTCDtlsTransportBackend> LibWebRTCRtpReceiverBackend::dtlsTransp
     return backend ? makeUnique<LibWebRTCDtlsTransportBackend>(backend.releaseNonNull()) : nullptr;
 }
 
+void LibWebRTCRtpReceiverBackend::setJitterBufferTarget(std::optional<double> valueInMillisecond)
+{
+    m_rtcReceiver->SetJitterBufferMinimumDelay(valueInMillisecond ? std::make_optional(*valueInMillisecond / 1000.0) : std::nullopt);
+}
+
 void LibWebRTCRtpReceiverBackend::OnFirstPacketReceivedAfterReceptiveChange(webrtc::MediaType)
 {
     callOnMainThread([source = m_source] {

@@ -1624,6 +1624,9 @@ webkit.org/b/182103 fast/forms/focus-selection-textarea.html [ Failure ]
 webkit.org/b/308037 imported/w3c/web-platform-tests/webrtc/simulcast/vp8.https.html [ Failure Pass ]
 webkit.org/b/308037 imported/w3c/web-platform-tests/webrtc/simulcast/vp9.https.html [ Failure Pass ]
 
+imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-audio-jitterBufferTarget-stats.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-video-jitterBufferTarget-stats.html [ Failure ]
+
 webkit.org/b/307144 media/video-restricted-invisible-autoplay-not-allowed.html [ Timeout Pass ]
 
 webkit.org/b/254520 media/video-ended-event-negative-playback.html [ Failure Timeout Pass ]
@@ -2988,7 +2991,6 @@ imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-videoDetectorTest.html 
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-encodings.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-headerExtensions.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-rtcp.html [ Pass ]
-imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-audio-jitterBufferTarget-stats.https.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-getCapabilities.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-getContributingSources.https.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-getParameters.html [ Failure ]
@@ -2996,7 +2998,6 @@ imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-getStats.https.html [ Fail
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-jitterBufferTarget.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-track-settings.tentative.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-video-anyCodec.html [ Failure ]
-imported/w3c/web-platform-tests/webrtc/RTCRtpReceiver-video-jitterBufferTarget-stats.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpSender-encode-same-track-twice.https.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpSender-getCapabilities.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpSender-getParameters.html [ Failure ]
