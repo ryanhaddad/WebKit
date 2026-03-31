@@ -62,6 +62,7 @@ public:
     using MappedTraits = MappedTraitsArg;
     using Entry = KeyValuePair<KeyType, MappedType>;
     using EntryTraits = KeyValuePairHashTraits<KeyTraits, MappedTraits>;
+    using MappedTakeType = typename MappedTraits::TakeType;
 
     InlineMap()
         : m_size(0)
@@ -147,6 +148,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     class ValuesIterator;
 
     class iterator {
+        friend class InlineMap;
         friend class ValuesIterator;
     public:
         iterator() = default;
@@ -323,7 +325,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
                     if (i != m_size) {
                         // Move last entry to fill the gap
                         std::construct_at(&entryStorage[i], WTF::move(entryStorage[m_size]));
-                        // Assuming the moved-from entry is trivially destructible
+                        std::destroy_at(&entryStorage[m_size]);
                     }
                     return true;
                 }
@@ -345,6 +347,51 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
             shrink();
 
         return true;
+    }
+
+    bool remove(iterator it)
+    {
+        if (it == end())
+            return false;
+
+        Entry* slot = it.m_current;
+
+        if (isInline()) {
+            std::destroy_at(slot);
+            --m_size;
+            Entry* lastEntry = &inlineStorage()[m_size];
+            if (slot != lastEntry) {
+                std::construct_at(slot, WTF::move(*lastEntry));
+                std::destroy_at(lastEntry);
+            }
+            return true;
+        }
+
+        std::destroy_at(slot);
+        constructDeletedEntry(*slot);
+        incrementDeletedCount();
+        --m_size;
+
+        if (shouldShrink())
+            shrink();
+
+        return true;
+    }
+
+    template<typename K>
+    MappedTakeType take(const K& key)
+    {
+        return take(find(key));
+    }
+
+    MappedTakeType take(iterator it)
+    {
+        if (it == end())
+            return emptyTakeResult();
+
+        auto result = MappedTraits::take(WTF::move(it->value));
+        remove(it);
+        return result;
     }
 
     iterator begin() LIFETIME_BOUND
@@ -480,7 +527,7 @@ private:
 
     ALWAYS_INLINE static bool isEmptyKey(const KeyType& key)
     {
-        return isHashTraitsEmptyValue<HashTraits<KeyType>>(key);
+        return isHashTraitsEmptyValue<KeyTraits>(key);
     }
 
     ALWAYS_INLINE static bool isEmptyEntry(const Entry& entry)
@@ -490,7 +537,7 @@ private:
 
     ALWAYS_INLINE static bool isDeletedEntry(const Entry& entry)
     {
-        return HashTraits<KeyType>::isDeletedValue(entry.key);
+        return KeyTraits::isDeletedValue(entry.key);
     }
 
     ALWAYS_INLINE static bool isEmptyOrDeletedEntry(const Entry& entry)
@@ -526,6 +573,14 @@ private:
     static constexpr unsigned loadFactorNumerator = 3;
     static constexpr unsigned loadFactorDenominator = 4;
     static constexpr unsigned minLoadInverse = 6;
+
+    ALWAYS_INLINE static MappedTakeType emptyTakeResult()
+    {
+        if constexpr (requires { MappedTraits::emptyTakeValue(); })
+            return MappedTraits::emptyTakeValue();
+        else
+            return MappedTraits::take(MappedTraits::emptyValue());
+    }
 
     ALWAYS_INLINE unsigned deletedCount() const
     {

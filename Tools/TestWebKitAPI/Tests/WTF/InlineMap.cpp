@@ -2575,4 +2575,671 @@ TEST(WTF_InlineMap, MustRehashInPlacePathDirect)
     }
 }
 
+TEST(WTF_InlineMap, CustomKeyTraitsTransitionToHashed)
+{
+    // Regression test: InlineMap with custom key traits (where emptyValue != 0)
+    // must use those traits for empty/deleted checks, not the default HashTraits.
+    // Previously, isEmptyKey() used HashTraits<KeyType> instead of the passed-in
+    // KeyTraits, causing an infinite loop during transitionToHashed() when
+    // UnsignedWithZeroKeyHashTraits was used (empty = INT_MAX, not 0).
+    InlineMap<int, int, 4, IntHash<int>, WTF::UnsignedWithZeroKeyHashTraits<int>> map;
+
+    // Fill inline capacity (4 entries, including key 0 which is allowed)
+    map.add(0, 100);
+    map.add(1, 200);
+    map.add(2, 300);
+    map.add(3, 400);
+    EXPECT_EQ(map.size(), 4u);
+
+    // This add triggers transitionToHashed(). With the bug, it would loop forever
+    // because the hashed storage was initialized with empty key = INT_MAX but
+    // isEmptyKey() checked for key == 0 (default HashTraits<int>).
+    map.add(4, 500);
+    EXPECT_EQ(map.size(), 5u);
+
+    // Verify all entries survived the transition
+    EXPECT_EQ(map.find(0)->value, 100);
+    EXPECT_EQ(map.find(1)->value, 200);
+    EXPECT_EQ(map.find(2)->value, 300);
+    EXPECT_EQ(map.find(3)->value, 400);
+    EXPECT_EQ(map.find(4)->value, 500);
+
+    // Verify remove works correctly in hashed mode with custom traits
+    EXPECT_TRUE(map.remove(2));
+    EXPECT_EQ(map.size(), 4u);
+    EXPECT_FALSE(map.contains(2));
+    EXPECT_TRUE(map.contains(0));
+    EXPECT_TRUE(map.contains(3));
+}
+
+// --- take() tests ---
+
+TEST(WTF_InlineMap, TakeExistingKeyInline)
+{
+    // take() on an existing key in inline mode returns the value and removes the entry.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 3u);
+
+    unsigned value = map.take(2);
+    EXPECT_EQ(value, 200u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(2));
+
+    // Other entries unaffected
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(3));
+    EXPECT_EQ(map.find(3)->value, 300u);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+}
+
+TEST(WTF_InlineMap, TakeNonExistingKeyReturnsDefault)
+{
+    // take() on a non-existing key returns the empty/default value.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+
+    // Take a key that does not exist (inline mode)
+    unsigned value = map.take(99);
+    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(map.size(), 2u);
+
+    // Take from an empty map
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> emptyMap;
+    value = emptyMap.take(1);
+    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(emptyMap.size(), 0u);
+}
+
+TEST(WTF_InlineMap, TakeExistingKeyHashed)
+{
+    // take() on an existing key in hashed mode returns the value and removes the entry.
+    InlineMap<unsigned, unsigned, 3, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 10; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 10u);
+
+    unsigned value = map.take(5);
+    EXPECT_EQ(value, 50u);
+    EXPECT_EQ(map.size(), 9u);
+    EXPECT_FALSE(map.contains(5));
+
+    // Other entries unaffected
+    for (unsigned i = 1; i <= 10; ++i) {
+        if (i == 5)
+            continue;
+        EXPECT_TRUE(map.contains(i));
+        EXPECT_EQ(map.find(i)->value, i * 10);
+    }
+
+    // Take a non-existing key in hashed mode
+    value = map.take(99);
+    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(map.size(), 9u);
+}
+
+TEST(WTF_InlineMap, TakeWithMoveOnlyValues)
+{
+    // take() works correctly with move-only value types.
+    InlineMap<unsigned, MoveOnly, 5, IntHash<unsigned>> map;
+
+    map.add(1, MoveOnly(10));
+    map.add(2, MoveOnly(20));
+    map.add(3, MoveOnly(30));
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    MoveOnly taken = map.take(2);
+    EXPECT_EQ(taken.value(), 20u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(2));
+
+    // Remaining entries intact
+    EXPECT_EQ(map.find(1)->value.value(), 10u);
+    EXPECT_EQ(map.find(3)->value.value(), 30u);
+
+    // Take non-existing key returns default (value 0)
+    MoveOnly missing = map.take(99);
+    EXPECT_EQ(missing.value(), 0u);
+    EXPECT_EQ(map.size(), 2u);
+}
+
+TEST(WTF_InlineMap, TakeAfterTransitionToHashed)
+{
+    // take() works on entries that were originally added in inline mode but are now
+    // in hashed mode after the transition.
+    InlineMap<unsigned, unsigned, 3, IntHash<unsigned>> map;
+
+    // Add entries in inline mode
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Trigger transition to hashed
+    map.add(4, 400);
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Take an entry that was added while inline
+    unsigned value = map.take(2);
+    EXPECT_EQ(value, 200u);
+    EXPECT_EQ(map.size(), 3u);
+    EXPECT_FALSE(map.contains(2));
+
+    // Take an entry that was added while hashed
+    value = map.take(4);
+    EXPECT_EQ(value, 400u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(4));
+
+    // Remaining entries
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(3));
+    EXPECT_EQ(map.find(3)->value, 300u);
+}
+
+TEST(WTF_InlineMap, TakeTriggersShrinkToInline)
+{
+    // Repeatedly calling take() on a hashed map can trigger shrink back to inline.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 20; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 20u);
+
+    // Take entries one by one. At some point the map should shrink back to inline.
+    bool becameInline = false;
+    for (unsigned i = 1; i <= 15; ++i) {
+        unsigned value = map.take(i);
+        EXPECT_EQ(value, i * 10);
+        if (!becameInline && WTF::InlineMapAccessForTesting::isInline(map))
+            becameInline = true;
+    }
+
+    EXPECT_TRUE(becameInline);
+    EXPECT_EQ(map.size(), 5u);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Remaining entries (16-20) are accessible
+    for (unsigned i = 16; i <= 20; ++i) {
+        EXPECT_TRUE(map.contains(i));
+        EXPECT_EQ(map.find(i)->value, i * 10);
+    }
+
+    // Taken entries are gone
+    for (unsigned i = 1; i <= 15; ++i)
+        EXPECT_FALSE(map.contains(i));
+}
+
+TEST(WTF_InlineMap, TakeWithMoveOnlyInHashedMode)
+{
+    // take() works with move-only values in hashed mode.
+    InlineMap<unsigned, MoveOnly, 3, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 10; ++i)
+        map.add(i, MoveOnly(i * 100));
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    MoveOnly taken = map.take(7);
+    EXPECT_EQ(taken.value(), 700u);
+    EXPECT_EQ(map.size(), 9u);
+    EXPECT_FALSE(map.contains(7));
+
+    // Take all remaining entries, verifying each
+    for (unsigned i = 1; i <= 10; ++i) {
+        if (i == 7)
+            continue;
+        MoveOnly v = map.take(i);
+        EXPECT_EQ(v.value(), i * 100);
+    }
+
+    EXPECT_TRUE(map.isEmpty());
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+}
+
+// --- remove(iterator) tests ---
+
+TEST(WTF_InlineMap, RemoveIteratorInlineMode)
+{
+    // Removing via iterator in inline mode removes the entry and keeps others intact.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(2);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(2));
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(3));
+    EXPECT_EQ(map.find(3)->value, 300u);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+}
+
+TEST(WTF_InlineMap, RemoveIteratorHashedMode)
+{
+    // Removing via iterator in hashed mode removes the entry and keeps others intact.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 20; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 20u);
+
+    auto it = map.find(10);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_EQ(map.size(), 19u);
+    EXPECT_FALSE(map.contains(10));
+
+    // Other entries unaffected
+    for (unsigned i = 1; i <= 20; ++i) {
+        if (i == 10)
+            continue;
+        EXPECT_TRUE(map.contains(i));
+        EXPECT_EQ(map.find(i)->value, i * 10);
+    }
+}
+
+TEST(WTF_InlineMap, RemoveEndIteratorReturnsFalse)
+{
+    // Removing via end() iterator returns false and does not modify the map.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+
+    EXPECT_FALSE(map.remove(map.end()));
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_TRUE(map.contains(2));
+
+    // Also test with an empty map
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> emptyMap;
+    EXPECT_FALSE(emptyMap.remove(emptyMap.end()));
+    EXPECT_TRUE(emptyMap.isEmpty());
+}
+
+TEST(WTF_InlineMap, RemoveIteratorFirstEntryInline)
+{
+    // Removing the first entry via iterator in inline mode uses swap-with-last compaction.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Find and remove the first entry (key 1)
+    auto it = map.find(1);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(1));
+    EXPECT_TRUE(map.contains(2));
+    EXPECT_EQ(map.find(2)->value, 200u);
+    EXPECT_TRUE(map.contains(3));
+    EXPECT_EQ(map.find(3)->value, 300u);
+}
+
+TEST(WTF_InlineMap, RemoveIteratorLastEntryInline)
+{
+    // Removing the last entry via iterator in inline mode works without swap.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Remove the last inline entry (key 3, which is at index 2)
+    auto it = map.find(3);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(3));
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(2));
+    EXPECT_EQ(map.find(2)->value, 200u);
+}
+
+TEST(WTF_InlineMap, RemoveIteratorMiddleEntryInline)
+{
+    // Removing a middle entry via iterator in inline mode compacts correctly.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(10, 1000);
+    map.add(20, 2000);
+    map.add(30, 3000);
+    map.add(40, 4000);
+    map.add(50, 5000);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Remove the middle entry (key 30)
+    auto it = map.find(30);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_EQ(map.size(), 4u);
+    EXPECT_FALSE(map.contains(30));
+    EXPECT_TRUE(map.contains(10));
+    EXPECT_EQ(map.find(10)->value, 1000u);
+    EXPECT_TRUE(map.contains(20));
+    EXPECT_EQ(map.find(20)->value, 2000u);
+    EXPECT_TRUE(map.contains(40));
+    EXPECT_EQ(map.find(40)->value, 4000u);
+    EXPECT_TRUE(map.contains(50));
+    EXPECT_EQ(map.find(50)->value, 5000u);
+}
+
+TEST(WTF_InlineMap, RemoveIteratorSoleEntryInline)
+{
+    // Removing the sole entry via iterator leaves the map empty and still usable.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(42, 420);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(42);
+    EXPECT_FALSE(it == map.end());
+    EXPECT_TRUE(map.remove(it));
+
+    EXPECT_TRUE(map.isEmpty());
+    EXPECT_EQ(map.size(), 0u);
+    EXPECT_FALSE(map.contains(42));
+
+    // Map should still be usable
+    map.add(99, 990);
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_TRUE(map.contains(99));
+}
+
+// --- take(iterator) tests ---
+
+TEST(WTF_InlineMap, TakeIteratorInlineMode)
+{
+    // take(iterator) in inline mode returns the value and removes the entry.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(2);
+    EXPECT_FALSE(it == map.end());
+    unsigned value = map.take(it);
+
+    EXPECT_EQ(value, 200u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(2));
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(3));
+    EXPECT_EQ(map.find(3)->value, 300u);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+}
+
+TEST(WTF_InlineMap, TakeIteratorHashedMode)
+{
+    // take(iterator) in hashed mode returns the value and removes the entry.
+    InlineMap<unsigned, unsigned, 3, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 10; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(7);
+    EXPECT_FALSE(it == map.end());
+    unsigned value = map.take(it);
+
+    EXPECT_EQ(value, 70u);
+    EXPECT_EQ(map.size(), 9u);
+    EXPECT_FALSE(map.contains(7));
+
+    // Other entries unaffected
+    for (unsigned i = 1; i <= 10; ++i) {
+        if (i == 7)
+            continue;
+        EXPECT_TRUE(map.contains(i));
+        EXPECT_EQ(map.find(i)->value, i * 10);
+    }
+}
+
+TEST(WTF_InlineMap, TakeEndIteratorReturnsDefault)
+{
+    // take(end()) returns the default/empty value and does not modify the map.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+
+    unsigned value = map.take(map.end());
+    EXPECT_EQ(value, 0u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_TRUE(map.contains(2));
+
+    // Also test with an empty map
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> emptyMap;
+    value = emptyMap.take(emptyMap.end());
+    EXPECT_EQ(value, 0u);
+    EXPECT_TRUE(emptyMap.isEmpty());
+}
+
+TEST(WTF_InlineMap, TakeIteratorWithMoveOnlyValues)
+{
+    // take(iterator) works correctly with move-only value types.
+    InlineMap<unsigned, MoveOnly, 5, IntHash<unsigned>> map;
+
+    map.add(1, MoveOnly(10));
+    map.add(2, MoveOnly(20));
+    map.add(3, MoveOnly(30));
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(2);
+    EXPECT_FALSE(it == map.end());
+    MoveOnly taken = map.take(it);
+
+    EXPECT_EQ(taken.value(), 20u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(2));
+    EXPECT_EQ(map.find(1)->value.value(), 10u);
+    EXPECT_EQ(map.find(3)->value.value(), 30u);
+
+    // take(end()) returns default MoveOnly (value 0)
+    MoveOnly missing = map.take(map.end());
+    EXPECT_EQ(missing.value(), 0u);
+    EXPECT_EQ(map.size(), 2u);
+}
+
+TEST(WTF_InlineMap, TakeIteratorTriggersShrinkToInline)
+{
+    // Repeatedly calling take(iterator) on a hashed map can trigger shrink back to inline.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 20; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 20u);
+
+    // Take entries one by one via iterator until the map shrinks to inline.
+    bool becameInline = false;
+    for (unsigned i = 1; i <= 15; ++i) {
+        auto it = map.find(i);
+        EXPECT_FALSE(it == map.end());
+        unsigned value = map.take(it);
+        EXPECT_EQ(value, i * 10);
+        if (!becameInline && WTF::InlineMapAccessForTesting::isInline(map))
+            becameInline = true;
+    }
+
+    EXPECT_TRUE(becameInline);
+    EXPECT_EQ(map.size(), 5u);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Remaining entries (16-20) are accessible
+    for (unsigned i = 16; i <= 20; ++i) {
+        EXPECT_TRUE(map.contains(i));
+        EXPECT_EQ(map.find(i)->value, i * 10);
+    }
+
+    // Taken entries are gone
+    for (unsigned i = 1; i <= 15; ++i)
+        EXPECT_FALSE(map.contains(i));
+}
+
+TEST(WTF_InlineMap, TakeIteratorWithMoveOnlyInHashedMode)
+{
+    // take(iterator) works with move-only values in hashed mode.
+    InlineMap<unsigned, MoveOnly, 3, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 10; ++i)
+        map.add(i, MoveOnly(i * 100));
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(5);
+    EXPECT_FALSE(it == map.end());
+    MoveOnly taken = map.take(it);
+    EXPECT_EQ(taken.value(), 500u);
+    EXPECT_EQ(map.size(), 9u);
+    EXPECT_FALSE(map.contains(5));
+
+    // Take all remaining entries via iterator
+    for (unsigned i = 1; i <= 10; ++i) {
+        if (i == 5)
+            continue;
+        it = map.find(i);
+        EXPECT_FALSE(it == map.end());
+        MoveOnly v = map.take(it);
+        EXPECT_EQ(v.value(), i * 100);
+    }
+
+    EXPECT_TRUE(map.isEmpty());
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+}
+
+TEST(WTF_InlineMap, TakeIteratorLastEntryInline)
+{
+    // Taking the last inline entry (slot == lastEntry) exercises the no-swap path.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(1, 100);
+    map.add(2, 200);
+    map.add(3, 300);
+
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // Key 3 is the last entry in inline storage (index 2)
+    auto it = map.find(3);
+    EXPECT_FALSE(it == map.end());
+    unsigned value = map.take(it);
+
+    EXPECT_EQ(value, 300u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_FALSE(map.contains(3));
+    EXPECT_TRUE(map.contains(1));
+    EXPECT_EQ(map.find(1)->value, 100u);
+    EXPECT_TRUE(map.contains(2));
+    EXPECT_EQ(map.find(2)->value, 200u);
+}
+
+TEST(WTF_InlineMap, TakeIteratorSoleEntryInline)
+{
+    // Taking the only entry leaves the map empty and still usable.
+    InlineMap<unsigned, unsigned, 5, IntHash<unsigned>> map;
+
+    map.add(42, 420);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    auto it = map.find(42);
+    EXPECT_FALSE(it == map.end());
+    unsigned value = map.take(it);
+
+    EXPECT_EQ(value, 420u);
+    EXPECT_TRUE(map.isEmpty());
+    EXPECT_EQ(map.size(), 0u);
+    EXPECT_FALSE(map.contains(42));
+
+    // Map should still be usable after being emptied
+    map.add(99, 990);
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(map.find(99)->value, 990u);
+}
+
+TEST(WTF_InlineMap, TakeIteratorExactTransitionToInline)
+{
+    // A single take(iterator) crosses the shrink threshold and transitions
+    // the map from hashed back to inline. Verify all surviving entries.
+    // With InlineCapacity=4, 5 entries transition to hashed capacity 16.
+    // shouldShrink() fires when m_size * 6 < 16, i.e. m_size <= 2.
+    InlineMap<unsigned, unsigned, 4, IntHash<unsigned>> map;
+
+    for (unsigned i = 1; i <= 5; ++i)
+        map.add(i, i * 10);
+
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+    EXPECT_EQ(map.size(), 5u);
+
+    // Remove entries until one more take will cross the shrink threshold
+    map.remove(1); // size -> 4
+    map.remove(2); // size -> 3
+    EXPECT_FALSE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // This take brings size to 2; 2*6=12 < 16 triggers shrink,
+    // and 2 <= InlineCapacity=4 triggers transition to inline
+    auto it = map.find(3);
+    EXPECT_FALSE(it == map.end());
+    unsigned value = map.take(it);
+
+    EXPECT_EQ(value, 30u);
+    EXPECT_EQ(map.size(), 2u);
+    EXPECT_TRUE(WTF::InlineMapAccessForTesting::isInline(map));
+
+    // All surviving entries accessible
+    EXPECT_FALSE(map.contains(1));
+    EXPECT_FALSE(map.contains(2));
+    EXPECT_FALSE(map.contains(3));
+    EXPECT_TRUE(map.contains(4));
+    EXPECT_EQ(map.find(4)->value, 40u);
+    EXPECT_TRUE(map.contains(5));
+    EXPECT_EQ(map.find(5)->value, 50u);
+}
+
 } // namespace TestWebKitAPI
