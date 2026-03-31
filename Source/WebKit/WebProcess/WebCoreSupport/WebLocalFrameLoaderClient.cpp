@@ -376,7 +376,7 @@ void WebLocalFrameLoaderClient::dispatchDidReceiveServerRedirectForProvisionalLo
 
     RefPtr documentLoader = m_localFrame->loader().provisionalDocumentLoader();
     if (!documentLoader) {
-        WebLocalFrameLoaderClient_RELEASE_LOG_FAULT(Loading, "dispatchDidReceiveServerRedirectForProvisionalLoad: Called with no provisional DocumentLoader (frameState=%hhu, stateForDebugging=%i)", static_cast<uint8_t>(m_localFrame->loader().state()), m_localFrame->loader().stateMachine().stateForDebugging());
+        WebLocalFrameLoaderClient_RELEASE_LOG_FAULT(Loading, "dispatchDidReceiveServerRedirectForProvisionalLoad: Called with no provisional DocumentLoader (frameState=%hhu, stateForDebugging=%i)", std::to_underlying(m_localFrame->loader().state()), m_localFrame->loader().stateMachine().stateForDebugging());
         return;
     }
 
@@ -397,7 +397,12 @@ void WebLocalFrameLoaderClient::dispatchDidChangeProvisionalURL()
     if (!webPage)
         return;
 
-    Ref documentLoader { *m_localFrame->loader().provisionalDocumentLoader() };
+    RefPtr documentLoader = m_localFrame->loader().provisionalDocumentLoader();
+    if (!documentLoader) {
+        WebLocalFrameLoaderClient_RELEASE_LOG_FAULT(Loading, "dispatchDidChangeProvisionalURL: Called with no provisional DocumentLoader (frameState=%hhu, stateForDebugging=%i)", std::to_underlying(m_localFrame->loader().state()), m_localFrame->loader().stateMachine().stateForDebugging());
+        return;
+    }
+
     webPage->send(Messages::WebPageProxy::DidChangeProvisionalURLForFrame(m_frame->frameID(), documentLoader->navigationID(), documentLoader->url()));
 }
 

@@ -271,12 +271,8 @@ void DocumentLoader::setRequest(ResourceRequest&& req)
     ASSERT(!m_committed);
 
     m_request = WTF::move(req);
-    if (shouldNotifyAboutProvisionalURLChange) {
-        // Logging for <rdar://problem/54830233>.
-        if (!frameLoader()->provisionalDocumentLoader())
-            DOCUMENTLOADER_RELEASE_LOG("DocumentLoader::setRequest: With no provisional document loader");
+    if (shouldNotifyAboutProvisionalURLChange)
         protect(frameLoader()->client())->dispatchDidChangeProvisionalURL();
-    }
 }
 
 void DocumentLoader::setMainDocumentError(const ResourceError& error)
