@@ -71,14 +71,6 @@ static HashSet<GCGLDisplay>& NODELETE usedDisplays()
     return s_usedDisplays;
 }
 
-#if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
-static void NODELETE wipeAlphaChannelFromPixels(std::span<uint8_t> pixels)
-{
-    for (size_t i = 0; i < pixels.size(); i += 4)
-        pixels[i + 3] = 255;
-}
-#endif
-
 static inline const Vector<const void*> asPointers(std::span<const GCGLsizei> offsets)
 {
     // Must cast offsets from int to void* before passing down to ANGLE.
@@ -395,14 +387,6 @@ RefPtr<PixelBuffer> GraphicsContextGLANGLE::readPixelsForPaintResults()
     ScopedBufferBinding scopedPixelPackBufferReset(GL_PIXEL_PACK_BUFFER, 0, m_isForWebGL2);
     setPackParameters(1, 0, false);
     GL_ReadPixelsRobustANGLE(0, 0, pixelBuffer->size().width(), pixelBuffer->size().height(), GL_RGBA, GL_UNSIGNED_BYTE, pixelBuffer->bytes().size(), nullptr, nullptr, nullptr, pixelBuffer->bytes().data());
-    // FIXME: Rendering to GL_RGB textures with a IOSurface bound to the texture image leaves
-    // the alpha in the IOSurface in incorrect state. Also ANGLE GL_ReadPixels will in some
-    // cases expose the non-255 values.
-    // https://bugs.webkit.org/show_bug.cgi?id=215804
-#if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
-    if (!contextAttributes().alpha)
-        wipeAlphaChannelFromPixels(pixelBuffer->bytes());
-#endif
     return pixelBuffer;
 }
 
@@ -751,15 +735,9 @@ std::optional<IntSize> GraphicsContextGLANGLE::readPixelsImpl(IntRect rect, GCGL
     if (attrs.antialias && m_state.boundReadFBO == m_multisampleFBO)
         GL_BindFramebuffer(framebufferTarget, m_multisampleFBO);
 
-    if (updateErrors()) {
-        // ANGLE detected a failure during the ReadPixelsRobustANGLE operation. Skip the alpha channel fixup below.
+    if (updateErrors())
         return std::nullopt;
-    }
 
-#if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
-    if (!data.empty() && !attrs.alpha && (format == GraphicsContextGL::RGBA || format == GraphicsContextGL::BGRA) && (type == GraphicsContextGL::UNSIGNED_BYTE) && (m_state.boundReadFBO == m_fbo || (attrs.antialias && m_state.boundReadFBO == m_multisampleFBO)))
-        wipeAlphaChannelFromPixels(data);
-#endif
     return IntSize { rows, columns };
 }
 
