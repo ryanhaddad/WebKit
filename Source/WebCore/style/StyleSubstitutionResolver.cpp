@@ -33,6 +33,7 @@
 #include "CSSPropertyParser.h"
 #include "CSSPropertyParserConsumer+Primitives.h"
 #include "CSSRegisteredCustomProperty.h"
+#include "CSSSelectorParser.h"
 #include "CSSShorthandSubstitutionValue.h"
 #include "CSSSubstitutionValue.h"
 #include "CSSTokenizer.h"
@@ -231,11 +232,13 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
     // attr() = attr( <attr-name> <attr-type>? , <declaration-value>?)
     auto range = CSSParserTokenRange { attrArgs->firstArg };
 
-    if (range.peek().type() != IdentToken)
+    // Consume <attr-name> = <wq-name> = [ <ident> | * ]? '|' <ident>  or  <ident>
+    auto parsedName = consumeQualifiedName(range);
+    if (!parsedName)
         return false;
+    range.consumeWhitespace();
 
-    // Consume <attr-name>
-    auto attributeName = range.consumeIncludingWhitespace().value().toAtomString();
+    auto attributeName = parsedName->name;
 
     // Consume optional <attr-type>.
     // https://drafts.csswg.org/css-values-5/#typedef-attr-type
@@ -337,6 +340,10 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
             return false;
         return substituteFailure();
     }
+
+    // FIXME: Resolve namespace prefixes using the stylesheet's @namespace rules instead of always triggering fallback.
+    if (!parsedName->namespacePrefix.isNull())
+        return substituteFailure();
 
     if (attributeValue.isNull())
         return substituteFailure();
