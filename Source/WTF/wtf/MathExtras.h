@@ -456,7 +456,7 @@ inline void doubleToInteger(double d, unsigned long long& value)
 
 namespace WTF {
 
-constexpr uint32_t roundUpToPowerOfTwo(auto v)
+constexpr auto roundUpToPowerOfTwo(auto v)
 {
     return std::bit_ceil(v);
 }

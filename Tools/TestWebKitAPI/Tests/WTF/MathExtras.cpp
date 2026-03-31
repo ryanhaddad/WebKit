@@ -489,6 +489,24 @@ TEST(WTF, roundUpToPowerOfTwo)
     EXPECT_EQ(roundUpToPowerOfTwo(1U << 31), (1U << 31));
 }
 
+TEST(WTF, roundUpToPowerOfTwoSizeT)
+{
+    // Values that fit in 32 bits should still work.
+    EXPECT_EQ(roundUpToPowerOfTwo(static_cast<size_t>(1)), static_cast<size_t>(1));
+    EXPECT_EQ(roundUpToPowerOfTwo(static_cast<size_t>(120)), static_cast<size_t>(128));
+
+    // Values beyond 32 bits should not be truncated.
+#if CPU(ADDRESS64)
+    constexpr size_t twoTo33 = static_cast<size_t>(1) << 33;
+    EXPECT_EQ(roundUpToPowerOfTwo(twoTo33), twoTo33);
+    EXPECT_EQ(roundUpToPowerOfTwo(twoTo33 + 1), twoTo33 << 1);
+    EXPECT_EQ(roundUpToPowerOfTwo(twoTo33 - 1), twoTo33);
+
+    constexpr size_t twoTo63 = static_cast<size_t>(1) << 63;
+    EXPECT_EQ(roundUpToPowerOfTwo(twoTo63), twoTo63);
+#endif
+}
+
 TEST(WTF, clz)
 {
     EXPECT_EQ(WTF::clz<int32_t>(1), 31U);
