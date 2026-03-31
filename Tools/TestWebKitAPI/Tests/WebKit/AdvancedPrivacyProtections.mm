@@ -1443,7 +1443,12 @@ TEST(AdvancedPrivacyProtections, VerifyHashFromNoisyCanvas2DAPI)
     EXPECT_FALSE([values.first isEqualToString:values.second]);
 }
 
+// FIXME when webkit.org/b/311210 is resolved.
+#if PLATFORM(iOS) && defined(NDEBUG)
+TEST(AdvancedPrivacyProtections, DISABLED_VerifyPixelsFromNoisyCanvas2DAPI)
+#else
 TEST(AdvancedPrivacyProtections, VerifyPixelsFromNoisyCanvas2DAPI)
+#endif
 {
     constexpr auto zeroPrefix = 380;
     constexpr auto channelsPerPixel = 4;
