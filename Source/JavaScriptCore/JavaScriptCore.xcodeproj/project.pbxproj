@@ -1949,7 +1949,6 @@
 		DD546FEC29CD2A5D00A5173B /* AirTmpWidthInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FEC858F2BDACDC70080FF74 /* AirTmpWidthInlines.h */; };
 		DD5F74F9283EF58D0027A8C6 /* copy-profiling-data.sh in Headers */ = {isa = PBXBuildFile; fileRef = DD5F74F8283EF4380027A8C6 /* copy-profiling-data.sh */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDB04F41278E569A008D3678 /* libWTF.a in Product Dependencies */ = {isa = PBXBuildFile; fileRef = 1498CAD3214656C400710879 /* libWTF.a */; };
-		DDE7487B2F7B3595008013AB /* WorkAround173516139.h in Headers */ = {isa = PBXBuildFile; fileRef = DDE7487A2F7B356F008013AB /* WorkAround173516139.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DDE99312278D089000F60D26 /* libWebKitAdditions.a in Product Dependencies */ = {isa = PBXBuildFile; fileRef = DDE9930E278D086600F60D26 /* libWebKitAdditions.a */; };
 		DE26E9031CB5DD0500D2BE82 /* BuiltinExecutableCreator.h in Headers */ = {isa = PBXBuildFile; fileRef = DE26E9021CB5DD0500D2BE82 /* BuiltinExecutableCreator.h */; };
 		DEA7E2451BBC677F00D78440 /* JSTypedArrayViewPrototype.h in Headers */ = {isa = PBXBuildFile; fileRef = 53917E7C1B791106000EBD33 /* JSTypedArrayViewPrototype.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -2446,20 +2445,6 @@
 				"$(HEADER_OUTPUT_DIR)/$(INPUT_FILE_NAME)",
 			);
 			script = "exec \"${SRCROOT}/Scripts/postprocess-header-rule\"\n";
-		};
-		DDE7487C2F7B35DC008013AB /* PBXBuildRule */ = {
-			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.proxy.script;
-			filePatterns = "*/WorkAround173516139.h";
-			fileType = pattern.proxy;
-			inputFiles = (
-				"$(WK_HEADERS_VFS_FILE)",
-			);
-			isEditable = 1;
-			outputFiles = (
-				"$(HEADER_OUTPUT_DIR)/$(INPUT_FILE_NAME)",
-			);
-			script = "cp \"${INPUT_FILE_PATH}\" \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 		};
 /* End PBXBuildRule section */
 
@@ -5806,7 +5791,6 @@
 		DD71812F2E21D3B700A096B7 /* AllowedSPI.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = AllowedSPI.toml; sourceTree = "<group>"; };
 		DD7181302E21D3B700A096B7 /* AllowedSPI-legacy.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = "AllowedSPI-legacy.toml"; sourceTree = "<group>"; };
 		DDA35E4D29CACFDE006C1018 /* ExtraSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraSymbolsForTAPI.h; sourceTree = "<group>"; };
-		DDE7487A2F7B356F008013AB /* WorkAround173516139.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WorkAround173516139.h; sourceTree = "<group>"; };
 		DDE9930E278D086600F60D26 /* libWebKitAdditions.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libWebKitAdditions.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE26E9021CB5DD0500D2BE82 /* BuiltinExecutableCreator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BuiltinExecutableCreator.h; sourceTree = "<group>"; };
 		DE26E9061CB5DD9600D2BE82 /* BuiltinExecutableCreator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BuiltinExecutableCreator.cpp; sourceTree = "<group>"; };
@@ -7735,7 +7719,6 @@
 				2BDF4F6E29E9E8BB0056BF50 /* PASReportCrashPrivate.cpp */,
 				2BDF4F6F29E9E8BB0056BF50 /* PASReportCrashPrivate.h */,
 				5DE3D0F40DD8DDFB00468714 /* WebKitAvailability.h */,
-				DDE7487A2F7B356F008013AB /* WorkAround173516139.h */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -12696,7 +12679,6 @@
 				BC18C47A0E16F5CD00B34460 /* WebKitAvailability.h in Headers */,
 				4B1F22F62900BFC700CB5E66 /* Width.h in Headers */,
 				99DA00A61BD5993100F4575C /* wkbuiltins.py in Headers */,
-				DDE7487B2F7B3595008013AB /* WorkAround173516139.h in Headers */,
 				8CCBF05D2C804E7E00EEC20B /* WrapForValidIteratorPrototype.h in Headers */,
 				8CCBF05F2C804E8500EEC20B /* WrapForValidIteratorPrototypeInlines.h in Headers */,
 				A7DCB97312E5193F00911940 /* WriteBarrier.h in Headers */,
@@ -12953,7 +12935,6 @@
 				DDA8F1542A15BEEA00BE8D11 /* Work around rdar://109484516 */,
 			);
 			buildRules = (
-				DDE7487C2F7B35DC008013AB /* PBXBuildRule */,
 				DD559E612BE5BD4700C2D03E /* PBXBuildRule */,
 			);
 			dependencies = (
