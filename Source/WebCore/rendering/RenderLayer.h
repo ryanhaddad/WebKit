@@ -981,6 +981,27 @@ public:
 
     bool ancestorLayerIsDOMParent(const RenderLayer* ancestor) const;
 
+    struct LayerPaintingInfo {
+        LayerPaintingInfo(RenderLayer* inRootLayer, const LayoutRect& inDirtyRect, OptionSet<PaintBehavior> inPaintBehavior, const LayoutSize& inSubpixelOffset, RenderObject* inSubtreePaintRoot = nullptr, OverlapTestRequestMap* inOverlapTestRequests = nullptr, bool inRequireSecurityOriginAccessForWidgets = false)
+            : rootLayer(inRootLayer)
+            , subtreePaintRoot(inSubtreePaintRoot)
+            , paintDirtyRect(inDirtyRect)
+            , subpixelOffset(inSubpixelOffset)
+            , overlapTestRequests(inOverlapTestRequests)
+            , paintBehavior(inPaintBehavior)
+            , requireSecurityOriginAccessForWidgets(inRequireSecurityOriginAccessForWidgets)
+        { }
+
+        RenderLayer* rootLayer { nullptr };
+        RenderObject* subtreePaintRoot { nullptr }; // Only paint descendants of this object.
+        LayoutRect paintDirtyRect; // Relative to rootLayer;
+        LayoutSize subpixelOffset;
+        OverlapTestRequestMap* overlapTestRequests { nullptr }; // May be null.
+        OptionSet<PaintBehavior> paintBehavior;
+        bool requireSecurityOriginAccessForWidgets { false };
+        CheckedPtr<RegionContext> regionContext;
+    };
+
 private:
 
     void setNextSibling(RenderLayer* next) { m_next = next; }
@@ -1013,27 +1034,6 @@ private:
     void clearZOrderLists();
 
     void updateNormalFlowList();
-
-    struct LayerPaintingInfo {
-        LayerPaintingInfo(RenderLayer* inRootLayer, const LayoutRect& inDirtyRect, OptionSet<PaintBehavior> inPaintBehavior, const LayoutSize& inSubpixelOffset, RenderObject* inSubtreePaintRoot = nullptr, OverlapTestRequestMap* inOverlapTestRequests = nullptr, bool inRequireSecurityOriginAccessForWidgets = false)
-            : rootLayer(inRootLayer)
-            , subtreePaintRoot(inSubtreePaintRoot)
-            , paintDirtyRect(inDirtyRect)
-            , subpixelOffset(inSubpixelOffset)
-            , overlapTestRequests(inOverlapTestRequests)
-            , paintBehavior(inPaintBehavior)
-            , requireSecurityOriginAccessForWidgets(inRequireSecurityOriginAccessForWidgets)
-        { }
-
-        RenderLayer* rootLayer;
-        RenderObject* subtreePaintRoot; // Only paint descendants of this object.
-        LayoutRect paintDirtyRect; // Relative to rootLayer;
-        LayoutSize subpixelOffset;
-        OverlapTestRequestMap* overlapTestRequests; // May be null.
-        OptionSet<PaintBehavior> paintBehavior;
-        bool requireSecurityOriginAccessForWidgets;
-        RegionContext* regionContext { nullptr };
-    };
 
     LayoutPoint paintOffsetForRenderer(const LayerFragment& fragment, const LayerPaintingInfo& paintingInfo) const
     {

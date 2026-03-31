@@ -155,6 +155,7 @@
 #include "StyleTranslateTransformFunction.h"
 #include "Styleable.h"
 #include "TransformOperationData.h"
+#include "TransformPaintScope.h"
 #include "TransformationMatrix.h"
 #include "ViewTransition.h"
 #include "WheelEventTestMonitor.h"
@@ -4036,14 +4037,6 @@ void RenderLayer::paintLayerByApplyingTransform(GraphicsContext& context, const 
     // all we need to do is add the delta to the accumulated pixels coming from ancestor layers.
     // Translate the graphics context to the snapping position to avoid off-device-pixel positing.
     transform.translateRight(alignedOffsetForThisLayer.width(), alignedOffsetForThisLayer.height());
-    // Apply the transform.
-    auto oldTransform = context.getCTM();
-    auto affineTransform = transform.toAffineTransform();
-    context.concatCTM(affineTransform);
-
-    if (paintingInfo.regionContext)
-        paintingInfo.regionContext->pushTransform(affineTransform);
-
     // Only propagate the subpixel offsets to the descendant layers, if we're not the root
     // of a SVG subtree, where no pixel snapping is applied -- only the outermost <svg> layer
     // is pixel-snapped "as whole", if it's part of a compound document, e.g. inline SVG in HTML.
@@ -4051,21 +4044,10 @@ void RenderLayer::paintLayerByApplyingTransform(GraphicsContext& context, const 
     if (rendererNeedsPixelSnapping(renderer()) && !renderer().isRenderSVGRoot())
         adjustedSubpixelOffset = offsetForThisLayer - LayoutSize(alignedOffsetForThisLayer);
 
-    // Now do a paint with the root layer shifted to be us.
-    LayerPaintingInfo transformedPaintingInfo(paintingInfo);
-    transformedPaintingInfo.rootLayer = this;
-    if (!transformedPaintingInfo.paintDirtyRect.isInfinite())
-        transformedPaintingInfo.paintDirtyRect = LayoutRect(encloseRectToDevicePixels(valueOrDefault(transform.inverse()).mapRect(paintingInfo.paintDirtyRect), deviceScaleFactor));
+    TransformPaintScope scope(context, paintingInfo, transform, deviceScaleFactor, adjustedSubpixelOffset, this);
 
     paintFlags.remove(PaintLayerFlag::PaintingOverflowContents);
-
-    transformedPaintingInfo.subpixelOffset = adjustedSubpixelOffset;
-    paintLayerContentsAndReflection(context, transformedPaintingInfo, paintFlags);
-
-    if (paintingInfo.regionContext)
-        paintingInfo.regionContext->popTransform();
-
-    context.setCTM(oldTransform);
+    paintLayerContentsAndReflection(context, scope.transformedPaintingInfo(), paintFlags);
 }
 
 void RenderLayer::paintList(LayerList layerIterator, GraphicsContext& context, const LayerPaintingInfo& paintingInfo, OptionSet<PaintLayerFlag> paintFlags)
