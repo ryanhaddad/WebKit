@@ -310,10 +310,16 @@ void updateRTCRtpSendParameters(const RTCRtpSendParameters& parameters, webrtc::
         rtcParameters.encodings[i].active = parameters.encodings[i].active;
         if (parameters.encodings[i].maxBitrate)
             rtcParameters.encodings[i].max_bitrate_bps = *parameters.encodings[i].maxBitrate;
+        else
+            rtcParameters.encodings[i].max_bitrate_bps = std::nullopt;
         if (parameters.encodings[i].maxFramerate)
             rtcParameters.encodings[i].max_framerate = *parameters.encodings[i].maxFramerate;
+        else
+            rtcParameters.encodings[i].max_framerate = std::nullopt;
         if (parameters.encodings[i].scaleResolutionDownBy)
             rtcParameters.encodings[i].scale_resolution_down_by = *parameters.encodings[i].scaleResolutionDownBy;
+        else
+            rtcParameters.encodings[i].scale_resolution_down_by = std::nullopt;
         rtcParameters.encodings[i].bitrate_priority = toWebRTCBitRatePriority(parameters.encodings[i].priority);
         if (parameters.encodings[i].networkPriority)
             rtcParameters.encodings[i].network_priority = fromRTCPriorityType(*parameters.encodings[i].networkPriority);
