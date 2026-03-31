@@ -253,10 +253,6 @@ enum {
     PROP_THEME_COLOR,
     PROP_IS_IMMERSIVE_MODE_ENABLED,
 
-#if PLATFORM(GTK) && ENABLE(2022_GLIB_API)
-    PROP_PAGE_ICONS,
-#endif
-
     N_PROPERTIES,
 };
 
@@ -424,9 +420,6 @@ struct _WebKitWebViewPrivate {
 
     CString faviconURI;
     unsigned long faviconChangedHandlerID;
-#if ENABLE(2022_GLIB_API)
-    GRefPtr<WebKitImageList> pageIcons;
-#endif
 #endif
 
     GRefPtr<WebKitAuthenticationRequest> authenticationRequest;
@@ -772,18 +765,7 @@ static void faviconChangedCallback(WebKitFaviconDatabase*, const char* pageURI, 
 
     webkitWebViewUpdateFaviconURI(webView, faviconURI);
 }
-
-#if ENABLE(2022_GLIB_API)
-static void webkitWebViewUpdatePageIcons(WebKitWebView* webView, GRefPtr<WebKitImageList>&& pageIcons)
-{
-    if (pageIcons == webView->priv->pageIcons)
-        return;
-
-    webView->priv->pageIcons = pageIcons;
-    g_object_notify_by_pspec(G_OBJECT(webView), sObjProperties[PROP_PAGE_ICONS]);
-}
 #endif
-#endif // PLATFORM(GTK)
 
 static bool webkitWebViewIsConstructed(WebKitWebView* webView)
 {
@@ -1245,11 +1227,6 @@ static void webkitWebViewGetProperty(GObject* object, guint propId, GValue* valu
     case PROP_IS_IMMERSIVE_MODE_ENABLED:
         g_value_set_boolean(value, webkit_web_view_is_immersive_mode_enabled(webView));
         break;
-#if PLATFORM(GTK) && ENABLE(2022_GLIB_API)
-    case PROP_PAGE_ICONS:
-        g_value_set_boxed(value, webkit_web_view_get_page_icons(webView));
-        break;
-#endif
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
     }
@@ -1469,22 +1446,7 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
             nullptr, nullptr,
             WEBKIT_PARAM_READABLE);
 #endif
-
-#if ENABLE(2022_GLIB_API)
-    /**
-     * WebKitWebView:page-icons: (attributes org.gtk.Property.get=webkit_web_view_get_page_icons) (getter get_page_icons):
-     *
-     * The page icons (favicons) associated to the currently loaded content, if any.
-     *
-     * Since: 2.54
-     */
-    sObjProperties[PROP_PAGE_ICONS] = g_param_spec_boxed(
-        "page-icons",
-        nullptr, nullptr,
-        WEBKIT_TYPE_IMAGE_LIST,
-        WEBKIT_PARAM_READABLE);
 #endif
-#endif // PLATFORM(GTK)
 
     /**
      * WebKitWebView:uri:
@@ -2770,66 +2732,22 @@ void webkitWebViewLoadFailedWithTLSErrors(WebKitWebView* webView, const char* fa
 }
 
 #if PLATFORM(GTK)
-void webkitWebViewGetLoadDecisionForIcons(WebKitWebView* webView, const HashMap<CallbackID, WebCore::LinkIcon>& icons, CompletionHandler<void(HashSet<WebKit::CallbackID>&&)>&& completionHandler)
+void webkitWebViewGetLoadDecisionForIcon(WebKitWebView* webView, const LinkIcon& icon, Function<void(bool)>&& completionHandler)
 {
-    struct CallbackAggregator final : public ThreadSafeRefCounted<CallbackAggregator>  {
-        explicit CallbackAggregator(CompletionHandler<void(HashSet<WebKit::CallbackID>&&)>&& completionHandler)
-            : m_completionHandler(WTF::move(completionHandler))
-        {
-        }
-
-        ~CallbackAggregator()
-        {
-            m_completionHandler(WTF::move(loadIdentifiers));
-        }
-
-        CompletionHandler<void(HashSet<WebKit::CallbackID>)> m_completionHandler;
-        HashSet<CallbackID> loadIdentifiers;
-    };
-
-    auto aggregator = adoptRef(new CallbackAggregator(WTF::move(completionHandler)));
-
-    auto* database = webkitWebViewGetFaviconDatabase(webView);
-    if (!database)
+    // We only support favicons for now.
+    if (icon.type != LinkIconType::Favicon) {
+        completionHandler(false);
         return;
-
-    const auto isEphemeral = webkitWebViewIsEphemeral(webView);
-    const auto& activeURL = getPage(webView).pageLoadState().activeURL();
-    for (const auto& [identifier, icon] : icons) {
-        // FIXME: Maybe we should consider other icon types as loadable.
-        if (!icon.url.protocolIsInHTTPFamily() || icon.type != LinkIconType::Favicon)
-            continue;
-
-        webkitFaviconDatabaseGetLoadDecisionForIcon(database, icon, activeURL, isEphemeral, [aggregator, identifier](bool loadIcon) {
-            if (loadIcon)
-                aggregator->loadIdentifiers.add(identifier);
-        });
     }
-}
 
-#if ENABLE(2022_GLIB_API)
-void webkitWebViewUpdatePageIcons(WebKitWebView *webView)
-{
     auto* database = webkitWebViewGetFaviconDatabase(webView);
-    if (!database)
+    if (!database) {
+        completionHandler(false);
         return;
+    }
 
-    auto cancellable = adoptGRef(g_cancellable_new());
-    webkit_favicon_database_get_page_icons(database, getPage(webView).pageLoadState().activeURL().utf8().data(), cancellable.get(), [](GObject* database, GAsyncResult* result, gpointer userData) {
-        auto webView = adoptGRef(WEBKIT_WEB_VIEW(userData));
-
-        GUniqueOutPtr<GError> error;
-        auto pageIcons = adoptGRef(webkit_favicon_database_get_page_icons_finish(WEBKIT_FAVICON_DATABASE(database), result, &error.outPtr()));
-        if (!pageIcons) {
-            if (!g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_CANCELLED))
-                LOG_ERROR("Could not get page icons: %s", error->message);
-            return;
-        }
-
-        webkitWebViewUpdatePageIcons(webView.get(), WTF::move(pageIcons));
-    }, g_object_ref(webView));
+    webkitFaviconDatabaseGetLoadDecisionForIcon(database, icon, getPage(webView).pageLoadState().activeURL(), webkitWebViewIsEphemeral(webView), WTF::move(completionHandler));
 }
-#endif // ENABLE(2022_GLIB_API)
 
 void webkitWebViewSetIcon(WebKitWebView* webView, const LinkIcon& icon, API::Data& iconData)
 {
@@ -2839,7 +2757,7 @@ void webkitWebViewSetIcon(WebKitWebView* webView, const LinkIcon& icon, API::Dat
 
     webkitFaviconDatabaseSetIconForPageURL(database, icon, iconData, getPage(webView).pageLoadState().activeURL(), webkitWebViewIsEphemeral(webView));
 }
-#endif // PLATFORM(GTK)
+#endif
 
 RefPtr<WebPageProxy> webkitWebViewCreateNewPage(WebKitWebView* webView, Ref<API::PageConfiguration>&& configuration, WebKitNavigationAction* navigationAction)
 {
@@ -6074,26 +5992,3 @@ void webkit_web_view_leave_immersive_mode(WebKitWebView* webView)
         xrSystem->invalidate(PlatformXRSystem::InvalidationReason::Client);
 #endif
 }
-
-#if PLATFORM(GTK) && ENABLE(2022_GLIB_API)
-/**
- * webkit_web_view_get_page_icons: (get-property page-icons):
- * @web_view: a #WebKitWebView
- *
- * Returns the page icons for the content loaded in the web view.
- *
- * Gets the page icons associated with the content currently loaded in the
- * @web_view, if any, as a [struct@ImageList]. Changes to the page icons
- * can be observed by connecting to the `notify::page-icons` signal.
- *
- * Returns: (transfer none) (nullable): a list of icons, or %NULL if there
- *    are no icons for the content loaded in @web_view.
- *
- * Since: 2.54
- */
-WebKitImageList* webkit_web_view_get_page_icons(WebKitWebView* webView)
-{
-    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), nullptr);
-    return webView->priv->pageIcons.get();
-}
-#endif

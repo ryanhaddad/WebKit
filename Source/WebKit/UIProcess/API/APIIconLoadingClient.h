@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2026 Igalia S.L. All rights reserved.
  * Copyright (C) 2016 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,11 +25,9 @@
 
 #pragma once
 
-#include "CallbackID.h"
 #include <WebCore/LinkIcon.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Function.h>
-#include <wtf/HashSet.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace API {
@@ -42,21 +39,10 @@ class IconLoadingClient {
 public:
     virtual ~IconLoadingClient() { }
 
-#if PLATFORM(COCOA)
     virtual void getLoadDecisionForIcon(const WebCore::LinkIcon&, CompletionHandler<void(CompletionHandler<void(API::Data*)>&&)>&& completionHandler)
     {
         completionHandler(nullptr);
     }
-#else
-    virtual void getLoadDecisionForIcons(const HashMap<WebKit::CallbackID, WebCore::LinkIcon>&, CompletionHandler<void(HashSet<WebKit::CallbackID>&&)>&& completionHandler)
-    {
-        completionHandler({ });
-    }
-
-    virtual void iconLoaded(const WebKit::CallbackID&, const WebCore::LinkIcon& icon, API::Data*)
-    {
-    }
-#endif
 };
 
 } // namespace API

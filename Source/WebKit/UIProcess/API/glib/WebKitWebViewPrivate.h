@@ -26,8 +26,6 @@
 
 #pragma once
 
-#include "APIIconLoadingClient.h"
-#include "CallbackID.h"
 #include "EditingRange.h"
 #include "RendererBufferDescription.h"
 #include "UserMessage.h"
@@ -55,9 +53,8 @@ void webkitWebViewLoadChanged(WebKitWebView*, WebKitLoadEvent);
 void webkitWebViewLoadFailed(WebKitWebView*, WebKitLoadEvent, const char* failingURI, GError*);
 void webkitWebViewLoadFailedWithTLSErrors(WebKitWebView*, const char* failingURI, GError*, GTlsCertificateFlags, GTlsCertificate*);
 #if PLATFORM(GTK)
-void webkitWebViewGetLoadDecisionForIcons(WebKitWebView*, const HashMap<WebKit::CallbackID, WebCore::LinkIcon>&, CompletionHandler<void(HashSet<WebKit::CallbackID>&&)>&&);
+void webkitWebViewGetLoadDecisionForIcon(WebKitWebView*, const WebCore::LinkIcon&, Function<void(bool)>&&);
 void webkitWebViewSetIcon(WebKitWebView*, const WebCore::LinkIcon&, API::Data&);
-void webkitWebViewUpdatePageIcons(WebKitWebView*);
 #endif
 RefPtr<WebKit::WebPageProxy> webkitWebViewCreateNewPage(WebKitWebView*, Ref<API::PageConfiguration>&&, WebKitNavigationAction*);
 void webkitWebViewReadyToShowPage(WebKitWebView*);
