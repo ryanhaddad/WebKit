@@ -382,8 +382,6 @@ extension WKBridgeReceiver {
 
     @nonobjc
     fileprivate var modelTransform: simd_float4x4
-    @nonobjc
-    fileprivate var modelDistance: Float
 
     @nonobjc
     fileprivate var dontCaptureAgain: Bool = false
@@ -409,7 +407,6 @@ extension WKBridgeReceiver {
         self.commandQueue = configuration.commandQueue
         self.deformationSystem = try _Proto_LowLevelDeformationSystem_v1.make(configuration.device, configuration.commandQueue).get()
         modelTransform = matrix_identity_float4x4
-        modelDistance = 1.0
         self.meshInstancePlainArray = []
         let meshInstances = try configuration.renderContext.makeMeshInstanceArray(renderTargets: [configuration.renderTarget], count: 16)
         let lightingFunction = configuration.renderContext.makePhysicallyBasedLightingFunction()
@@ -761,9 +758,8 @@ extension WKBridgeReceiver {
     }
 
     @objc
-    func setCameraDistance(_ distance: Float) {
-        modelDistance = distance
-        appRenderer.setCameraDistance(modelDistance)
+    func setFOV(_ fovY: Float) {
+        appRenderer.setFOV(fovY)
     }
 
     @objc
@@ -2364,7 +2360,7 @@ extension WKBridgeReceiver {
     }
 
     @objc
-    func setCameraDistance(_ distance: Float) {
+    func setFOV(_ fovY: Float) {
     }
 
     @objc

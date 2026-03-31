@@ -83,9 +83,9 @@ std::optional<WebModel::Float4x4> MeshImpl::entityTransform() const
 }
 #endif
 
-void MeshImpl::setCameraDistance(float distance)
+void MeshImpl::setFOV(float fovY)
 {
-    m_backing->setCameraDistance(distance);
+    m_backing->setFOV(fovY);
 }
 
 void MeshImpl::setBackgroundColor(const WebModel::Float3& color)

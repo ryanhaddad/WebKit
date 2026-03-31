@@ -106,7 +106,7 @@ private:
 #endif
     bool supportsTransform(const WebCore::TransformationMatrix&) const final;
     void setScale(float) final;
-    void setCameraDistance(float) final;
+    void setFOV(float);
     void setBackgroundColor(const WebModel::Float3&) final;
     void setViewportSize(float, float) final;
     void setStageMode(WebCore::StageModeOperation) final;
@@ -126,7 +126,6 @@ private:
     std::optional<WebModel::Float4x4> m_computedTransform;
 #endif
 #if ENABLE(GPU_PROCESS_MODEL)
-    float m_cameraDistance { 1.f };
     float m_viewportWidth { 0.f };
     float m_viewportHeight { 0.f };
     WebCore::StageModeOperation m_stageMode;

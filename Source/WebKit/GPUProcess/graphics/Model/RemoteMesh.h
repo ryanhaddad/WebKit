@@ -95,7 +95,7 @@ private:
     void updateTexture(const WebModel::UpdateTextureDescriptor&, CompletionHandler<void(bool)>&&);
     void updateMaterial(const WebModel::UpdateMaterialDescriptor&, CompletionHandler<void(bool)>&&);
     void updateTransform(const WebModel::Float4x4& transform);
-    void setCameraDistance(float);
+    void setFOV(float fovY);
     void setBackgroundColor(const WebModel::Float3&);
     void play(bool);
     void setEnvironmentMap(const WebModel::ImageAsset&);

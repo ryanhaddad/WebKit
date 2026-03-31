@@ -262,6 +262,7 @@ void WebModelPlayer::load(WebCore::Model& modelSource, WebCore::LayoutSize size)
     if (!gpu)
         return;
 
+    auto cssSize = size;
     size.scale(document->deviceScaleFactor());
     m_currentPixelSize = WebCore::IntSize(size.width().toUnsigned(), size.height().toUnsigned());
 
@@ -296,7 +297,7 @@ void WebModelPlayer::load(WebCore::Model& modelSource, WebCore::LayoutSize size)
         if (surfaceHandles.size())
             protectedThis->m_displayBuffers = WTF::move(surfaceHandles);
     });
-    m_currentModel->setViewportSize(size.width().toFloat(), size.height().toFloat());
+    m_currentModel->setViewportSize(cssSize.width().toFloat(), cssSize.height().toFloat());
 
     m_modelLoader = adoptNS([allocWKBridgeModelLoaderInstance() init]);
     Ref protectedThis = Ref { *this };
@@ -371,6 +372,7 @@ void WebModelPlayer::sizeDidChange(WebCore::LayoutSize size)
     if (!document)
         return;
 
+    auto cssSize = size;
     size.scale(document->deviceScaleFactor());
     auto newPixelSize = WebCore::IntSize(size.width().toUnsigned(), size.height().toUnsigned());
     if (newPixelSize == m_currentPixelSize)
@@ -389,7 +391,7 @@ void WebModelPlayer::sizeDidChange(WebCore::LayoutSize size)
     });
 
     if (RefPtr model = m_currentModel)
-        model->setViewportSize(size.width().toFloat(), size.height().toFloat());
+        model->setViewportSize(cssSize.width().toFloat(), cssSize.height().toFloat());
     notifyEntityTransformUpdated();
 }
 

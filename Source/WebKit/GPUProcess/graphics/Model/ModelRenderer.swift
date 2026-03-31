@@ -45,8 +45,10 @@ class Renderer {
         // swift-format-ignore: NeverForceUnwrap
         renderer!.renderTargetDescriptor
     }
+
     var pose: _Proto_Pose_v1
-    var modelDistance: Float = 1.0
+    private static let cameraDistance: Float = 0.5
+    var fovY: Float = 60 * .pi / 180
     var clearColor: MTLClearColor = .init(red: 1, green: 1, blue: 1, alpha: 1)
     let memoryOwner: task_id_token_t
 
@@ -58,7 +60,10 @@ class Renderer {
 
         self.device = device
         self.commandQueue = commandQueue
-        self.pose = .init(translation: [0, 0, 1], rotation: .init(ix: 0, iy: 0, iz: 0, r: 1))
+        self.pose = .init(
+            translation: [0, 0, Self.cameraDistance],
+            rotation: .init(ix: 0, iy: 0, iz: 0, r: 1)
+        )
         self.memoryOwner = memoryOwner
     }
 
@@ -98,10 +103,10 @@ class Renderer {
 
         let aspect = Float(texture.width) / Float(texture.height)
         let projection = _Proto_LowLevelRenderer_v1.Camera.Projection.perspective(
-            fovYRadians: 60 * .pi / 180,
+            fovYRadians: fovY,
             aspectRatio: aspect,
-            nearZ: modelDistance * 0.01,
-            farZ: modelDistance * 100,
+            nearZ: Self.cameraDistance * 0.01,
+            farZ: Self.cameraDistance * 100,
             reverseZ: true
         )
 
@@ -119,12 +124,8 @@ class Renderer {
         renderCommandBuffer.commit()
     }
 
-    internal func setCameraDistance(_ distance: Float) {
-        modelDistance = distance
-        pose = .init(
-            translation: [0, 0, distance],
-            rotation: simd_quatf(angle: 0, axis: [0, 0, 1]),
-        )
+    internal func setFOV(_ fovYRadians: Float) {
+        fovY = fovYRadians
     }
 
     internal func setBackgroundColor(_ color: simd_float3) {

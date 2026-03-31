@@ -107,9 +107,9 @@ void RemoteMesh::updateTransform(const WebModel::Float4x4& transform)
     m_backing->setEntityTransform(transform);
 }
 
-void RemoteMesh::setCameraDistance(float distance)
+void RemoteMesh::setFOV(float fovY)
 {
-    m_backing->setCameraDistance(distance);
+    m_backing->setFOV(fovY);
 }
 
 void RemoteMesh::setBackgroundColor(const WebModel::Float3& color)

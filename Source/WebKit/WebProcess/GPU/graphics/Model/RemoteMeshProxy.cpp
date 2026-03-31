@@ -247,17 +247,17 @@ std::optional<WebModel::Float4x4> RemoteMeshProxy::entityTransform() const
 }
 #endif
 
-void RemoteMeshProxy::setCameraDistance(float distance)
+static constexpr float kCSSPixelsPerMeter = 96 / 2.54 * 100;
+// Fixed camera distance matching the ModelRenderer
+static constexpr float kCameraDistance = 0.5;
+
+void RemoteMeshProxy::setFOV(float fovY)
 {
 #if ENABLE(GPU_PROCESS_MODEL)
-    if (areSameSignAndAlmostEqual(distance, m_cameraDistance))
-        return;
-
-    auto sendResult = send(Messages::RemoteMesh::SetCameraDistance(distance));
+    auto sendResult = send(Messages::RemoteMesh::SetFOV(fovY));
     UNUSED_PARAM(sendResult);
-    m_cameraDistance = distance;
 #else
-    UNUSED_PARAM(distance);
+    UNUSED_PARAM(fovY);
 #endif
 }
 
@@ -339,10 +339,6 @@ void RemoteMeshProxy::setStageMode(WebCore::StageModeOperation stageMode)
 }
 
 
-static constexpr float kCSSPixelsPerMeter = 96 / 2.54 * 100;
-// Based on the 60° fovYRadians in ModelRenderer.swift
-static constexpr float kVerticalFOVScale = 1.1547;
-
 #if ENABLE(GPU_PROCESS_MODEL)
 void RemoteMeshProxy::computeTransform()
 {
@@ -359,11 +355,7 @@ void RemoteMeshProxy::computeTransform()
             scale = std::fmin(viewportWidth / extents.x, viewportHeight / extents.y);
         depth = extents.z;
     } else {
-        float boundingDiameter = std::max(
-            { simd_length(simd_make_float2(extents.x, extents.y))
-            , simd_length(simd_make_float2(extents.x, extents.z))
-            , simd_length(simd_make_float2(extents.y, extents.z)) }
-        );
+        float boundingDiameter = simd_length(simd_make_float3(extents.x, extents.y, extents.z));
         if (boundingDiameter > FLT_EPSILON)
             scale = std::fmin(viewportWidth, viewportHeight) / boundingDiameter;
         depth = boundingDiameter;
@@ -382,7 +374,8 @@ void RemoteMeshProxy::computeTransform()
         -simd_dot(center.xyz, simd_make_float3(result.column0.z, result.column1.z, result.column2.z)) - scale * depth / 2,
         1.f);
 
-    setCameraDistance(viewportHeight / kVerticalFOVScale);
+    setFOV(2 * std::atan(viewportHeight / (2 * kCameraDistance)));
+
     setEntityTransformInternal(result);
     m_computedTransform = result;
 }

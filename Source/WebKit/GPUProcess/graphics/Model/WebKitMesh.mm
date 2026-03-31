@@ -1101,13 +1101,12 @@ void WebMesh::setTransform(const simd_float4x4& transform)
 #endif
 }
 
-void WebMesh::setCameraDistance(float distance)
+void WebMesh::setFOV(float fovY)
 {
 #if ENABLE(GPU_PROCESS_MODEL)
-    [m_receiver setCameraDistance:distance];
-    render();
+    [m_receiver setFOV:fovY];
 #else
-    UNUSED_PARAM(distance);
+    UNUSED_PARAM(fovY);
 #endif
 }
 
