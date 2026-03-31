@@ -421,7 +421,7 @@ function(WEBKIT_COPY_FILES target_name)
             set(dst_file ${opt_DESTINATION}/${file})
         endif ()
         add_custom_command(OUTPUT ${dst_file}
-            COMMAND ${CMAKE_COMMAND} -E copy ${src_file} ${dst_file}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src_file} ${dst_file}
             MAIN_DEPENDENCY ${file}
             VERBATIM
         )
