@@ -382,13 +382,17 @@ public:
     {
         // In normal execution, a CheckedPtr always points to an object with a non-zero checkedPtrCount().
         // When it detects a dangling pointer, WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR scribbles an object with zeroes and then leaks it.
-        // When we check checkedPtrCountWithoutThreadCheck() here, we're checking for a scribbled object.
-        if (!checkedPtrCountWithoutThreadCheck()) [[unlikely]]
-            crashDueToCheckedPtrToDeadObject();
-        if constexpr (AtomicLike<StorageType>)
-            m_checkedPtrCount.fetch_sub(1, std::memory_order_release);
-        else
+        // When we check the count here, we're checking for a scribbled object.
+        if constexpr (AtomicLike<StorageType>) {
+            // Combine the acquire load (zombie check) with the release decrement into a
+            // single acq_rel fetch_sub. The returned old value lets us detect a zero count.
+            if (!m_checkedPtrCount.fetch_sub(1, std::memory_order_acq_rel)) [[unlikely]]
+                crashDueToCheckedPtrToDeadObject();
+        } else {
+            if (!m_checkedPtrCount.valueWithoutThreadCheck()) [[unlikely]]
+                crashDueToCheckedPtrToDeadObject();
             --m_checkedPtrCount;
+        }
     }
 
     ALWAYS_INLINE PtrCounterType checkedPtrCountWithoutThreadCheck() const
