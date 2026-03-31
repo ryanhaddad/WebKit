@@ -117,7 +117,10 @@ public:
     WEBCORE_EXPORT static bool needsIPadMiniUserAgent(const URL&);
     WEBCORE_EXPORT static bool NODELETE needsIPhoneUserAgent(const URL&);
     WEBCORE_EXPORT static bool NODELETE needsDesktopUserAgent(const URL&);
+    WEBCORE_EXPORT static bool NODELETE needsChromeForAndroidUserAgent(const URL&);
     WEBCORE_EXPORT static std::optional<String> needsCustomUserAgentOverride(const URL&, const String& applicationNameForUserAgent, const String& currentUserAgent);
+
+    WEBCORE_EXPORT static bool NODELETE needsMediaSourceEnabled(const URL&);
 
     WEBCORE_EXPORT static bool needsPartitionedCookies(const ResourceRequest&);
 

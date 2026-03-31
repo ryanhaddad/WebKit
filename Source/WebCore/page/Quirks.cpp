@@ -1769,6 +1769,30 @@ bool Quirks::needsIPhoneUserAgent(const URL& url)
     return false;
 }
 
+bool Quirks::needsChromeForAndroidUserAgent(const URL& url)
+{
+#if PLATFORM(IOS_FAMILY)
+    // nfl.com rdar://171113872
+    if (url.host() == "www.nfl.com"_s && PAL::currentUserInterfaceIdiomIsSmallScreen())
+        return true;
+#else
+    UNUSED_PARAM(url);
+#endif
+    return false;
+}
+
+bool Quirks::needsMediaSourceEnabled(const URL& url)
+{
+#if PLATFORM(IOS_FAMILY)
+    // nfl.com rdar://171113872
+    if (url.host() == "www.nfl.com"_s && PAL::currentUserInterfaceIdiomIsSmallScreen())
+        return true;
+#else
+    UNUSED_PARAM(url);
+#endif
+    return false;
+}
+
 std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const String& applicationNameForUserAgent, const String& currentUserAgent)
 {
     auto hostDomain = RegistrableDomain(url);
