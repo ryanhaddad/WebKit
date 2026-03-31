@@ -13344,6 +13344,8 @@
         "web-platform-tests/quirks/reference/percentage-height-quirk-excludes-flex-grid-001-ref.html",
         "web-platform-tests/quirks/reference/percentage-height-quirk-excludes-flex-grid-002-notref.html",
         "web-platform-tests/quirks/reference/table-cell-width-calculation-abspos-ref.html",
+        "web-platform-tests/quirks/tables-inherit-color-from-body-quirk-004-ref.html",
+        "web-platform-tests/quirks/tables-inherit-color-from-body-quirk-005-ref.html",
         "web-platform-tests/quirks/text-decoration-doesnt-propagate-into-tables/quirks-ref.html",
         "web-platform-tests/quirks/text-decoration-doesnt-propagate-into-tables/standards-ref.html",
         "web-platform-tests/resize-observer/devicepixel-ref.html",

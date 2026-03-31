@@ -2163,6 +2163,11 @@ webkit.org/b/244022 imported/w3c/web-platform-tests/quirks/body-fills-html-quirk
 webkit.org/b/244022 imported/w3c/web-platform-tests/quirks/percentage-height-quirk-excludes-flex-grid-001.html [ ImageOnlyFailure ]
 webkit.org/b/244022 imported/w3c/web-platform-tests/quirks/text-decoration-doesnt-propagate-into-tables/quirks.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/quirks/line-height-preserved-segment-break.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/percentage-height-quirk-excludes-flex-grid-003.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-003.html [ ImageOnlyFailure Pass ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-004.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-005.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-007.html [ ImageOnlyFailure ]
 
 # WPT tests requiring DTR/WTR to allow other URLs than localhost to not be blocked and be reachable (www2.localhost)
 imported/w3c/web-platform-tests/xhr/send-redirect-bogus.htm [ Skip ]

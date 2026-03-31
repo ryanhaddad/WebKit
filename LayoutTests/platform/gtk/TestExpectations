@@ -1544,6 +1544,8 @@ webkit.org/b/306384 fast/css/object-position/object-position-img.html [ ImageOnl
 webkit.org/b/306384 fast/table/row-background-image.html [ ImageOnlyFailure ]
 webkit.org/b/306384 imported/w3c/web-platform-tests/quirks/line-height-in-list-item.html [ ImageOnlyFailure ]
 webkit.org/b/306384 scrollbars/corner-resizer-window-inactive.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/quirks/tables-inherit-color-from-body-quirk-002.html [ ImageOnlyFailure ]
 
 webkit.org/b/309260 webrtc/video-clone-track.html [ Pass Failure Timeout ]
 webkit.org/b/309261 platform/gtk/fast/forms/menulist-typeahead-find.html [ Pass Failure ]
