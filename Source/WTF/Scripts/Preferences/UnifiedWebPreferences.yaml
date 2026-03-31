@@ -6299,21 +6299,6 @@ PointerLockEnabled:
     WebCore:
       default: false
 
-PointerLockOptionsEnabled:
-  type: bool
-  status: stable
-  category: dom
-  condition: ENABLE(POINTER_LOCK)
-  humanReadableName: "Pointer Lock Options"
-  humanReadableDescription: "Element.requestPointerLock(options) and promise support."
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 PopoverAttributeEnabled:
   type: bool
   status: stable

@@ -745,8 +745,7 @@ public:
     bool hasPointerCapture(int32_t);
 
 #if ENABLE(POINTER_LOCK)
-    JSC::JSValue requestPointerLock(JSC::JSGlobalObject& lexicalGlobalObject, PointerLockOptions&&);
-    WEBCORE_EXPORT void requestPointerLock();
+    void requestPointerLock(PointerLockOptions&&, Ref<DeferredPromise>&&);
 #endif
 
     OptionSet<VisibilityAdjustment> NODELETE visibilityAdjustment() const;
