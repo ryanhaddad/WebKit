@@ -73,7 +73,7 @@ const AtomString& CheckboxInputType::formControlType() const
     return InputTypeNames::checkbox();
 }
 
-bool CheckboxInputType::valueMissing(const String&) const
+bool CheckboxInputType::valueMissing(StringView) const
 {
     ASSERT(element());
     return element()->isRequired() && !element()->checked();

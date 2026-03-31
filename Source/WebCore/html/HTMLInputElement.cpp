@@ -248,7 +248,7 @@ bool HTMLInputElement::shouldAutocomplete() const
     return HTMLTextFormControlElement::shouldAutocomplete();
 }
 
-bool HTMLInputElement::isValidValue(const String& value) const
+bool HTMLInputElement::isValidValue(StringView value) const
 {
     if (!m_inputType->isValidValue(value))
         return false;
@@ -1165,7 +1165,7 @@ ExceptionOr<void> HTMLInputElement::setValue(const String& value, TextFieldEvent
     Ref protectedThis { *this };
     EventQueueScope scope;
     auto sanitizedValue = sanitizeValue(value);
-    bool valueChanged = sanitizedValue != this->value();
+    bool valueChanged = sanitizedValue != this->value().get();
 
     setLastChangeWasNotUserEdit();
     setFormControlValueMatchesRenderer(false);

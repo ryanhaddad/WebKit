@@ -128,7 +128,7 @@ bool TextFieldInputType::isEmptyValue() const
     return true;
 }
 
-bool TextFieldInputType::valueMissing(const String& value) const
+bool TextFieldInputType::valueMissing(StringView value) const
 {
     ASSERT(element());
     Ref element = *this->element();

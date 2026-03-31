@@ -142,7 +142,7 @@ bool FileInputType::appendFormData(DOMFormData& formData) const
     return true;
 }
 
-bool FileInputType::valueMissing(const String& value) const
+bool FileInputType::valueMissing(StringView value) const
 {
     ASSERT(element());
     return element()->isRequired() && value.isEmpty();

@@ -108,7 +108,7 @@ template<typename T> static Ref<InputType> createInputType(HTMLInputElement& ele
 }
 
 template<typename DowncastedType>
-ALWAYS_INLINE bool isInvalidInputType(const DowncastedType& inputType, const String& value)
+ALWAYS_INLINE bool isInvalidInputType(const DowncastedType& inputType, StringView value)
 {
     return inputType.typeMismatch()
         || inputType.hasStepRangeViolation(value)
@@ -188,7 +188,7 @@ RefPtr<InputType> InputType::createIfDifferent(HTMLInputElement& element, const 
 
 InputType::~InputType() = default;
 
-template<typename T> static bool validateInputType(const T& inputType, const String& value)
+template<typename T> static bool validateInputType(const T& inputType, StringView value)
 {
     ASSERT(inputType.canSetStringValue());
     return !inputType.typeMismatchFor(value)
@@ -197,7 +197,7 @@ template<typename T> static bool validateInputType(const T& inputType, const Str
         && !inputType.valueMissing(value);
 }
 
-bool InputType::isValidValue(const String& value) const
+bool InputType::isValidValue(StringView value) const
 {
     switch (m_type) {
     case Type::Button:
@@ -324,7 +324,7 @@ bool InputType::supportsRequired() const
     return supportsValidation();
 }
 
-std::optional<std::pair<Decimal, StepRange>> InputType::parsedValueAndStepRange(const String& value) const
+std::optional<std::pair<Decimal, StepRange>> InputType::parsedValueAndStepRange(StringView value) const
 {
     if (!isSteppable())
         return std::nullopt;
@@ -334,7 +334,7 @@ std::optional<std::pair<Decimal, StepRange>> InputType::parsedValueAndStepRange(
     return { { numericValue, createStepRange(AnyStepHandling::Reject) } };
 }
 
-bool InputType::rangeUnderflow(const String& value) const
+bool InputType::rangeUnderflow(StringView value) const
 {
     auto parsed = parsedValueAndStepRange(value);
     if (!parsed)
@@ -348,7 +348,7 @@ bool InputType::rangeUnderflow(const String& value) const
     return numericValue < range.minimum();
 }
 
-bool InputType::rangeOverflow(const String& value) const
+bool InputType::rangeOverflow(StringView value) const
 {
     auto parsed = parsedValueAndStepRange(value);
     if (!parsed)
@@ -362,7 +362,7 @@ bool InputType::rangeOverflow(const String& value) const
     return numericValue > range.maximum();
 }
 
-bool InputType::isInvalid(const String& value) const
+bool InputType::isInvalid(StringView value) const
 {
     switch (m_type) {
     case Type::Button:
@@ -441,7 +441,7 @@ float InputType::decorationWidth(float) const
     return 0;
 }
 
-bool InputType::isInRange(const String& value) const
+bool InputType::isInRange(StringView value) const
 {
     if (!isSteppable())
         return false;
@@ -462,7 +462,7 @@ bool InputType::isInRange(const String& value) const
     return numericValue >= stepRange.minimum() && numericValue <= stepRange.maximum();
 }
 
-bool InputType::isOutOfRange(const String& value) const
+bool InputType::isOutOfRange(StringView value) const
 {
     if (!isSteppable() || value.isEmpty())
         return false;
@@ -483,7 +483,7 @@ bool InputType::isOutOfRange(const String& value) const
     return numericValue < stepRange.minimum() || numericValue > stepRange.maximum();
 }
 
-bool InputType::stepMismatch(const String& value) const
+bool InputType::stepMismatch(StringView value) const
 {
     auto parsed = parsedValueAndStepRange(value);
     if (!parsed)
@@ -493,7 +493,7 @@ bool InputType::stepMismatch(const String& value) const
     return range.stepMismatch(numericValue);
 }
 
-bool InputType::hasStepRangeViolation(const String& value) const
+bool InputType::hasStepRangeViolation(StringView value) const
 {
     auto parsed = parsedValueAndStepRange(value);
     if (!parsed)
@@ -645,13 +645,13 @@ void InputType::removeShadowSubtree()
     m_hasCreatedShadowSubtree = false;
 }
 
-Decimal InputType::parseToNumber(const String&, const Decimal& defaultValue) const
+Decimal InputType::parseToNumber(StringView, const Decimal& defaultValue) const
 {
     ASSERT_NOT_REACHED();
     return defaultValue;
 }
 
-Decimal InputType::parseToNumberOrNaN(const String& string) const
+Decimal InputType::parseToNumberOrNaN(StringView string) const
 {
     return parseToNumber(string, Decimal::nan());
 }

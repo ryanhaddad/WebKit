@@ -63,15 +63,15 @@ const AtomString& EmailInputType::formControlType() const
     return InputTypeNames::email();
 }
 
-bool EmailInputType::typeMismatchFor(const String& value) const
+bool EmailInputType::typeMismatchFor(StringView value) const
 {
     ASSERT(element());
     if (value.isEmpty())
         return false;
     if (!protect(element())->multiple())
         return !isValidEmailAddress(value);
-    for (auto& address : value.splitAllowingEmptyEntries(',')) {
-        if (!isValidEmailAddress(StringView(address).trim(isASCIIWhitespace<char16_t>)))
+    for (auto address : value.splitAllowingEmptyEntries(',')) {
+        if (!isValidEmailAddress(address.trim(isASCIIWhitespace<char16_t>)))
             return true;
     }
     return false;

@@ -40,7 +40,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(BaseTextInputType);
 
 using namespace HTMLNames;
 
-bool BaseTextInputType::patternMismatch(const String& value) const
+bool BaseTextInputType::patternMismatch(StringView value) const
 {
     ASSERT(element());
     Ref element = *this->element();
@@ -54,7 +54,7 @@ bool BaseTextInputType::patternMismatch(const String& value) const
         return false;
     }
 
-    auto valuePatternMismatch = [&regex](auto& value) {
+    auto valuePatternMismatch = [&regex](auto value) {
         int matchLength = 0;
         int valueLength = value.length();
         int matchOffset = regex.match(value, 0, &matchLength);
@@ -62,8 +62,11 @@ bool BaseTextInputType::patternMismatch(const String& value) const
     };
 
     if (isEmailField() && element->multiple()) {
-        auto values = value.split(',');
-        return values.findIf(valuePatternMismatch) != notFound;
+        for (auto splitValue : value.split(',')) {
+            if (valuePatternMismatch(splitValue))
+                return true;
+        }
+        return false;
     }
     return valuePatternMismatch(value);
 }
