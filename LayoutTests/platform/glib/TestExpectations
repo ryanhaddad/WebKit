@@ -1795,6 +1795,8 @@ webkit.org/b/284429 imported/w3c/web-platform-tests/webcodecs/audio-encoder.http
 # is not supported) is expected to fail.
 http/wpt/webcodecs/H264-422.html [ Failure ]
 
+http/wpt/webcodecs/encoder-decoder-vp9-I420.html [ Failure ]
+
 fast/mediacapturefromelement/CanvasCaptureMediaStream-capture-out-of-DOM-canvas-webgl.html [ Pass Failure ]
 
 webkit.org/b/298925 fast/mediacapturefromelement/CanvasCaptureMediaStream-offscreencanvas.html [ Timeout ]

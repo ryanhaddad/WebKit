@@ -6545,8 +6545,6 @@ imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-and-mo
 
 webkit.org/b/258192 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h264_avc [ Pass Failure ]
 
-webkit.org/b/306751 http/wpt/webcodecs/encoder-decoder-vp9-I420.html [ Failure ]
-
 # These tests are timing out since their import.
 imported/w3c/web-platform-tests/html/browsers/the-window-object/window-open-noopener.html?indexed [ Skip ]
 imported/w3c/web-platform-tests/html/browsers/the-window-object/window-open-noopener.html?_self [ Skip ]
