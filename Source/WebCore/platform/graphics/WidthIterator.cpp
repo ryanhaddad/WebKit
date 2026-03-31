@@ -745,8 +745,6 @@ void WidthIterator::applyCSSVisibilityRules(GlyphBuffer& glyphBuffer, unsigned g
 {
     // This function needs to be kept in sync with characterCanUseSimplifiedTextMeasuring().
 
-    Vector<unsigned> glyphsIndicesToBeDeleted;
-
     float yPosition = height(glyphBuffer.initialAdvance());
 
     auto adjustForSyntheticBold = [&](auto index) {
