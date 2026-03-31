@@ -45,9 +45,12 @@
 #endif
 
 #if USE(SKIA)
+#include "FontRenderOptions.h"
+#include "SkiaUtilities.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN // GLib/Win port
 #include <skia/core/SkImage.h>
 #include <skia/core/SkPixmap.h>
+#include <skia/core/SkSurface.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
@@ -572,6 +575,19 @@ OptionSet<TextureMapperFlags> BitmapTexture::colorConvertFlags() const
     return TextureMapperFlags::ShouldConvertTextureARGBToRGBA;
 #endif
 }
+
+#if USE(SKIA)
+GrBackendTexture BitmapTexture::createSkiaBackendTexture() const
+{
+    return SkiaUtilities::createBackendTexture(*this);
+}
+
+sk_sp<SkSurface> BitmapTexture::createSkiaSurface(GrDirectContext* grContext, GrSurfaceOrigin origin, unsigned sampleCount) const
+{
+    auto properties = FontRenderOptions::singleton().createSurfaceProps();
+    return SkiaUtilities::createSurface(grContext, *this, properties, origin, sampleCount);
+}
+#endif
 
 } // namespace WebCore
 

@@ -43,6 +43,7 @@
 #include "SkiaImageAtlasLayoutBuilder.h"
 #include "SkiaPaintingEngine.h"
 #include "SkiaRecordingResult.h"
+#include "SkiaUtilities.h"
 #include <cmath>
 #include <ranges>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
@@ -58,8 +59,6 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkSurface.h>
 #include <skia/core/SkTileMode.h>
 #include <skia/effects/SkImageFilters.h>
-#include <skia/gpu/ganesh/GrBackendSurface.h>
-#include <skia/gpu/ganesh/SkImageGanesh.h>
 #include <skia/gpu/ganesh/SkSurfaceGanesh.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/MathExtras.h>
@@ -345,9 +344,7 @@ void GraphicsContextSkia::drawNativeImage(const NativeImage& nativeImage, const 
                 if (auto fence = createAcceleratedRenderingFence(nativeImage.platformImage(), nativeImage.grContext()))
                     fence->serverWait();
 
-                GrBackendTexture backendTexture;
-                if (SkImages::GetBackendTextureFromImage(image.get(), &backendTexture, false))
-                    imageInThisThread = SkImages::BorrowTextureFrom(grContext, backendTexture, kTopLeft_GrSurfaceOrigin, image->colorType(), image->alphaType(), image->refColorSpace());
+                imageInThisThread = SkiaUtilities::rewrapImageForContext(grContext, *image);
             }
         }
     }

@@ -42,9 +42,6 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkColorSpace.h>
 #include <skia/core/SkImage.h>
 #include <skia/core/SkStream.h>
-#include <skia/gpu/ganesh/GrBackendSurface.h>
-#include <skia/gpu/ganesh/SkSurfaceGanesh.h>
-#include <skia/gpu/ganesh/gl/GrGLBackendSurface.h>
 #include <skia/gpu/ganesh/gl/GrGLDirectContext.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/MainThread.h>
@@ -150,7 +147,7 @@ bool CoordinatedUnacceleratedTileBuffer::tryEnsureSurface()
 
     auto imageInfo = SkImageInfo::Make(m_size.width(), m_size.height(), kBGRA_8888_SkColorType, kPremul_SkAlphaType, SkColorSpace::MakeSRGB());
     // FIXME: ref buffer and unref on release proc?
-    SkSurfaceProps properties = FontRenderOptions::singleton().createSurfaceProps();
+    auto properties = FontRenderOptions::singleton().createSurfaceProps();
     m_surface = SkSurfaces::WrapPixels(imageInfo, data(), imageInfo.minRowBytes64(), &properties);
     return true;
 }
@@ -184,14 +181,6 @@ bool CoordinatedAcceleratedTileBuffer::tryEnsureSurface()
     if (!PlatformDisplay::sharedDisplay().skiaGLContext()->makeContextCurrent())
         return false;
 
-    GrGLTextureInfo externalTexture;
-    externalTexture.fTarget = GL_TEXTURE_2D;
-    externalTexture.fID = m_texture->id();
-    externalTexture.fFormat = GL_RGBA8;
-
-    const auto& size = m_texture->size();
-    auto backendTexture = GrBackendTextures::MakeGL(size.width(), size.height(), skgpu::Mipmapped::kNo, externalTexture);
-
 #if PLATFORM(GTK)
     // FIXME: there's a deadlock when two rendering threads try to create a texture with MSAA enabled. So, for now
     // we just disable MSAA for the GTK port to render tiles until we find a solution.
@@ -200,15 +189,7 @@ bool CoordinatedAcceleratedTileBuffer::tryEnsureSurface()
     unsigned msaaSampleCount = PlatformDisplay::sharedDisplay().msaaSampleCount();
 #endif
 
-    SkSurfaceProps properties = FontRenderOptions::singleton().createSurfaceProps();
-    m_surface = SkSurfaces::WrapBackendTexture(PlatformDisplay::sharedDisplay().skiaGrContext(),
-        backendTexture,
-        kTopLeft_GrSurfaceOrigin,
-        msaaSampleCount,
-        kRGBA_8888_SkColorType,
-        SkColorSpace::MakeSRGB(),
-        &properties);
-
+    m_surface = m_texture->createSkiaSurface(PlatformDisplay::sharedDisplay().skiaGrContext(), kTopLeft_GrSurfaceOrigin, msaaSampleCount);
     return true;
 }
 

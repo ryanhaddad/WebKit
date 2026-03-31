@@ -32,19 +32,13 @@
 #include "BitmapTexturePool.h"
 #include "CoordinatedPlatformLayer.h"
 #include "CoordinatedPlatformLayerBufferRGB.h"
-#include "FontRenderOptions.h"
 #include "GLContext.h"
 #include "GLFence.h"
 #include "GraphicsContextSkia.h"
 #include "PlatformDisplay.h"
 #include "ScrollerImpAdwaita.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
-#include <skia/core/SkColorSpace.h>
-#include <skia/core/SkImage.h>
-#include <skia/gpu/ganesh/GrBackendSurface.h>
-#include <skia/gpu/ganesh/SkSurfaceGanesh.h>
-#include <skia/gpu/ganesh/gl/GrGLBackendSurface.h>
-#include <skia/gpu/ganesh/gl/GrGLDirectContext.h>
+#include <skia/core/SkSurface.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #include <wtf/TZoneMallocInlines.h>
 
@@ -136,13 +130,7 @@ void ScrollerCoordinated::updateValues()
     Ref texture = BitmapTexturePool::singleton().acquireTexture(state.frameRect.size(), { BitmapTexture::Flags::SupportsAlpha });
 
     GLContext::ScopedGLContextCurrent scopedCurrent(*glContext);
-    GrGLTextureInfo externalTexture;
-    externalTexture.fTarget = GL_TEXTURE_2D;
-    externalTexture.fID = texture->id();
-    externalTexture.fFormat = GL_RGBA8;
-    auto backendTexture = GrBackendTextures::MakeGL(state.frameRect.size().width(), state.frameRect.size().height(), skgpu::Mipmapped::kNo, externalTexture);
-    SkSurfaceProps properties = FontRenderOptions::singleton().createSurfaceProps();
-    auto surface = SkSurfaces::WrapBackendTexture(grContext, backendTexture, kTopLeft_GrSurfaceOrigin, 0, kRGBA_8888_SkColorType, SkColorSpace::MakeSRGB(), &properties);
+    auto surface = texture->createSkiaSurface(grContext);
     if (!surface)
         return;
 

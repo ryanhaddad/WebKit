@@ -30,7 +30,6 @@
 #include "WebPage.h"
 #include "WebProcess.h"
 #include <WebCore/BitmapTexture.h>
-#include <WebCore/FontRenderOptions.h>
 #include <WebCore/GLContext.h>
 #include <WebCore/GLFence.h>
 #include <WebCore/Page.h>
@@ -47,9 +46,6 @@
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkCanvas.h>
-#include <skia/gpu/ganesh/GrBackendSurface.h>
-#include <skia/gpu/ganesh/SkSurfaceGanesh.h>
-#include <skia/gpu/ganesh/gl/GrGLBackendSurface.h>
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 
 #if PLATFORM(GTK) || ENABLE(WPE_PLATFORM)
@@ -158,16 +154,8 @@ void AcceleratedSurface::RenderTarget::createSkiaSurfaceForTexture(const BitmapT
 {
     auto& display = PlatformDisplay::sharedDisplay();
     GLContext::ScopedGLContextCurrent scopedCurrent(*display.skiaGLContext());
-    GrGLTextureInfo externalTexture;
-    externalTexture.fTarget = GL_TEXTURE_2D;
-    externalTexture.fID = texture.id();
-    externalTexture.fFormat = GL_RGBA8;
-
-    const auto& size = texture.size();
-    auto backendTexture = GrBackendTextures::MakeGL(size.width(), size.height(), skgpu::Mipmapped::kNo, externalTexture);
-    SkSurfaceProps properties = FontRenderOptions::singleton().createSurfaceProps();
     auto origin = m_surface->shouldPaintMirrored() ? kBottomLeft_GrSurfaceOrigin : kTopLeft_GrSurfaceOrigin;
-    m_skiaSurface = SkSurfaces::WrapBackendTexture(display.skiaGrContext(), backendTexture, origin, 0, kRGBA_8888_SkColorType, SkColorSpace::MakeSRGB(), &properties);
+    m_skiaSurface = texture.createSkiaSurface(display.skiaGrContext(), origin);
 }
 
 #if PLATFORM(GTK) || ENABLE(WPE_PLATFORM)
