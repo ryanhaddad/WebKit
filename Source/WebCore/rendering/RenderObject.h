@@ -619,6 +619,7 @@ public:
     // The name objectBoundingBox is taken from the SVG 1.1 spec.
     virtual FloatRect objectBoundingBox() const;
     virtual FloatRect strokeBoundingBox() const;
+    virtual bool objectBoundingBoxIsEmpty() const { return false; }
 
     // The objectBoundingBox of a SVG container is affected by the transformations applied on its children -- the container
     // bounding box is a union of all child bounding boxes, mapped through their transformation matrices.

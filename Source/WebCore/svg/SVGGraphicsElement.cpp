@@ -91,7 +91,7 @@ FloatRect SVGGraphicsElement::computeBBox(SVGElement* element, StyleUpdateStrate
 
     // FIXME: Eventually we should support getBBox for detached elements.
     CheckedPtr renderer = element->renderer();
-    if (!renderer || renderer->isRenderSVGHiddenContainer())
+    if (!renderer || renderer->isRenderSVGHiddenContainer() || renderer->objectBoundingBoxIsEmpty())
         return FloatRect();
 
     return renderer->objectBoundingBox();

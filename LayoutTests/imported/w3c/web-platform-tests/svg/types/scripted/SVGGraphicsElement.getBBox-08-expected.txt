@@ -1,10 +1,10 @@
 
-FAIL image with zero width assert_equals: x expected 0 but got 10
-FAIL image with zero height assert_equals: x expected 0 but got 10
-FAIL image with zero width and height assert_equals: x expected 0 but got 10
-FAIL image with no width/height attributes assert_equals: x expected 0 but got 10
-FAIL foreignObject with zero width assert_equals: height expected 0 but got 50
-FAIL foreignObject with zero height assert_equals: width expected 0 but got 50
+PASS image with zero width
+PASS image with zero height
+PASS image with zero width and height
+PASS image with no width/height attributes
+PASS foreignObject with zero width
+PASS foreignObject with zero height
 PASS foreignObject with zero width and height
 PASS foreignObject with no width/height attributes
 PASS empty nested SVG element
