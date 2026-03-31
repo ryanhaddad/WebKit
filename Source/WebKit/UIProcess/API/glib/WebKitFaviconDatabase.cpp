@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, 2017 Igalia S.L.
+ * Copyright (C) 2012, 2017, 2026 Igalia S.L.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,14 @@
 #if PLATFORM(GTK)
 #include "GtkUtilities.h"
 #include <WebCore/RefPtrCairo.h>
+#endif
+
+#if ENABLE(2022_GLIB_API)
+#include "WebKitImagePrivate.h"
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
+#include <skia/core/SkBitmap.h>
+#include <skia/core/SkPixmap.h>
+WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
 using namespace WebKit;
@@ -176,7 +184,7 @@ void webkitFaviconDatabaseGetFaviconInternal(WebKitFaviconDatabase* database, co
 {
     if (!webkitFaviconDatabaseIsOpen(database)) {
         g_task_report_new_error(database, callback, userData, 0,
-            WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_NOT_INITIALIZED, _("Favicons database not initialized yet"));
+            WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_NOT_INITIALIZED, _("Favicon database not initialized yet"));
         return;
     }
 
@@ -263,7 +271,94 @@ cairo_surface_t* webkit_favicon_database_get_favicon_finish(WebKitFaviconDatabas
     return image ? skiaImageToCairoSurface(*image).leakRef() : nullptr;
 #endif
 }
-#endif
+
+#if ENABLE(2022_GLIB_API)
+/**
+ * webkit_favicon_database_get_page_icons:
+ * @database: a #WebKitFaviconDatabase
+ * @page_uri: URI of the page to get icons for
+ * @cancellable: (nullable): A #GCancellable ior %NULL
+ * @callback: (scope async) (nullable): A #GAsyncReadyCallback to invoke when the request
+ *    is satisfied or %NULL to discard the result.
+ * @user_data: Additional data to pass to @callback.
+ *
+ * Obtains the set of icons for a page.
+ *
+ * Starts an asynchronous operation to obtain the set of icons cached in the database for a given
+ * page URI. Available icons will be read from the database and provided as a [struct@ImageList]
+ * that can be retrieved using [id@webkit_favicon_database_get_page_icons_finish] in the completion
+ * @callback.
+ *
+ * Since: 2.54
+ */
+void webkit_favicon_database_get_page_icons(WebKitFaviconDatabase* database, const gchar* pageURI, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer userData)
+{
+    g_return_if_fail(WEBKIT_IS_FAVICON_DATABASE(database));
+    g_return_if_fail(pageURI);
+
+    if (!webkitFaviconDatabaseIsOpen(database))
+        return g_task_report_new_error(database, callback, userData, 0, WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_NOT_INITIALIZED, _("Favicons database not initialized yet"));
+
+    const auto uriString = String::fromUTF8(pageURI);
+    if (uriString.startsWith("about:"_s))
+        return g_task_report_new_error(database, callback, userData, 0, WEBKIT_FAVICON_DATABASE_ERROR, WEBKIT_FAVICON_DATABASE_ERROR_FAVICON_NOT_FOUND, _("Page %s does not have a favicon"), pageURI);
+
+    auto task = adoptGRef(g_task_new(database, cancellable, callback, userData));
+    database->priv->iconDatabase->loadIconsForPageURL(uriString, IconDatabase::AllowDatabaseWrite::No, [task = WTF::move(task)](Vector<PlatformImagePtr>&& icons) {
+        auto images = icons.map([](PlatformImagePtr image) -> GRefPtr<WebKitImage> {
+            SkPixmap pixmap;
+            RELEASE_ASSERT(image->peekPixels(&pixmap));
+
+            if (image->colorType() != SkColorType::kN32_SkColorType || !image->colorSpace()->isSRGB()) [[unlikely]] {
+                auto newImageInfo = SkImageInfo::MakeS32(image->width(), image->height(), SkAlphaType::kPremul_SkAlphaType);
+                SkBitmap destination;
+                destination.allocPixels(newImageInfo);
+                RELEASE_ASSERT(destination.writePixels(pixmap));
+                destination.setImmutable();
+
+                // Replace image with the converted one, and re-fill pixmap.
+                image = SkImages::RasterFromBitmap(destination);
+                RELEASE_ASSERT(image->peekPixels(&pixmap));
+            }
+
+            RELEASE_ASSERT(image->colorType() == SkColorType::kN32_SkColorType);
+            RELEASE_ASSERT(image->colorSpace()->isSRGB());
+
+            int width = pixmap.width();
+            int height = pixmap.height();
+            unsigned stride = pixmap.rowBytes();
+            auto bytes = adoptGRef(g_bytes_new_with_free_func(pixmap.addr32(), pixmap.computeByteSize(), [](void* data) {
+                static_cast<SkImage*>(data)->unref();
+            }, image.release()));
+            return adoptGRef(webkitImageNew(width, height, stride, WTF::move(bytes)));
+        });
+
+        g_task_return_pointer(task.get(), webkitImageListCreate(WTF::move(images)), [](void* data) {
+            webkit_image_list_unref(static_cast<WebKitImageList*>(data));
+        });
+    });
+}
+
+/**
+ * webkit_favicon_database_get_page_icons_finish:
+ * @database: A #WebKitFaviconDatabase
+ * @result: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to [id@webkit_favicon_database_get_page_icons].
+ * @error: (nullable): Return location for an error or %NULL.
+ *
+ * Finishes an operation started with [id@webkit_favicon_database_get_page_icons].
+ *
+ * Returns: (transfer full): the set of icons for the page, or %NULL in case of error.
+ *
+ * Since: 2.54
+ */
+WebKitImageList* webkit_favicon_database_get_page_icons_finish(WebKitFaviconDatabase* database, GAsyncResult* result, GError** error)
+{
+    g_return_val_if_fail(WEBKIT_IS_FAVICON_DATABASE(database), nullptr);
+
+    return static_cast<WebKitImageList*>(g_task_propagate_pointer(G_TASK(result), error));
+}
+#endif // ENABLE(2022_GLIB_API)
+#endif // PLATFORM(GTK)
 
 /**
  * webkit_favicon_database_get_favicon_uri:

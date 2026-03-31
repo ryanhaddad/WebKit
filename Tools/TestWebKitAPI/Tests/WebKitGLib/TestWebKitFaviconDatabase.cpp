@@ -59,6 +59,8 @@ public:
 
         g_signal_handlers_disconnect_matched(m_database.get(), G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, this);
 #if ENABLE(2022_GLIB_API)
+        g_clear_pointer(&m_pageIcons, webkit_image_list_unref);
+
         GUniquePtr<char> databaseDirectory(g_build_filename(Test::dataDirectory(), "icondatabase", nullptr));
         if (GDir* directory = g_dir_open(databaseDirectory.get(), 0, nullptr)) {
             const char* fileName;
@@ -69,6 +71,9 @@ public:
             g_dir_close(directory);
         }
         g_rmdir(databaseDirectory.get());
+
+        if (m_database)
+            close();
 #endif
     }
 
@@ -113,7 +118,7 @@ public:
     static void viewFaviconChangedCallback(WebKitWebView* webView, GParamSpec* pspec, FaviconDatabaseTest* test)
     {
         g_assert_true(test->webView() == webView);
-        test->m_faviconNotificationReceived = true;
+        test->m_pageFaviconNotificationCount++;
 #if USE(GTK4)
         test->m_favicon = webkit_web_view_get_favicon(webView);
 #else
@@ -123,6 +128,18 @@ public:
             test->quitMainLoop();
     }
 
+#if ENABLE(2022_GLIB_API)
+    static void viewPageIconsChangedCallback(WebKitWebView* webView, GParamSpec*, FaviconDatabaseTest* test)
+    {
+        g_clear_pointer(&test->m_pageIcons, webkit_image_list_unref);
+        g_assert_true(test->webView() == webView);
+        test->m_pageIconsNoticationCount++;
+        test->m_pageIcons = webkit_image_list_ref(webkit_web_view_get_page_icons(webView));
+        if (test->m_loadFinished)
+            test->quitMainLoop();
+    }
+#endif
+
     static void viewLoadChangedCallback(WebKitWebView* webView, WebKitLoadEvent loadEvent, FaviconDatabaseTest* test)
     {
         g_assert_true(test->webView() == webView);
@@ -130,7 +147,7 @@ public:
             return;
 
         test->m_loadFinished = true;
-        if (test->m_faviconNotificationReceived)
+        if (test->m_pageFaviconNotificationCount > 0)
             test->quitMainLoop();
     }
 
@@ -147,7 +164,7 @@ public:
 
     void waitUntilFaviconChanged()
     {
-        m_faviconNotificationReceived = false;
+        m_pageFaviconNotificationCount = 0;
         unsigned long handlerID = g_signal_connect(m_webView.get(), "notify::favicon", G_CALLBACK(viewFaviconChangedCallback), this);
         g_main_loop_run(m_mainLoop);
         g_signal_handler_disconnect(m_webView.get(), handlerID);
@@ -160,7 +177,7 @@ public:
             cairo_surface_destroy(m_favicon);
 #endif
         m_favicon = nullptr;
-        m_faviconNotificationReceived = false;
+        m_pageFaviconNotificationCount = 0;
         m_loadFinished = false;
         unsigned long faviconChangedID = g_signal_connect(m_webView.get(), "notify::favicon", G_CALLBACK(viewFaviconChangedCallback), this);
         unsigned long loadChangedID = g_signal_connect(m_webView.get(), "load-changed", G_CALLBACK(viewLoadChangedCallback), this);
@@ -168,6 +185,31 @@ public:
         g_signal_handler_disconnect(m_webView.get(), faviconChangedID);
         g_signal_handler_disconnect(m_webView.get(), loadChangedID);
     }
+
+    static void faviconChangedCountCallback(WebKitWebView* webView, GParamSpec*, FaviconDatabaseTest* test)
+    {
+        g_assert_true(test->webView() == webView);
+        test->m_pageFaviconNotificationCount++;
+    }
+
+#if ENABLE(2022_GLIB_API)
+    void waitUntilLoadFinishedAndPageIconsChanged()
+    {
+        g_clear_pointer(&m_pageIcons, webkit_image_list_unref);
+        m_pageFaviconNotificationCount = 0;
+        m_pageIconsNoticationCount = 0;
+        m_loadFinished = false;
+
+        const auto faviconID = g_signal_connect(m_webView.get(), "notify::favicon", G_CALLBACK(faviconChangedCountCallback), this);
+        const auto pageIconsID = g_signal_connect(m_webView.get(), "notify::page-icons", G_CALLBACK(viewPageIconsChangedCallback), this);
+        const auto loadChangedID = g_signal_connect(m_webView.get(), "load-changed", G_CALLBACK(viewLoadChangedCallback), this);
+        g_main_loop_run(m_mainLoop);
+
+        g_signal_handler_disconnect(m_webView.get(), faviconID);
+        g_signal_handler_disconnect(m_webView.get(), pageIconsID);
+        g_signal_handler_disconnect(m_webView.get(), loadChangedID);
+    }
+#endif // ENABLE(2022_GLIB_API)
 
     void getFaviconForPageURIAndWaitUntilReady(const char* pageURI)
     {
@@ -214,18 +256,41 @@ public:
         }
     }
 
+    void waitUntilFaviconChangedTimes(unsigned numTimes, unsigned timeoutMilliseconds = 0)
+    {
+        if (m_pageFaviconNotificationCount >= numTimes)
+            return;
+
+        GTimer* timer = g_timer_new();
+        auto handlerID = g_signal_connect(m_webView.get(), "notify::favicon", G_CALLBACK(faviconChangedCountCallback), this);
+        while (m_pageFaviconNotificationCount < numTimes && g_timer_elapsed(timer, nullptr) * 1000.0 <= timeoutMilliseconds) {
+            g_main_context_iteration(g_main_loop_get_context(m_mainLoop), FALSE);
+            g_usleep(10000);
+        }
+        g_clear_pointer(&timer, g_timer_destroy);
+        g_signal_handler_disconnect(m_webView.get(), handlerID);
+    }
+
     GRefPtr<WebKitFaviconDatabase> m_database;
+    unsigned m_faviconChangedID { 0 };
 #if USE(GTK4)
     GRefPtr<GdkTexture> m_favicon;
 #else
     cairo_surface_t* m_favicon { nullptr };
 #endif
+    size_t m_pageFaviconNotificationCount { 0 };
+    unsigned m_pageFaviconNotificationTimeoutID { 0 };
+
     std::optional<CString> m_faviconURI { std::nullopt };
     GUniqueOutPtr<GError> m_error;
-    bool m_faviconNotificationReceived { false };
     bool m_loadFinished { false };
     bool m_waitingForFaviconURI { false };
     unsigned m_waitingForFaviconURITimeoutID { 0 };
+
+#if ENABLE(2022_GLIB_API)
+    size_t m_pageIconsNoticationCount { 0 };
+    WebKitImageList* m_pageIcons;
+#endif
 };
 
 static void serverCallback(SoupServer*, SoupServerMessage* message, const char* path, GHashTable* query, gpointer)
@@ -249,9 +314,24 @@ static void serverCallback(SoupServer*, SoupServerMessage* message, const char* 
         GUniquePtr<char> pathToFavicon(g_build_filename(Test::getResourcesDir().data(), "blank.ico", nullptr));
         g_file_get_contents(pathToFavicon.get(), &contents, &length, 0);
         soup_message_body_append(responseBody, SOUP_MEMORY_TAKE, contents, length);
+    } else if (g_str_equal(path, "/icon/red-32x32.png")) {
+        GUniquePtr<char> pathToFavicon(g_build_filename(Test::getResourcesDir().data(), "red-32x32.png", nullptr));
+        g_file_get_contents(pathToFavicon.get(), &contents, &length, nullptr);
+        soup_message_body_append(responseBody, SOUP_MEMORY_TAKE, contents, length);
+    } else if (g_str_equal(path, "/icon/blue-48x48.png")) {
+        GUniquePtr<char> pathToFavicon(g_build_filename(Test::getResourcesDir().data(), "blue-48x48.png", nullptr));
+        g_file_get_contents(pathToFavicon.get(), &contents, &length, nullptr);
+        soup_message_body_append(responseBody, SOUP_MEMORY_TAKE, contents, length);
     } else if (g_str_equal(path, "/nofavicon")) {
         static const char* noFaviconHTML = "<html><head><body>test</body></html>";
         soup_message_body_append(responseBody, SOUP_MEMORY_STATIC, noFaviconHTML, strlen(noFaviconHTML));
+    } else if (g_str_equal(path, "/multipleicons")) {
+        static constexpr ASCIILiteral multipleIconsHTML = "<html><head>"
+            "<link rel='icon' type='image/x-ico' href='/icon/favicon.ico'>"
+            "<link rel='icon' type='image/png' href='/icon/red-32x32.png' sizes='32x32'>"
+            "<link rel='icon' type='image/png' href='/icon/blue-48x48.png' sizes='48x48'>"
+            "</head><body>test</body></html>";
+        soup_message_body_append(responseBody, SOUP_MEMORY_STATIC, multipleIconsHTML, multipleIconsHTML.length());
     } else {
         static const char* contentsHTML = "<html><head><link rel='icon' href='/icon/favicon.ico' type='image/x-ico; charset=binary'></head><body>test</body></html>";
         soup_message_body_append(responseBody, SOUP_MEMORY_STATIC, contentsHTML, strlen(contentsHTML));
@@ -357,6 +437,60 @@ static void testFaviconDatabaseGetFavicon(FaviconDatabaseTest* test, gconstpoint
     g_assert_nonnull(webkit_web_view_get_favicon(test->webView()));
 }
 
+#if ENABLE(2022_GLIB_API)
+static void testFaviconDatabaseGetPageIcons(FaviconDatabaseTest *test, gconstpointer)
+{
+    test->open("testFaviconDatabaseGetPageIcons");
+
+    test->loadURI(kServer->getURIForPath("/multipleicons").data());
+    test->waitUntilLoadFinishedAndPageIconsChanged();
+    test->waitUntilFaviconChangedTimes(3, 1500);
+    g_assert_cmpint(test->m_pageFaviconNotificationCount, ==, 3);
+
+    g_assert_cmpint(test->m_pageIconsNoticationCount, ==, 1);
+    g_assert_nonnull(test->m_pageIcons);
+    g_assert_cmpint(webkit_image_list_get_length(test->m_pageIcons), ==, 3);
+
+    static const auto getIconWithSize = [](WebKitImageList* imageList, int size) -> WebKitImage* {
+        for (unsigned i = 0; i < webkit_image_list_get_length(imageList); ++i) {
+            auto* image = webkit_image_list_get(imageList, i);
+            if (webkit_image_get_width(image) == size && webkit_image_get_height(image) == size)
+                return image;
+        }
+        return nullptr;
+    };
+
+    static const auto getARGBColorAtOrigin = [](WebKitImage* image) -> std::optional<uint32_t> {
+        auto* imageBytes = webkit_image_as_bytes(image);
+
+        size_t imageDataSize = 0;
+        auto* imageData = reinterpret_cast<const uint32_t*>(g_bytes_get_data(imageBytes, &imageDataSize));
+        if (imageDataSize >= sizeof(uint32_t))
+            return *imageData;
+
+        return std::nullopt;
+    };
+
+    auto* whiteIcon = getIconWithSize(test->m_pageIcons, 16);
+    g_assert_nonnull(whiteIcon);
+    auto whiteIconPixel = getARGBColorAtOrigin(whiteIcon);
+    g_assert_true(whiteIconPixel.has_value());
+    g_assert_cmpint(*whiteIconPixel, ==, 0xFFFFFFFF);
+
+    auto* redIcon = getIconWithSize(test->m_pageIcons, 32);
+    g_assert_nonnull(redIcon);
+    auto redIconPixel = getARGBColorAtOrigin(redIcon);
+    g_assert_true(redIconPixel.has_value());
+    g_assert_cmpint(*redIconPixel, ==, 0xFFFF0000);
+
+    auto* blueIcon = getIconWithSize(test->m_pageIcons, 48);
+    g_assert_nonnull(blueIcon);
+    auto blueIconPixel = getARGBColorAtOrigin(blueIcon);
+    g_assert_true(blueIconPixel.has_value());
+    g_assert_cmpint(*blueIconPixel, ==, 0xFF0000FF);
+}
+#endif // ENABLE(2022_GLIB_API)
+
 static void ephemeralViewFaviconChanged(WebKitWebView* webView, GParamSpec*, WebViewTest* test)
 {
     g_signal_handlers_disconnect_by_func(webView, reinterpret_cast<void*>(ephemeralViewFaviconChanged), test);
@@ -452,6 +586,9 @@ void beforeAll()
     FaviconDatabaseTest::add("WebKitFaviconDatabase", "get-favicon", testFaviconDatabaseGetFavicon);
     FaviconDatabaseTest::add("WebKitFaviconDatabase", "ephemeral", testFaviconDatabaseEphemeral);
     FaviconDatabaseTest::add("WebKitFaviconDatabase", "clear", testFaviconDatabaseClear);
+#if ENABLE(2022_GLIB_API)
+    FaviconDatabaseTest::add("WebKitFaviconDatabase", "get-page-icons", testFaviconDatabaseGetPageIcons);
+#endif
 }
 
 void afterAll()

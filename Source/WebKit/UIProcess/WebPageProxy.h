@@ -2232,7 +2232,7 @@ public:
 
     void didRestoreScrollPosition();
 
-    void getLoadDecisionForIcon(const WebCore::LinkIcon&, CallbackID);
+    void getLoadDecisionForIcons(const HashMap<WebKit::CallbackID, WebCore::LinkIcon>&);
 
     void focusFromServiceWorker(CompletionHandler<void()>&&);
     void setFocus(bool focused);
