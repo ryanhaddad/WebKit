@@ -30,6 +30,8 @@
 
 #include "BitmapTexture.h"
 #include "ColorSpaceSkia.h"
+#include "GLFence.h"
+#include "PlatformDisplay.h"
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/gpu/ganesh/SkImageGanesh.h>
@@ -90,6 +92,38 @@ std::optional<unsigned> retrieveGLTextureID(const SkImage& image)
         return std::nullopt;
 
     return textureInfo.fID;
+}
+
+static std::unique_ptr<GLFence> createFenceAfterFlush(GrDirectContext* grContext)
+{
+    auto& glDisplay = PlatformDisplay::sharedDisplay().glDisplay();
+    if (GLFence::isSupported(glDisplay)) {
+        grContext->submit(GrSyncCpu::kNo);
+
+        if (auto fence = GLFence::create(glDisplay))
+            return fence;
+    }
+
+    grContext->submit(GrSyncCpu::kYes);
+    return nullptr;
+}
+
+std::unique_ptr<GLFence> flushAndSubmitSurfaceWithFence(GrDirectContext* grContext, SkSurface* surface)
+{
+    grContext->flush(surface);
+    return createFenceAfterFlush(grContext);
+}
+
+std::unique_ptr<GLFence> flushAndSubmitImageWithFence(GrDirectContext* grContext, const sk_sp<SkImage>& image)
+{
+    grContext->flush(image);
+    return createFenceAfterFlush(grContext);
+}
+
+std::unique_ptr<GLFence> flushAndSubmitWithFence(GrDirectContext* grContext)
+{
+    grContext->flush();
+    return createFenceAfterFlush(grContext);
 }
 
 } // namespace SkiaUtilities

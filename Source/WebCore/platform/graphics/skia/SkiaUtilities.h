@@ -27,6 +27,7 @@
 
 #if USE(SKIA)
 
+#include <memory>
 #include <optional>
 
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
@@ -43,6 +44,7 @@ enum GrSurfaceOrigin : int;
 namespace WebCore {
 
 class BitmapTexture;
+class GLFence;
 
 namespace SkiaUtilities {
 
@@ -64,6 +66,21 @@ sk_sp<SkImage> borrowBackendTextureAsImage(GrDirectContext*, const GrBackendText
 
 // Extracts the GL texture ID from a GPU-backed SkImage, if available.
 std::optional<unsigned> retrieveGLTextureID(const SkImage&);
+
+// Flushes the surface, submits pending GPU commands, and creates a GLFence
+// for async synchronization. Falls back to synchronous submit if fences
+// are not supported or creation fails, and returns nullptr.
+std::unique_ptr<GLFence> flushAndSubmitSurfaceWithFence(GrDirectContext*, SkSurface*);
+
+// Flushes the image, submits pending GPU commands, and creates a GLFence
+// for async synchronization. Falls back to synchronous submit if fences
+// are not supported or creation fails, and returns nullptr.
+std::unique_ptr<GLFence> flushAndSubmitImageWithFence(GrDirectContext*, const sk_sp<SkImage>&);
+
+// Flushes and submits pending GPU commands and creates a GLFence for async
+// synchronization. Falls back to synchronous submit if fences are not
+// supported or creation fails, and returns nullptr.
+std::unique_ptr<GLFence> flushAndSubmitWithFence(GrDirectContext*);
 
 } // namespace SkiaUtilities
 } // namespace WebCore

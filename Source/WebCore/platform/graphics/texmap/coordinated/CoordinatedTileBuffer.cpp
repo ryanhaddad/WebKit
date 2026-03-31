@@ -38,6 +38,7 @@
 #include "GLFence.h"
 #include "PlatformDisplay.h"
 #include "ProcessCapabilities.h"
+#include "SkiaUtilities.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkColorSpace.h>
 #include <skia/core/SkImage.h>
@@ -202,14 +203,7 @@ void CoordinatedAcceleratedTileBuffer::completePainting()
         return;
     }
 
-    auto& glDisplay = PlatformDisplay::sharedDisplay().glDisplay();
-    if (GLFence::isSupported(glDisplay)) {
-        grContext->flushAndSubmit(m_surface.get(), GrSyncCpu::kNo);
-        m_fence = GLFence::create(glDisplay);
-        if (!m_fence)
-            grContext->submit(GrSyncCpu::kYes);
-    } else
-        grContext->flushAndSubmit(m_surface.get(), GrSyncCpu::kYes);
+    m_fence = SkiaUtilities::flushAndSubmitSurfaceWithFence(grContext, m_surface.get());
 
     CoordinatedTileBuffer::completePainting();
 }

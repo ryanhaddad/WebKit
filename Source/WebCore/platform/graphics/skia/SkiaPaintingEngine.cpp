@@ -41,6 +41,7 @@
 #include "SkiaImageAtlasLayout.h"
 #include "SkiaRecordingResult.h"
 #include "SkiaReplayCanvas.h"
+#include "SkiaUtilities.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkColorSpace.h>
 #include <skia/core/SkPictureRecorder.h>
@@ -264,12 +265,7 @@ Ref<SkiaRecordingResult> SkiaPaintingEngine::record(const GraphicsLayerCoordinat
                 // BitmapTexture::updateContents() issues GL upload commands.
                 // On the DMA-buf path, uploading is CPU-side (memory-mapped),
                 // so this is a no-op flush but harmless.
-                auto& glDisplay = PlatformDisplay::sharedDisplay().glDisplay();
-                if (GLFence::isSupported(glDisplay)) {
-                    grContext->flushAndSubmit(GrSyncCpu::kNo);
-                    result->setUploadFence(GLFence::create(glDisplay));
-                } else
-                    grContext->flushAndSubmit(GrSyncCpu::kYes);
+                result->setUploadFence(SkiaUtilities::flushAndSubmitWithFence(grContext));
             }
         }
     } else {

@@ -27,7 +27,6 @@
 
 #if USE(SKIA)
 
-#include "GLFence.h"
 #include "GraphicsContext.h"
 #include "SkiaRecordingResult.h"
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
@@ -123,9 +122,6 @@ public:
     SkPaint createStrokePaint() const;
 
     void drawSkiaText(const sk_sp<SkTextBlob>&, SkScalar, SkScalar, bool, bool);
-
-    static std::unique_ptr<GLFence> createAcceleratedRenderingFence(SkSurface*);
-    static std::unique_ptr<GLFence> createAcceleratedRenderingFence(const sk_sp<SkImage>&, GrDirectContext*);
 
 private:
     enum class ContextMode : bool {
