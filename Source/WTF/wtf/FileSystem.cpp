@@ -698,7 +698,9 @@ bool isAncestor(const String& possibleAncestor, const String& possibleChild)
         possibleChildLexicallyNormal = possibleChildLexicallyNormal.left(possibleChildLexicallyNormal.length() - 1);
     if (possibleAncestorLexicallyNormal.endsWith(static_cast<char16_t>(std::filesystem::path::preferred_separator)))
         possibleAncestorLexicallyNormal = possibleAncestorLexicallyNormal.left(possibleAncestorLexicallyNormal.length() - 1);
-    return possibleChildLexicallyNormal.startsWith(possibleAncestorLexicallyNormal) && possibleChildLexicallyNormal.length() != possibleAncestorLexicallyNormal.length();
+    return possibleChildLexicallyNormal.startsWith(possibleAncestorLexicallyNormal)
+        && possibleChildLexicallyNormal.length() > possibleAncestorLexicallyNormal.length()
+        && possibleChildLexicallyNormal[possibleAncestorLexicallyNormal.length()] == static_cast<char16_t>(std::filesystem::path::preferred_separator);
 }
 
 String createTemporaryFile(StringView prefix, StringView suffix)
