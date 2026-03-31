@@ -701,7 +701,7 @@ TEST_F(WTF_URLParser, ParserDifferences)
         { ""_s, ""_s, ""_s, ""_s, 0, ""_s, ""_s, ""_s, "http:/"_s });
     checkRelativeURL("http:"_s, "about:blank"_s, { ""_s, ""_s, ""_s, ""_s, 0, ""_s, ""_s, ""_s, "http:"_s });
     checkRelativeURLDifferences("http:/"_s, "http://host"_s,
-        { ""_s, ""_s, ""_s, ""_s, 0, ""_s, ""_s, ""_s, "http:/"_s });
+        { "http"_s, ""_s, ""_s, "host"_s, 0, "/"_s, ""_s, ""_s, "http://host/"_s });
     checkURLDifferences("http:/"_s,
         { ""_s, ""_s, ""_s, ""_s, 0, ""_s, ""_s, ""_s, "http:/"_s });
     checkURL("http:"_s, { ""_s, ""_s, ""_s, ""_s, 0, ""_s, ""_s, ""_s, "http:"_s });

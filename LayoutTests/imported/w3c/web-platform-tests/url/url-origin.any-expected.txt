@@ -68,6 +68,7 @@ PASS Origin parsing: <http://[::127.0.0.1]> against <http://example.org/foo/bar>
 PASS Origin parsing: <http://[0:0:0:0:0:0:13.1.68.3]> against <http://example.org/foo/bar>
 PASS Origin parsing: <http://[2001::1]:80> against <http://example.org/foo/bar>
 PASS Origin parsing: <http:/example.com/> against <http://example.org/foo/bar>
+PASS Origin parsing: <http:/> against <http://example.com/>
 PASS Origin parsing: <ftp:/example.com/> against <http://example.org/foo/bar>
 PASS Origin parsing: <https:/example.com/> against <http://example.org/foo/bar>
 PASS Origin parsing: <madeupscheme:/example.com/> against <http://example.org/foo/bar>
