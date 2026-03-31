@@ -303,18 +303,23 @@ private:
 
         auto optionalOwnerThread = vm.ownerThread();
         if (optionalOwnerThread) {
+            auto expectedUID = optionalOwnerThread.value()->uid();
             ThreadSuspendLocker locker;
             sendMessage(locker, *optionalOwnerThread.value().get(), [&] (PlatformRegisters& registers) -> void {
                 auto signalContext = SignalContext::tryCreate(registers);
                 if (!signalContext)
                     return;
 
-                auto ownerThread = vm.apiLock().ownerThread();
                 // We can't mess with a thread unless it's the one we suspended.
-                if (!ownerThread || ownerThread != optionalOwnerThread)
+                // Use ownerThreadUID() instead of ownerThread() to avoid creating a temporary
+                // RefPtr<Thread> copy, which would acquire the Thread control block WordLock.
+                // If the suspended thread was frozen mid-unlock of that same WordLock,
+                // calling ownerThread() here would deadlock.
+                auto currentUID = vm.ownerThreadUID();
+                if (!currentUID || *currentUID != expectedUID)
                     return;
 
-                Thread& thread = *ownerThread->get();
+                Thread& thread = *optionalOwnerThread->get();
                 vm.traps().tryInstallTrapBreakpoints(*signalContext, thread.stack());
             });
         }
