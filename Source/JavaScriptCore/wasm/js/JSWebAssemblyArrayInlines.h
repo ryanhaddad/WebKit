@@ -56,7 +56,7 @@ std::span<T> JSWebAssemblyArray::span() LIFETIME_BOUND
     if constexpr (std::is_same_v<T, v128_t>)
         data = WTF::roundUpToMultipleOf<16>(data);
     else
-        ASSERT(!needsAlignmentCheck(elementType().type));
+        data += alignmentShift(sizeof(T));
     ASSERT(data == this->bytes().data());
     return { std::bit_cast<T*>(data), size() };
 }
@@ -69,9 +69,12 @@ std::span<uint64_t> JSWebAssemblyArray::refTypeSpan() LIFETIME_BOUND
 
 std::span<uint8_t> JSWebAssemblyArray::bytes()
 {
-    if (!needsAlignmentCheck(elementType().type))
-        return { data(), sizeInBytes() };
-    return { WTF::roundUpToMultipleOf<16>(data()), sizeInBytes() };
+    uint8_t* start = data();
+    if (needsV128AlignmentMask(elementType().type))
+        start = WTF::roundUpToMultipleOf<16>(start);
+    else
+        start += alignmentShift(elementType().type.elementSize());
+    return { start, sizeInBytes() };
 }
 
 auto JSWebAssemblyArray::visitSpan(auto functor)

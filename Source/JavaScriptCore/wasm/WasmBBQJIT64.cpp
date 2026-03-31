@@ -1482,7 +1482,7 @@ void BBQJIT::emitAllocateGCArrayUninitialized(GPRReg resultGPR, uint32_t typeInd
         ASSERT(hasOneBitSet(elementSize));
         m_jit.zeroExtend32ToWord(sizeLocation.asGPR(), scratchGPR);
         m_jit.lshift64(scratchGPR, TrustedImm32(getLSBSet(elementSize)), scratchGPR);
-        m_jit.add64(TrustedImm64(sizeof(JSWebAssemblyArray)), scratchGPR);
+        m_jit.add64(TrustedImm64(JSWebAssemblyArray::allocationMetadataSize(elementSize)), scratchGPR);
 
         m_jit.emitAllocateVariableSized(resultGPR, JITAllocator::variableNonNull(), allocatorBufferBase, scratchGPR, scratchGPR, scratchGPR2, slowPath, AssemblyHelpers::SlowAllocationResult::UndefinedBehavior);
         m_jit.load32(structureIDAddress, scratchGPR);
@@ -1541,7 +1541,8 @@ void BBQJIT::emitAllocateGCArrayUninitialized(GPRReg resultGPR, uint32_t typeInd
             m_jit.probeDebug([=] (Probe::Context& context) {
                 auto* arrayPtr = context.gpr<JSWebAssemblyArray*>(resultGPR);
                 if (!arrayPtr->isPreciseAllocation())
-                    ASSERT(arrayPtr->sizeInBytes() + sizeof(JSWebAssemblyArray) <= arrayPtr->markedBlock().handle().cellSize());
+                    ASSERT(arrayPtr->sizeInBytes() + JSWebAssemblyArray::allocationMetadataSize(elementType.elementSize())
+                        <= arrayPtr->markedBlock().handle().cellSize());
                 auto span = arrayPtr->refTypeSpan();
                 for (uint64_t value : span)
                     validateWasmValue(value, elementType.unpacked());

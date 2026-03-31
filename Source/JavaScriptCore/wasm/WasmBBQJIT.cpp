@@ -5721,14 +5721,15 @@ Location BBQJIT::allocateStack(Value value)
 void BBQJIT::emitArrayGetPayload(StorageType type, GPRReg arrayGPR, GPRReg payloadGPR)
 {
     ASSERT(arrayGPR != payloadGPR);
-    if (!JSWebAssemblyArray::needsAlignmentCheck(type)) {
-        m_jit.addPtr(MacroAssembler::TrustedImm32(JSWebAssemblyArray::offsetOfData()), arrayGPR, payloadGPR);
+    if (JSWebAssemblyArray::needsV128AlignmentMask(type)) {
+        // V128 needs runtime masking: PreciseAllocation only guarantees 8-byte alignment.
+        m_jit.addPtr(MacroAssembler::TrustedImm32(JSWebAssemblyArray::offsetOfData() + 15), arrayGPR, payloadGPR);
+        m_jit.andPtr(MacroAssembler::TrustedImm32(-16), payloadGPR);
         return;
     }
-
-    // Round-up to 16x for PreciseAllocation + V128 array data handling.
-    m_jit.addPtr(MacroAssembler::TrustedImm32(JSWebAssemblyArray::offsetOfData() + 15), arrayGPR, payloadGPR);
-    m_jit.andPtr(MacroAssembler::TrustedImm32(-16), payloadGPR);
+    // For all other types, alignment shift is a compile-time constant
+    // since JSCell always has >=8-byte alignment.
+    m_jit.addPtr(MacroAssembler::TrustedImm32(JSWebAssemblyArray::alignedOffsetOfData(type.elementSize())), arrayGPR, payloadGPR);
 }
 
 } // namespace JSC::Wasm::BBQJITImpl

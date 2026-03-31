@@ -3625,14 +3625,17 @@ bool OMGIRGenerator::emitNullCheckBeforeAccess(Value* ref, ptrdiff_t offset)
 
 Value* OMGIRGenerator::emitGetArrayPayloadBase(Wasm::StorageType fieldType, Value* arrayref)
 {
-    auto payloadBase = m_currentBlock->appendNew<Value>(m_proc, Add, pointerType(), origin(), pointerOfWasmRef(arrayref), constant(pointerType(), JSWebAssemblyArray::offsetOfData()));
-    if (JSWebAssemblyArray::needsAlignmentCheck(fieldType)) {
+    if (JSWebAssemblyArray::needsV128AlignmentMask(fieldType)) {
+        auto payloadBase = m_currentBlock->appendNew<Value>(m_proc, Add, pointerType(), origin(),
+            pointerOfWasmRef(arrayref), constant(pointerType(), JSWebAssemblyArray::offsetOfData()));
         // Round-up to 16x for PreciseAllocation + V128 array data handling.
         return m_currentBlock->appendNew<Value>(m_proc, BitAnd, origin(),
             m_currentBlock->appendNew<Value>(m_proc, Add, origin(), payloadBase, constant(pointerType(), 15)),
             constant(pointerType(), -16));
     }
-    return payloadBase;
+    return m_currentBlock->appendNew<Value>(m_proc, Add, pointerType(), origin(),
+        pointerOfWasmRef(arrayref),
+        constant(pointerType(), JSWebAssemblyArray::alignedOffsetOfData(fieldType.elementSize())));
 }
 
 // Does the array set without null check and bounds checks -- can be
@@ -4160,7 +4163,7 @@ Value* OMGIRGenerator::allocateWasmGCArrayUninitialized(uint32_t typeIndex, Valu
     size_t elementSize = typeDefinition->elementType().type.elementSize();
     auto* extended = pointerOfInt32(size);
     auto* shifted = m_currentBlock->appendNew<Value>(m_proc, Shl, origin(), extended, constant(Int32, getLSBSet(elementSize)));
-    auto* sizeInBytes = m_currentBlock->appendNew<Value>(m_proc, Add, pointerType(), origin(), shifted, constant(pointerType(), sizeof(JSWebAssemblyArray)));
+    auto* sizeInBytes = m_currentBlock->appendNew<Value>(m_proc, Add, pointerType(), origin(), shifted, constant(pointerType(), JSWebAssemblyArray::allocationMetadataSize(elementSize)));
     auto* allocator = allocatorForWasmGCHeapCellSize(sizeInBytes, slowPath);
     auto* typeInfo = constant(Int32, JSWebAssemblyArray::typeInfoBlob().blob());
     auto* cell = allocateWasmGCObject(allocator, structureID, typeInfo, slowPath);
