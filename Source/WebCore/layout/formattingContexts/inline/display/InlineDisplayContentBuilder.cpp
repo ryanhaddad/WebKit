@@ -1101,9 +1101,9 @@ void InlineDisplayContentBuilder::collectInkOverflowForInlineBoxes(std::span<Inl
             if (!accumulatedInkOverflowRect.isEmpty())
                 displayBox.adjustInkOverflow(accumulatedInkOverflowRect);
             auto& layoutBox = displayBox.layoutBox();
-            auto visualRect = FloatRect { displayBox.visualRectIgnoringBlockDirection() };
-            adjustInkOverflowForInlineBox(layoutBox, root(), layoutBox.style(), visualRect);
-            displayBox.adjustInkOverflow(visualRect);
+            auto inkOverflowRect = displayBox.inkOverflow();
+            adjustInkOverflowForInlineBox(layoutBox, root(), layoutBox.style(), inkOverflowRect);
+            displayBox.adjustInkOverflow(inkOverflowRect);
         }
 
         // We stop collecting ink overflow for at root inline box (i.e. don't inflate the root inline box with the inline content here).

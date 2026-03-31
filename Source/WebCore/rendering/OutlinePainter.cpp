@@ -153,18 +153,36 @@ void OutlinePainter::paintOutline(const RenderInline& renderer, const LayoutPoin
     auto isFlipped = containingBlock->writingMode().isBlockFlipped();
     Vector<LayoutRect> rects;
     for (auto box = InlineIterator::lineLeftmostInlineBoxFor(renderer); box; box.traverseInlineBoxLineRightward()) {
-        auto lineBox = box->lineBox();
-        auto logicalTop = std::max(lineBox->contentLogicalTop(), box->logicalTop());
-        auto logicalBottom = std::min(lineBox->contentLogicalBottom(), box->logicalBottom());
-        auto enclosingVisualRect = FloatRect { box->logicalLeftIgnoringInlineDirection(), logicalTop, box->logicalWidth(), logicalBottom - logicalTop };
+        // Start with the inline box's own rect as the base, ensuring the outline
+        // covers margins, paddings and borders of nested inline boxes.
+        auto inlineBoxLogicalTop = box->logicalTop();
+        auto inlineBoxLogicalBottom = box->logicalBottom();
+        auto baseRect = FloatRect { box->logicalLeftIgnoringInlineDirection(), inlineBoxLogicalTop, box->logicalWidth(), inlineBoxLogicalBottom - inlineBoxLogicalTop };
 
         if (!isHorizontalWritingMode)
-            enclosingVisualRect = enclosingVisualRect.transposedRect();
-
+            baseRect = baseRect.transposedRect();
         if (isFlipped)
-            containingBlock->flipForWritingMode(enclosingVisualRect);
+            containingBlock->flipForWritingMode(baseRect);
+        rects.append(LayoutRect { baseRect });
 
-        rects.append(LayoutRect { enclosingVisualRect });
+        // Collect a rect for each leaf box inside this inline box fragment,
+        // so the outline hugs the actual content shape. Each rect expands
+        // beyond the inline box for overflowing content.
+        for (auto leaf = box->firstLeafBox(); leaf && leaf != box->endLeafBox(); ++leaf) {
+            auto logicalTop = std::min(leaf->logicalTop(), inlineBoxLogicalTop);
+            auto logicalBottom = std::max(leaf->logicalBottom(), inlineBoxLogicalBottom);
+            if (logicalTop == inlineBoxLogicalTop && logicalBottom == inlineBoxLogicalBottom)
+                continue; // Already covered by the base rect.
+            auto enclosingVisualRect = FloatRect { leaf->logicalLeftIgnoringInlineDirection(), logicalTop, leaf->logicalWidth(), logicalBottom - logicalTop };
+
+            if (!isHorizontalWritingMode)
+                enclosingVisualRect = enclosingVisualRect.transposedRect();
+
+            if (isFlipped)
+                containingBlock->flipForWritingMode(enclosingVisualRect);
+
+            rects.append(LayoutRect { enclosingVisualRect });
+        }
     }
     paintOutlineWithLineRects(renderer, paintOffset, rects);
 }
