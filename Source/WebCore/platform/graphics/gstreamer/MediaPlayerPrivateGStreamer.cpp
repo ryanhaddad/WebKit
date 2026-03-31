@@ -1147,8 +1147,10 @@ MediaPlayerPrivateGStreamer::ChangePipelineStateResult MediaPlayerPrivateGStream
     auto& quirksManager = GStreamerQuirksManager::singleton();
     auto eosState = quirksManager.eosMediaPlayerState();
 
-    // Create a timer when entering the READY state so that we can free resources if we stay for too long on READY.
-    // Also lets remove the timer if we request a state change for any state other than READY. See also https://bugs.webkit.org/show_bug.cgi?id=117354
+    // Create a timer when entering the EOS state (which depending on quirks can be either READY or
+    // PAUSED) so that we can free resources if we stay for too long in EOS state. Also lets remove
+    // the timer if we request a state change for any state other than EOS state. See also
+    // https://bugs.webkit.org/show_bug.cgi?id=117354
     if (RefPtr player = m_player.get(); newState == eosState && m_isEndReached && player && !player->isLooping()
         && !isMediaSource() && !m_eosTimerHandler.isActive()) {
         // Max interval in seconds to stay in the eos state after video finished on manual state change requests.
@@ -2899,6 +2901,9 @@ void MediaPlayerPrivateGStreamer::updateStates()
     // updateBufferingStatus() must have been called at some point before updateStates() and have set m_wasBuffering, m_isBuffering,
     // m_previousBufferingPercentage and m_bufferingPercentage. We take decisions here based on their values.
 
+    auto& quirksManager = GStreamerQuirksManager::singleton();
+    auto eosState = quirksManager.eosMediaPlayerState();
+
     bool shouldUpdatePlaybackState = false;
     switch (getStateResult) {
     case GST_STATE_CHANGE_SUCCESS: {
@@ -2906,7 +2911,7 @@ void MediaPlayerPrivateGStreamer::updateStates()
 
         // Do nothing if on EOS and state changed to READY to avoid recreating the player
         // on HTMLMediaElement and properly generate the video 'ended' event.
-        if (m_isEndReached && m_currentState == GST_STATE_READY)
+        if (m_isEndReached && m_currentState == GST_STATE_READY && eosState != GST_STATE_READY)
             break;
 
         m_shouldResetPipeline = m_currentState <= GST_STATE_READY;
@@ -2918,8 +2923,13 @@ void MediaPlayerPrivateGStreamer::updateStates()
             m_networkState = MediaPlayer::NetworkState::Empty;
             break;
         case GST_STATE_READY:
-            m_readyState = MediaPlayer::ReadyState::HaveMetadata;
-            m_networkState = MediaPlayer::NetworkState::Empty;
+            if (m_isEndReached && eosState == GST_STATE_READY) {
+                m_readyState = MediaPlayer::ReadyState::HaveEnoughData;
+                m_networkState = MediaPlayer::NetworkState::Loaded;
+            } else {
+                m_readyState = MediaPlayer::ReadyState::HaveMetadata;
+                m_networkState = MediaPlayer::NetworkState::Empty;
+            }
             break;
         case GST_STATE_PAUSED:
             [[fallthrough]];
