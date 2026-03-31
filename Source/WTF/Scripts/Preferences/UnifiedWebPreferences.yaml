@@ -6057,20 +6057,6 @@ PDFPluginPageNumberIndicatorEnabled:
     WebCore:
       default: false
 
-PageAtRuleMarginDescriptorsEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "@page CSS at-rule margin descriptors"
-  humanReadableDescription: "Enable support for @page margin descriptors"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 PageVisibilityBasedProcessSuppressionEnabled:
   type: bool
   status: internal
