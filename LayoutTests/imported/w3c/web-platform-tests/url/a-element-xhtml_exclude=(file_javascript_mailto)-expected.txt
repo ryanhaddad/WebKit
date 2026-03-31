@@ -724,6 +724,9 @@ PASS Parsing: <non-special:\/opaque> against <about:blank>
 PASS Parsing: <non-special:/\path> against <about:blank>
 PASS Parsing: <non-special://host\a> against <about:blank>
 PASS Parsing: <non-special://host/a\b> against <about:blank>
+PASS Parsing: <\a> against <foo://foo/a>
+PASS Parsing: <\/a> against <foo://foo/a>
+PASS Parsing: <\\a> against <foo://foo/a>
 PASS Parsing: <data:text/plain,test#<foo> <bar>> against <about:blank>
 PASS Parsing: <about:blank#<foo> <bar>> against <about:blank>
 PASS Parsing: <data:text/plain,test#\0	
