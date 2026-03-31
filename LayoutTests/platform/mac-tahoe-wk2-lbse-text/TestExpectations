@@ -182,7 +182,6 @@ svg/W3C-SVG-1.1/text-text-05-t.svg                 [ ImageOnlyFailure ]
 svg/hittest/text-multiple-dx-values.svg            [ ImageOnlyFailure ]
 svg/hittest/text-with-multiple-tspans.svg          [ ImageOnlyFailure ]
 svg/hittest/text-with-text-path.svg                [ ImageOnlyFailure ]
-svg/text/text-paint-order-stroke-fill-gradient.svg [ ImageOnlyFailure ]
 svg/text/text-text-05-t.svg                        [ ImageOnlyFailure ]
 
 # Text rendering has issues with CSS 'visibility'
