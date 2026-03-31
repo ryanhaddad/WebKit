@@ -3838,6 +3838,7 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
             PaintBehavior::ExcludeText,
             PaintBehavior::FixedAndStickyLayersOnly,
             PaintBehavior::DrawsHDRContent,
+            PaintBehavior::IncludeDocumentMarkers,
         };
         OptionSet<PaintBehavior> paintBehavior = paintingInfo.paintBehavior & flagsToCopy;
 
@@ -6747,6 +6748,7 @@ TextStream& operator<<(TextStream& ts, PaintBehavior behavior)
     case PaintBehavior::FixedAndStickyLayersOnly: ts << "FixedAndStickyLayersOnly"_s; break;
     case PaintBehavior::DrawsHDRContent: ts << "DrawsHDRContent"_s; break;
     case PaintBehavior::DraggableSnapshot: ts << "DraggableSnapshot"_s; break;
+    case PaintBehavior::IncludeDocumentMarkers: ts << "IncludeDocumentMarkers"_s; break;
     }
 
     return ts;

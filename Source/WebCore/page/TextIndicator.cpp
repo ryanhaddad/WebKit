@@ -215,6 +215,9 @@ static SnapshotOptions snapshotOptionsForTextIndicatorOptions(OptionSet<TextIndi
     if (options.contains(TextIndicatorOption::SnapshotContentAt3xBaseScale))
         snapshotOptions.flags.add(SnapshotFlags::PaintWith3xBaseScale);
 
+    if (options.contains(TextIndicatorOption::IncludeDocumentMarkers))
+        snapshotOptions.flags.add(SnapshotFlags::IncludeDocumentMarkers);
+
     return snapshotOptions;
 }
 

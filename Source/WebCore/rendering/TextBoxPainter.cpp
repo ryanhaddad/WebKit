@@ -224,7 +224,7 @@ void TextBoxPainter::paint()
     if (m_paintInfo.paintBehavior.contains(PaintBehavior::ExcludeText))
         return;
 
-    if (m_paintInfo.phase == PaintPhase::Selection && !m_haveSelection)
+    if (m_paintInfo.phase == PaintPhase::Selection && !m_haveSelection && !m_paintInfo.paintBehavior.contains(PaintBehavior::IncludeDocumentMarkers))
         return;
 
     if (m_paintInfo.phase == PaintPhase::EventRegion) {
@@ -251,6 +251,9 @@ void TextBoxPainter::paint()
 
         return;
     }
+
+    if (m_paintInfo.phase == PaintPhase::Selection && m_paintInfo.paintBehavior.contains(PaintBehavior::IncludeDocumentMarkers))
+        paintPlatformDocumentMarkers();
 
     if (m_paintInfo.phase == PaintPhase::Foreground) {
         auto shouldPaintBackgroundFill = [&] {
@@ -1246,6 +1249,9 @@ static std::optional<MarkedText> NODELETE markedTextForTextDecorationLineGrammar
 
 void TextBoxPainter::paintPlatformDocumentMarkers()
 {
+    if (m_paintInfo.paintBehavior.contains(PaintBehavior::Snapshotting) && !m_paintInfo.paintBehavior.contains(PaintBehavior::IncludeDocumentMarkers))
+        return;
+
     auto markedTexts = MarkedText::collectForDocumentMarkers(m_renderer, m_selectableRange, MarkedText::PaintPhase::Decoration);
     // We want to paint text-decoration-line: spelling-error and grammar-error the same way we natively paint text marked with spelling errors
     auto textDecorationLineSpellingErrorAsMarkedText = markedTextForTextDecorationLineSpellingError(m_renderer);

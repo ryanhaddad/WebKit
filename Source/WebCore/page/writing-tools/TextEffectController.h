@@ -43,6 +43,8 @@ class TextIndicator;
 
 struct SimpleRange;
 
+enum class IncludeDocumentMarkers : bool { No, Yes };
+
 class TextEffectController final {
     WTF_MAKE_TZONE_ALLOCATED(TextEffectController);
     WTF_MAKE_NONCOPYABLE(TextEffectController);
@@ -54,7 +56,7 @@ public:
     void removeTextEffect(const SimpleRange&);
     void removeAllTextEffects();
 
-    RefPtr<TextIndicator> createTextIndicatorForRange(const SimpleRange&);
+    RefPtr<TextIndicator> createTextIndicatorForRange(const SimpleRange&, IncludeDocumentMarkers = IncludeDocumentMarkers::No);
 
     WEBCORE_EXPORT void updateUnderlyingTextVisibilityForTextEffectID(const WTF::UUID&, bool visible, CompletionHandler<void()>&&);
     WEBCORE_EXPORT void createTextIndicatorForTextEffectID(const WTF::UUID&, CompletionHandler<void(RefPtr<TextIndicator>&&)>&&);

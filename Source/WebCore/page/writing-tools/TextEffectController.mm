@@ -137,14 +137,17 @@ std::optional<SimpleRange> TextEffectController::rangeForTextEffectID(const WTF:
     return std::nullopt;
 }
 
-RefPtr<TextIndicator> TextEffectController::createTextIndicatorForRange(const SimpleRange& range)
+RefPtr<TextIndicator> TextEffectController::createTextIndicatorForRange(const SimpleRange& range, IncludeDocumentMarkers includeDocumentMarkers)
 {
-    static constexpr OptionSet textIndicatorOptions {
+    OptionSet textIndicatorOptions {
         TextIndicatorOption::IncludeSnapshotOfAllVisibleContentWithoutSelection,
         TextIndicatorOption::ExpandClipBeyondVisibleRect,
         TextIndicatorOption::SkipReplacedContent,
         TextIndicatorOption::RespectTextColor,
     };
+
+    if (includeDocumentMarkers == IncludeDocumentMarkers::Yes)
+        textIndicatorOptions.add(TextIndicatorOption::IncludeDocumentMarkers);
 
     return TextIndicator::createWithRange(range, textIndicatorOptions, TextIndicatorPresentationTransition::None, { });
 }

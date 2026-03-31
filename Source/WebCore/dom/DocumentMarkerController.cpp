@@ -130,7 +130,7 @@ bool DocumentMarkerController::addMarker(const SimpleRange& range, DocumentMarke
 
 #if ENABLE(WRITING_TOOLS_TEXT_EFFECTS)
     if (needsTextEffect) {
-        RefPtr decorationIndicator = page->textEffectController().createTextIndicatorForRange(range);
+        RefPtr decorationIndicator = page->textEffectController().createTextIndicatorForRange(range, IncludeDocumentMarkers::Yes);
         page->textEffectController().addTextEffect(range, WTF::move(textIndicator), WTF::move(decorationIndicator));
         for (auto& textPiece : collectTextRanges(range))
             m_appliedGrammarTextEffectRanges.append(SimpleRange { BoundaryPoint { textPiece.node.copyRef(), textPiece.range.start }, BoundaryPoint { textPiece.node.copyRef(), textPiece.range.end } });
