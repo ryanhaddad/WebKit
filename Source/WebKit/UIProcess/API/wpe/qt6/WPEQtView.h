@@ -109,6 +109,7 @@ private Q_SLOTS:
     void configureWindow();
     void createWebView();
     void didUpdateScene();
+    void invalidateSceneGraph();
 
 private:
     QSGNode* updatePaintNode(QSGNode*, UpdatePaintNodeData*) final;

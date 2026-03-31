@@ -97,6 +97,8 @@ void WPEQtView::configureWindow()
 
     win->setSurfaceType(QWindow::OpenGLSurface);
 
+    connect(win, &QQuickWindow::sceneGraphInvalidated, this, &WPEQtView::invalidateSceneGraph);
+
     if (win->isSceneGraphInitialized())
         createWebView();
     else
@@ -590,6 +592,16 @@ void WPEQtView::touchEvent(QTouchEvent* event)
         return;
     auto* wpeView = webkit_web_view_get_wpe_view(d->m_webView.get());
     wpe_view_dispatch_touch_event(WPE_VIEW_QTQUICK(wpeView), event);
+}
+
+void WPEQtView::invalidateSceneGraph()
+{
+    Q_D(WPEQtView);
+    if (!d->m_webView)
+        return;
+
+    auto* wpeView = webkit_web_view_get_wpe_view(d->m_webView.get());
+    wpe_view_qtquick_invalidate_rendering(WPE_VIEW_QTQUICK(wpeView));
 }
 
 WebKitWebView* WPEQtView::webView() const
