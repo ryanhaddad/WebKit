@@ -180,7 +180,7 @@ public:
 #else
         memcpySpan(std::span { m_storage }, asByteSpan(value).last(storageSize));
 #endif
-        ASSERT(std::bit_cast<uintptr_t>(get()) == value);
+        ASSERT(get() == passedValue);
     }
 
     void clear()
