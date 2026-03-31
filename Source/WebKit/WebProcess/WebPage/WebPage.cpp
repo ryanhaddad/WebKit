@@ -2849,13 +2849,11 @@ void WebPage::accessibilitySettingsDidChange()
 void WebPage::inheritAccessibilityMode(WebCore::AccessibilityMode mode)
 {
     if (WebCore::isAccessibilityModeOff(mode)) {
-        // The only time we disable accessibility is for testing, and
-        // that should request to disable accessibility should not sync
-        // to other processes. If we hit this assert, it means we
-        // turned accessibility on in this process, and then something
-        // tried to sync an Off-state to us, which should never happen.
-        AX_ASSERT(!WebCore::AXObjectCache::accessibilityEnabled());
-
+        // Accessibility may already be enabled process-wide (e.g. a prior
+        // WebPage in this process received a non-Off mode, or
+        // shouldForceAccessibilityEnabled() triggered enableAccessibility).
+        // Receiving Off for a new page is normal in that case — just no-op.
+        //
         // In the future, we may add a way to disable accessibility in
         // production (i.e. the user turns off their AT), in which case
         // this function will need to change.
