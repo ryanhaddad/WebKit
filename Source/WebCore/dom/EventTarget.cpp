@@ -430,7 +430,7 @@ void EventTarget::removeAllEventListeners()
     threadData->setIsInRemoveAllEventListeners(false);
 }
 
-bool EventTarget::hasAnyEventListeners(Vector<AtomString> eventTypes) const
+bool EventTarget::hasAnyEventListeners(std::span<const AtomString> eventTypes) const
 {
     if (auto* data = eventTargetData()) {
         for (const auto& eventType : eventTypes) {

@@ -1637,7 +1637,7 @@ Element* AccessibilityNodeObject::actionElement() const
 bool AccessibilityNodeObject::hasClickHandler() const
 {
     RefPtr element = this->element();
-    return element && element->hasAnyEventListeners({ eventNames().clickEvent, eventNames().mousedownEvent, eventNames().mouseupEvent });
+    return element && element->hasAnyEventListeners(std::array { eventNames().clickEvent, eventNames().mousedownEvent, eventNames().mouseupEvent });
 }
 
 bool AccessibilityNodeObject::showsCursorOnHover() const
