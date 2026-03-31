@@ -13,6 +13,9 @@ http/tests/accessibility [ Skip ]
 # ACCELERATED_OVERFLOW_SCROLLING is disabled
 fast/repaint/overflow-scroll-touch-repaint.html [ Skip ]
 
+# Application Manifest is not supported
+webkit.org/b/158205 applicationmanifest/ [ Skip ]
+
 # CONTENT_FILTERING is disabled
 contentfiltering [ Skip ]
 

@@ -374,6 +374,7 @@ imported/w3c/web-platform-tests/websockets/back-forward-cache-with-open-websocke
 inspector/dom/inspect-template-node.html [ Failure ]
 inspector/dom/inspect.html [ Failure ]
 inspector/dom/willDestroyDOMNode.html [ Failure ]
+inspector/dom-debugger/attribute-modified-style.html [ Failure ]
 inspector/runtime/execution-context-in-scriptless-page.html [ Failure ]
 inspector/runtime/executionContextCreated-onEnable.html [ Failure ]
 inspector/shadow-realm-console.html [ Failure ]

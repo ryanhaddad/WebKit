@@ -161,8 +161,6 @@ ipc/webpageproxy-correctionpanel-no-crash.html [ Pass ]
 # Skipped because of <rdar://problem/45388584>.
 http/tests/webAPIStatistics [ Pass ]
 
-webkit.org/b/184569 storage/indexeddb/modern/transactions-stop-on-navigation.html [ Pass Failure ]
-
 fast/events/detect-caps-lock.html [ Pass ]
 fast/forms/auto-fill-button/caps-lock-indicator-should-not-be-visible-when-auto-fill-strong-password-button-is-visible.html [ Pass ]
 
@@ -575,10 +573,6 @@ webkit.org/b/124476 platform/mac-wk2/plugins/slow/asynchronous-plugin-initializa
 webkit.org/b/125996 accessibility/mac/search-when-element-starts-in-table.html [ Failure ]
 webkit.org/b/125996 accessibility/mac/search-predicate-visible-button.html [ Failure ]
 
-webkit.org/b/162999 accessibility/mac/wk1-set-selected-text-marker-range-input-element.html [ Skip ]
-
-webkit.org/b/162999 [ Debug ] accessibility/mac/native-text-control-set-selected-textmarker-range.html [ Pass Failure ]
-
 # testRunner.setUseDeferredFrameLoading is not implemented.
 webkit.org/b/172544 [ Debug ] tiled-drawing/scrolling/fast-scroll-iframe-latched-mainframe-with-handler.html [ Pass Failure ]
 
@@ -758,7 +752,6 @@ imported/blink/fast/transforms/transform-update-frame-overflow.html [ Pass Image
 # PiP tests are only enabled for Sierra WebKit2.
 # rdar://problem/27574303
 media/fullscreen-api-enabled-media-with-presentation-mode.html [ Pass ]
-webkit.org/b/173199 media/navigate-with-pip-should-not-crash.html [ Pass Failure ]
 media/picture-in-picture [ Pass ]
 media/remove-video-element-in-pip-from-document.html [ Pass ]
 
@@ -882,8 +875,6 @@ http/tests/resourceLoadStatistics/user-interaction-only-reported-once-within-sho
 
 webkit.org/b/173861 [ Release ] http/tests/webrtc/filtering-ice-candidate-same-origin-frame.html [ Pass Timeout ]
 
-webkit.org/b/172148 tiled-drawing/scrolling/scroll-snap/scroll-snap-mandatory-mainframe-vertical.html [ Pass Failure ]
-
 webkit.org/b/173779 [ Debug ] fast/scrolling/arrow-key-scroll-in-rtl-document.html [ Pass Failure ]
 
 webkit.org/b/173500 http/tests/loading/basic-auth-remove-credentials.html [ Pass Failure ]
@@ -949,8 +940,6 @@ webkit.org/b/229473 media/modern-media-controls/seek-backward-support/seek-backw
 
 webkit.org/b/184245 http/tests/workers/service/service-worker-cache-api.https.html [ Pass Failure ]
 
-webkit.org/b/184937 transitions/opacity-transition-zindex.html [ Skip ]
-
 webkit.org/b/186362 [ Release ] http/tests/resourceLoadStatistics/prevalent-resource-with-user-interaction.html [ Skip ]
 
 webkit.org/b/189598 compositing/backing/backing-store-attachment-fill-forwards-animation.html [ Pass Failure ]
@@ -962,8 +951,6 @@ webkit.org/b/271207 http/wpt/webauthn/public-key-credential-get-success-local.ht
 webkit.org/b/271207 http/wpt/webauthn/public-key-credential-get-failure-local.https.html [ Failure Crash ]
 
 webkit.org/b/194826 http/tests/resourceLoadStatistics/do-not-block-top-level-navigation-redirect.html [ Pass Timeout ]
-
-webkit.org/b/187391 accessibility/mac/async-increment-decrement-action.html [ Skip ]
 
 #http/tests/storageAccess/request-and-grant-access-cross-origin-sandboxed-iframe-from-prevalent-domain-with-user-interaction-but-access-from-wrong-frame.html [ Pass Timeout ]
 
@@ -978,8 +965,6 @@ webkit.org/b/198195 fast/css/sticky/sticky-left-percentage.html [ Pass ImageOnly
 webkit.org/b/187828 [ Release ] fast/css-grid-layout/flex-content-sized-columns-resize.html [ Pass ImageOnlyFailure ]
 
 #webkit.org/b/198663 http/tests/storageAccess/request-and-grant-access-then-navigate-same-site-should-have-access.html [ Pass Timeout ]
-
-webkit.org/b/205808 fast/text/international/unicode-bidi-other-neutrals.html [ Pass Failure ]
 
 # <rdar://problem/60929239> [ macOS wk2 ] editing/selection/caret-at-bidi-boundary.html is a flaky timeout
 webkit.org/b/206696 editing/selection/caret-at-bidi-boundary.html [ Pass Timeout ]
@@ -1071,8 +1056,6 @@ webkit.org/b/209148 imported/w3c/web-platform-tests/mediacapture-streams/MediaSt
 
 webkit.org/b/209183 webrtc/concurrentVideoPlayback.html [ Pass Timeout ]
 
-webkit.org/b/209283 tiled-drawing/scrolling/scroll-iframe-latched-selects.html [ Pass Failure ]
-
 webkit.org/b/209564 svg/as-image/svg-image-with-data-uri-background.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/209624 tiled-drawing/scrolling/fixed/four-bars-zoomed.html [ Pass Failure ]
@@ -1096,7 +1079,6 @@ webkit.org/b/213804 fast/scrolling/mac/scroll-snapping-in-progress.html [ Pass F
 webkit.org/b/229206 [ Debug ] http/wpt/webrtc/sframe-transform-error.html [ Pass Failure ]
 
 webkit.org/b/214478 [ Debug ] http/wpt/webrtc/generateCertificate.html [ Skip ]
-webkit.org/b/214478 [ Debug ] tiled-drawing/scrolling/fast-scroll-iframe-latched-select.html [ Skip ]
 
 webkit.org/b/214661 [ Debug ] imported/w3c/web-platform-tests/webrtc/RTCSctpTransport-events.html [ Pass Crash Failure ]
 
@@ -1175,8 +1157,6 @@ webkit.org/b/217938 http/wpt/service-workers/header-filtering.https.html [ Pass 
 webkit.org/b/217938 http/wpt/service-workers/mac/throttleable.https.html [ Pass Failure ]
 webkit.org/b/217938 http/wpt/service-workers/online.https.html [ Pass Failure ]
 
-webkit.org/b/218341 inspector/dom-debugger/attribute-modified-style.html [ Pass Timeout ]
-
 # This file should contain entries for expectations that are specific
 # to the Apple Mac port running the WebKit2 variant (--webkit-test-runner)
 
@@ -1191,8 +1171,6 @@ webanimations/translate-property-and-translate-animation-with-delay-on-forced-la
 
 webkit.org/b/232040 webanimations/marker-opacity-animation-no-effect.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/221847 platform/mac/media/encrypted-media/fps-encrypted-event.html [ Pass Timeout ]
-
 webkit.org/b/221857 fast/selectors/text-field-selection-window-inactive-text-shadow.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/221853 inspector/debugger/stepping/stepInto.html [ Pass Timeout ]
@@ -1200,8 +1178,6 @@ webkit.org/b/221853 inspector/debugger/stepping/stepInto.html [ Pass Timeout ]
 webkit.org/b/221849 inspector/model/remote-object/array-large.html [ Pass Timeout ]
 
 webkit.org/b/222140 inspector/indexeddb/clearObjectStore.html [ Pass Failure Timeout ]
-
-webkit.org/b/221930 media/media-fragments/TC0034.html [ Skip ]
 
 webkit.org/b/222209 inspector/debugger/async-stack-trace-basic.html [ Pass Timeout ]
 
@@ -1561,8 +1537,6 @@ webkit.org/b/262411 [ Sonoma+ ] fast/scrolling/scroll-to-anchor-zoomed-header.ht
 media/media-vp8-webm.html [ Pass ImageOnlyFailure ]
 media/media-vp8-webm-seek-to-start.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/261356 [ Debug ] fast/mediastream/device-change-event-2.html [ Pass Timeout ] # CHANGE TO [ Pass Timeout ] WITHOUT DEBUG AFTER FIX ACCORDING TO webkit.org/b/188924
-
 webkit.org/b/263396 css3/color/text.html [ Skip ]
 
 # WebGPU
@@ -1770,8 +1744,6 @@ http/wpt/opener/iframe-access-top-via-windowproxy.html [ Pass ]
 http/wpt/opener/parent-access-child-via-windowproxy.html [ Pass ]
 http/wpt/opener/same-site-child-access-parent-iframe-via-windowproxy.html [ Pass ]
 
-webkit.org/b/265957 [ Release ] fullscreen/full-screen-layer-dump.html [ Pass Failure ]
-
 webkit.org/b/265954 [ Release x86_64 ] media/video-audio-session-mode.html [ Failure Crash ]
 
 webkit.org/b/266490 [ Sonoma+ ] fast/scrolling/overlay-scrollbars-scroll-corner.html [ Pass ImageOnlyFailure ]
@@ -1851,10 +1823,6 @@ webkit.org/b/258228 [ Sonoma+ Debug ] accessibility/mac/text-input-session-notif
 [ Release x86_64 ] http/tests/webgpu/webgpu/api/operation/memory_sync/texture/same_subresource.html [ Skip ]
 [ Release x86_64 ] http/tests/webgpu/webgpu/api/operation/command_buffer/programmable/state_tracking.html [ Skip ]
 
-webkit.org/b/275873 storage/indexeddb/database-transaction-cycle.html [ Pass Failure ]
-
-webkit.org/b/276389 media/video-transformed.html [ Pass Failure ]
-
 # webkit.org/b/278178  [macOS Debug] imported/w3c/web-platform-tests/css/cssom-view/scroll-behavior-smooth-positions.html is a flaky failure
 imported/w3c/web-platform-tests/css/cssom-view/scroll-behavior-smooth-positions.html [ Pass Failure ]
 
@@ -1919,8 +1887,6 @@ webkit.org/b/289347 http/tests/site-isolation/fullscreen-escape-key.html [ Pass 
 [ Sequoia+ ] http/tests/cookies/same-site/fetch-in-cross-origin-service-worker.html [ Failure ]
 [ Sequoia+ ] http/tests/cookies/same-site/popup-cross-site-post.html [ Failure ]
 
-webkit.org/b/283596 [ Sequoia+ Debug ] ipc/cfnetwork-crashes-with-string-to-string-http-headers.html [ Skip ]
-
 webkit.org/b/284511 [ Release ] imported/w3c/web-platform-tests/fs/FileSystemBaseHandle-postMessage-Error.https.window.html [ Pass Failure ]
 
 webkit.org/b/284190 [ Sequoia+ ] http/tests/privateClickMeasurement/send-attribution-conversion-request.https.html [ Failure ]
@@ -1937,8 +1903,6 @@ webkit.org/b/232282 fast/scrolling/mac/scrollbars/overlay-scrollbar-hovered.html
 [ arm64 ] fast/selectors/text-field-selection-stroke-color.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/286693 [ Sequoia Debug arm64 ] media/video-canvas-createPattern.html [ Pass Failure ]
-
-webkit.org/b/287040 [ Sonoma arm64 ] fast/webgpu/ftoi.html [ Skip ]
 
 webkit.org/b/286653 [ Sequoia ] pdf/images/jpeg2000-embed-pdf.html [ Pass Failure ]
 
@@ -2182,8 +2146,6 @@ webkit.org/b/296209 http/tests/workers/service/basic-timeout.https.html [ Pass F
 [ Sequoia Release arm64 ] http/tests/webgpu/webgpu/shader/validation/statement/for.html [ Failure ]
 [ Sequoia Release arm64 ] http/tests/webgpu/webgpu/shader/validation/statement/phony.html [ Failure ]
 
-webkit.org/b/296289 media/media-session/play-after-seek.html [ Pass Failure ]
-
 webkit.org/b/296300 [ Sequoia Debug arm64 ] webgl/2.0.y/conformance2/offscreencanvas/offscreencanvas-transfer-image-bitmap.html [ Pass Timeout ]
 
 webkit.org/b/296297 fast/images/image-map-outline-with-paint-root-offset.html [ Pass Failure ]
@@ -2316,8 +2278,6 @@ http/tests/webgpu/webgpu/web_platform/copyToTexture/ImageBitmap.html [ Pass Time
 # skip on intel for now due to small precision error differences
 [ x86_64 ] http/tests/webgpu/webgpu/web_platform/copyToTexture/video.html [ Skip ]
 
-webkit.org/b/298903 webrtc/video-rotation-black.html [ Pass Failure ]
-
 webkit.org/b/298416 [ Debug ] http/tests/websocket/construct-in-detached-frame.html [ Skip ]
 
 webkit.org/b/299561 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-chained-003.html [ Pass ]
@@ -2368,8 +2328,6 @@ webkit.org/b/303507 [ Sonoma+ Debug ] inspector/network/intercept-aborted-reques
 webkit.org/b/303507 [ Sonoma+ Debug ] inspector/page/filter-cookies-for-domain.html [ Timeout ]
 
 webkit.org/b/304427 fast/html/HTMLPluginElement-renderer-destroyed-crash.html [ Skip ]
-
-webkit.org/b/304616 fast/images/mac/play-all-pause-all-animations-context-menu-items.html [ Pass Timeout ]
 
 webkit.org/b/304851 imported/w3c/web-platform-tests/workers/worker-performance.worker.html [ Pass Failure ]
 
