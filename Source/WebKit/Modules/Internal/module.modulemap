@@ -11,6 +11,12 @@ module WebKit_Internal [system] {
         export *
     }
 
+    module CallbackID {
+        requires cplusplus20
+        header "../../Shared/CallbackID.h"
+        export *
+    }
+
     module FrameInfoData {
         requires cplusplus20
         header "../../Shared/FrameInfoData.h"
