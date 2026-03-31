@@ -4897,7 +4897,7 @@ class YarrGenerator final : public YarrJITInfo {
                 // For FixedCount, we need to handle inter-iteration backtracking.
                 // Check if the current ParenContext is "incomplete" (iteration failed before END).
                 // An incomplete context has matchAmount == -1 (marker stored at BEGIN).
-                // If incomplete, free it and try the previous iteration's context.
+                // If incomplete, skip it and try the previous iteration's context.
                 // If complete, restore from it and retry the iteration's content.
                 if (term->quantityType == QuantifierType::FixedCount) {
                     // First, skip any incomplete contexts (failed iterations that never reached END).
@@ -4913,11 +4913,12 @@ class YarrGenerator final : public YarrJITInfo {
                         MacroAssembler::Address(currParenContextReg, ParenContext::matchAmountOffset()),
                         MacroAssembler::TrustedImm32(-1));
 
-                    // Incomplete context: free this context and try the previous one
-                    m_jit.loadPtr(MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()), newParenContextReg);
-                    freeParenContext(currParenContextReg);
-                    storeToFrame(newParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
-                    m_jit.move(newParenContextReg, currParenContextReg);
+                    // Incomplete context: advance past it without freeing. Outer
+                    // FixedCount layers may hold snapshots of this chain in their
+                    // own ParenContexts; freeing here would leave those snapshots
+                    // pointing into the freelist.
+                    m_jit.loadPtr(MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()), currParenContextReg);
+                    storeToFrame(currParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
                     m_jit.jump(checkContext);
 
                     // Complete context found - restore from it
@@ -4958,29 +4959,19 @@ class YarrGenerator final : public YarrJITInfo {
 
                         // Load the END position from the context. Content's backtrack expects
                         // index at where the iteration ended.
-                        // Must load before freeParenContext since we need currParenContextReg.
                         m_jit.load32(MacroAssembler::Address(currParenContextReg, ParenContext::endOffset()), m_regs.index);
 
-                        // Pop the context from list
-                        m_jit.loadPtr(MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()), newParenContextReg);
-                        freeParenContext(currParenContextReg);
-                        storeToFrame(newParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
+                        // Reuse this context in-place for the retry: mark it incomplete.
+                        // If content-backtrack succeeds, END.forward's saveParenContext
+                        // overwrites the marker. If it fails, next Begin.bt skips it.
+                        // Not freeing keeps outer layers' chain snapshots valid.
+                        m_jit.store32(MacroAssembler::TrustedImm32(-1), MacroAssembler::Address(currParenContextReg, ParenContext::matchAmountOffset()));
 
                         // Decrement matchAmount (we're retrying the previous iteration)
-                        // Use regT2 for count, NOT regT1, because newParenContextReg is regT1
-                        // and we need it later when allocating fresh context.
                         const MacroAssembler::RegisterID countTemporary = m_regs.regT2;
                         loadFromFrame(parenthesesFrameLocation + BackTrackInfoParentheses::matchAmountIndex(), countTemporary);
                         m_jit.sub32(MacroAssembler::TrustedImm32(1), countTemporary);
                         storeToFrame(countTemporary, parenthesesFrameLocation + BackTrackInfoParentheses::matchAmountIndex());
-
-                        // Allocate a fresh context for the retry attempt. This context starts
-                        // as "incomplete" and will be marked complete by END.forward if the
-                        // retried iteration succeeds.
-                        allocateParenContext(currParenContextReg);
-                        m_jit.storePtr(newParenContextReg, MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()));
-                        storeToFrame(currParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
-                        m_jit.store32(MacroAssembler::TrustedImm32(-1), MacroAssembler::Address(currParenContextReg, ParenContext::matchAmountOffset()));
 
                         // Jump to content's backtrack entry point.
                         // We can't use fallthrough() here because backtrack generation runs in
@@ -5025,22 +5016,14 @@ class YarrGenerator final : public YarrJITInfo {
                         // Restore endIndex for content backtracking (where the iteration ended)
                         m_jit.load32(MacroAssembler::Address(currParenContextReg, ParenContext::endOffset()), m_regs.index);
 
-                        // Pop the context from list
-                        m_jit.loadPtr(MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()), newParenContextReg);
-                        freeParenContext(currParenContextReg);
-                        storeToFrame(newParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
+                        // Reuse this context in-place for the retry (see single-alt path above).
+                        m_jit.store32(MacroAssembler::TrustedImm32(-1), MacroAssembler::Address(currParenContextReg, ParenContext::matchAmountOffset()));
 
                         // Decrement matchAmount (we're retrying the previous iteration)
                         const MacroAssembler::RegisterID countTemporary = m_regs.regT2;
                         loadFromFrame(parenthesesFrameLocation + BackTrackInfoParentheses::matchAmountIndex(), countTemporary);
                         m_jit.sub32(MacroAssembler::TrustedImm32(1), countTemporary);
                         storeToFrame(countTemporary, parenthesesFrameLocation + BackTrackInfoParentheses::matchAmountIndex());
-
-                        // Allocate fresh context for the retry attempt (starts as incomplete)
-                        allocateParenContext(currParenContextReg);
-                        m_jit.storePtr(newParenContextReg, MacroAssembler::Address(currParenContextReg, ParenContext::nextOffset()));
-                        storeToFrame(currParenContextReg, parenthesesFrameLocation + BackTrackInfoParentheses::parenContextHeadIndex());
-                        m_jit.store32(MacroAssembler::TrustedImm32(-1), MacroAssembler::Address(currParenContextReg, ParenContext::matchAmountOffset()));
 
                         // Jump to the stored address (content backtrack entry of current alternative)
                         loadFromFrameAndJump(parenthesesFrameLocation + BackTrackInfoParentheses::returnAddressIndex());
