@@ -30,8 +30,13 @@
 #include "IDBBindingUtilities.h"
 #include "IDBKey.h"
 #include "IDBKeyData.h"
+#include "JSIDBKeyRange.h"
 #include "ScriptExecutionContext.h"
 #include "ScriptWrappableInlines.h"
+#include <JavaScriptCore/DateInstance.h>
+#include <JavaScriptCore/JSArray.h>
+#include <JavaScriptCore/JSArrayBuffer.h>
+#include <JavaScriptCore/JSArrayBufferView.h>
 #include <JavaScriptCore/JSCJSValue.h>
 #include <JavaScriptCore/JSGlobalObject.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -160,6 +165,28 @@ ExceptionOr<bool> IDBKeyRange::includes(JSC::JSGlobalObject& state, JSC::JSValue
     }
 
     return true;
+}
+
+// https://w3c.github.io/IndexedDB/#is-a-potentially-valid-key-range
+bool IDBKeyRange::isPotentiallyValidKeyRange(JSC::JSGlobalObject& execState, JSC::JSValue value)
+{
+    if (JSIDBKeyRange::toWrapped(execState.vm(), value))
+        return true;
+    if (value.isNumber())
+        return true;
+    if (value.isString())
+        return true;
+    if (!value.isObject())
+        return false;
+    if (value.inherits<JSC::DateInstance>())
+        return true;
+    if (JSC::jsDynamicCast<JSC::JSArray*>(value))
+        return true;
+    if (JSC::jsDynamicCast<JSC::JSArrayBuffer*>(value))
+        return true;
+    if (JSC::jsDynamicCast<JSC::JSArrayBufferView*>(value))
+        return true;
+    return false;
 }
 
 } // namespace WebCore

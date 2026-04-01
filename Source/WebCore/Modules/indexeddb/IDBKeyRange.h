@@ -53,6 +53,8 @@ public:
     bool lowerOpen() const { return m_isLowerOpen; }
     bool upperOpen() const { return m_isUpperOpen; }
 
+    static bool isPotentiallyValidKeyRange(JSC::JSGlobalObject& execState, JSC::JSValue value);
+
     static ExceptionOr<Ref<IDBKeyRange>> only(RefPtr<IDBKey>&& value);
     static ExceptionOr<Ref<IDBKeyRange>> only(JSC::JSGlobalObject&, JSC::JSValue key);
 

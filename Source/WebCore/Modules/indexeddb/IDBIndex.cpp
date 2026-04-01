@@ -356,7 +356,7 @@ ExceptionOr<Ref<IDBRequest>> IDBIndex::doGetAllShared(IndexedDB::GetAllType getA
         callingFunctionExceptionMessagePrefix = "Failed to execute 'getAll' on IDBIdex': "_s;
         break;
     case IndexedDB::GetAllType::Keys:
-        callingFunctionExceptionMessagePrefix = "Failed to execute 'getAllValues' on IDBIdex': "_s;
+        callingFunctionExceptionMessagePrefix = "Failed to execute 'getAllKeys' on IDBIdex': "_s;
         break;
     }
 
@@ -396,12 +396,16 @@ ExceptionOr<Ref<IDBRequest>> IDBIndex::getAll(JSGlobalObject& execState, JSValue
     LOG(IndexedDB, "IDBIndex::getAll");
 
     return doGetAllShared(IndexedDB::GetAllType::Values, count, [context = RefPtr { scriptExecutionContext() }, execState = &execState, keyOrOptions, count]() -> ExceptionOr<ParsedGetAllQueryOrOptions> {
-        auto onlyResult = IDBKeyRange::only(*execState, keyOrOptions);
-        if (!onlyResult.hasException())
+        if (IDBKeyRange::isPotentiallyValidKeyRange(*execState, keyOrOptions)) {
+            auto onlyResult = IDBKeyRange::only(*execState, keyOrOptions);
+            if (onlyResult.hasException())
+                return onlyResult.releaseException();
+
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
+        }
 
         if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
-            return Exception(ExceptionCode::DataError, "Failed to execute 'getAll' on 'IDBIndex': The parameter is not a valid key."_s);
+            return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);
     });
@@ -421,12 +425,16 @@ ExceptionOr<Ref<IDBRequest>> IDBIndex::getAllKeys(JSGlobalObject& execState, JSV
     LOG(IndexedDB, "IDBIndex::getAllKeys");
 
     return doGetAllShared(IndexedDB::GetAllType::Keys, count, [context = RefPtr { scriptExecutionContext() }, execState = &execState, keyOrOptions, count]() -> ExceptionOr<ParsedGetAllQueryOrOptions> {
-        auto onlyResult = IDBKeyRange::only(*execState, keyOrOptions);
-        if (!onlyResult.hasException())
+        if (IDBKeyRange::isPotentiallyValidKeyRange(*execState, keyOrOptions)) {
+            auto onlyResult = IDBKeyRange::only(*execState, keyOrOptions);
+            if (onlyResult.hasException())
+                return onlyResult.releaseException();
+
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
+        }
 
         if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
-            return Exception(ExceptionCode::DataError, "Failed to execute 'getAllKeys' on 'IDBIndex': The parameter is not a valid key."_s);
+            return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);
     });
