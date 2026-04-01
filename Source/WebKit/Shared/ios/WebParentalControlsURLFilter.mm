@@ -132,10 +132,8 @@ void WebParentalControlsURLFilter::requestPermissionForURL(const URL& url, const
         currentIsEnabled = isEnabled(),
         url = crossThreadCopy(url),
         referrerURL = crossThreadCopy(referrerURL),
-        presentingViewAsUIView = presentingViewAsUIView,
+        presentingViewAsUIView,
         completionHandler = WTF::move(completionHandler)]() mutable {
-        // Add UNUSED_VARIABLE so that folks without a paired change don't have build errors
-        UNUSED_VARIABLE(presentingViewAsUIView);
         if (!currentIsEnabled) {
             callOnMainRunLoop([completionHandler = WTF::move(completionHandler)] mutable {
                 completionHandler(true);
