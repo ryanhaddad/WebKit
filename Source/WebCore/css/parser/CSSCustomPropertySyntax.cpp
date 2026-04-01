@@ -126,8 +126,11 @@ std::optional<CSSCustomPropertySyntax> CSSCustomPropertySyntax::parse(StringView
 
             definition.append(*component);
 
-            skipExactly(buffer, '|');
-            skipWhile<isCSSSpace>(buffer);
+            if (skipExactly(buffer, '|')) {
+                skipWhile<isCSSSpace>(buffer);
+                if (!buffer.hasCharactersRemaining())
+                    return { };
+            }
         }
 
         if (definition.isEmpty())

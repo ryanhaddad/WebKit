@@ -59,7 +59,7 @@ PASS CSS Values and Units Test: attr 55
 PASS CSS Values and Units Test: attr 56
 PASS CSS Values and Units Test: attr 57
 PASS CSS Values and Units Test: attr 58
-FAIL CSS Values and Units Test: attr 59 assert_equals: Setting property 'width' to the value 'attr(data-foo type(invalid |), 10px)', where 'data-foo=0px' should not change it's value. expected "784px" but got "10px"
+PASS CSS Values and Units Test: attr 59
 PASS CSS Values and Units Test: attr 60
 PASS CSS Values and Units Test: attr 61
 PASS CSS Values and Units Test: attr 62
