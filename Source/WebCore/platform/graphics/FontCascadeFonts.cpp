@@ -33,6 +33,7 @@
 #include "FontCache.h"
 #include "FontCascade.h"
 #include "GlyphPage.h"
+#include "TextShapingResultAndDisplayList.h"
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {
@@ -571,9 +572,11 @@ void FontCascadeFonts::pruneSystemFallbacks()
     m_shapedTextCache.clear();
 }
 
-const TextShapingResult* FontCascadeFonts::getOrCreateCachedShapedText(const TextRun& run, const FontCascade& fontCascade, unsigned from, std::optional<unsigned> to, ForTextEmphasis forTextEmphasis)
+TextShapingResultAndDisplayList* FontCascadeFonts::getOrCreateCachedShapedText(const TextRun& run, const FontCascade& fontCascade, unsigned from, std::optional<unsigned> to, ForTextEmphasis forTextEmphasis)
 {
     auto isCacheable = [&] {
+        if (!isMainThread())
+            return false;
         unsigned destination = to.value_or(run.length());
         if (from || destination != run.length() || forTextEmphasis == ForTextEmphasis::Yes)
             return false;
@@ -590,7 +593,7 @@ const TextShapingResult* FontCascadeFonts::getOrCreateCachedShapedText(const Tex
         return nullptr;
 
     // FIXME: TextMeasurementCache callers use the pattern of "adding" an empty entry as a way to perform a search with the same constraints that ::add enforces (no letter-spacing, no word-spacing, etc). We should properly encapsulate these requirements in both the ::add method and a dedicated ::find method.
-    CachedTextShapingResult* cacheEntry = m_shapedTextCache.add(run, nullptr, TextShapingContext { fontCascade });
+    auto* cacheEntry = m_shapedTextCache.add(run, nullptr, TextShapingContext { fontCascade });
 
     if (!cacheEntry)
         return nullptr;
@@ -599,14 +602,13 @@ const TextShapingResult* FontCascadeFonts::getOrCreateCachedShapedText(const Tex
         return cacheEntry->get();
 
     auto codePath = fontCascade.codePath(run);
-    TextShapingResult result;
-    if (fontCascade.shouldUseComplexTextController(codePath))
-        result = fontCascade.layoutComplexText(run, 0, run.length(), ForTextEmphasis::No);
-    else
-        result = fontCascade.layoutSimpleText(run, 0, run.length(), ForTextEmphasis::No);
+    auto result =
+        (fontCascade.shouldUseComplexTextController(codePath))
+        ? fontCascade.layoutComplexText(run, 0, run.length(), ForTextEmphasis::No)
+        : fontCascade.layoutSimpleText(run, 0, run.length(), ForTextEmphasis::No);
     result.glyphBuffer.flatten();
 
-    *cacheEntry = WTF::makeUnique<TextShapingResult>(WTF::move(result));
+    *cacheEntry = WTF::makeUnique<TextShapingResultAndDisplayList>(WTF::move(result));
 
     return cacheEntry->get();
 }

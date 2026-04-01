@@ -85,6 +85,7 @@
 #include "StyleResolver.h"
 #include "TextMetrics.h"
 #include "TextRun.h"
+#include "TextShapingResultAndDisplayList.h"
 #include "TextUtil.h"
 #include "WebCodecsVideoFrame.h"
 #include <JavaScriptCore/ConsoleTypes.h>
@@ -2883,14 +2884,15 @@ void CanvasRenderingContext2DBase::drawTextUnchecked(const TextRun& textRun, dou
     auto& fontCascade = this->fontProxy()->fontCascade();
     auto& fontMetrics = fontProxy()->metricsOfPrimaryFont();
 
-    const TextShapingResult* cachedShapedText = nullptr;
-    if (canUseCachedShapedText(textRun)) {
+    auto* cachedShapedText = [&]() -> TextShapingResultAndDisplayList* {
+        if (!canUseCachedShapedText(textRun))
+            return nullptr;
         RefPtr fonts = fontCascade.fonts();
         ASSERT(fonts);
-        cachedShapedText = fonts->getOrCreateCachedShapedText(textRun, fontCascade, 0, std::nullopt, ForTextEmphasis::No);
-    }
+        return fonts->getOrCreateCachedShapedText(textRun, fontCascade, 0, std::nullopt, ForTextEmphasis::No);
+    }();
 
-    float fontWidth = cachedShapedText ? cachedShapedText->width : fontCascade.width(textRun);
+    float fontWidth = cachedShapedText ? cachedShapedText->textShapingResult.width : fontCascade.width(textRun);
 
     bool useMaxWidth = maxWidth && maxWidth.value() < fontWidth;
     float width = useMaxWidth ? maxWidth.value() : fontWidth;
@@ -2910,12 +2912,40 @@ void CanvasRenderingContext2DBase::drawTextUnchecked(const TextRun& textRun, dou
     auto* c = effectiveDrawingContext();
     auto& fontProxy = *this->fontProxy();
 
+    bool cachedDisplayListNeedsStateSave = false;
+    // Any shadow could add display list items to draw glyphs a 2nd time with different context attributes.
+    if (cachedShapedText && !cachedShapedText->displayList && !cachedShapedText->textShapingResult.glyphBuffer.isEmpty() && !c->dropShadow()) {
+        cachedShapedText->displayList = fontCascade.displayListForGlyphBuffer(*c, cachedShapedText->textShapingResult.glyphBuffer, FontCascade::CustomFontNotReadyAction::UseFallbackIfFontNotReady);
+
+        if (cachedShapedText->displayList) {
+            for (auto& item : cachedShapedText->displayList->items()) {
+                if (std::holds_alternative<DisplayList::SetInlineFillColor>(item)
+                    || std::holds_alternative<DisplayList::SetInlineStroke>(item)) {
+                    cachedDisplayListNeedsStateSave = true;
+                    break;
+                }
+            }
+        }
+    }
+
     auto drawText = [&](GraphicsContext& context, const FloatPoint& point) {
         if (cachedShapedText) {
-            const auto& glyphBuffer = cachedShapedText->glyphBuffer;
-            if (!glyphBuffer.isEmpty()) {
-                FloatPoint startPoint = point + WebCore::size(glyphBuffer.initialAdvance());
-                fontCascade.drawGlyphBuffer(context, glyphBuffer, startPoint, FontCascade::CustomFontNotReadyAction::UseFallbackIfFontNotReady);
+            const auto& glyphBuffer = cachedShapedText->textShapingResult.glyphBuffer;
+            if (!cachedShapedText->textShapingResult.glyphBuffer.isEmpty()) {
+                if (cachedShapedText->displayList && !context.hasDropShadow()) {
+                    if (cachedDisplayListNeedsStateSave) {
+                        GraphicsContextStateSaver stateSaver(context);
+                        context.translate(point);
+                        context.drawDisplayList(*cachedShapedText->displayList);
+                    } else {
+                        context.translate(point);
+                        context.drawDisplayList(*cachedShapedText->displayList);
+                        context.translate(-point);
+                    }
+                } else {
+                    FloatPoint startPoint = point + WebCore::size(glyphBuffer.initialAdvance());
+                    fontCascade.drawGlyphBuffer(context, glyphBuffer, startPoint, FontCascade::CustomFontNotReadyAction::UseFallbackIfFontNotReady);
+                }
             }
         } else
             fontProxy.drawBidiText(context, textRun, point, FontCascade::CustomFontNotReadyAction::UseFallbackIfFontNotReady);

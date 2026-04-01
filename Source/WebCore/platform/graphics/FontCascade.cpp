@@ -35,6 +35,7 @@
 #include "GraphicsContext.h"
 #include "LayoutRect.h"
 #include "TextRun.h"
+#include "TextShapingResultAndDisplayList.h"
 #include "WidthIterator.h"
 #include <ranges>
 #include <wtf/MainThread.h>
@@ -177,7 +178,7 @@ TextShapingResult FontCascade::layoutText(CodePath codePathToUse, const TextRun&
 {
     if (RefPtr fonts = this->fonts()) {
         if (auto* cached = fonts->getOrCreateCachedShapedText(run, *this, from, to, forTextEmphasis))
-            return *cached;
+            return cached->textShapingResult;
     }
 
     if (shouldUseComplexTextController(codePathToUse))
@@ -229,6 +230,13 @@ RefPtr<const DisplayList::DisplayList> FontCascade::displayListForTextRun(Graphi
 
     auto glyphBuffer = layoutText(codePathToUse, run, from, destination).glyphBuffer;
     glyphBuffer.flatten();
+
+    return displayListForGlyphBuffer(context, glyphBuffer, customFontNotReadyAction);
+}
+
+RefPtr<const DisplayList::DisplayList> FontCascade::displayListForGlyphBuffer(GraphicsContext& context, const GlyphBuffer& glyphBuffer,  CustomFontNotReadyAction customFontNotReadyAction) const
+{
+    ASSERT(!context.paintingDisabled());
 
     if (glyphBuffer.isEmpty())
         return nullptr;

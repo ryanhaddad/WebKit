@@ -134,6 +134,9 @@ public:
 
     CachedType* add(StringView text, CachedType&& entry)
     {
+        if (!isMainThread())
+            return nullptr;
+
         unsigned length = text.length();
 
         // Do not allow length = 0. This allows SmallStringKey empty-value-is-zero.
@@ -153,6 +156,9 @@ public:
 
     CachedType* add(const TextRun& run, CachedType&& entry, TextShapingContext shapingContext)
     {
+        if (!isMainThread())
+            return nullptr;
+
         // The width cache is not really profitable unless we're doing expensive glyph transformations.
         if (!shapingContext.hasKerningOrLigatures)
             return nullptr;
@@ -171,6 +177,7 @@ public:
 
     void clear()
     {
+        ASSERT(isMainThread());
         m_singleCharMap.clear();
         m_map.clear();
     }
