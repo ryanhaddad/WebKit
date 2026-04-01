@@ -54,6 +54,14 @@
 namespace WebKit {
 using namespace WebCore;
 
+static inline void setBackForwardItemIdentifiers(FrameState& frameState, BackForwardItemIdentifier itemID)
+{
+    frameState.itemID = itemID;
+    frameState.frameItemID = BackForwardFrameItemIdentifier::generate();
+    for (auto& child : frameState.children)
+        setBackForwardItemIdentifiers(child, itemID);
+}
+
 #if !ENABLE(BACK_FORWARD_LIST_SWIFT)
 
 static const unsigned DefaultCapacity = 100;
@@ -448,14 +456,6 @@ BackForwardListState WebBackForwardList::backForwardListState(WTF::Function<bool
         backForwardListState.currentIndex = backForwardListState.items.size() - 1;
 
     return backForwardListState;
-}
-
-static inline void setBackForwardItemIdentifiers(FrameState& frameState, BackForwardItemIdentifier itemID)
-{
-    frameState.itemID = itemID;
-    frameState.frameItemID = BackForwardFrameItemIdentifier::generate();
-    for (auto& child : frameState.children)
-        setBackForwardItemIdentifiers(child, itemID);
 }
 
 void WebBackForwardList::restoreFromState(BackForwardListState backForwardListState)
@@ -884,11 +884,6 @@ WebCore::BackForwardFrameItemIdentifier generateBackForwardFrameItemIdentifier()
     return WebCore::BackForwardFrameItemIdentifier::generate();
 }
 
-WebCore::BackForwardItemIdentifier generateBackForwardItemIdentifier()
-{
-    return WebCore::BackForwardItemIdentifier::generate();
-}
-
 // rdar://168139823 is the task of doing a productionized version of WebKit Swift logging
 void doLog(const WTF::String& msg)
 {
@@ -904,5 +899,19 @@ void messageCheckFailed(Ref<WebKit::WebProcessProxy> process)
 {
     MESSAGE_CHECK_BASE(false, process->connection());
 }
+
+// Workarounds for rdar://171011011
+void appendToBackForwardStateItems(Vector<WebKit::BackForwardListItemState>& items, const WebKit::WebBackForwardListItem& entry)
+{
+    items.append({ entry.copyMainFrameStateWithChildren(), entry.navigatedFrameID() });
+}
+
+Ref<WebKit::WebBackForwardListItem> createItemFromState(const WebKit::BackForwardListItemState& itemState, WebKit::WebPageProxyIdentifier pageIdentifier)
+{
+    Ref stateCopy = itemState.frameState->copy();
+    setBackForwardItemIdentifiers(stateCopy, WebCore::BackForwardItemIdentifier::generate());
+    return WebKit::WebBackForwardListItem::create(WTF::move(stateCopy), pageIdentifier, itemState.navigatedFrameID);
+}
+
 
 #endif // ENABLE(BACK_FORWARD_LIST_SWIFT)

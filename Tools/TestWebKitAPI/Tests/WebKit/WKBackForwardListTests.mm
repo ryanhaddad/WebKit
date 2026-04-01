@@ -361,6 +361,35 @@ TEST(WKBackForwardList, InteractionStateRestorationInvalid)
     EXPECT_STREQ([[list.currentItem URL] absoluteString].UTF8String, url3.absoluteString.UTF8String);
 }
 
+// Restoring state with multiple items causes the Swift restoreFromState loop to iterate more than
+// once, which can trigger an ASAN false positive if Swift reuses a stack slot that C++ poisoned
+// via leakRef in the previous iteration.
+TEST(WKBackForwardList, InteractionStateRestorationMultipleItems)
+{
+    RetainPtr webView = adoptNS([[WKWebView alloc] init]);
+
+    RetainPtr url1 = [NSBundle.test_resourcesBundle URLForResource:@"simple" withExtension:@"html"];
+    RetainPtr url2 = [NSBundle.test_resourcesBundle URLForResource:@"simple2" withExtension:@"html"];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:url1]];
+    [webView _test_waitForDidFinishNavigation];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:url2]];
+    [webView _test_waitForDidFinishNavigation];
+
+    id interactionState = [webView interactionState];
+
+    webView = adoptNS([[WKWebView alloc] init]);
+    [webView setInteractionState:interactionState];
+    [webView _test_waitForDidFinishNavigation];
+
+    RetainPtr list = [webView backForwardList];
+    EXPECT_EQ((NSUInteger)1, list.get().backList.count);
+    EXPECT_EQ((NSUInteger)0, list.get().forwardList.count);
+    EXPECT_STREQ([[list.get().currentItem URL] absoluteString].UTF8String, url2.get().absoluteString.UTF8String);
+    EXPECT_STREQ([[list.get().backList.firstObject URL] absoluteString].UTF8String, url1.get().absoluteString.UTF8String);
+}
+
 @interface WKBackForwardNavigationDelegate : NSObject <WKNavigationDelegatePrivate>
 - (void)waitForDidFinishNavigationOrDidSameDocumentNavigation;
 @end
