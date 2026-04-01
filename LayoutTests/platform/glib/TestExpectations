@@ -456,6 +456,7 @@ imported/w3c/web-platform-tests/html/rendering/widgets/input-radio-disabled-chec
 imported/w3c/web-platform-tests/html/rendering/widgets/the-select-element/select-as-listbox-default-styles.tentative.html [ Failure ]
 
 imported/w3c/web-platform-tests/html/semantics/document-metadata/the-link-element/link-rel-attribute-ascii-case-insensitive.html [ Pass ]
+imported/w3c/web-platform-tests/html/semantics/forms/the-datalist-element/input-text-datalist-removal.html [ Pass ]
 imported/w3c/web-platform-tests/html/semantics/forms/the-select-element/customizable-select/select-appearance-sizing-in-flex.html [ Pass ]
 imported/w3c/web-platform-tests/html/semantics/forms/the-textarea-element/placeholder-white-space.tentative.html [ Pass ]
 imported/w3c/web-platform-tests/html/semantics/text-level-semantics/the-b-element/b-usage.html [ Pass ]
@@ -2433,8 +2434,6 @@ webkit.org/b/189739 svg/gradients/spreadMethodClose2.svg [ ImageOnlyFailure ]
 
 webkit.org/b/107018 svg/animations/mozilla/animateMotion-mpath-pathLength-1.svg [ Pass ImageOnlyFailure ]
 
-webkit.org/b/151267 imported/blink/svg/animations/no-attr-radialgradient-spreadmethod.svg [ ImageOnlyFailure ]
-
 webkit.org/b/203677 svg/W3C-SVG-1.1/painting-fill-05-b.svg [ Failure ]
 
 webkit.org/b/163831 svg/custom/acid3-test-77.html [ Failure ]
@@ -3992,6 +3991,7 @@ webkit.org/b/131347 fast/layers/hidpi-box-positioned-off-by-one-when-transform-i
 webkit.org/b/131347 fast/table/hidpi-collapsed-border-with-odd-pixel-width.html [ ImageOnlyFailure ]
 webkit.org/b/131347 http/tests/loading/hidpi-preload-picture-sizes.html [ Failure ]
 webkit.org/b/131347 svg/text/hidpi-text-selection-rect-position.html [ ImageOnlyFailure ]
+webkit.org/b/131347 fast/repaint/hidpi-inline-outline-atomic-child-overflow.html [ ImageOnlyFailure ]
 
 webkit.org/b/136109 fast/multicol/mixed-opacity-fixed-test.html [ ImageOnlyFailure ]
 webkit.org/b/136537 fast/sub-pixel/client-width-height-snapping.html [ Failure ]
@@ -5438,6 +5438,8 @@ imported/w3c/web-platform-tests/css/css-overflow/scrollbar-gutter-root.html [ Im
 imported/w3c/web-platform-tests/css/css-overflow/scrollbar-gutter-root-both-edges.html [ ImageOnlyFailure ]
 
 webkit.org/b/311093 media/video-src-blob-replay.html [ Pass Timeout ]
+
+webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/ready-states/autoplay.html [ Failure Pass ]
 
 # End: Common failures between GTK and WPE.
 

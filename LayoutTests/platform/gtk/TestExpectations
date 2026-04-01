@@ -144,6 +144,7 @@ webkit.org/b/308373 webrtc/encoded-streams-quirks.html [ Pass Timeout ]
 webkit.org/b/308362 [ Debug ] webrtc/processIceTransportStateChange-gc.html [ Pass Crash ]
 
 webkit.org/b/305553 fast/selectors/selection-window-inactive-stroke-color.html [ ImageOnlyFailure ]
+webkit.org/b/305553 fast/selectors/selection-window-inactive.html [ ImageOnlyFailure ]
 
 # This test constantly fails in EWS but passes in post-commit bots, so skip it.
 fast/selectors/selection-window-inactive-text-shadow.html [ Skip ]
@@ -663,8 +664,6 @@ webkit.org/b/190703 inspector/worker/debugger-pause.html [ Failure Pass Timeout 
 
 webkit.org/b/194382 mathml/presentation/stretchy-depth-height-symmetric.html [ Failure ]
 imported/w3c/web-platform-tests/mathml/presentation-markup/tables/table-002.html [ Pass ]
-
-webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/ready-states/autoplay.html [ Failure ]
 
 webkit.org/b/170484 swipe/main-frame-pinning-requirement.html [ Timeout ]
 
