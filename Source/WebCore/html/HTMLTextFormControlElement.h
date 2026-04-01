@@ -192,6 +192,7 @@ private:
 
     bool m_hasCachedSelection { false };
     bool m_hasScheduledSelectionChangeEvent { false };
+    bool m_isInsideSetSelectionRange { false };
 
     String m_pointerType { mousePointerEventType() };
 

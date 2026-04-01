@@ -64,6 +64,7 @@
 #include "ShadowRoot.h"
 #include "Text.h"
 #include "TextControlInnerElements.h"
+#include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
@@ -397,6 +398,7 @@ bool HTMLTextFormControlElement::setSelectionRange(unsigned start, unsigned end,
             options.add(FrameSelection::SetSelectionOption::DelegateMainFrameScroll);
             break;
         }
+        SetForScope isInsideSetSelectionRange(m_isInsideSetSelectionRange, true);
         frame->selection().moveWithoutValidationTo(startPosition, endPosition, direction != SelectionHasNoDirection, options, intent);
     }
 
@@ -576,11 +578,10 @@ bool HTMLTextFormControlElement::selectionChanged(bool shouldFireSelectEvent)
     if (!isTextField())
         return false;
 
-    // FIXME: Don't re-compute selection start and end if this function was called inside setSelectionRange.
-    // selectionStart() or selectionEnd() will return cached selection when this node doesn't have focus
     unsigned previousSelectionStart = m_cachedSelectionStart;
     unsigned previousSelectionEnd = m_cachedSelectionEnd;
-    cacheSelection(computeSelectionStart(), computeSelectionEnd(), computeSelectionDirection());
+    if (!m_isInsideSetSelectionRange)
+        cacheSelection(computeSelectionStart(), computeSelectionEnd(), computeSelectionDirection());
 
     document().setHasEverHadSelectionInsideTextFormControl();
 
