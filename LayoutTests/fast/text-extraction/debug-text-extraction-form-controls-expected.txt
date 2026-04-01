@@ -5,10 +5,8 @@ root
         aria-label='Main Page Title','Welcome to Test Page'
     navigation,role='navigation',aria-label='Main navigation'
         list
-            list-item
-                link,'Section 1'
-            list-item
-                link,'Section 2'
+            link,'Section 1'
+            link,'Section 2'
     role='main'
         section,aria-label='Interactive Elements'
             button,aria-describedby='This button does nothing',aria-label='Test button','Click Me'
@@ -23,10 +21,8 @@ root
             role='complementary',aria-label='Related information'
                 'Related Links'
                 list
-                    list-item
-                        link,'Example Link'
-                    list-item
-                        link,'Test Link'
+                    link,'Example Link'
+                    link,'Test Link'
             role='region'
                 role='status','Ready'
                 button,'Update Status'

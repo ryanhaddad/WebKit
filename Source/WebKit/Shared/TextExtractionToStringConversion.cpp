@@ -744,11 +744,17 @@ private:
             if (!shortenURLs())
                 return url.string();
 
+            auto stringToShorten = shortenedString;
+            if (!m_options.topHostName.isEmpty() && stringToShorten.startsWithIgnoringASCIICase(m_options.topHostName)) {
+                auto rest = stringToShorten.substring(m_options.topHostName.length());
+                stringToShorten = rest.isEmpty() ? "/"_s : rest;
+            }
+
             RefPtr cache = m_options.urlCache;
             if (!cache)
-                return shortenedString;
+                return stringToShorten;
 
-            auto result = cache->add(shortenedString, url, type);
+            auto result = cache->add(stringToShorten, url, type);
             if (!result.isEmpty())
                 m_shortenedURLStrings.append(result);
 
@@ -1642,6 +1648,11 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
         if (isStrikethrough)
             aggregator.popStrikethrough();
     });
+
+    if (aggregator.useTextTreeOutput() && containerType == TextExtraction::ContainerType::ListItem && item.children.size() == 1 && !item.nodeIdentifier) {
+        addTextRepresentationRecursive(item.children[0], std::optional { identifier }, depth, aggregator, hasAdjacentLinkAfter);
+        return;
+    }
 
     bool omitChildTextNode = [&] {
         if (aggregator.useMarkdownOutput())

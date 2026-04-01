@@ -1334,4 +1334,32 @@ TEST(TextExtractionTests, ClickInteractionWithExtractionContext)
     EXPECT_WK_STREQ("original", [webView stringByEvaluatingJavaScript:@"document.getElementById('result').textContent"]);
 }
 
+TEST(TextExtractionTests, ShortenURLsWithTopHostName)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:^{
+        RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+        [[configuration preferences] _setTextExtractionEnabled:YES];
+        return configuration.autorelease();
+    }()]);
+
+    RetainPtr markup = @"<!DOCTYPE html>"
+        "<html><body>"
+        "    <a href=\"https://webkit.org/blog/post\">Same-host link</a>"
+        "    <a href=\"https://webkit.org\">Root link</a>"
+        "    <a href=\"https://example.com/other\">Cross-host link</a>"
+        "</body></html>";
+    [webView synchronouslyLoadHTMLString:markup.get() baseURL:[NSURL URLWithString:@"http://webkit.org"]];
+
+    RetainPtr debugText = [webView synchronouslyGetDebugText:^{
+        RetainPtr configuration = adoptNS([_WKTextExtractionConfiguration new]);
+        [configuration setIncludeURLs:YES];
+        [configuration setShortenURLs:YES];
+        return configuration.autorelease();
+    }()];
+
+    EXPECT_TRUE([debugText containsString:@"url='/blog/post'"]);
+    EXPECT_TRUE([debugText containsString:@"url='/'"]);
+    EXPECT_TRUE([debugText containsString:@"example.com/other"]);
+}
+
 } // namespace TestWebKitAPI

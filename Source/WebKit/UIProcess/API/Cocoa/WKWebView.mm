@@ -7017,7 +7017,8 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
         version,
         replacementStrings = extractReplacementStrings(configuration),
         outputFormat = textExtractionOutputFormat(configuration),
-        endTextExtractionScope = WTF::move(endTextExtractionScope)
+        endTextExtractionScope = WTF::move(endTextExtractionScope),
+        topHostName = URL { _page->pageLoadState().activeURL() }.host().toString()
     ](auto&& result) mutable {
         RetainPtr strongSelf = weakSelf.get();
         if (!strongSelf)
@@ -7118,6 +7119,7 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
             outputFormat,
             urlCache.get(),
             WTF::move(maxWordsPerParagraph),
+            WTF::move(topHostName),
         };
         WebKit::convertToText(WTF::move(result->rootItem), WTF::move(options), [weakSelf, startTime, urlCache, completionHandler = WTF::move(completionHandler), endTextExtractionScope = WTF::move(endTextExtractionScope)](auto&& result) {
             RetainPtr strongSelf = weakSelf.get();
