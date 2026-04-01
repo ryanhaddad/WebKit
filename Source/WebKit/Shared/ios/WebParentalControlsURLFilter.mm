@@ -128,8 +128,14 @@ void WebParentalControlsURLFilter::setSharedParentalControlsURLFilterIfNecessary
 void WebParentalControlsURLFilter::requestPermissionForURL(const URL& url, const URL& referrerURL, CompletionHandler<void(bool)>&& completionHandler, CocoaView* presentingView)
 {
     UIView* presentingViewAsUIView = (UIView *)presentingView;
-    UNUSED_VARIABLE(presentingViewAsUIView);
-    workQueueSingleton().dispatchSync([this, protectedThis = Ref { *this }, currentIsEnabled = isEnabled(), url = crossThreadCopy(url), referrerURL = crossThreadCopy(referrerURL), completionHandler = WTF::move(completionHandler)]() mutable {
+    workQueueSingleton().dispatchSync([this, protectedThis = Ref { *this },
+        currentIsEnabled = isEnabled(),
+        url = crossThreadCopy(url),
+        referrerURL = crossThreadCopy(referrerURL),
+        presentingViewAsUIView = presentingViewAsUIView,
+        completionHandler = WTF::move(completionHandler)]() mutable {
+        // Add UNUSED_VARIABLE so that folks without a paired change don't have build errors
+        UNUSED_VARIABLE(presentingViewAsUIView);
         if (!currentIsEnabled) {
             callOnMainRunLoop([completionHandler = WTF::move(completionHandler)] mutable {
                 completionHandler(true);
