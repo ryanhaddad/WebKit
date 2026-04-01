@@ -585,57 +585,13 @@ PASS :binding_point_on_function_var:group="";binding=""
 PASS :binding_point_on_function_var:group="";binding="%40binding(0)"
 PASS :binding_point_on_function_var:group="%40group(0)";binding=""
 PASS :binding_point_on_function_var:group="%40group(0)";binding="%40binding(0)"
-FAIL :binding_collisions:a_group=0;b_group=0;a_binding=0;b_binding=0;b_use="same" assert_unreached:
-  - EXPECTATION FAILED: Expected validation error
-      at (elided: below max severity)
-  - VALIDATION FAILED: Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-        @group(0) @binding(0) var<uniform> a : vec4f;
-        @group(0) @binding(0) var<uniform> b : vec4f;
-
-        @fragment
-        fn main1() {
-          _ = a;
-
-          _ = b;
-        }
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:91:30
-    async finalize@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:128:16
-    async runTest@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:534:28
-    async run@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:682:31
-    @http://127.0.0.1:8000/webgpu/common/runtime/wpt.js:75:27
- Reached unreachable code
+PASS :binding_collisions:a_group=0;b_group=0;a_binding=0;b_binding=0;b_use="same"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=0;b_binding=0;b_use="different"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=0;b_binding=1;b_use="same"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=0;b_binding=1;b_use="different"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=1;b_binding=0;b_use="same"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=1;b_binding=0;b_use="different"
-FAIL :binding_collisions:a_group=0;b_group=0;a_binding=1;b_binding=1;b_use="same" assert_unreached:
-  - EXPECTATION FAILED: Expected validation error
-      at (elided: below max severity)
-  - VALIDATION FAILED: Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-        @group(0) @binding(1) var<uniform> a : vec4f;
-        @group(0) @binding(1) var<uniform> b : vec4f;
-
-        @fragment
-        fn main1() {
-          _ = a;
-
-          _ = b;
-        }
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:91:30
-    async finalize@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:128:16
-    async runTest@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:534:28
-    async run@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:682:31
-    @http://127.0.0.1:8000/webgpu/common/runtime/wpt.js:75:27
- Reached unreachable code
+PASS :binding_collisions:a_group=0;b_group=0;a_binding=1;b_binding=1;b_use="same"
 PASS :binding_collisions:a_group=0;b_group=0;a_binding=1;b_binding=1;b_use="different"
 PASS :binding_collisions:a_group=0;b_group=1;a_binding=0;b_binding=0;b_use="same"
 PASS :binding_collisions:a_group=0;b_group=1;a_binding=0;b_binding=0;b_use="different"
@@ -653,57 +609,13 @@ PASS :binding_collisions:a_group=1;b_group=0;a_binding=1;b_binding=0;b_use="same
 PASS :binding_collisions:a_group=1;b_group=0;a_binding=1;b_binding=0;b_use="different"
 PASS :binding_collisions:a_group=1;b_group=0;a_binding=1;b_binding=1;b_use="same"
 PASS :binding_collisions:a_group=1;b_group=0;a_binding=1;b_binding=1;b_use="different"
-FAIL :binding_collisions:a_group=1;b_group=1;a_binding=0;b_binding=0;b_use="same" assert_unreached:
-  - EXPECTATION FAILED: Expected validation error
-      at (elided: below max severity)
-  - VALIDATION FAILED: Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-        @group(1) @binding(0) var<uniform> a : vec4f;
-        @group(1) @binding(0) var<uniform> b : vec4f;
-
-        @fragment
-        fn main1() {
-          _ = a;
-
-          _ = b;
-        }
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:91:30
-    async finalize@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:128:16
-    async runTest@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:534:28
-    async run@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:682:31
-    @http://127.0.0.1:8000/webgpu/common/runtime/wpt.js:75:27
- Reached unreachable code
+PASS :binding_collisions:a_group=1;b_group=1;a_binding=0;b_binding=0;b_use="same"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=0;b_binding=0;b_use="different"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=0;b_binding=1;b_use="same"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=0;b_binding=1;b_use="different"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=1;b_binding=0;b_use="same"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=1;b_binding=0;b_use="different"
-FAIL :binding_collisions:a_group=1;b_group=1;a_binding=1;b_binding=1;b_use="same" assert_unreached:
-  - EXPECTATION FAILED: Expected validation error
-      at (elided: below max severity)
-  - VALIDATION FAILED: Missing expected compilationInfo 'error' message.
-
-
-    ---- shader ----
-
-        @group(1) @binding(1) var<uniform> a : vec4f;
-        @group(1) @binding(1) var<uniform> b : vec4f;
-
-        @fragment
-        fn main1() {
-          _ = a;
-
-          _ = b;
-        }
-    @http://127.0.0.1:8000/webgpu/webgpu/shader/validation/shader_validation_test.js:91:30
-    async finalize@http://127.0.0.1:8000/webgpu/common/framework/fixture.js:128:16
-    async runTest@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:534:28
-    async run@http://127.0.0.1:8000/webgpu/common/internal/test_group.js:682:31
-    @http://127.0.0.1:8000/webgpu/common/runtime/wpt.js:75:27
- Reached unreachable code
+PASS :binding_collisions:a_group=1;b_group=1;a_binding=1;b_binding=1;b_use="same"
 PASS :binding_collisions:a_group=1;b_group=1;a_binding=1;b_binding=1;b_use="different"
 PASS :binding_collision_unused_helper:
 FAIL :address_space_access_mode:address_space="private";access_mode="";trailing_comma=true assert_unreached:

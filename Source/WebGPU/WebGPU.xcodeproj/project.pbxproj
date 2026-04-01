@@ -228,6 +228,8 @@
 		97CB27C12F43C25F0024DD32 /* AliasAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97CB27BF2F43C25F0024DD32 /* AliasAnalysis.cpp */; };
 		97CB27CC2F579A6F0024DD32 /* UniformityAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97CB27CB2F579A6F0024DD32 /* UniformityAnalysis.cpp */; };
 		97CB27CD2F579A6F0024DD32 /* UniformityAnalysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 97CB27CA2F579A6F0024DD32 /* UniformityAnalysis.h */; };
+		97CB27D22F730F670024DD32 /* IOValidator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97CB27D12F730F670024DD32 /* IOValidator.cpp */; };
+		97CB27D32F730F670024DD32 /* IOValidator.h in Headers */ = {isa = PBXBuildFile; fileRef = 97CB27D02F730F670024DD32 /* IOValidator.h */; };
 		97D398E32B05106000D8C4AA /* ASTFloat16Literal.h in Headers */ = {isa = PBXBuildFile; fileRef = 97D398E22B05106000D8C4AA /* ASTFloat16Literal.h */; };
 		97D398E62B06A85B00D8C4AA /* ASTDiagnosticDirective.h in Headers */ = {isa = PBXBuildFile; fileRef = 97D398E42B06A85B00D8C4AA /* ASTDiagnosticDirective.h */; };
 		97D398E72B06A85B00D8C4AA /* ASTDiagnostic.h in Headers */ = {isa = PBXBuildFile; fileRef = 97D398E52B06A85B00D8C4AA /* ASTDiagnostic.h */; };
@@ -565,6 +567,8 @@
 		97CB27BF2F43C25F0024DD32 /* AliasAnalysis.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = AliasAnalysis.cpp; sourceTree = "<group>"; };
 		97CB27CA2F579A6F0024DD32 /* UniformityAnalysis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UniformityAnalysis.h; sourceTree = "<group>"; };
 		97CB27CB2F579A6F0024DD32 /* UniformityAnalysis.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UniformityAnalysis.cpp; sourceTree = "<group>"; };
+		97CB27D02F730F670024DD32 /* IOValidator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IOValidator.h; sourceTree = "<group>"; };
+		97CB27D12F730F670024DD32 /* IOValidator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IOValidator.cpp; sourceTree = "<group>"; };
 		97D398E22B05106000D8C4AA /* ASTFloat16Literal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTFloat16Literal.h; sourceTree = "<group>"; };
 		97D398E42B06A85B00D8C4AA /* ASTDiagnosticDirective.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTDiagnosticDirective.h; sourceTree = "<group>"; };
 		97D398E52B06A85B00D8C4AA /* ASTDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTDiagnostic.h; sourceTree = "<group>"; };
@@ -784,6 +788,8 @@
 				979EDBB02A826B2800B4B7D0 /* GlobalSorting.h */,
 				97F547B6298055D90011D79A /* GlobalVariableRewriter.cpp */,
 				97F547B7298055D90011D79A /* GlobalVariableRewriter.h */,
+				97CB27D12F730F670024DD32 /* IOValidator.cpp */,
+				97CB27D02F730F670024DD32 /* IOValidator.h */,
 				338BB2D527B6B68700E066AB /* Lexer.cpp */,
 				338BB2D327B6B66C00E066AB /* Lexer.h */,
 				978A9123298A4E8400B37E5E /* MangleNames.cpp */,
@@ -1138,6 +1144,7 @@
 				979240C829769AC00050EA2C /* EntryPointRewriter.h in Headers */,
 				979EDBB22A826B2800B4B7D0 /* GlobalSorting.h in Headers */,
 				97F547B9298055D90011D79A /* GlobalVariableRewriter.h in Headers */,
+				97CB27D32F730F670024DD32 /* IOValidator.h in Headers */,
 				338BB2D427B6B66C00E066AB /* Lexer.h in Headers */,
 				978A9126298A4E8400B37E5E /* MangleNames.h in Headers */,
 				979240B6297018290050EA2C /* MetalCodeGenerator.h in Headers */,
@@ -1435,6 +1442,7 @@
 				979240C929769AC00050EA2C /* EntryPointRewriter.cpp in Sources */,
 				979EDBB12A826B2800B4B7D0 /* GlobalSorting.cpp in Sources */,
 				97F547B8298055D90011D79A /* GlobalVariableRewriter.cpp in Sources */,
+				97CB27D22F730F670024DD32 /* IOValidator.cpp in Sources */,
 				338BB2D627B6B68700E066AB /* Lexer.cpp in Sources */,
 				978A9125298A4E8400B37E5E /* MangleNames.cpp in Sources */,
 				979240B8297018290050EA2C /* MetalCodeGenerator.cpp in Sources */,
