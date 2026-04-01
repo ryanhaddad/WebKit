@@ -128,7 +128,7 @@ void WebParentalControlsURLFilter::setSharedParentalControlsURLFilterIfNecessary
 void WebParentalControlsURLFilter::requestPermissionForURL(const URL& url, const URL& referrerURL, CompletionHandler<void(bool)>&& completionHandler, CocoaView* presentingView)
 {
     UIView* presentingViewAsUIView = (UIView *)presentingView;
-    workQueueSingleton().dispatchSync([this, protectedThis = Ref { *this },
+    workQueueSingleton().dispatch([this, protectedThis = Ref { *this },
         currentIsEnabled = isEnabled(),
         url = crossThreadCopy(url),
         referrerURL = crossThreadCopy(referrerURL),
