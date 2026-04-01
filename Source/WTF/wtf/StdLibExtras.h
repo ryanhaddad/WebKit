@@ -345,7 +345,7 @@ bool checkAndSet(T& left, U right)
 }
 
 template<typename T>
-inline unsigned ctz(T value); // Clients will also need to #include MathExtras.h
+constexpr unsigned ctz(T value); // Clients will also need to #include MathExtras.h
 
 template<typename T>
 bool findBitInWord(T word, size_t& startOrResultIndex, size_t endIndex, bool value)

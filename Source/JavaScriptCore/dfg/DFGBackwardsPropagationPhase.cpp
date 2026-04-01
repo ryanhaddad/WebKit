@@ -257,7 +257,7 @@ private:
         return changed;
     }
     
-    static constexpr NodeFlags VariableIsUsed = 1 << (1 + WTF::getMSBSetConstexpr(NodeBytecodeBackPropMask));
+    static constexpr NodeFlags VariableIsUsed = 1 << (1 + WTF::getMSBSet(NodeBytecodeBackPropMask));
     static_assert(!(VariableIsUsed & NodeBytecodeBackPropMask));
     static_assert(VariableIsUsed > NodeBytecodeBackPropMask, "Verify the above doesn't overflow");
     

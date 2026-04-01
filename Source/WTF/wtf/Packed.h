@@ -116,7 +116,7 @@ public:
     static_assert(hasOneBitSet(passedAlignment), "Alignment needs to be power-of-two");
     static constexpr size_t alignment = passedAlignment;
     static constexpr bool isPackedType = true;
-    static constexpr unsigned alignmentShiftSizeIfProfitable = getLSBSetConstexpr(alignment);
+    static constexpr unsigned alignmentShiftSizeIfProfitable = getLSBSet(alignment);
     static constexpr unsigned storageSizeWithoutAlignmentShift = roundUpToMultipleOf<8>(OS_CONSTANT(EFFECTIVE_ADDRESS_WIDTH)) / 8;
     static constexpr unsigned storageSizeWithAlignmentShift = roundUpToMultipleOf<8>(OS_CONSTANT(EFFECTIVE_ADDRESS_WIDTH) - alignmentShiftSizeIfProfitable) / 8;
     static constexpr bool isAlignmentShiftProfitable = storageSizeWithoutAlignmentShift > storageSizeWithAlignmentShift;
