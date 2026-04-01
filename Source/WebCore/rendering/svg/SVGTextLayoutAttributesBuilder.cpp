@@ -86,6 +86,8 @@ static inline void NODELETE processRenderSVGInlineText(const RenderSVGInlineText
     auto length = string.length();
     if (text.style().whiteSpaceCollapse() == WhiteSpaceCollapse::Preserve) {
         atCharacter += length;
+        if (length)
+            lastCharacterWasSpace = string[length - 1] == ' ';
         return;
     }
 
