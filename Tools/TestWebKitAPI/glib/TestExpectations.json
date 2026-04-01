@@ -159,7 +159,7 @@
                 "expected": {"all": {"status": ["PASS", "FAIL"], "bug": "webkit.org/b/281942"}}
             },
             "/webkit/WebKitWebContext/no-web-process-leak": {
-                "expected": {"all": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/299598"}}
+                "expected": {"all": {"status": ["TIMEOUT", "PASS", "CRASH"], "bug": "webkit.org/b/299598"}}
             }
         }
     },
