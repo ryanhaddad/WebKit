@@ -96,9 +96,10 @@ enum class RequestType : uint8_t {
     Other,
 };
 
-enum class GetAllType : bool {
+enum class GetAllType : uint8_t {
     Keys,
     Values,
+    Records
 };
 
 enum class ConnectionClosedOnBehalfOfServer : bool { No, Yes };

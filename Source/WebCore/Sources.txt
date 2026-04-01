@@ -175,6 +175,7 @@ Modules/indexeddb/IDBKeyRange.cpp
 Modules/indexeddb/IDBKeyRangeData.cpp
 Modules/indexeddb/IDBObjectStore.cpp
 Modules/indexeddb/IDBOpenDBRequest.cpp
+Modules/indexeddb/IDBRecord.cpp
 Modules/indexeddb/IDBRequest.cpp
 Modules/indexeddb/IDBRequestCompletionEvent.cpp
 Modules/indexeddb/IDBTransaction.cpp
@@ -733,6 +734,7 @@ bindings/js/JSHistoryCustom.cpp
 bindings/js/JSIDBCursorCustom.cpp
 bindings/js/JSIDBCursorWithValueCustom.cpp
 bindings/js/JSIDBObjectStoreCustom.cpp
+bindings/js/JSIDBRecordCustom.cpp
 bindings/js/JSIDBRequestCustom.cpp
 bindings/js/JSIDBSerializationGlobalObject.cpp
 bindings/js/JSIDBTransactionCustom.cpp
@@ -4432,6 +4434,7 @@ JSIDBIndex.cpp
 JSIDBKeyRange.cpp
 JSIDBObjectStore.cpp
 JSIDBOpenDBRequest.cpp
+JSIDBRecord.cpp
 JSIDBRequest.cpp
 JSIDBTransaction.cpp
 JSIDBTransactionDurability.cpp

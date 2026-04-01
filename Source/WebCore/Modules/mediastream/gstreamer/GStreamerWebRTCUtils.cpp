@@ -35,6 +35,7 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/WallTime.h>
 #include <wtf/WeakRandomNumber.h>
+#include <wtf/glib/GMallocString.h>
 #include <wtf/glib/GSpanExtras.h>
 #include <wtf/text/Base64.h>
 #include <wtf/text/StringToIntegerConversion.h>

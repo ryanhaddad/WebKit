@@ -1733,6 +1733,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBObjectStore.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBObjectStore.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBOpenDBRequest.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBOpenDBRequest.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBRecord.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBRecord.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBRequest.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBRequest.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSIDBTransaction.cpp

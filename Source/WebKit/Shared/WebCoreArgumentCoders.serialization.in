@@ -490,6 +490,7 @@ class WebCore::IDBGetResult {
 class WebCore::IDBGetAllResult {
     WebCore::IndexedDB::GetAllType type()
     Vector<WebCore::IDBKeyData> keys()
+    Vector<WebCore::IDBKeyData> primaryKeys()
     Vector<WebCore::IDBValue> values()
     std::optional<WebCore::IDBKeyPath> keyPath()
 }
@@ -1824,7 +1825,11 @@ enum class WebCore::InputMode : uint8_t {
     Search
 };
 
-enum class WebCore::IndexedDB::GetAllType : bool
+enum class WebCore::IndexedDB::GetAllType : uint8_t {
+    Keys,
+    Values,
+    Records
+};
 
 enum class WebCore::WorkerType : bool
 

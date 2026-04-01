@@ -617,6 +617,8 @@ ExceptionOr<Ref<IDBRequest>> IDBObjectStore::doGetAllShared(IndexedDB::GetAllTyp
     case IndexedDB::GetAllType::Keys:
         callingFunctionExceptionMessagePrefix = "Failed to execute 'getAllKeys' on IDBObjectStore': "_s;
         break;
+    case IndexedDB::GetAllType::Records:
+        return Exception { ExceptionCode::NotSupportedError, "getAllRecords is not yet supported"_s };
     }
 
     Ref transaction = m_transaction.get();

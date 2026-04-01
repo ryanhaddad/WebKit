@@ -527,6 +527,7 @@ $(PROJECT_DIR)/Modules/indexeddb/IDBIndex.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBKeyRange.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBObjectStore.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBOpenDBRequest.idl
+$(PROJECT_DIR)/Modules/indexeddb/IDBRecord.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBRequest.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBTransaction.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBTransactionDurability.idl

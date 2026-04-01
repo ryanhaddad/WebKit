@@ -467,6 +467,7 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/indexeddb/IDBKeyRange.idl
     Modules/indexeddb/IDBObjectStore.idl
     Modules/indexeddb/IDBOpenDBRequest.idl
+    Modules/indexeddb/IDBRecord.idl
     Modules/indexeddb/IDBRequest.idl
     Modules/indexeddb/IDBTransaction.idl
     Modules/indexeddb/IDBTransactionDurability.idl

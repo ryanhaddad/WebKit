@@ -997,6 +997,9 @@ void IDBTransaction::didGetAllRecordsOnServer(IDBRequest& request, const IDBResu
     case IndexedDB::GetAllType::Values:
         request.setResult(getAllResult);
         break;
+    case IndexedDB::GetAllType::Records:
+        request.setResult(getAllResult);
+        break;
     }
 
     completeNoncursorRequest(request, resultData);

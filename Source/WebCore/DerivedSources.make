@@ -389,6 +389,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/indexeddb/IDBKeyRange.idl \
     $(WebCore)/Modules/indexeddb/IDBObjectStore.idl \
     $(WebCore)/Modules/indexeddb/IDBOpenDBRequest.idl \
+    $(WebCore)/Modules/indexeddb/IDBRecord.idl \
     $(WebCore)/Modules/indexeddb/IDBRequest.idl \
     $(WebCore)/Modules/indexeddb/IDBTransaction.idl \
 	$(WebCore)/Modules/indexeddb/IDBTransactionDurability.idl \

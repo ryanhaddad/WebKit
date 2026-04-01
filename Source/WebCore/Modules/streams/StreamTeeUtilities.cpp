@@ -29,6 +29,7 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "EventLoop.h"
+#include "JSDOMConvertBufferSource.h"
 #include "JSDOMPromise.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSReadableStreamReadResult.h"

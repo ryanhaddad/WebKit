@@ -2329,10 +2329,20 @@ IDBError SQLiteIDBBackingStore::getAllIndexRecords(const IDBResourceIdentifier& 
     if (!targetCount)
         targetCount = std::numeric_limits<uint32_t>::max();
     while (!cursor->didComplete() && !cursor->didError() && currentCount < targetCount) {
-        IDBKeyData keyCopy = cursor->currentPrimaryKey();
-        result.addKey(WTF::move(keyCopy));
-        if (getAllRecordsData.getAllType == IndexedDB::GetAllType::Values)
+        switch (getAllRecordsData.getAllType) {
+        case IndexedDB::GetAllType::Keys:
+            result.addKey(IDBKeyData(cursor->currentPrimaryKey()));
+            break;
+        case IndexedDB::GetAllType::Values:
+            result.addKey(IDBKeyData(cursor->currentPrimaryKey()));
             result.addValue(IDBValue(cursor->currentValue()));
+            break;
+        case IndexedDB::GetAllType::Records:
+            result.addKey(IDBKeyData(cursor->currentKey()));
+            result.addPrimaryKey(IDBKeyData(cursor->currentPrimaryKey()));
+            result.addValue(IDBValue(cursor->currentValue()));
+            break;
+        };
 
         ++currentCount;
         cursor->advance(1);

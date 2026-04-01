@@ -52,4 +52,4 @@ struct ParsedGetAllQueryOrOptions {
 
 ExceptionOr<ParsedGetAllQueryOrOptions> parseGetAllOptions(JSC::JSGlobalObject& execState, JSC::JSValue keyOrOptions);
 
-}
+} // namespace WebCore

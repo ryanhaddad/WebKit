@@ -32,7 +32,7 @@
 namespace WebCore {
 
 namespace IndexedDB {
-enum class GetAllType : bool;
+enum class GetAllType : uint8_t;
 }
 
 struct IDBGetAllRecordsData {
