@@ -1682,6 +1682,39 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
             init.set(collator);
         });
 
+    m_defaultDateTimeFormat.initLater(
+        [] (const Initializer<IntlDateTimeFormat>& init) {
+            JSGlobalObject* globalObject = jsCast<JSGlobalObject*>(init.owner);
+            VM& vm = init.vm;
+            auto scope = DECLARE_THROW_SCOPE(vm);
+            auto* dateTimeFormat = IntlDateTimeFormat::create(vm, globalObject->dateTimeFormatStructure());
+            dateTimeFormat->initializeDateTimeFormat(globalObject, jsUndefined(), jsUndefined(), IntlDateTimeFormat::RequiredComponent::Any, IntlDateTimeFormat::Defaults::All);
+            RETURN_IF_EXCEPTION(scope, void());
+            init.set(dateTimeFormat);
+        });
+
+    m_defaultDateFormat.initLater(
+        [] (const Initializer<IntlDateTimeFormat>& init) {
+            JSGlobalObject* globalObject = jsCast<JSGlobalObject*>(init.owner);
+            VM& vm = init.vm;
+            auto scope = DECLARE_THROW_SCOPE(vm);
+            auto* dateTimeFormat = IntlDateTimeFormat::create(vm, globalObject->dateTimeFormatStructure());
+            dateTimeFormat->initializeDateTimeFormat(globalObject, jsUndefined(), jsUndefined(), IntlDateTimeFormat::RequiredComponent::Date, IntlDateTimeFormat::Defaults::Date);
+            RETURN_IF_EXCEPTION(scope, void());
+            init.set(dateTimeFormat);
+        });
+
+    m_defaultTimeFormat.initLater(
+        [] (const Initializer<IntlDateTimeFormat>& init) {
+            JSGlobalObject* globalObject = jsCast<JSGlobalObject*>(init.owner);
+            VM& vm = init.vm;
+            auto scope = DECLARE_THROW_SCOPE(vm);
+            auto* dateTimeFormat = IntlDateTimeFormat::create(vm, globalObject->dateTimeFormatStructure());
+            dateTimeFormat->initializeDateTimeFormat(globalObject, jsUndefined(), jsUndefined(), IntlDateTimeFormat::RequiredComponent::Time, IntlDateTimeFormat::Defaults::Time);
+            RETURN_IF_EXCEPTION(scope, void());
+            init.set(dateTimeFormat);
+        });
+
     m_defaultNumberFormat.initLater(
         [] (const Initializer<IntlNumberFormat>& init) {
             JSGlobalObject* globalObject = jsCast<JSGlobalObject*>(init.owner);
@@ -2880,6 +2913,9 @@ void JSGlobalObject::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     visitor.append(thisObject->m_stringConstructor);
 
     thisObject->m_defaultCollator.visit(visitor);
+    thisObject->m_defaultDateTimeFormat.visit(visitor);
+    thisObject->m_defaultDateFormat.visit(visitor);
+    thisObject->m_defaultTimeFormat.visit(visitor);
     thisObject->m_defaultNumberFormat.visit(visitor);
     thisObject->m_collatorStructure.visit(visitor);
     thisObject->m_displayNamesStructure.visit(visitor);

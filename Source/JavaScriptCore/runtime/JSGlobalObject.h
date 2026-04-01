@@ -84,6 +84,7 @@ class GeneratorPrototype;
 class GetterSetter;
 class ImportMap;
 class IntlCollator;
+class IntlDateTimeFormat;
 class IntlNumberFormat;
 class JSArrayBuffer;
 class JSCallee;
@@ -270,6 +271,9 @@ public:
     WriteBarrier<StringConstructor> m_stringConstructor;
 
     LazyProperty<JSGlobalObject, IntlCollator> m_defaultCollator;
+    LazyProperty<JSGlobalObject, IntlDateTimeFormat> m_defaultDateTimeFormat;
+    LazyProperty<JSGlobalObject, IntlDateTimeFormat> m_defaultDateFormat;
+    LazyProperty<JSGlobalObject, IntlDateTimeFormat> m_defaultTimeFormat;
     LazyProperty<JSGlobalObject, IntlNumberFormat> m_defaultNumberFormat;
     LazyProperty<JSGlobalObject, Structure> m_collatorStructure;
     LazyProperty<JSGlobalObject, Structure> m_displayNamesStructure;
@@ -753,6 +757,9 @@ public:
     JSIteratorConstructor* iteratorConstructor() const LIFETIME_BOUND { return m_iteratorConstructor.get(); }
 
     IntlCollator* defaultCollator() const LIFETIME_BOUND { return m_defaultCollator.get(this); }
+    IntlDateTimeFormat* defaultDateTimeFormat() const LIFETIME_BOUND { return m_defaultDateTimeFormat.get(this); }
+    IntlDateTimeFormat* defaultDateFormat() const LIFETIME_BOUND { return m_defaultDateFormat.get(this); }
+    IntlDateTimeFormat* defaultTimeFormat() const LIFETIME_BOUND { return m_defaultTimeFormat.get(this); }
     IntlNumberFormat* defaultNumberFormat() const LIFETIME_BOUND { return m_defaultNumberFormat.get(this); }
 
     NullGetterFunction* nullGetterFunction() const LIFETIME_BOUND { return m_nullGetterFunction.get(); }
