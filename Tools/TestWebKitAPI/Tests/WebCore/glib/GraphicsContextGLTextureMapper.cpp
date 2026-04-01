@@ -32,7 +32,6 @@
 #include "WebCoreTestUtilities.h"
 #include <WebCore/Color.h>
 #include <WebCore/GraphicsContextGLTextureMapperANGLE.h>
-#include <WebCore/PlatformDisplaySurfaceless.h>
 #include <WebCore/ProcessIdentity.h>
 #include <atomic>
 #include <limits>
@@ -47,20 +46,10 @@ using namespace WebCore;
 
 namespace {
 
-static void initializePlatformDisplayIfNeeded()
-{
-    if (PlatformDisplay::sharedDisplayIfExists())
-        return;
-    auto display = PlatformDisplaySurfaceless::create();
-    RELEASE_ASSERT(display);
-    PlatformDisplay::setSharedDisplay(WTF::move(display));
-}
-
 using TestedGraphicsContextGLTextureMapper = GraphicsContextGLTextureMapperANGLE;
 
 static RefPtr<TestedGraphicsContextGLTextureMapper> createTestedGraphicsContextGL(GraphicsContextGLAttributes attribute)
 {
-    initializePlatformDisplayIfNeeded();
     return TestedGraphicsContextGLTextureMapper::create(WTF::move(attribute));
 }
 

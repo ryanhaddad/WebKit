@@ -28,7 +28,27 @@
 
 #include <wtf/MemoryFootprint.h>
 
+#if PLATFORM(GTK) || PLATFORM(WPE)
+#include <WebCore/PlatformDisplaySurfaceless.h>
+#endif
+
 namespace TestWebKitAPI {
+
+#if PLATFORM(GTK) || PLATFORM(WPE)
+class PlatformDisplayEnvironment : public testing::Environment {
+public:
+    void SetUp() override
+    {
+        if (WebCore::PlatformDisplay::sharedDisplayIfExists())
+            return;
+        auto display = WebCore::PlatformDisplaySurfaceless::create();
+        RELEASE_ASSERT(display);
+        WebCore::PlatformDisplay::setSharedDisplay(WTF::move(display));
+    }
+};
+
+static testing::Environment* const platformDisplayEnvironment = testing::AddGlobalTestEnvironment(new PlatformDisplayEnvironment);
+#endif // PLATFORM(GTK) || PLATFORM(WPE)
 
 ::testing::AssertionResult memoryFootprintChangedBy(size_t& lastFootprint, double expectedChange, double error)
 {
