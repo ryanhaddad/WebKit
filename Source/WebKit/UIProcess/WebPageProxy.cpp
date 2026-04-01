@@ -2825,7 +2825,7 @@ void WebPageProxy::goToBackForwardItemAtIndex(int32_t steps, FrameLoadType frame
 {
     WEBPAGEPROXY_RELEASE_LOG(Loading, "goToBackForwardItemAtIndex: steps=%d", steps);
 
-    RefPtr item = backForwardList().itemAtIndex(steps);
+    RefPtr item = backForwardList().itemAtDeltaFromCurrentIndex(steps);
     if (!item)
         return;
 
