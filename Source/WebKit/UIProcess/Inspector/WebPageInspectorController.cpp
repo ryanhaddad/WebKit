@@ -250,7 +250,8 @@ void WebPageInspectorController::didCreateFrame(WebFrameProxy& frame)
     if (!shouldManageFrameTargets())
         return;
 
-    addTarget(FrameInspectorTargetProxy::create(frame, getTargetID(frame)));
+    constexpr bool isProvisional = false;
+    addTarget(makeUnique<FrameInspectorTargetProxy>(frame.frameID(), protect(frame.process()), isProvisional));
 }
 
 void WebPageInspectorController::willDestroyFrame(const WebFrameProxy& frame)
@@ -266,7 +267,8 @@ void WebPageInspectorController::didCreateProvisionalFrame(ProvisionalFrameProxy
     if (!shouldManageFrameTargets())
         return;
 
-    addTarget(FrameInspectorTargetProxy::create(provisionalFrame, getTargetID(provisionalFrame)));
+    constexpr bool isProvisional = true;
+    addTarget(makeUnique<FrameInspectorTargetProxy>(protect(provisionalFrame.frame())->frameID(), protect(provisionalFrame.process()), isProvisional));
 }
 
 void WebPageInspectorController::willDestroyProvisionalFrame(const ProvisionalFrameProxy& provisionalFrame)
