@@ -198,6 +198,9 @@ public:
     
     bool isArrowFunction() const { return isArrowFunctionParseMode(parseMode()); }
 
+    bool singletonHasBeenInvalidated() const { return m_singletonHasBeenInvalidated; }
+    void setSingletonHasBeenInvalidated() { m_singletonHasBeenInvalidated = true; }
+
     JSC::DerivedContextType derivedContextType() const {return static_cast<JSC::DerivedContextType>(m_derivedContextType); }
 
     InlineAttribute inlineAttribute() const { return static_cast<InlineAttribute>(m_inlineAttribute); }
@@ -302,7 +305,8 @@ private:
     unsigned m_isCached : 1;
     unsigned m_unlinkedFunctionEnd : 31;
     unsigned m_needsClassFieldInitializer : 1;
-    unsigned m_parameterCount : 31;
+    unsigned m_parameterCount : 30;
+    unsigned m_singletonHasBeenInvalidated : 1;
     unsigned m_privateBrandRequirement : 1;
     CodeFeatures m_features : bitWidthOfCodeFeatures;
     uint16_t m_constructorKind : 2;

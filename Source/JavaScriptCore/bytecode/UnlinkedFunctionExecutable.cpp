@@ -106,6 +106,7 @@ UnlinkedFunctionExecutable::UnlinkedFunctionExecutable(VM& vm, Structure* struct
     , m_unlinkedFunctionEnd(node->startStartOffset() + node->source().length() - 1)
     , m_needsClassFieldInitializer(static_cast<unsigned>(needsClassFieldInitializer))
     , m_parameterCount(node->parameterCount())
+    , m_singletonHasBeenInvalidated(false)
     , m_privateBrandRequirement(static_cast<unsigned>(privateBrandRequirement))
     , m_features(0)
     , m_constructorKind(static_cast<unsigned>(node->constructorKind()))
@@ -200,6 +201,8 @@ FunctionExecutable* UnlinkedFunctionExecutable::link(VM& vm, ScriptExecutable* t
         SourceProfiler::profile(SourceProfiler::Type::Function, source);
 
     FunctionExecutable* result = FunctionExecutable::create(vm, topLevelExecutable, source, this, intrinsic, isInsideOrdinaryFunction);
+    if (m_singletonHasBeenInvalidated)
+        result->singleton().invalidate(vm, StringFireDetail("Singleton was previously invalidated"));
     if (overrideLineNumber)
         result->setOverrideLineNumber(*overrideLineNumber);
 
