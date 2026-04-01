@@ -277,6 +277,11 @@ public:
     const size_t numberOfFrames { 0 };
 };
 
+bool AudioFileReader::isAvailable()
+{
+    return PAL::isAVFoundationFrameworkAvailable() && PAL::isCoreMediaFrameworkAvailable() && PAL::isAudioToolboxFrameworkAvailable();
+}
+
 AudioFileReader::AudioFileReader(std::span<const uint8_t> data)
     : m_data(data)
 #if !RELEASE_LOG_DISABLED
@@ -848,6 +853,9 @@ RefPtr<AudioBus> AudioFileReader::createBus(float sampleRate, bool mixToMono)
 
 RefPtr<AudioBus> createBusFromInMemoryAudioFile(std::span<const uint8_t> data, bool mixToMono, float sampleRate)
 {
+    if (!AudioFileReader::isAvailable())
+        return nullptr;
+
     AudioFileReader reader(data);
     return reader.createBus(sampleRate, mixToMono);
 }
