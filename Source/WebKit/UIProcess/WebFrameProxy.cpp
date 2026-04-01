@@ -91,6 +91,9 @@
 
 #if HAVE(BROWSERENGINEKIT_WEBCONTENTFILTER)
 #include "WebParentalControlsURLFilter.h"
+#if HAVE(WEBCONTENTRESTRICTIONS_ASK_TO)
+#include <WebCore/CocoaView.h>
+#endif
 #endif
 
 #define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, process().connection())
@@ -451,8 +454,12 @@ bool WebFrameProxy::didHandleContentFilterUnblockNavigation(const ResourceReques
 
     std::optional<URL> unblockRequestURL = std::nullopt;
 #if HAVE(WEBCONTENTRESTRICTIONS_ASK_TO)
-    if (page->preferences().webContentRestrictionsAskToEnabled())
+    bool webContentRestrictionsAskToEnabled = page->preferences().webContentRestrictionsAskToEnabled();
+    if (webContentRestrictionsAskToEnabled)
         unblockRequestURL = request.url();
+#if HAVE(BROWSERENGINEKIT_WEBCONTENTFILTER)
+    RetainPtr<CocoaView> presentingView = webContentRestrictionsAskToEnabled ? reinterpret_cast<CocoaView *>(page->cocoaView().get()) : nullptr;
+#endif
 #endif
 
 #if HAVE(WEBCONTENTRESTRICTIONS)
@@ -480,10 +487,14 @@ bool WebFrameProxy::didHandleContentFilterUnblockNavigation(const ResourceReques
     WebParentalControlsURLFilter::setSharedParentalControlsURLFilterIfNecessary();
 #endif
 
-    m_contentFilterUnblockHandler.requestUnblockAsync([page](bool unblocked) {
+    SUPPRESS_FORWARD_DECL_ARG m_contentFilterUnblockHandler.requestUnblockAsync([page](bool unblocked) {
         if (unblocked)
             page->reload({ });
-    }, unblockRequestURL);
+    }, unblockRequestURL
+#if HAVE(WEBCONTENTRESTRICTIONS_ASK_TO) && HAVE(BROWSERENGINEKIT_WEBCONTENTFILTER)
+    , presentingView
+#endif
+    );
     return true;
 }
 #endif

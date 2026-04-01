@@ -29,6 +29,7 @@
 #if HAVE(BROWSERENGINEKIT_WEBCONTENTFILTER)
 
 #import "Logging.h"
+#import <UIKit/UIView.h>
 #import <WebCore/ParentalControlsContentFilter.h>
 #import <pal/spi/ios/BrowserEngineKitSPI.h>
 #import <wtf/BlockPtr.h>
@@ -124,8 +125,10 @@ void WebParentalControlsURLFilter::setSharedParentalControlsURLFilterIfNecessary
 }
 
 #if HAVE(WEBCONTENTRESTRICTIONS_ASK_TO)
-void WebParentalControlsURLFilter::requestPermissionForURL(const URL& url, const URL& referrerURL, CompletionHandler<void(bool)>&& completionHandler)
+void WebParentalControlsURLFilter::requestPermissionForURL(const URL& url, const URL& referrerURL, CompletionHandler<void(bool)>&& completionHandler, CocoaView* presentingView)
 {
+    UIView* presentingViewAsUIView = (UIView *)presentingView;
+    UNUSED_VARIABLE(presentingViewAsUIView);
     workQueueSingleton().dispatchSync([this, protectedThis = Ref { *this }, currentIsEnabled = isEnabled(), url = crossThreadCopy(url), referrerURL = crossThreadCopy(referrerURL), completionHandler = WTF::move(completionHandler)]() mutable {
         if (!currentIsEnabled) {
             callOnMainRunLoop([completionHandler = WTF::move(completionHandler)] mutable {
