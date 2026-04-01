@@ -942,7 +942,7 @@ void WebAutomationSession::traverseHistoryInBrowsingContext(const Inspector::Pro
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(targetIndex >= static_cast<int>(backCount + forwardCount + 1), InvalidParameter);
 
 #if ENABLE(BACK_FORWARD_LIST_SWIFT)
-    RefPtr targetItem = backForwardList.itemAtIndex(targetIndex);
+    RefPtr targetItem = backForwardList.itemAtDeltaFromCurrentIndex(targetIndex);
 #else
     RefPtr targetItem = backForwardList->itemAtDeltaFromCurrentIndex(targetIndex);
 #endif

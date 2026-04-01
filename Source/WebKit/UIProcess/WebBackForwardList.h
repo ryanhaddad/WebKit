@@ -157,7 +157,7 @@ public:
     void clear();
 
     WebBackForwardListItem* WTF_NULLABLE currentItem() const;
-    WebBackForwardListItem* WTF_NULLABLE itemAtIndex(int) const;
+    RefPtr<WebBackForwardListItem> itemAtDeltaFromCurrentIndex(int) const;
     WebBackForwardListItem* WTF_NULLABLE backItem() const;
     WebBackForwardListItem* WTF_NULLABLE forwardItem() const;
 
