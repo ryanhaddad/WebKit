@@ -49,6 +49,7 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
 #if USE(GBM)
+#include <WebCore/DMABufBuffer.h>
 #include <WebCore/DRMDevice.h>
 #include <WebCore/GBMDevice.h>
 struct gbm_bo;
@@ -267,7 +268,7 @@ private:
     class RenderTargetEGLImage final : public RenderTargetShareableBuffer {
     public:
         static std::unique_ptr<RenderTarget> create(AcceleratedSurface&, const WebCore::IntSize&, const BufferFormat&);
-        RenderTargetEGLImage(AcceleratedSurface&, const WebCore::IntSize&, EGLImage, uint32_t format, Vector<WTF::UnixFileDescriptor>&&, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, RendererBufferFormat::Usage);
+        RenderTargetEGLImage(AcceleratedSurface&, const WebCore::IntSize&, EGLImage, WebCore::DMABufBufferAttributes&&, RendererBufferFormat::Usage);
 #if OS(ANDROID)
         RenderTargetEGLImage(AcceleratedSurface&, const WebCore::IntSize&, EGLImage, RefPtr<AHardwareBuffer>&&);
 #endif

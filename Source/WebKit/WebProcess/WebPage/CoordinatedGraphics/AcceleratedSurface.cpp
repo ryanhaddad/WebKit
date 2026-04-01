@@ -61,6 +61,7 @@ WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
 #if USE(GBM)
+#include <WebCore/DMABufBuffer.h>
 #include <WebCore/DRMDeviceManager.h>
 #include <WebCore/GBMVersioning.h>
 #include <drm_fourcc.h>
@@ -254,8 +255,9 @@ std::unique_ptr<AcceleratedSurface::RenderTarget> AcceleratedSurface::RenderTarg
 
     struct gbm_bo* bo = nullptr;
     uint32_t flags = bufferFormat.usage == RendererBufferFormat::Usage::Scanout ? GBM_BO_USE_SCANOUT : GBM_BO_USE_RENDERING;
-    bool disableModifiers = bufferFormat.modifiers.size() == 1 && bufferFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID;
-    if (!disableModifiers && !bufferFormat.modifiers.isEmpty())
+    auto enableModifiers = bufferFormat.modifiers.size() == 1 && bufferFormat.modifiers[0] == DRM_FORMAT_MOD_INVALID
+        ? DMABufBufferAttributes::EnableModifiers::No : DMABufBufferAttributes::EnableModifiers::Yes;
+    if (enableModifiers == DMABufBufferAttributes::EnableModifiers::Yes && !bufferFormat.modifiers.isEmpty())
         bo = gbm_bo_create_with_modifiers2(gbmDevice->device(), size.width(), size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), flags);
 
     if (!bo) {
@@ -269,64 +271,25 @@ std::unique_ptr<AcceleratedSurface::RenderTarget> AcceleratedSurface::RenderTarg
         return nullptr;
     }
 
-    Vector<UnixFileDescriptor> fds;
-    Vector<uint32_t> offsets;
-    Vector<uint32_t> strides;
-    uint32_t format = gbm_bo_get_format(bo);
-    int planeCount = gbm_bo_get_plane_count(bo);
-    uint64_t modifier = disableModifiers ? DRM_FORMAT_MOD_INVALID : gbm_bo_get_modifier(bo);
-
-    Vector<EGLAttrib> attributes = {
-        EGL_WIDTH, static_cast<EGLAttrib>(gbm_bo_get_width(bo)),
-        EGL_HEIGHT, static_cast<EGLAttrib>(gbm_bo_get_height(bo)),
-        EGL_LINUX_DRM_FOURCC_EXT, static_cast<EGLAttrib>(format),
-    };
-
-#define ADD_PLANE_ATTRIBUTES(planeIndex) { \
-    fds.append(UnixFileDescriptor { gbm_bo_get_fd_for_plane(bo, planeIndex), UnixFileDescriptor::Adopt }); \
-    offsets.append(gbm_bo_get_offset(bo, planeIndex)); \
-    strides.append(gbm_bo_get_stride_for_plane(bo, planeIndex)); \
-    std::array<EGLAttrib, 6> planeAttributes { \
-        EGL_DMA_BUF_PLANE##planeIndex##_FD_EXT, fds.last().value(), \
-        EGL_DMA_BUF_PLANE##planeIndex##_OFFSET_EXT, static_cast<EGLAttrib>(offsets.last()), \
-        EGL_DMA_BUF_PLANE##planeIndex##_PITCH_EXT, static_cast<EGLAttrib>(strides.last()) \
-    }; \
-    attributes.append(std::span<const EGLAttrib> { planeAttributes }); \
-    if (modifier != DRM_FORMAT_MOD_INVALID) { \
-        std::array<EGLAttrib, 4> modifierAttributes { \
-            EGL_DMA_BUF_PLANE##planeIndex##_MODIFIER_HI_EXT, static_cast<EGLAttrib>(modifier >> 32), \
-            EGL_DMA_BUF_PLANE##planeIndex##_MODIFIER_LO_EXT, static_cast<EGLAttrib>(modifier & 0xffffffff) \
-        }; \
-        attributes.append(std::span<const EGLAttrib> { modifierAttributes }); \
-    } \
+    auto dmaBufAttributes = DMABufBufferAttributes::fromGBMBufferObject(bo, enableModifiers);
+    if (!dmaBufAttributes) {
+        gbm_bo_destroy(bo);
+        WTFLogAlways("Failed to extract DMA-buf attributes from GBM buffer of size %dx%d", size.width(), size.height()); // NOLINT
+        return nullptr;
     }
 
-    if (planeCount > 0)
-        ADD_PLANE_ATTRIBUTES(0);
-    if (planeCount > 1)
-        ADD_PLANE_ATTRIBUTES(1);
-    if (planeCount > 2)
-        ADD_PLANE_ATTRIBUTES(2);
-    if (planeCount > 3)
-        ADD_PLANE_ATTRIBUTES(3);
-
-#undef ADD_PLANE_ATTRIBS
-
-    attributes.append(EGL_NONE);
-
     auto& display = PlatformDisplay::sharedDisplay();
-    auto image = display.createEGLImage(EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attributes);
+    auto image = DMABufBuffer::createEGLImage(display.glDisplay(), *dmaBufAttributes);
     gbm_bo_destroy(bo);
-
     if (!image) {
         WTFLogAlways("Failed to create EGL image for DMABufs with size %dx%d", size.width(), size.height());
         return nullptr;
     }
 
-    return makeUnique<RenderTargetEGLImage>(surface, size, image, format, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier, bufferFormat.usage);
+    return makeUnique<RenderTargetEGLImage>(surface, size, image, WTF::move(*dmaBufAttributes), bufferFormat.usage);
 }
 
-AcceleratedSurface::RenderTargetEGLImage::RenderTargetEGLImage(AcceleratedSurface& surface, const IntSize& size, EGLImage image, uint32_t format, Vector<UnixFileDescriptor>&& fds, Vector<uint32_t>&& offsets, Vector<uint32_t>&& strides, uint64_t modifier, RendererBufferFormat::Usage usage)
+AcceleratedSurface::RenderTargetEGLImage::RenderTargetEGLImage(AcceleratedSurface& surface, const IntSize& size, EGLImage image, DMABufBufferAttributes&& dmaBufAttributes, RendererBufferFormat::Usage usage)
     : RenderTargetShareableBuffer(surface, size)
     , m_image(image)
 {
@@ -335,7 +298,7 @@ AcceleratedSurface::RenderTargetEGLImage::RenderTargetEGLImage(AcceleratedSurfac
         createSkiaSurfaceForTexture(*m_texture);
     } else
         initializeColorBuffer();
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, size, format, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier, usage), m_surface->surfaceID());
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, WTF::move(dmaBufAttributes), usage), m_surface->surfaceID());
 }
 #endif // USE(GBM)
 
@@ -529,7 +492,7 @@ AcceleratedSurface::RenderTargetTexture::RenderTargetTexture(AcceleratedSurface&
     else
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->id(), 0);
 
-    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, size, format, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier, RendererBufferFormat::Usage::Rendering), m_surface->surfaceID());
+    WebProcess::singleton().parentProcessConnection()->send(Messages::AcceleratedBackingStore::DidCreateDMABufBuffer(m_id, { size, format, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier }, RendererBufferFormat::Usage::Rendering), m_surface->surfaceID());
 }
 
 AcceleratedSurface::RenderTargetTexture::~RenderTargetTexture() = default;

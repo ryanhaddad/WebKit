@@ -833,7 +833,7 @@ RefPtr<DMABufBuffer> VideoFrameGStreamer::getDMABuf()
         fourcc = *fourccFromFormat;
     ASSERT(fourcc);
 
-    RefPtr dmabuf = DMABufBuffer::create(size, fourcc, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier);
+    Ref dmabuf = DMABufBuffer::create({ size, fourcc, WTF::move(fds), WTF::move(offsets), WTF::move(strides), modifier });
 
     DMABufBuffer::ColorSpace colorSpace = DMABufBuffer::ColorSpace::Bt601;
     DMABufBuffer::TransferFunction transferFunction = DMABufBuffer::TransferFunction::Bt709;
