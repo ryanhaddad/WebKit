@@ -64,6 +64,10 @@ void UDateIntervalFormatDeleter::operator()(UDateIntervalFormat* formatter)
 
 const ClassInfo IntlDateTimeFormat::s_info = { "Object"_s, &Base::s_info, nullptr, nullptr, CREATE_METHOD_TABLE(IntlDateTimeFormat) };
 
+// Approximate sizes of ICU objects for GC memory pressure reporting, measured empirically with udat_open + udat_format.
+static constexpr size_t estimatedUDateFormatSize = 30000;
+static constexpr size_t estimatedUDateIntervalFormatSize = 30000;
+
 namespace IntlDateTimeFormatInternal {
 static constexpr bool verbose = false;
 }
@@ -94,6 +98,11 @@ void IntlDateTimeFormat::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     Base::visitChildren(thisObject, visitor);
 
     visitor.append(thisObject->m_boundFormat);
+
+    if (thisObject->m_dateFormat)
+        visitor.reportExtraMemoryVisited(estimatedUDateFormatSize);
+    if (thisObject->m_dateIntervalFormat)
+        visitor.reportExtraMemoryVisited(estimatedUDateIntervalFormatSize);
 }
 
 DEFINE_VISIT_CHILDREN(IntlDateTimeFormat);
@@ -949,6 +958,8 @@ void IntlDateTimeFormat::initializeDateTimeFormat(JSGlobalObject* globalObject, 
         return;
     }
 
+    vm.heap.reportExtraMemoryAllocated(this, estimatedUDateFormatSize);
+
     // Gregorian calendar should be used from the beginning of ECMAScript time.
     // Failure here means unsupported calendar, and can safely be ignored.
     UCalendar* cal = const_cast<UCalendar*>(udat_getCalendar(m_dateFormat.get()));
@@ -1433,6 +1444,9 @@ UDateIntervalFormat* IntlDateTimeFormat::createDateIntervalFormatIfNecessary(JSG
         throwTypeError(globalObject, scope, "failed to initialize DateIntervalFormat"_s);
         return nullptr;
     }
+
+    vm.heap.reportExtraMemoryAllocated(this, estimatedUDateIntervalFormatSize);
+
     return m_dateIntervalFormat.get();
 }
 
