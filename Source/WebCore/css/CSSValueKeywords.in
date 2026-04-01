@@ -1849,6 +1849,9 @@ allow-discrete
 // inline
 -internal-textarea-auto
 
+// outline-offset
+-internal-inset
+
 // CSS Anchor Positioning
 anchor
 anchor-size

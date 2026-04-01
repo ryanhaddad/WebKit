@@ -129,6 +129,7 @@ public:
     static Ref<CSSValue> extractWebkitMaskSourceType(ExtractorState&);
     static Ref<CSSValue> extractColor(ExtractorState&);
     static Ref<CSSValue> extractCaretColor(ExtractorState&);
+    static RefPtr<CSSValue> extractOutlineOffset(ExtractorState&);
 
     // MARK: Shorthands
 
@@ -227,6 +228,7 @@ public:
     static void extractWebkitMaskSourceTypeSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractColorSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractCaretColorSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
+    static void extractOutlineOffsetSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
 
     static void extractAnimationShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
     static void extractAnimationRangeShorthandSerialization(ExtractorState&, StringBuilder&, const CSS::SerializationContext&);
@@ -2412,6 +2414,16 @@ inline void ExtractorCustom::extractCaretColorSerialization(ExtractorState& stat
         return;
     }
     extractSerialization<CSSPropertyCaretColor>(state, builder, context);
+}
+
+inline RefPtr<CSSValue> ExtractorCustom::extractOutlineOffset(ExtractorState& state)
+{
+    return createCSSValue(state.pool, state.style, state.style.usedOutlineOffset());
+}
+
+inline void ExtractorCustom::extractOutlineOffsetSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
+{
+    serializationForCSS(builder, context, state.style, state.style.usedOutlineOffset());
 }
 
 // MARK: - Shorthands

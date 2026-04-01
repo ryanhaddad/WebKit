@@ -3333,6 +3333,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/non-standard/StyleWebKitTextStrokeWidth.h
     style/values/non-standard/StyleWebKitTouchCallout.h
 
+    style/values/outline/StyleOutlineOffset.h
+
     style/values/overflow/StyleBlockEllipsis.h
     style/values/overflow/StyleMaximumLines.h
     style/values/overflow/StyleOverflowClipMargin.h

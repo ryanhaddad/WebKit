@@ -308,6 +308,7 @@ struct OffsetPosition;
 struct OffsetRotate;
 struct Opacity;
 struct Orphans;
+struct OutlineOffset;
 struct OverflowClipMargin;
 struct PaddingEdge;
 struct PageSize;

@@ -7037,14 +7037,20 @@
         "outline-offset": {
             "animation-type": "by computed value",
             "initial": "0px",
+            "values": [
+                {
+                	"value": "-internal-inset",
+                	"status": "internal"
+                }
+            ],
             "codegen-properties": {
-                "computed-style-initial-constexpr": true,
                 "computed-style-storage-path": ["m_nonInheritedData", "backgroundData", "outline"],
                 "computed-style-storage-container": "struct",
                 "computed-style-storage-kind": "reference",
-                "computed-style-type": "Style::Length<>",
+                "computed-style-type": "Style::OutlineOffset",
                 "skip-render-style-getter": true,
-                "parser-grammar": "<length>"
+                "style-extractor-custom": true,
+                "parser-grammar": "<length> | <<values>>"
             },
             "specification": {
                 "category": "css-ui",

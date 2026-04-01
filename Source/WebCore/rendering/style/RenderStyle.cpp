@@ -402,7 +402,10 @@ Style::LineWidth RenderStyle::usedColumnRuleWidth() const
 
 Style::Length<> RenderStyle::usedOutlineOffset() const
 {
-    return m_computedStyle.outline().outlineOffset;
+    auto& outline = m_computedStyle.outline();
+    if (outline.outlineOffset.isInternalInset())
+        return Style::Length<> { -Style::evaluate<float>(usedOutlineWidth(), Style::ZoomNeeded { }) };
+    return *outline.outlineOffset.tryLength();
 }
 
 Style::LineWidth RenderStyle::usedOutlineWidth() const
