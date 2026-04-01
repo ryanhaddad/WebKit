@@ -836,6 +836,12 @@ void WebChromeClient::requestFrameScreenPosition(FrameIdentifier frameID) const
     if (RefPtr page = m_page.get())
         page->requestFrameScreenPosition(frameID);
 }
+
+void WebChromeClient::scheduleAccessibilityFrameGeometryUpdate() const
+{
+    if (RefPtr page = m_page.get())
+        page->scheduleAccessibilityFrameGeometryUpdate();
+}
 #endif
 
 void WebChromeClient::mainFrameDidChange()

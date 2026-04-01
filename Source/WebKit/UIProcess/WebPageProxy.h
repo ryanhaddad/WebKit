@@ -1578,6 +1578,7 @@ public:
     void accessibilitySettingsDidChange();
 #if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
     void updateAccessibilityFrameGeometry();
+    void scheduleAccessibilityFrameGeometryUpdate();
 #endif
     void setAccessibilityMode(WebCore::AccessibilityMode);
 
@@ -3883,6 +3884,10 @@ private:
     bool m_isEditable { false };
 
     WebCore::AccessibilityMode m_accessibilityMode { };
+#if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
+    MonotonicTime m_lastAccessibilityFrameGeometryUpdate;
+    RefPtr<RunLoop::DispatchTimer> m_pendingAccessibilityFrameGeometryUpdateTimer;
+#endif
 
     double m_textZoomFactor { 1 };
     double m_pageZoomFactor { 1 };

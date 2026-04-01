@@ -140,6 +140,7 @@ private:
     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) const final;
 #if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
     void requestFrameScreenPosition(WebCore::FrameIdentifier) const final;
+    void scheduleAccessibilityFrameGeometryUpdate() const final;
 #endif
 
     void mainFrameDidChange() final;

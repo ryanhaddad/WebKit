@@ -10073,6 +10073,30 @@ void WebPageProxy::updateAccessibilityFrameGeometry()
     for (RefPtr frame = m_mainFrame; frame; frame = frame->traverseNext().frame)
         requestFrameScreenPosition(frame->frameID());
 }
+
+void WebPageProxy::scheduleAccessibilityFrameGeometryUpdate()
+{
+    if (WebCore::isAccessibilityModeOff(m_accessibilityMode))
+        return;
+
+    // Fire immediately on the first call (or if enough time has elapsed), but
+    // throttle rapid successive calls to avoid excessive updating.
+    static constexpr Seconds updateDelay = 100_ms;
+    auto timeSinceLastUpdate = MonotonicTime::now() - m_lastAccessibilityFrameGeometryUpdate;
+    if (timeSinceLastUpdate >= updateDelay) {
+        m_lastAccessibilityFrameGeometryUpdate = MonotonicTime::now();
+        updateAccessibilityFrameGeometry();
+    } else if (!m_pendingAccessibilityFrameGeometryUpdateTimer || !m_pendingAccessibilityFrameGeometryUpdateTimer->isActive()) {
+        m_pendingAccessibilityFrameGeometryUpdateTimer = RunLoop::mainSingleton().dispatchAfter(updateDelay, [weakThis = WeakPtr { *this }] {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis)
+                return;
+            protectedThis->m_pendingAccessibilityFrameGeometryUpdateTimer = nullptr;
+            protectedThis->m_lastAccessibilityFrameGeometryUpdate = MonotonicTime::now();
+            protectedThis->updateAccessibilityFrameGeometry();
+        });
+    }
+}
 #endif // ENABLE(ACCESSIBILITY_LOCAL_FRAME)
 
 void WebPageProxy::runBeforeUnloadConfirmPanel(IPC::Connection& connection, FrameIdentifier frameID, FrameInfoData&& frameInfo, String&& message, CompletionHandler<void(bool)>&& reply)

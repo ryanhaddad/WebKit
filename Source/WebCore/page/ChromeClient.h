@@ -295,6 +295,7 @@ public:
     virtual IntRect rootViewToAccessibilityScreen(const IntRect&) const = 0;
 #if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
     virtual void requestFrameScreenPosition(FrameIdentifier) const { }
+    virtual void scheduleAccessibilityFrameGeometryUpdate() const { }
 #endif
 #if PLATFORM(IOS_FAMILY)
     virtual void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&) const = 0;

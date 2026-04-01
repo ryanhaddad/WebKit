@@ -1030,6 +1030,7 @@ public:
     // Allows remote web processes to request an asynchronous update to their screen position, computed in the UI process.
 #if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
     void requestFrameScreenPosition(WebCore::FrameIdentifier);
+    void scheduleAccessibilityFrameGeometryUpdate();
 #endif
 #if PLATFORM(IOS_FAMILY)
     void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&);

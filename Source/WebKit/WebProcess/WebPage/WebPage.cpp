@@ -4605,6 +4605,11 @@ void WebPage::requestFrameScreenPosition(FrameIdentifier frameID)
 {
     send(Messages::WebPageProxy::RequestFrameScreenPosition(frameID));
 }
+
+void WebPage::scheduleAccessibilityFrameGeometryUpdate()
+{
+    send(Messages::WebPageProxy::ScheduleAccessibilityFrameGeometryUpdate());
+}
 #endif
 
 KeyboardUIMode WebPage::keyboardUIMode()
