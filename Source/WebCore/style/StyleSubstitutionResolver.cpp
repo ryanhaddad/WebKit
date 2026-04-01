@@ -34,6 +34,7 @@
 #include "CSSPropertyParserConsumer+Primitives.h"
 #include "CSSRegisteredCustomProperty.h"
 #include "CSSSelectorParser.h"
+#include "CSSSerializationContext.h"
 #include "CSSShorthandSubstitutionValue.h"
 #include "CSSSubstitutionValue.h"
 #include "CSSTokenizer.h"
@@ -414,13 +415,24 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
         if (m_styleBuilder.state().m_inCycleAttrAttributes.contains(attributeName))
             return substituteFailure();
 
-        if (!parsedAttrType->syntax.isUniversal()) {
-            CSSParserTokenRange substitutedRange(*substitutedTokens);
-            if (!CSSPropertyParser::isValidCustomPropertyValueForSyntax(parsedAttrType->syntax, substitutedRange, context))
-                return substituteFailure();
+        if (parsedAttrType->syntax.isUniversal()) {
+            tokens.appendVector(*substitutedTokens);
+            return true;
         }
 
-        tokens.appendVector(*substitutedTokens);
+        // Parse against the syntax and re-tokenize from the normalized serialization.
+        CSSParserTokenRange substitutedRange(*substitutedTokens);
+        auto parsedValue = CSSPropertyParser::parseWithSyntax(parsedAttrType->syntax, substitutedRange, context);
+        if (!parsedValue)
+            return substituteFailure();
+
+        auto serialized = parsedValue->cssText(CSS::defaultSerializationContext());
+        CSSTokenizer resultTokenizer(serialized);
+        m_intermediateTokenStrings.appendVector(resultTokenizer.escapedStringsForAdoption());
+        m_intermediateTokenStrings.append(WTF::move(serialized));
+
+        tokens.append(resultTokenizer.tokenRange().span());
+
         return true;
     }
     }

@@ -440,6 +440,26 @@ bool CSSPropertyParser::isValidCustomPropertyValueForSyntax(const CSSCustomPrope
     return !!consumeCustomPropertyValueWithSyntax(range, state, syntax).first;
 }
 
+// https://drafts.csswg.org/css-values-5/#parse-with-a-syntax
+RefPtr<CSSValue> CSSPropertyParser::parseWithSyntax(const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, const CSSParserContext& context)
+{
+    ASSERT(!syntax.isUniversal());
+
+    range.consumeWhitespace();
+
+    auto state = CSS::PropertyParserState {
+        .context = context,
+        .currentRule = StyleRuleType::Style,
+        .currentProperty = CSSPropertyCustom,
+        .important = IsImportant::No,
+    };
+
+    auto [value, syntaxType] = consumeCustomPropertyValueWithSyntax(range, state, syntax);
+    if (!value || !range.atEnd())
+        return { };
+    return value;
+}
+
 std::optional<CSSWideKeyword> CSSPropertyParser::parseCSSWideKeyword(CSSParserTokenRange range)
 {
     return consumeCSSWideKeyword(range);
