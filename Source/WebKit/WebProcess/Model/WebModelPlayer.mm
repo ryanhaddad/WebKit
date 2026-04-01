@@ -31,22 +31,26 @@
 
 #import "Mesh.h"
 #import "ModelInlineConverters.h"
+#import "ModelProcessModelPlayerTransformState.h"
 #import "ModelTypes.h"
 #import "RemoteGPUProxy.h"
 #import "WKStageModeOrbitSimulator.h"
-#import "WebKitSwiftSoftLink.h"
 #import <WebCore/Document.h>
 #import <WebCore/FloatPoint3D.h>
 #import <WebCore/GPU.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/GraphicsLayerContentsDisplayDelegate.h>
 #import <WebCore/HTMLModelElement.h>
+#import <WebCore/ModelPlayerAnimationState.h>
 #import <WebCore/ModelPlayerGraphicsLayerConfiguration.h>
+#import <WebCore/ModelPlayerTransformState.h>
 #import <WebCore/Navigator.h>
 #import <WebCore/Page.h>
 #import <WebCore/PlatformCALayer.h>
 #import <WebCore/PlatformCALayerDelegatedContents.h>
 #import <wtf/RetainPtr.h>
+
+#import "WebKitSwiftSoftLink.h"
 
 #if PLATFORM(COCOA)
 #import <Metal/Metal.h>
@@ -311,6 +315,9 @@ void WebModelPlayer::load(WebCore::Model& modelSource, WebCore::LayoutSize size)
 
             [protectedThis->m_modelLoader requestCompleted:updateRequest];
 
+            if (!model)
+                return;
+
             if (RefPtr client = protectedThis->m_client.get(); client && !protectedThis->m_didFinishLoading) {
                 protectedThis->m_didFinishLoading = true;
                 [protectedThis->m_modelLoader setLoop:protectedThis->m_isLooping];
@@ -321,7 +328,7 @@ void WebModelPlayer::load(WebCore::Model& modelSource, WebCore::LayoutSize size)
                 protectedThis->notifyEntityTransformUpdated();
 
                 auto environmentMap = protectedThis->m_environmentMap;
-                if (model && environmentMap) {
+                if (environmentMap) {
                     if (auto environmentMapImage = loadIBL(WTF::move(*environmentMap))) {
                         model->setEnvironmentMap(*environmentMapImage);
                         protectedThis->m_environmentMap = std::nullopt;
@@ -506,6 +513,11 @@ WebCore::ModelPlayerIdentifier WebModelPlayer::identifier() const
     return m_id;
 }
 
+bool WebModelPlayer::isPlaceholder() const
+{
+    return !m_currentModel;
+}
+
 void WebModelPlayer::configureGraphicsLayer(WebCore::GraphicsLayer& graphicsLayer, WebCore::ModelPlayerGraphicsLayerConfiguration&& configuration)
 {
     graphicsLayer.setContentsDisplayDelegate(contentsDisplayDelegate(), WebCore::GraphicsLayer::ContentsLayerPurpose::Canvas);
@@ -529,10 +541,10 @@ const MachSendRight* WebModelPlayer::displayBuffer() const
 
 WebCore::GraphicsLayerContentsDisplayDelegate* WebModelPlayer::contentsDisplayDelegate()
 {
-    if (!m_contentsDisplayDelegate) {
+    if (auto buffer = displayBuffer(); !m_contentsDisplayDelegate && buffer) {
         RefPtr modelDisplayDelegate = ModelDisplayBufferDisplayDelegate::create(*this);
         m_contentsDisplayDelegate = modelDisplayDelegate;
-        modelDisplayDelegate->setDisplayBuffer(*displayBuffer());
+        modelDisplayDelegate->setDisplayBuffer(*buffer);
     }
 
     return m_contentsDisplayDelegate.get();
@@ -693,6 +705,76 @@ void WebModelPlayer::setEnvironmentMap(Ref<WebCore::SharedBuffer>&& data)
 
     if (RefPtr client = m_client.get())
         client->didFinishEnvironmentMapLoading(*this, success);
+}
+
+void WebModelPlayer::visibilityStateDidChange()
+{
+    // When the model becomes invisible, release memory-intensive resources.
+    // When it becomes visible again, HTMLModelElement will trigger a reload through startLoadModelTimer().
+    RefPtr client = m_client.get();
+    if (!client)
+        return;
+
+    if (!client->isVisible()) {
+        m_cachedAnimationState = currentAnimationState();
+        m_cachedTransformState = currentTransformState();
+
+        // Model is no longer visible - release resources to save memory
+        m_currentModel = nullptr;
+        m_retainedData = nil;
+        m_didFinishLoading = false;
+        m_modelLoader = nil;
+        m_displayBuffers.clear();
+        m_environmentMap = std::nullopt;
+    }
+}
+
+void WebModelPlayer::reload(WebCore::Model& modelSource, WebCore::LayoutSize size, WebCore::ModelPlayerAnimationState& animationState, std::unique_ptr<WebCore::ModelPlayerTransformState>&& transformState)
+{
+    load(modelSource, size);
+    if (transformState) {
+        if (auto entityTransform = transformState->entityTransform())
+            setEntityTransform(*entityTransform);
+    }
+
+    setAutoplay(animationState.autoplay());
+    setLoop(animationState.loop());
+    setPaused(animationState.paused(), [] (bool) { });
+    if (auto playbackRate = animationState.effectivePlaybackRate())
+        setPlaybackRate(*playbackRate, [] (double) { });
+    setCurrentTime(animationState.currentTime(), [] { });
+}
+
+std::optional<WebCore::ModelPlayerAnimationState> WebModelPlayer::currentAnimationState() const
+{
+    if (!m_currentModel)
+        return m_cachedAnimationState;
+
+    bool paused = m_pauseState != PauseState::Playing;
+    bool autoplay = !paused;
+    Seconds animationDuration { duration() };
+    std::optional<double> effectivePlaybackRate = m_playbackRate;
+    std::optional<Seconds> lastCachedCurrentTime = currentTime();
+    std::optional<MonotonicTime> lastCachedClockTimestamp = MonotonicTime::now();
+
+    return WebCore::ModelPlayerAnimationState(autoplay, m_isLooping, paused, animationDuration, effectivePlaybackRate, lastCachedCurrentTime, lastCachedClockTimestamp);
+}
+
+std::optional<std::unique_ptr<WebCore::ModelPlayerTransformState>> WebModelPlayer::currentTransformState() const
+{
+    if (!m_currentModel) {
+        if (m_cachedTransformState)
+            return (*m_cachedTransformState)->clone();
+        return std::nullopt;
+    }
+
+    std::optional<WebCore::TransformationMatrix> transform = entityTransform();
+
+    auto [simdCenter, simdExtents] = m_currentModel->getCenterAndExtents();
+    std::optional<WebCore::FloatPoint3D> center = WebCore::FloatPoint3D(simdCenter.x, simdCenter.y, simdCenter.z);
+    std::optional<WebCore::FloatPoint3D> extents = WebCore::FloatPoint3D(simdExtents.x, simdExtents.y, simdExtents.z);
+
+    return ModelProcessModelPlayerTransformState::create(transform, center, extents, false, m_stageMode);
 }
 
 }

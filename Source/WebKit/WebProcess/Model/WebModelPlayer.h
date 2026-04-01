@@ -31,6 +31,7 @@
 #include "ModelTypes.h"
 #include <WebCore/Model.h>
 #include <WebCore/ModelPlayer.h>
+#include <WebCore/ModelPlayerAnimationState.h>
 #include <WebCore/ModelPlayerClient.h>
 #include <WebCore/StageModeOperations.h>
 #include <wtf/Forward.h>
@@ -63,6 +64,7 @@ public:
     virtual ~WebModelPlayer();
 
     WebCore::ModelPlayerIdentifier identifier() const final;
+    bool isPlaceholder() const final;
     void update();
 
 private:
@@ -97,6 +99,10 @@ private:
     void setEntityTransform(WebCore::TransformationMatrix) final;
     bool supportsTransform(WebCore::TransformationMatrix) final;
     bool supportsMouseInteraction() final;
+    void visibilityStateDidChange() final;
+    void reload(WebCore::Model&, WebCore::LayoutSize, WebCore::ModelPlayerAnimationState&, std::unique_ptr<WebCore::ModelPlayerTransformState>&&) final;
+    std::optional<WebCore::ModelPlayerAnimationState> currentAnimationState() const final;
+    std::optional<std::unique_ptr<WebCore::ModelPlayerTransformState>> currentTransformState() const final;
 
     const MachSendRight* displayBuffer() const;
     WebCore::GraphicsLayerContentsDisplayDelegate* contentsDisplayDelegate();
@@ -140,6 +146,8 @@ private:
     std::optional<Ref<WebCore::SharedBuffer>> m_environmentMap;
     RetainPtr<WKStageModeOrbitSimulator> m_orbitSimulator;
     MonotonicTime m_lastUpdateTime;
+    std::optional<WebCore::ModelPlayerAnimationState> m_cachedAnimationState;
+    std::optional<std::unique_ptr<WebCore::ModelPlayerTransformState>> m_cachedTransformState;
     float m_playbackRate { 1.0f };
     bool m_isLooping { false };
 };

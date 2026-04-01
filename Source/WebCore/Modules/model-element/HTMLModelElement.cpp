@@ -653,6 +653,7 @@ void HTMLModelElement::reloadModelPlayer()
     auto transformState = modelPlayer->currentTransformState();
     ASSERT(animationState && transformState);
 
+#if ENABLE(MODEL_PROCESS)
     if (!m_modelPlayerProvider)
         m_modelPlayerProvider = document().page()->modelPlayerProvider();
     if (RefPtr modelPlayerProvider = m_modelPlayerProvider.get()) {
@@ -663,6 +664,7 @@ void HTMLModelElement::reloadModelPlayer()
         RELEASE_LOG_ERROR(ModelElement, "%p - HTMLModelElement: Failed to create model player to reload with", this);
         return;
     }
+#endif
 
     RELEASE_LOG(ModelElement, "%p - HTMLModelElement: Reloading previous states to new model player: %p", this, modelPlayer.get());
     modelPlayer->reload(*model, contentSize(), *animationState, WTF::move(*transformState));
