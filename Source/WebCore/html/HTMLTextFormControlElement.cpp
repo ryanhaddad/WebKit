@@ -81,6 +81,50 @@ using namespace HTMLNames;
 
 static Position positionForIndex(TextControlInnerTextElement*, unsigned);
 
+static void stripTrailingNewline(StringBuilder& result)
+{
+    // Remove one trailing newline; there's always one that's collapsed out by rendering.
+    size_t size = result.length();
+    if (size && result[size - 1] == newlineCharacter)
+        result.shrink(size - 1);
+}
+
+// Should stay in sync with innerTextLengthFrom().
+static String innerTextValueFrom(TextControlInnerTextElement& innerText)
+{
+    StringBuilder result;
+    for (RefPtr<Node> node = innerText.firstChild(); node; node = NodeTraversal::next(*node, &innerText)) {
+        if (is<HTMLBRElement>(*node))
+            result.append(newlineCharacter);
+        else if (auto* textNode = dynamicDowncast<Text>(*node))
+            result.append(textNode->data());
+    }
+    stripTrailingNewline(result);
+    return result.toString();
+}
+
+// Should stay in sync with innerTextValueFrom().
+static unsigned innerTextLengthFrom(TextControlInnerTextElement& innerText)
+{
+    unsigned length = 0;
+    bool endsWithNewline = false;
+    for (RefPtr node = innerText.firstChild(); node; node = NodeTraversal::next(*node, &innerText)) {
+        if (is<HTMLBRElement>(*node)) {
+            ++length;
+            endsWithNewline = true;
+        } else if (auto* textNode = dynamicDowncast<Text>(*node)) {
+            if (unsigned nodeLength = textNode->length()) {
+                length += nodeLength;
+                endsWithNewline = textNode->data()[nodeLength - 1] == newlineCharacter;
+            }
+        }
+    }
+    // Remove one trailing newline; there's always one that's collapsed out by rendering.
+    if (endsWithNewline && length)
+        --length;
+    return length;
+}
+
 HTMLTextFormControlElement::HTMLTextFormControlElement(const QualifiedName& tagName, Document& document, HTMLFormElement* form)
     : HTMLFormControlElement(tagName, document, form)
     , m_cachedSelectionDirection(document.frame() && document.frame()->editor().behavior().shouldConsiderSelectionAsDirectional() ? SelectionHasForwardDirection : SelectionHasNoDirection)
@@ -329,7 +373,7 @@ bool HTMLTextFormControlElement::setSelectionRange(unsigned start, unsigned end,
     auto innerText = innerTextElementCreatingShadowSubtreeIfNeeded();
 
     // Clamps to the current value length.
-    unsigned innerTextValueLength = innerTextValue().length();
+    unsigned innerTextValueLength = innerText ? innerTextLengthFrom(*innerText) : 0;
     end = std::min(end, innerTextValueLength);
     start = std::min(start, end);
 
@@ -671,27 +715,6 @@ bool HTMLTextFormControlElement::wasEverChangedByUserEdit() const
     return m_wasEverChangedByUserEdit;
 }
 
-static void stripTrailingNewline(StringBuilder& result)
-{
-    // Remove one trailing newline; there's always one that's collapsed out by rendering.
-    size_t size = result.length();
-    if (size && result[size - 1] == newlineCharacter)
-        result.shrink(size - 1);
-}
-
-static String innerTextValueFrom(TextControlInnerTextElement& innerText)
-{
-    StringBuilder result;
-    for (RefPtr<Node> node = innerText.firstChild(); node; node = NodeTraversal::next(*node, &innerText)) {
-        if (is<HTMLBRElement>(*node))
-            result.append(newlineCharacter);
-        else if (auto* textNode = dynamicDowncast<Text>(*node))
-            result.append(textNode->data());
-    }
-    stripTrailingNewline(result);
-    return result.toString();
-}
-
 void HTMLTextFormControlElement::setInnerTextValue(String&& value)
 {
     LayoutDisallowedScope layoutDisallowedScope(LayoutDisallowedScope::Reason::PerformanceOptimization);
@@ -795,8 +818,8 @@ unsigned HTMLTextFormControlElement::indexForPosition(const Position& passedPosi
             ++index;
     }
 
-    unsigned length = innerTextValue().length();
-    index = std::min(index, length); // FIXME: We shouldn't have to call innerTextValue() just to ignore the last LF. See finishText.
+    unsigned length = innerTextLengthFrom(*innerText);
+    index = std::min(index, length);
 #if 0
     // FIXME: This assertion code was never built, has bit rotted, and needs to be fixed before it can be enabled:
     // https://bugs.webkit.org/show_bug.cgi?id=205706.
