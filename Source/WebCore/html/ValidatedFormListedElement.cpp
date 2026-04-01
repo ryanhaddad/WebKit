@@ -260,10 +260,10 @@ void ValidatedFormListedElement::updateValidity()
     if (newIsValid != m_isValid) {
         SUPPRESS_UNCOUNTED_LOCAL auto& element = asHTMLElement();
         Style::PseudoClassChangeInvalidation styleInvalidation(element, {
-            { CSSSelector::PseudoClass::Valid, newIsValid },
-            { CSSSelector::PseudoClass::Invalid, !newIsValid },
-            { CSSSelector::PseudoClass::UserValid, m_wasInteractedWithSinceLastFormSubmitEvent && newIsValid },
-            { CSSSelector::PseudoClass::UserInvalid, m_wasInteractedWithSinceLastFormSubmitEvent && !newIsValid },
+            { CSSSelector::PseudoClass::Valid, willValidate && newIsValid },
+            { CSSSelector::PseudoClass::Invalid, willValidate && !newIsValid },
+            { CSSSelector::PseudoClass::UserValid, willValidate && m_wasInteractedWithSinceLastFormSubmitEvent && newIsValid },
+            { CSSSelector::PseudoClass::UserInvalid, willValidate && m_wasInteractedWithSinceLastFormSubmitEvent && !newIsValid },
         });
 
         m_isValid = newIsValid;
