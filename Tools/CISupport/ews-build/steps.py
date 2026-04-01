@@ -5710,7 +5710,7 @@ class RunAPITests(shell.Test, AddToLogMixin, ShellMixin):
     MSG_FOR_EXCESSIVE_LOGS_API_TEST = f'Stopped due to excessive logging, limit: {THRESHOLD_FOR_EXCESSIVE_LOGS_API_TESTS}'
 
     def __init__(self, **kwargs):
-        super().__init__(logEnviron=False, timeout=3 * 60 * 60, **kwargs)
+        super().__init__(logEnviron=False, timeout=20 * 60, **kwargs)
         self.failing_tests_filtered = []
         self.preexisting_failures_in_results_db = []
         self.steps_to_add = []
@@ -5742,7 +5742,7 @@ class RunAPITests(shell.Test, AddToLogMixin, ShellMixin):
             if list_failed_tests_with_change:
                 self.command = self.command + [quote(t) for t in list_failed_tests_with_change]
         if SHOULD_FILTER_LOGS is True:
-            self.command = self.shell_command(' '.join(self.command) + ' > logs.txt 2>&1 ; ret=$? ; grep "Ran " logs.txt ; exit $ret')
+            self.command = self.shell_command(' '.join(self.command) + ' 2>&1 | Tools/Scripts/filter-test-logs api')
 
         rc = yield super().run()
 
