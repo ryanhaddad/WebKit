@@ -683,17 +683,8 @@ RetainPtr<CMVideoFormatDescriptionRef> createVP9FormatDescriptionFromRecord(cons
     ASSERT(record.frameWidth);
     ASSERT(record.frameHeight);
 
-    auto vpcc = vpcCFromVPCodecConfigurationRecord(record);
-    RetainPtr cfData = toCFData(vpcc.span());
-
-    auto configurationDict = @{ @"vpcC": (__bridge NSData *)cfData.get() };
-    auto extensions = @{ (__bridge NSString *)PAL::kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms: configurationDict };
-
-    CMVideoFormatDescriptionRef formatDescription = nullptr;
-    if (PAL::CMVideoFormatDescriptionCreate(kCFAllocatorDefault, kCMVideoCodecType_VP9, record.frameWidth, record.frameHeight, (__bridge CFDictionaryRef)extensions, &formatDescription) != noErr)
-        return { };
-
-    return adoptCF(formatDescription);
+    Ref videoInfo = createVideoInfoFromVPCodecConfigurationRecord(record, IntSize { record.frameWidth, record.frameHeight }, IntSize { record.frameWidth, record.frameHeight });
+    return createFormatDescriptionFromTrackInfo(videoInfo.get());
 }
 
 }

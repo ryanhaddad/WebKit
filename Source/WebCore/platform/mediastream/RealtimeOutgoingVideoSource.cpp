@@ -267,6 +267,8 @@ void RealtimeOutgoingVideoSource::sendFrame(webrtc::scoped_refptr<webrtc::VideoF
     MonotonicTime timestamp = MonotonicTime::now();
     webrtc::VideoFrame frame(buffer, m_isApplyingRotation ? webrtc::kVideoRotation_0 : m_currentRotation, static_cast<int64_t>(timestamp.secondsSinceEpoch().microseconds()));
 
+    // FIXME: set color space based on VideoFrame.
+
 #if !RELEASE_LOG_DISABLED
     ++m_frameCount;
 

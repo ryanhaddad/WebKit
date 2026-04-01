@@ -36,7 +36,13 @@
 
 namespace WebCore {
 
-static RetainPtr<CFDictionaryRef> createPixelBufferAttributes()
+static bool shouldUseFullRange(CMVideoFormatDescriptionRef format)
+{
+    RetainPtr fullRange = dynamic_cf_cast<CFBooleanRef>(PAL::CMFormatDescriptionGetExtension(format, PAL::kCMFormatDescriptionExtension_FullRangeVideo));
+    return fullRange && CFBooleanGetValue(fullRange.get());
+}
+
+static RetainPtr<CFDictionaryRef> createPixelBufferAttributes(CMVideoFormatDescriptionRef format)
 {
     static size_t const attributesSize = 3;
     CFTypeRef keys[attributesSize] = {
@@ -50,7 +56,7 @@ static RetainPtr<CFDictionaryRef> createPixelBufferAttributes()
     };
 
     auto ioSurfaceValue = adoptCF(CFDictionaryCreate(kCFAllocatorDefault, nullptr, nullptr, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
-    int64_t nv12type = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
+    int64_t nv12type = shouldUseFullRange(format) ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
     auto pixelFormat = adoptCF(CFNumberCreate(nullptr, kCFNumberLongType, &nv12type));
     CFTypeRef values[attributesSize] = { kCFBooleanTrue, ioSurfaceValue.get(), pixelFormat.get() };
     return adoptCF(CFDictionaryCreate(kCFAllocatorDefault, keys, values, attributesSize, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
@@ -66,7 +72,7 @@ int32_t WebRTCVideoDecoderVTB::decodeFrameInternal(int64_t timeStamp, std::span<
         return -1;
 
     if (!m_decoder || !protect(m_decoder)->canAccept(m_format.get())) {
-        m_decoder = VideoDecoderVTB::create(m_format.get(), createPixelBufferAttributes().get());
+        m_decoder = VideoDecoderVTB::create(m_format.get(), createPixelBufferAttributes(m_format.get()).get());
         if (!m_decoder)
             return -1;
     }

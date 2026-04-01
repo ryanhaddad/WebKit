@@ -48,34 +48,17 @@ static RetainPtr<CMVideoFormatDescriptionRef> createVP9FormatDescriptionFromData
     if (height)
         parsedRecord->frameHeight = height;
 
+    if (parsedRecord->colorPrimaries == VPConfigurationColorPrimaries::Unspecified && parsedRecord->transferCharacteristics == VPConfigurationTransferCharacteristics::Unspecified && parsedRecord->matrixCoefficients == VPConfigurationMatrixCoefficients::Unspecified) {
+        parsedRecord->colorPrimaries = VPConfigurationColorPrimaries::BT_709_6;
+        parsedRecord->transferCharacteristics = VPConfigurationTransferCharacteristics::BT_709_6;
+        parsedRecord->matrixCoefficients = VPConfigurationMatrixCoefficients::BT_709_6;
+    }
+
     return createVP9FormatDescriptionFromRecord(*parsedRecord);
 }
 
-static void overrideVP9ColorSpaceAttachments(CVPixelBufferRef pixelBuffer)
-{
-    CVBufferSetAttachment(pixelBuffer, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_709_2, kCVAttachmentMode_ShouldPropagate);
-    CVBufferSetAttachment(pixelBuffer, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_709_2, kCVAttachmentMode_ShouldPropagate);
-    CVBufferSetAttachment(pixelBuffer, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, kCVAttachmentMode_ShouldPropagate);
-    CVBufferSetAttachment(pixelBuffer, (CFStringRef)@"ColorInfoGuessedBy", (CFStringRef)@"WebRTCDecoderVTBVP9", kCVAttachmentMode_ShouldPropagate);
-}
-
-static BlockPtr<void(OSStatus, VTDecodeInfoFlags, CVImageBufferRef pixelBuffer, CMTaggedBufferGroupRef, CMTime presentationTime, CMTime)> createVP9Callback(WebRTCVideoDecoderCallback callback)
-{
-    return makeBlockPtr([callback = makeBlockPtr(callback)](OSStatus, VTDecodeInfoFlags, CVImageBufferRef pixelBuffer, CMTaggedBufferGroupRef, CMTime presentationTime, CMTime) mutable {
-        if (!pixelBuffer) {
-            callback(nil, 0, 0, false);
-            return;
-        }
-
-        // FIXME: We should remove this override once the encoder is properly setting color space info.
-        overrideVP9ColorSpaceAttachments(pixelBuffer);
-
-        callback((CVPixelBufferRef)pixelBuffer, presentationTime.value, 0, false);
-    });
-}
-
 WebRTCVideoDecoderVTBVP9::WebRTCVideoDecoderVTBVP9(WebRTCVideoDecoderCallback callback)
-    : WebRTCVideoDecoderVTB(createVP9Callback(WTF::move(callback)))
+    : WebRTCVideoDecoderVTB(createMultiImageCallback(WTF::move(callback)))
 {
 }
 
