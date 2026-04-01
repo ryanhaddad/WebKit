@@ -229,7 +229,7 @@ public:
         other.set(t1);
     }
 
-    void swap(T* t2)
+    void swap(T*& t2)
     {
         T* t1 = get();
         std::swap(t1, t2);

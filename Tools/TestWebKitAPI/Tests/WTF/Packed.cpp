@@ -125,6 +125,20 @@ TEST(WTF_Packed, PackedAlignedPtrSetNonNull)
     }
 }
 
+TEST(WTF_Packed, PackedPtrSwapWithRawPointer)
+{
+    PackableUint8 a { 1 };
+    PackableUint8 b { 2 };
+
+    PackedPtr<PackableUint8> packed { &a };
+    PackableUint8* raw = &b;
+
+    packed.swap(raw);
+
+    EXPECT_EQ(packed.get(), &b);
+    EXPECT_EQ(raw, &a);
+}
+
 struct PackingTarget {
     WTF_ALLOW_STRUCT_COMPACT_POINTERS;
     unsigned m_value { 0 };
