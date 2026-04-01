@@ -56,7 +56,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(InspectorRuntimeAgent);
 InspectorRuntimeAgent::InspectorRuntimeAgent(AgentContext& context)
     : InspectorAgentBase("Runtime"_s)
     , m_injectedScriptManager(context.injectedScriptManager)
-    , m_debugger(*CheckedRef { context.environment }->debugger())
+    , m_debugger(CheckedRef { context.environment }->debugger())
     , m_vm(CheckedRef { context.environment }->vm())
 {
 }
@@ -145,11 +145,14 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::op
     std::optional<bool> wasThrown;
     std::optional<int> savedResultIndex;
 
-    JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
+    std::optional<JSC::Debugger::TemporarilyDisableExceptionBreakpoints> temporarilyDisableExceptionBreakpoints;
+    if (m_debugger)
+        temporarilyDisableExceptionBreakpoints.emplace(*m_debugger);
 
     bool pauseAndMute = doNotPauseOnExceptionsAndMuteConsole.value_or(false);
     if (pauseAndMute) {
-        temporarilyDisableExceptionBreakpoints.replace();
+        if (temporarilyDisableExceptionBreakpoints)
+            temporarilyDisableExceptionBreakpoints->replace();
         muteConsole();
     }
 
@@ -195,11 +198,14 @@ void InspectorRuntimeAgent::callFunctionOn(InjectedScript& injectedScript, const
 {
     ASSERT(!injectedScript.hasNoValue());
 
-    JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
+    std::optional<JSC::Debugger::TemporarilyDisableExceptionBreakpoints> temporarilyDisableExceptionBreakpoints;
+    if (m_debugger)
+        temporarilyDisableExceptionBreakpoints.emplace(*m_debugger);
 
     bool pauseAndMute = doNotPauseOnExceptionsAndMuteConsole.value_or(false);
     if (pauseAndMute) {
-        temporarilyDisableExceptionBreakpoints.replace();
+        if (temporarilyDisableExceptionBreakpoints)
+            temporarilyDisableExceptionBreakpoints->replace();
         muteConsole();
     }
 
@@ -223,8 +229,11 @@ Protocol::ErrorStringOr<Ref<Protocol::Runtime::ObjectPreview>> InspectorRuntimeA
     if (injectedScript.hasNoValue())
         return makeUnexpected("Missing injected script for given objectId"_s);
 
-    JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
-    temporarilyDisableExceptionBreakpoints.replace();
+    std::optional<JSC::Debugger::TemporarilyDisableExceptionBreakpoints> temporarilyDisableExceptionBreakpoints;
+    if (m_debugger) {
+        temporarilyDisableExceptionBreakpoints.emplace(*m_debugger);
+        temporarilyDisableExceptionBreakpoints->replace();
+    }
 
     RefPtr<Protocol::Runtime::ObjectPreview> preview;
 
@@ -259,8 +268,11 @@ Protocol::ErrorStringOr<std::tuple<Ref<JSON::ArrayOf<Protocol::Runtime::Property
     RefPtr<JSON::ArrayOf<Protocol::Runtime::PropertyDescriptor>> properties;
     RefPtr<JSON::ArrayOf<Protocol::Runtime::InternalPropertyDescriptor>> internalProperties;
 
-    JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
-    temporarilyDisableExceptionBreakpoints.replace();
+    std::optional<JSC::Debugger::TemporarilyDisableExceptionBreakpoints> temporarilyDisableExceptionBreakpoints;
+    if (m_debugger) {
+        temporarilyDisableExceptionBreakpoints.emplace(*m_debugger);
+        temporarilyDisableExceptionBreakpoints->replace();
+    }
 
     muteConsole();
 
@@ -297,8 +309,11 @@ Protocol::ErrorStringOr<std::tuple<Ref<JSON::ArrayOf<Protocol::Runtime::Property
     RefPtr<JSON::ArrayOf<Protocol::Runtime::PropertyDescriptor>> properties;
     RefPtr<JSON::ArrayOf<Protocol::Runtime::InternalPropertyDescriptor>> internalProperties;
 
-    JSC::Debugger::TemporarilyDisableExceptionBreakpoints temporarilyDisableExceptionBreakpoints(m_debugger);
-    temporarilyDisableExceptionBreakpoints.replace();
+    std::optional<JSC::Debugger::TemporarilyDisableExceptionBreakpoints> temporarilyDisableExceptionBreakpoints;
+    if (m_debugger) {
+        temporarilyDisableExceptionBreakpoints.emplace(*m_debugger);
+        temporarilyDisableExceptionBreakpoints->replace();
+    }
 
     muteConsole();
 

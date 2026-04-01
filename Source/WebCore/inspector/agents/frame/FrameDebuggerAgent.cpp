@@ -193,8 +193,22 @@ void FrameDebuggerAgent::didClearWindowObjectInWorld(DOMWrapperWorld& world)
     Ref normalWorld = mainThreadNormalWorldSingleton();
     CheckedRef script = frame->script();
     auto* globalObject = script->globalObject(normalWorld);
-    if (globalObject)
-        debugger().attach(globalObject);
+    if (!globalObject) {
+        didClearGlobalObject();
+        return;
+    }
+
+    // The globalObject may already have a debugger attached (e.g., by initScriptForWindowProxy
+    // in non-site-isolation configurations). Under site isolation, FrameDebugger is the sole
+    // debugger, but detach any stale debugger as defense-in-depth.
+    if (auto* existingDebugger = globalObject->debugger()) {
+        if (existingDebugger == &debugger()) {
+            didClearGlobalObject();
+            return;
+        }
+        existingDebugger->detach(globalObject, JSC::Debugger::TerminatingDebuggingSession);
+    }
+    debugger().attach(globalObject);
 
     didClearGlobalObject();
 }

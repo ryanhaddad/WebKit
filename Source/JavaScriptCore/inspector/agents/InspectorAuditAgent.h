@@ -74,7 +74,7 @@ protected:
 private:
     const Ref<AuditBackendDispatcher> m_backendDispatcher;
     const CheckedRef<InjectedScriptManager> m_injectedScriptManager;
-    JSC::Debugger& m_debugger;
+    JSC::Debugger* m_debugger { nullptr };
 
     JSC::Strong<JSC::JSObject> m_injectedWebInspectorAuditValue;
 };

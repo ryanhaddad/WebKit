@@ -66,7 +66,9 @@ void FrameDebugger::attachDebugger()
     Ref world = mainThreadNormalWorldSingleton();
     CheckedRef script = frame->script();
     auto* globalObject = script->globalObject(world);
-    if (globalObject)
+    // globalObject() may lazily create the JSWindowProxy, which fires didClearWindowObjectInWorld
+    // and attaches us via FrameDebuggerAgent::didClearWindowObjectInWorld. Guard against double-attach.
+    if (globalObject && !globalObject->debugger())
         attach(globalObject);
 }
 
