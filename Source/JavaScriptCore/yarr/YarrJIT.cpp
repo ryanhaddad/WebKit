@@ -2970,8 +2970,11 @@ class YarrGenerator final : public YarrJITInfo {
 
         MacroAssembler::JumpList done;
 
-        if (m_decodeSurrogatePairs)
+        if (m_decodeSurrogatePairs) {
+            if (!term->isFixedWidthCharacterClass())
+                storeToFrame(m_regs.index, term->frameLocation + BackTrackInfoCharacterClass::beginIndex());
             op.m_jumps.append(jumpIfNoAvailableInput());
+        }
 
         Checked<unsigned> scaledMaxCount = term->quantityMaxCount;
 #if ENABLE(YARR_JIT_UNICODE_EXPRESSIONS)
@@ -3020,6 +3023,19 @@ class YarrGenerator final : public YarrJITInfo {
 
     void backtrackCharacterClassFixed(size_t opIndex)
     {
+#if ENABLE(YARR_JIT_UNICODE_EXPRESSIONS)
+        if (m_decodeSurrogatePairs) {
+            YarrOp& op = m_ops[opIndex];
+            PatternTerm* term = op.m_term;
+            if (!term->isFixedWidthCharacterClass()) {
+                m_backtrackingState.link(*this, op);
+                op.m_jumps.link(&m_jit);
+                loadFromFrame(term->frameLocation + BackTrackInfoCharacterClass::beginIndex(), m_regs.index);
+                m_backtrackingState.fallthrough();
+                return;
+            }
+        }
+#endif
         backtrackTermDefault(opIndex);
     }
 
