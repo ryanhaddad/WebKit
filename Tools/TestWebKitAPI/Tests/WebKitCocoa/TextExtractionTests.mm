@@ -43,6 +43,7 @@
 #import <WebKit/WKWebViewConfigurationPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
+#import <WebKit/WKWebpagePreferences.h>
 #import <WebKit/_WKContentWorldConfiguration.h>
 #import <WebKit/_WKFeature.h>
 #import <WebKit/_WKFrameTreeNode.h>
@@ -50,6 +51,7 @@
 #import <WebKit/_WKRemoteObjectInterface.h>
 #import <WebKit/_WKRemoteObjectRegistry.h>
 #import <WebKit/_WKTextExtraction.h>
+#import <WebKit/_WKWebsiteDataStoreConfiguration.h>
 #import <pal/cocoa/ScreenTimeSoftLink.h>
 #import <pal/spi/cocoa/NSKeyedUnarchiverSPI.h>
 #import <wtf/SoftLinking.h>
@@ -1192,6 +1194,39 @@ TEST(TextExtractionTests, DelayedSafeBrowsingWarningBlocksTextExtraction)
 
     RetainPtr debugTextAfterWarning = [webView synchronouslyGetDebugText:nil];
     EXPECT_FALSE([debugTextAfterWarning containsString:@"test"]);
+}
+
+TEST(TextExtractionTests, BackgroundTextExtractionBlocksUserMediatedHTTPFallback)
+{
+    using namespace TestWebKitAPI;
+    HTTPServer httpsServer({
+        { "/secure"_s, { { }, "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initNonPersistentConfiguration]);
+    [storeConfiguration setProxyConfiguration:@{
+        (NSString *)kCFStreamPropertyHTTPSProxyHost: @"127.0.0.1",
+        (NSString *)kCFStreamPropertyHTTPSProxyPort: @(httpsServer.port())
+    }];
+    RetainPtr dataStore = adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:storeConfiguration.get()]);
+    RetainPtr configuration = adoptNS([WKWebViewConfiguration new]);
+    [configuration setWebsiteDataStore:dataStore.get()];
+    [configuration _setBackgroundTextExtractionEnabled:YES];
+    [configuration defaultWebpagePreferences].preferredHTTPSNavigationPolicy = WKWebpagePreferencesUpgradeToHTTPSPolicyUserMediatedFallbackToHTTP;
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration.get()]);
+
+    __block bool failedNavigation { false };
+    RetainPtr delegate = adoptNS([TestNavigationDelegate new]);
+    [delegate setDidFailProvisionalNavigation:^(WKWebView *, WKNavigation *, NSError *error) {
+        EXPECT_NOT_NULL(error);
+        failedNavigation = true;
+    }];
+    [webView setNavigationDelegate:delegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://site.example/secure"]]];
+
+    Util::run(&failedNavigation);
+
+    EXPECT_NULL([webView _safeBrowsingWarning]);
 }
 
 #endif // HAVE(SAFE_BROWSING)

@@ -7750,7 +7750,11 @@ void WebPageProxy::didFailProvisionalLoadForFrameShared(Ref<WebProcessProxy>&& p
         };
 #if HAVE(SAFE_BROWSING)
         URL failedURL { m_failingProvisionalLoadURL };
-        bool canFallbackToHTTP = frame.isMainFrame() && error.errorRecoveryMethod() == ResourceError::ErrorRecoveryMethod::HTTPFallback && failedURL.protocolIs("https"_s);
+        bool canFallbackToHTTP = frame.isMainFrame()
+            && error.errorRecoveryMethod() == ResourceError::ErrorRecoveryMethod::HTTPFallback
+            && failedURL.protocolIs("https"_s)
+            && !m_configuration->backgroundTextExtractionEnabled();
+
         if (RefPtr websitePolicies = navigation ? navigation->websitePolicies() : nullptr; websitePolicies
             && websitePolicies->isUpgradeWithUserMediatedFallbackEnabled()
             && !websitePolicies->advancedPrivacyProtections().contains(AdvancedPrivacyProtections::HTTPSOnlyExplicitlyBypassedForDomain)
@@ -8933,12 +8937,20 @@ void WebPageProxy::decidePolicyForNavigationAction(Ref<WebProcessProxy>&& proces
                 protectedPageLoadState->commitChanges();
             }
 
-            if (!frame->isMainFrame()) {
+            auto failProvisionalNavigation = [&] {
                 auto error = interruptedForPolicyChangeError(navigation->currentRequest());
                 m_navigationClient->didFailProvisionalNavigationWithError(*this, FrameInfoData { frameInfo }, navigation.get(), navigation->currentRequest().url(), error, nullptr);
-                WEBPAGEPROXY_RELEASE_LOG(Loading, "decidePolicyForNavigationAction: Ignoring request to load subframe resource because Safe Browsing found a match.");
                 completionHandlerWrapper(PolicyAction::Ignore);
-                return;
+            };
+
+            if (!frame->isMainFrame()) {
+                WEBPAGEPROXY_RELEASE_LOG(Loading, "decidePolicyForNavigationAction: Ignoring request to load subframe resource because Safe Browsing found a match.");
+                return failProvisionalNavigation();
+            }
+
+            if (m_configuration->backgroundTextExtractionEnabled()) {
+                WEBPAGEPROXY_RELEASE_LOG(Loading, "decidePolicyForNavigationAction: Ignoring main frame navigation because Safe Browsing found a match and background text extraction is enabled.");
+                return failProvisionalNavigation();
             }
 
             Ref protectedPageLoadState = pageLoadState();
