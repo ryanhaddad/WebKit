@@ -62,19 +62,22 @@ SizesAttributeParser::SizesAttributeParser(const String& attribute, const Docume
         m_result = parse(CSSTokenizer(attribute).tokenRange(), CSSParserContext(document));
 }
 
-float SizesAttributeParser::effectiveSize()
+std::optional<float> SizesAttributeParser::effectiveSize()
 {
     if (m_result)
         return *m_result;
     return effectiveSizeDefaultValue();
 }
 
-float SizesAttributeParser::effectiveSizeDefaultValue()
+std::optional<float> SizesAttributeParser::effectiveSizeDefaultValue()
 {
     auto conversionData = this->conversionData();
     if (!conversionData)
-        return 0;
-    return CSS::clampToRange<CSS::Nonnegative, float>(Style::computeNonCalcLengthDouble(100.0, CSS::LengthUnit::Vw, *conversionData));
+        return std::nullopt;
+    auto result = CSS::clampToRange<CSS::Nonnegative, float>(Style::computeNonCalcLengthDouble(100.0, CSS::LengthUnit::Vw, *conversionData));
+    if (!result)
+        return std::nullopt;
+    return result;
 }
 
 std::optional<float> SizesAttributeParser::parse(CSSParserTokenRange tokens, const CSSParserContext& context)
