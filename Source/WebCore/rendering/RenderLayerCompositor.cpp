@@ -316,9 +316,7 @@ struct RenderLayerCompositor::BackingSharingSnapshot {
 class RenderLayerCompositor::BackingSharingState {
     WTF_MAKE_NONCOPYABLE(BackingSharingState);
 public:
-    BackingSharingState(bool allowOverlappingProviders)
-        : m_allowOverlappingProviders(allowOverlappingProviders)
-    { }
+    BackingSharingState() = default;
 
     struct Provider {
         InlineWeakPtr<RenderLayer> providerLayer;
@@ -347,7 +345,7 @@ public:
     }
 
     void addBackingSharingCandidate(RenderLayer& candidateLayer, LayoutRect candidateAbsoluteBounds, RenderLayer& candidateStackingContext, const std::optional<BackingSharingSnapshot>&);
-    bool isAdditionalProviderCandidate(RenderLayer&, LayoutRect candidateAbsoluteBounds, RenderLayer* stackingContextAncestor) const;
+    bool isAdditionalProviderCandidate(RenderLayer* stackingContextAncestor) const;
     void startBackingSharingSequence(RenderLayer& candidateLayer, LayoutRect candidateAbsoluteBounds, RenderLayer& candidateStackingContext);
     void endBackingSharingSequence(RenderLayer&);
 
@@ -368,7 +366,6 @@ private:
     RenderLayer* m_backingSharingStackingContext { nullptr };
     BackingSharingSequenceIdentifier m_sequenceIdentifier { BackingSharingSequenceIdentifier::generate() };
     InlineWeakKeyHashSet<RenderLayer> m_layersPendingRepaint;
-    bool m_allowOverlappingProviders { false };
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, const RenderLayerCompositor::BackingSharingState::Provider&);
@@ -418,16 +415,6 @@ auto RenderLayerCompositor::BackingSharingState::backingProviderCandidateForLaye
 {
     if (layer.hasReflection())
         return nullptr;
-
-    if (!m_allowOverlappingProviders) {
-        for (auto& candidate : m_backingProviderCandidates) {
-            CheckedRef providerLayer = *candidate.providerLayer;
-            if (layer.ancestorLayerIsInContainingBlockChain(providerLayer))
-                return &candidate;
-        }
-
-        return nullptr;
-    }
 
     if (m_backingProviderCandidates.isEmpty())
         return nullptr;
@@ -520,24 +507,11 @@ auto RenderLayerCompositor::BackingSharingState::backingProviderForLayer(const R
     return nullptr;
 }
 
-bool RenderLayerCompositor::BackingSharingState::isAdditionalProviderCandidate(RenderLayer& candidateLayer, LayoutRect candidateAbsoluteBounds, RenderLayer* stackingContextAncestor) const
+bool RenderLayerCompositor::BackingSharingState::isAdditionalProviderCandidate(RenderLayer* stackingContextAncestor) const
 {
     ASSERT(!m_backingProviderCandidates.isEmpty());
     if (!stackingContextAncestor || stackingContextAncestor != m_backingSharingStackingContext)
         return false;
-
-    if (!m_allowOverlappingProviders) {
-        // Only allow multiple providers for overflow scroll, which we know clips its descendants.
-        if (!(m_backingProviderCandidates[0].providerLayer->canUseCompositedScrolling() && candidateLayer.canUseCompositedScrolling()))
-            return false;
-
-        // Disallow overlap between backing providers.
-        for (auto& candidate : m_backingProviderCandidates) {
-            if (candidateAbsoluteBounds.intersects(candidate.absoluteBounds))
-                return false;
-        }
-        return true;
-    }
 
     if (!m_backingProviderCandidates[0].providerLayer->canUseCompositedScrolling())
         return false;
@@ -1152,7 +1126,7 @@ bool RenderLayerCompositor::updateCompositingLayers(CompositingUpdateType update
     if (updateRoot->hasDescendantNeedingCompositingRequirementsTraversal() || updateRoot->needsCompositingRequirementsTraversal()) {
         CheckedRef rootLayer = rootRenderLayer();
         CompositingState compositingState(updateRoot);
-        BackingSharingState backingSharingState(m_renderView.settings().overlappingBackingStoreProvidersEnabled());
+        BackingSharingState backingSharingState;
         LayerOverlapMap overlapMap(rootLayer);
 
         computeCompositingRequirements(nullptr, rootLayer, overlapMap, compositingState, backingSharingState);
@@ -1895,8 +1869,9 @@ std::optional<RenderLayerCompositor::BackingSharingSnapshot> RenderLayerComposit
             return false;
 
         // If this layer is composited, we can only continue the sequence if it's a new provider candidate.
+        // FIXME: Can this computeExtent() call be removed?
         computeExtent(overlapMap, layer, layerExtent);
-        return !sharingState.isAdditionalProviderCandidate(layer, layerExtent.bounds, stackingContextAncestor);
+        return !sharingState.isAdditionalProviderCandidate(stackingContextAncestor);
     }();
 
     // A layer that composites resets backing-sharing, since subsequent layers need to composite to overlap it.
@@ -1948,7 +1923,7 @@ void RenderLayerCompositor::updateBackingSharingAfterDescendantTraversal(Backing
         }
 
         computeExtent(overlapMap, layer, layerExtent);
-        if (sharingState.isAdditionalProviderCandidate(layer, layerExtent.bounds, stackingContextAncestor)) {
+        if (sharingState.isAdditionalProviderCandidate(stackingContextAncestor)) {
             sharingState.addBackingSharingCandidate(layer, layerExtent.bounds, *stackingContextAncestor, backingSharingSnapshot);
             LOG_WITH_STREAM(Compositing, stream << TextStream::Repeat(depth * 2, ' ') << " - added additional provider candidate " << &layer);
             return;
