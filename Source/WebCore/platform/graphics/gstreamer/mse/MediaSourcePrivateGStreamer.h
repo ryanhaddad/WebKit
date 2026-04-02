@@ -105,8 +105,6 @@ public:
     RegisteredTrack registerTrack(TrackID, StreamType);
     void unregisterTrack(TrackID);
 
-    void willSeek();
-
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return m_logger; }
     ASCIILiteral logClassName() const override { return "MediaSourcePrivateGStreamer"_s; }

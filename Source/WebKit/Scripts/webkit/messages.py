@@ -570,6 +570,7 @@ def types_that_cannot_be_forward_declared():
     return frozenset([
         'CVPixelBufferRef',
         'GCGLint',
+        'GenericPromise::Result',
         'IPC::AsyncReplyID',
         'IPC::FontReference',
         'IPC::Semaphore',
@@ -1098,6 +1099,7 @@ def headers_for_type(type, for_implementation_file=False):
     special_cases = {
         'CVPixelBufferRef': ['<WebCore/CVUtilities.h>'],
         'GCGLint': ['<WebCore/GraphicsTypesGL.h>'],
+        'GenericPromise::Result': ['<wtf/NativePromise.h>'],
         'Inspector::ExtensionAppearance': ['"InspectorExtensionTypes.h"'],
         'Inspector::ExtensionError': ['"InspectorExtensionTypes.h"'],
         'Inspector::ExtensionTabID': ['"InspectorExtensionTypes.h"'],
@@ -1134,6 +1136,7 @@ def headers_for_type(type, for_implementation_file=False):
         'String': ['<wtf/text/WTFString.h>'],
         'std::monostate': [],
         'URL': ['<wtf/URLHash.h>'],
+        'WTF::GenericPromise::Result': ['<wtf/NativePromise.h>'],
         'WTF::UUID': ['<wtf/UUID.h>'],
         'WallTime': ['<wtf/WallTime.h>'],
         'WebCore::AXDebugInfo': ['<WebCore/AXObjectCache.h>'],
@@ -1309,6 +1312,7 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::MediaSettingsRange': ['<WebCore/MediaSettingsRange.h>'],
         'WebCore::MediaSourcePrivateAddStatus': ['<WebCore/MediaSourcePrivate.h>'],
         'WebCore::MediaSourcePrivateEndOfStreamStatus': ['<WebCore/MediaSourcePrivate.h>'],
+        'WebCore::MediaTimePromise::Result': ['<WebCore/MediaPromiseTypes.h>'],
         'WebCore::MessagePortChannelProvider::HasActivity': ['<WebCore/MessagePortChannelProvider.h>'],
         'WebCore::ModalContainerControlType': ['<WebCore/ModalContainerTypes.h>'],
         'WebCore::ModalContainerDecision': ['<WebCore/ModalContainerTypes.h>'],

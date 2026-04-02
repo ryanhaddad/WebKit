@@ -415,15 +415,18 @@ public:
     template<typename PC, typename BasePromise>
     struct ConvertedPromise {
         template <typename T, typename E>
-        struct Promise
-        {
+        struct Promise {
             using Type = NativePromise<T, E>;
         };
 
         template <typename T, typename E>
-        struct Promise<Expected<T, E>, E>
-        {
+        struct Promise<Expected<T, E>, E> {
             using Type = NativePromise<T, E>;
+        };
+
+        template <typename T>
+        struct Promise<Expected<T, GenericPromise::RejectValueType>, GenericPromise::RejectValueType> {
+            using Type = NativePromise<T, void>;
         };
 
         using RejectValueType = std::remove_reference_t<decltype(PC::convertError(std::declval<IPC::Error>()).error())>;

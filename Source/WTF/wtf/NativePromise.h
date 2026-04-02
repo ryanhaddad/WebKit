@@ -1593,6 +1593,10 @@ struct LogArgument<GenericPromise> {
     }
 };
 
+struct GenericPromiseConverter {
+    static auto convertError(auto&&) { return makeUnexpected(GenericPromise::RejectValueType { }); }
+};
+
 } // namespace WTF
 
 #undef PROMISE_LOG

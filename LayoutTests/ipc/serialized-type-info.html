@@ -164,7 +164,8 @@
         // add IPC metadata in a *.serialization.in file instead.
         let result = [
             "CTFontDescriptorOptions",
-            "MachSendRight"
+            "MachSendRight",
+            "GenericPromise::Result", // Added to hide the implementation details that simulate an Expected<void, void>
         ];
         if (window.testRunner) {
             if (testRunner.isMac) {

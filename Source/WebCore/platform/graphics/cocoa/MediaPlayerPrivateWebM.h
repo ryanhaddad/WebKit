@@ -373,7 +373,6 @@ private:
     bool seeking() const final;
     void seekInternal();
     void cancelPendingSeek(); // Called from destructor or running queue
-    void startSeek(const MediaTime&);
     void completeSeek(const MediaTime&);
     Ref<GenericPromise> waitForTimeBuffered(const MediaTime&);
     void resolveWaitForTimeBufferedPromiseIfPossible();

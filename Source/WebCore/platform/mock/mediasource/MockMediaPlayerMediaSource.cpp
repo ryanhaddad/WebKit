@@ -260,20 +260,24 @@ void MockMediaPlayerMediaSource::seekToTarget(const SeekTarget& target)
             return;
 
         const auto seekTime = *result;
-        protect(protectedThis->m_mediaSourcePrivate)->seekToTime(seekTime);
-        protectedThis->m_lastSeekTarget.reset();
-        protectedThis->m_currentTime = seekTime;
+        protect(protectedThis->m_mediaSourcePrivate)->reenqueueMediaForTime(seekTime)->whenSettled(RunLoop::currentSingleton(), [weakThis, seekTime](auto&& result) {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis || !result)
+                return;
+            protectedThis->m_lastSeekTarget.reset();
+            protectedThis->m_currentTime = seekTime;
 
-        if (RefPtr player = protectedThis->m_player.get()) {
-            player->seeked(seekTime);
-            player->timeChanged();
-        }
+            if (RefPtr player = protectedThis->m_player.get()) {
+                player->seeked(seekTime);
+                player->timeChanged();
+            }
 
-        if (protectedThis->m_playing) {
-            callOnMainThread([protectedThis = WTF::move(protectedThis)] {
-                protectedThis->advanceCurrentTime();
-            });
-        }
+            if (protectedThis->m_playing) {
+                callOnMainThread([protectedThis = WTF::move(protectedThis)] {
+                    protectedThis->advanceCurrentTime();
+                });
+            }
+        });
     });
 }
 

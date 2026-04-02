@@ -282,3 +282,7 @@ using FileSystem::Salt = std::array<uint8_t, 8>;
     FixedVector<uint8_t> data;
 }
 #endif
+
+header: <wtf/NativePromise.h>
+[CustomHeader] struct WTF::detail::VoidPlaceholder {
+}
