@@ -3328,15 +3328,11 @@ void WebPage::completeSyntheticClick(std::optional<WebCore::FrameIdentifier> fra
     RefPtr<Element> newFocusedElement = newFocusedFrame ? newFocusedFrame->document()->focusedElement() : nullptr;
 
     if (nodeRespondingToClick.document().settings().contentChangeObserverEnabled()) {
-        Ref document = nodeRespondingToClick.document();
-        // Dispatch mouseOut to dismiss tooltip content when tapping on the control bar buttons (cc, settings).
-        if (document->quirks().needsYouTubeMouseOutQuirk()) {
-            if (RefPtr frame = document->frame()) {
-                PlatformMouseEvent event { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::NoType, 0, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::NoTap, m_potentialTapInputSource, pointerId };
-                if (!nodeRespondingToClick.isConnected())
-                    frame->eventHandler().dispatchSyntheticMouseMove(event);
-                frame->eventHandler().dispatchSyntheticMouseOut(event);
-            }
+        if (RefPtr frame = nodeRespondingToClick.document().frame()) {
+            PlatformMouseEvent event { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::None, PlatformEvent::Type::NoType, 0, platformModifiers, MonotonicTime::now(), 0, WebCore::SyntheticClickType::NoTap, m_potentialTapInputSource, pointerId };
+            if (!nodeRespondingToClick.isConnected())
+                frame->eventHandler().dispatchSyntheticMouseMove(event);
+            frame->eventHandler().dispatchSyntheticMouseOut(event);
         }
     }
 
