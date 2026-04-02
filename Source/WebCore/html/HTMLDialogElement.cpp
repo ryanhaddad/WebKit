@@ -389,13 +389,28 @@ void HTMLDialogElement::setupSteps()
     ASSERT(isConnected());
     Ref document = this->document();
     ASSERT(!document->openDialogsList().contains(this));
+#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+    bool neededEventHandling = document->needsPointerEventHandlingForPopoverOrDialog();
+#endif
     document->openDialogsList().add(*this);
+#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+    if (!neededEventHandling) {
+        document->invalidateRenderingDependentRegions();
+        document->invalidateEventListenerRegions();
+    }
+#endif
 }
 
 void HTMLDialogElement::cleanupSteps()
 {
     Ref document = this->document();
     document->openDialogsList().remove(*this);
+#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+    if (!document->needsPointerEventHandlingForPopoverOrDialog()) {
+        document->invalidateRenderingDependentRegions();
+        document->invalidateEventListenerRegions();
+    }
+#endif
 }
 
 void HTMLDialogElement::setIsModal(bool newValue)

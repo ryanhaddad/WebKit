@@ -219,8 +219,8 @@ bool Adjuster::adjustEventListenerRegionTypesForRootStyle(RenderStyle& rootStyle
         regionTypes.add(computeEventListenerRegionTypes(document, rootStyle, *window, { }));
 
 #if ENABLE(TOUCH_EVENT_REGIONS)
-    // https://html.spec.whatwg.org/multipage/popover.html#popover-light-dismiss
-    if (document.needsPointerEventHandlingForPopover()) {
+    // https://html.spec.whatwg.org/multipage/interactive-elements.html#run-light-dismiss-activities
+    if (document.needsPointerEventHandlingForPopoverOrDialog()) {
         regionTypes.add(EventListenerRegionType::PointerDown);
         regionTypes.add(EventListenerRegionType::PointerUp);
     }
