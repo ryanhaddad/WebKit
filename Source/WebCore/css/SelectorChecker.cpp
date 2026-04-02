@@ -1415,8 +1415,6 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
 
 bool SelectorChecker::matchSelectorList(CheckingContext& checkingContext, const LocalContext& context, const Element& element, const CSSSelectorList& selectorList) const
 {
-    bool hasMatchedAnything = false;
-
     for (auto& subselector : selectorList) {
         LocalContext subcontext(context);
         subcontext.element = &element;
@@ -1427,11 +1425,10 @@ bool SelectorChecker::matchSelectorList(CheckingContext& checkingContext, const 
         EnumSet<PseudoElementType> ignoredPseudoElements;
         if (matchRecursively(checkingContext, subcontext, ignoredPseudoElements).match == Match::SelectorMatches) {
             ASSERT(!ignoredPseudoElements);
-
-            hasMatchedAnything = true;
+            return true;
         }
     }
-    return hasMatchedAnything;
+    return false;
 }
 
 bool SelectorChecker::matchHasPseudoClass(CheckingContext& checkingContext, const Element& element, const CSSSelector& hasSelector) const
