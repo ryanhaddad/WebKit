@@ -344,25 +344,24 @@ SMILTime SVGSMILElement::parseClockValue(StringView data)
         return SMILTime::indefinite();
 
     double result = 0;
-    bool ok;
     size_t doublePointOne = parse.find(':');
     size_t doublePointTwo = parse.find(':', doublePointOne + 1);
     if (doublePointOne == 2 && doublePointTwo == 5 && parse.length() >= 8) {
-        auto hour = parseInteger<uint8_t>(parse.left(2));
-        auto minute = parseInteger<uint8_t>(parse.substring(3, 2));
-        auto seconds = parseInteger<uint8_t>(parse.substring(6, 2));
-        if (!hour || !minute || *minute > 59 || !seconds || *seconds > 59)
+        auto hours = parseInteger<uint8_t>(parse.left(2));
+        auto minutes = parseInteger<uint8_t>(parse.substring(3, 2));
+        auto seconds = parseNumber(parse.substring(6));
+        if (!hours || !minutes || *minutes > 59 || !seconds || *seconds >= 60)
             return SMILTime::unresolved();
-        result = *hour * 60 * 60 + *minute * 60 + parse.substring(6).toDouble(ok);
+        result = *hours * 60 * 60 + *minutes * 60 + *seconds;
     } else if (doublePointOne == 2 && doublePointTwo == notFound && parse.length() >= 5) {
-        auto minute = parseInteger<uint8_t>(parse.left(2));
-        auto seconds = parseInteger<uint8_t>(parse.substring(3, 2));
-        if (!minute || *minute > 59 || !seconds || *seconds > 59)
+        auto minutes = parseInteger<uint8_t>(parse.left(2));
+        auto seconds = parseNumber(parse.substring(3));
+        if (!minutes || *minutes > 59 || !seconds || *seconds >= 60)
             return SMILTime::unresolved();
-        result = *minute * 60 + parse.substring(3).toDouble(ok);
+        result = *minutes * 60 + *seconds;
     } else
         return parseOffsetValue(parse);
-    if (!ok || !SMILTime(result).isFinite())
+    if (!SMILTime(result).isFinite())
         return SMILTime::unresolved();
     return result;
 }

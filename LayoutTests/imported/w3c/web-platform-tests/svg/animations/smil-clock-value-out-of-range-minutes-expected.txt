@@ -1,3 +1,0 @@
-
-PASS SMIL clock values with out-of-range minutes or seconds should be treated as invalid
-
