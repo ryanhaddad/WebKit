@@ -410,6 +410,11 @@ void RemoteLayerTreeDrawingAreaProxy::commitLayerTree(IPC::Connection& connectio
             return;
     }
 
+    {
+        CheckedRef scrollingCoordinatorProxy = *page->scrollingCoordinatorProxy();
+        scrollingCoordinatorProxy->establishLayerTreeScrollingRelations(connection);
+    }
+
     for (auto& callbackID : bundle.pageData.callbackIDs) {
         removeOutstandingPresentationUpdateCallback(connection, callbackID);
         if (auto callback = connection.takeAsyncReplyHandler(callbackID))

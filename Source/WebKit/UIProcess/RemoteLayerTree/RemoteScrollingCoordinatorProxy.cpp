@@ -41,6 +41,9 @@
 #include <WebCore/PerformanceLoggingClient.h>
 #include <WebCore/ScrollingStateTree.h>
 #include <WebCore/ScrollingTreeFrameScrollingNode.h>
+#include <WebCore/ScrollingTreeOverflowScrollProxyNode.h>
+#include <WebCore/ScrollingTreeOverflowScrollingNode.h>
+#include <WebCore/ScrollingTreePositionedNode.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -104,8 +107,6 @@ ScrollRequestData RemoteScrollingCoordinatorProxy::commitScrollingTreeState(IPC:
         bool succeeded = m_scrollingTree->commitTreeState(WTF::move(stateTree), identifier);
 
         MESSAGE_CHECK_WITH_RETURN_VALUE(succeeded, ScrollRequestData());
-
-        establishLayerTreeScrollingRelations(*layerTreeHost);
     }
 
     if (transaction.clearScrollLatching())
@@ -113,6 +114,60 @@ ScrollRequestData RemoteScrollingCoordinatorProxy::commitScrollingTreeState(IPC:
 
     return std::exchange(m_scrollRequestData, { });
 }
+
+void RemoteScrollingCoordinatorProxy::establishLayerTreeScrollingRelations(IPC::Connection& connection)
+{
+    auto* remoteLayerTreeHost = this->layerTreeHost();
+    if (!remoteLayerTreeHost) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
+
+    for (auto layerID : m_layersWithScrollingRelations) {
+        if (RefPtr layerNode = remoteLayerTreeHost->nodeForID(layerID)) {
+            layerNode->setActingScrollContainerID(std::nullopt);
+            layerNode->setStationaryScrollContainerIDs({ });
+        }
+    }
+    m_layersWithScrollingRelations.clear();
+
+    // Usually a scroll view scrolls its descendant layers. In some positioning cases it also controls non-descendants, or doesn't control a descendant.
+    // To do overlap hit testing correctly we tell layers about such relations.
+
+    for (auto& positionedNode : scrollingTree().activePositionedNodes()) {
+        Vector<PlatformLayerIdentifier> stationaryScrollContainerIDs;
+
+        for (auto overflowNodeID : positionedNode->relatedOverflowScrollingNodes()) {
+            RefPtr node = scrollingTree().nodeForID(overflowNodeID);
+            RefPtr overflowNode = dynamicDowncast<ScrollingTreeOverflowScrollingNode>(node.get());
+            MESSAGE_CHECK_BASE(overflowNode, connection);
+            SUPPRESS_FORWARD_DECL_ARG RetainPtr scrollContainerLayer = static_cast<CALayer*>(overflowNode->scrollContainerLayer());
+            SUPPRESS_FORWARD_DECL_ARG auto layerID = RemoteLayerTreeNode::layerID(scrollContainerLayer.get());
+            MESSAGE_CHECK_BASE(layerID, connection);
+            stationaryScrollContainerIDs.append(*layerID);
+        }
+
+        SUPPRESS_FORWARD_DECL_ARG RetainPtr positionedLayer = positionedNode->layer();
+        SUPPRESS_FORWARD_DECL_ARG if (RefPtr layerNode = RemoteLayerTreeNode::forCALayer(positionedLayer.get())) {
+            layerNode->setStationaryScrollContainerIDs(WTF::move(stationaryScrollContainerIDs));
+            m_layersWithScrollingRelations.add(layerNode->layerID());
+        }
+    }
+
+    for (auto& scrollProxyNode : scrollingTree().activeOverflowScrollProxyNodes()) {
+        RefPtr node = scrollingTree().nodeForID(scrollProxyNode->overflowScrollingNodeID());
+        RefPtr overflowNode = dynamicDowncast<ScrollingTreeOverflowScrollingNode>(node.get());
+        MESSAGE_CHECK_BASE(overflowNode, connection);
+
+        SUPPRESS_FORWARD_DECL_ARG RetainPtr scrollProxyLayer = scrollProxyNode->layer();
+        SUPPRESS_FORWARD_DECL_ARG if (RefPtr layerNode = RemoteLayerTreeNode::forCALayer(scrollProxyLayer.get())) {
+            SUPPRESS_FORWARD_DECL_ARG RetainPtr scrollContainerLayer = static_cast<CALayer*>(overflowNode->scrollContainerLayer());
+            SUPPRESS_FORWARD_DECL_ARG layerNode->setActingScrollContainerID(RemoteLayerTreeNode::layerID(scrollContainerLayer.get()));
+            m_layersWithScrollingRelations.add(layerNode->layerID());
+        }
+    }
+}
+
 
 void RemoteScrollingCoordinatorProxy::adjustMainFrameDelegatedScrollPosition(ScrollRequestData&& requestData)
 {
