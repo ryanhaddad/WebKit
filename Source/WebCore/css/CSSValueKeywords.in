@@ -1603,6 +1603,7 @@ tip enable-if=ENABLE_APPLE_PAY&ENABLE_APPLE_PAY_NEW_BUTTON_TYPES
 // font-synthesis
 weight
 style
+oblique-only
 
 // will-change
 scroll-position

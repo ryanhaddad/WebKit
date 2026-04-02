@@ -81,6 +81,9 @@ auto FontSelectionAlgorithm::styleDistance(Capabilities capabilities) const -> D
     if (m_request.slopeAxis == FontStyleAxis::slnt && capabilities.faceAxis == FontStyleAxis::ital)
         return { FontSelectionValue::maximumValue(), requestSlope };
 
+    if (m_request.penalizeObliqueFontSelection && capabilities.faceAxis == FontStyleAxis::slnt)
+        return { FontSelectionValue::maximumValue(), requestSlope };
+
     if (slope.includes(requestSlope))
         return { FontSelectionValue(), requestSlope };
 

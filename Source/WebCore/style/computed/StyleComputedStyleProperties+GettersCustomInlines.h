@@ -204,7 +204,7 @@ inline FontSynthesisLonghandValue ComputedStyleProperties::fontSynthesisSmallCap
     return fontDescription().fontSynthesisSmallCaps();
 }
 
-inline FontSynthesisLonghandValue ComputedStyleProperties::fontSynthesisStyle() const
+inline FontSynthesisStyleLonghandValue ComputedStyleProperties::fontSynthesisStyle() const
 {
     return fontDescription().fontSynthesisStyle();
 }

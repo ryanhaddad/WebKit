@@ -306,6 +306,7 @@ struct FontSelectionRequest {
     Value width;
     std::optional<Value> slope;
     FontStyleAxis slopeAxis { FontStyleAxis::normal };
+    bool penalizeObliqueFontSelection { false };
 
     friend bool operator==(const FontSelectionRequest&, const FontSelectionRequest&) = default;
 };
@@ -324,7 +325,7 @@ inline TextStream& operator<<(TextStream& ts, const std::optional<FontSelectionV
 
 inline void add(Hasher& hasher, const FontSelectionRequest& request)
 {
-    add(hasher, request.weight, request.width, request.slope, std::to_underlying(request.slopeAxis));
+    add(hasher, request.weight, request.width, request.slope, std::to_underlying(request.slopeAxis), request.penalizeObliqueFontSelection);
 }
 
 struct FontSelectionCapabilities {

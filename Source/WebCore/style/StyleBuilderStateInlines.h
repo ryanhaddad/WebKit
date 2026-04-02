@@ -149,7 +149,7 @@ inline void BuilderState::setFontDescriptionFontSynthesisSmallCaps(FontSynthesis
     m_style.mutableFontDescriptionWithoutUpdate().setFontSynthesisSmallCaps(WTF::move(fontSynthesisSmallCaps));
 }
 
-inline void BuilderState::setFontDescriptionFontSynthesisStyle(FontSynthesisLonghandValue fontSynthesisStyle)
+inline void BuilderState::setFontDescriptionFontSynthesisStyle(FontSynthesisStyleLonghandValue fontSynthesisStyle)
 {
     if (m_style.fontDescription().fontSynthesisStyle() == fontSynthesisStyle)
         return;

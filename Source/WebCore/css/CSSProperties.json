@@ -1275,7 +1275,11 @@
             "initial": "auto",
             "values": [
                 "auto",
-                "none"
+                "none",
+                {
+                    "value": "oblique-only",
+                    "settings-flag": "cssFontSynthesisStyleObliqueOnlyEnabled"
+                }
             ],
             "codegen-properties": {
                 "font-property": true,
@@ -1283,7 +1287,7 @@
                 "computed-style-storage-container": "opaque",
                 "computed-style-storage-path": ["m_inheritedData", "fontData", "fontCascade"],
                 "computed-style-storage-kind": "enum",
-                "computed-style-type": "FontSynthesisLonghandValue",
+                "computed-style-type": "FontSynthesisStyleLonghandValue",
                 "parser-grammar": "<<values>>"
             },
             "specification": {

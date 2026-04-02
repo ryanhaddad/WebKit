@@ -190,7 +190,7 @@ public:
     void setFontDescriptionFontSmoothing(FontSmoothingMode);
     void setFontDescriptionFontStyle(FontStyle);
     void setFontDescriptionFontSynthesisSmallCaps(FontSynthesisLonghandValue);
-    void setFontDescriptionFontSynthesisStyle(FontSynthesisLonghandValue);
+    void setFontDescriptionFontSynthesisStyle(FontSynthesisStyleLonghandValue);
     void setFontDescriptionFontSynthesisWeight(FontSynthesisLonghandValue);
     void setFontDescriptionKerning(Kerning);
     void setFontDescriptionOpticalSizing(FontOpticalSizing);

@@ -121,6 +121,7 @@ CSSParserContext::CSSParserContext(const Settings& settings)
     , cssDynamicRangeLimitMixEnabled { settings.cssDynamicRangeLimitMixEnabled() }
     , cssConstrainedDynamicRangeLimitEnabled { settings.cssConstrainedDynamicRangeLimitEnabled() }
     , cssTextTransformMathAutoEnabled { settings.cssTextTransformMathAutoEnabled() }
+    , cssFontSynthesisStyleObliqueOnlyEnabled { settings.cssFontSynthesisStyleObliqueOnlyEnabled() }
     , cssInternalAutoBaseParsingEnabled { settings.cssInternalAutoBaseParsingEnabled() }
     , cssMathDepthEnabled { settings.cssMathDepthEnabled() }
     , openPseudoClassEnabled { settings.openPseudoClassEnabled() }
@@ -163,6 +164,7 @@ void add(Hasher& hasher, const CSSParserContext& context)
         context.cssConstrainedDynamicRangeLimitEnabled,
         context.cssTextDecorationLineErrorValues,
         context.cssTextTransformMathAutoEnabled,
+        context.cssFontSynthesisStyleObliqueOnlyEnabled,
         context.cssInternalAutoBaseParsingEnabled,
         context.cssMathDepthEnabled,
         context.openPseudoClassEnabled,
