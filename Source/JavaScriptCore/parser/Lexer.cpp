@@ -1043,15 +1043,12 @@ template <bool shouldCreateIdentifier> ALWAYS_INLINE JSTokenType Lexer<Latin1Cha
     if ((remaining < maxTokenLength) && !lexerFlags.contains(LexerFlags::IgnoreReservedWords)) [[unlikely]] {
         if (!isBuiltinName) {
             ASSERT(shouldCreateIdentifier);
-            if (remaining < maxTokenLength) {
-                const HashTableValue* entry = JSC::mainTable.entry(*ident);
-                ASSERT((remaining < maxTokenLength) || !entry);
-                if (!entry)
-                    return identType;
-                JSTokenType token = static_cast<JSTokenType>(entry->lexerValue());
-                return (token != RESERVED_IF_STRICT) || strictMode ? token : identType;
-            }
-            return identType;
+            const HashTableValue* entry = JSC::mainTable.entry(*ident);
+            ASSERT((remaining < maxTokenLength) || !entry);
+            if (!entry)
+                return identType;
+            JSTokenType token = static_cast<JSTokenType>(entry->lexerValue());
+            return (token != RESERVED_IF_STRICT) || strictMode ? token : identType;
         }
     }
 
@@ -1135,15 +1132,12 @@ template <bool shouldCreateIdentifier> ALWAYS_INLINE JSTokenType Lexer<char16_t>
 
     if ((remaining < maxTokenLength) && !lexerFlags.contains(LexerFlags::IgnoreReservedWords)) [[unlikely]] {
         ASSERT(shouldCreateIdentifier);
-        if (remaining < maxTokenLength) {
-            const HashTableValue* entry = JSC::mainTable.entry(*ident);
-            ASSERT((remaining < maxTokenLength) || !entry);
-            if (!entry)
-                return IDENT;
-            JSTokenType token = static_cast<JSTokenType>(entry->lexerValue());
-            return (token != RESERVED_IF_STRICT) || strictMode ? token : IDENT;
-        }
-        return IDENT;
+        const HashTableValue* entry = JSC::mainTable.entry(*ident);
+        ASSERT((remaining < maxTokenLength) || !entry);
+        if (!entry)
+            return IDENT;
+        JSTokenType token = static_cast<JSTokenType>(entry->lexerValue());
+        return (token != RESERVED_IF_STRICT) || strictMode ? token : IDENT;
     }
 
     return IDENT;
