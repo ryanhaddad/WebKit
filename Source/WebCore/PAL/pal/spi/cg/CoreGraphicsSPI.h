@@ -413,7 +413,6 @@ void CGContextSetStyle(CGContextRef, CGStyleRef);
 void CGContextDrawConicGradient(CGContextRef, CGGradientRef, CGPoint center, CGFloat angle);
 void CGPathAddUnevenCornersRoundedRect(CGMutablePathRef, const CGAffineTransform *, CGRect, const CGSize corners[4]);
 bool CGFontRenderingGetFontSmoothingDisabled(void);
-CGShadingRef CGShadingCreateConic(CGColorSpaceRef, CGPoint center, CGFloat angle, CGFunctionRef);
 
 CGGradientRef CGGradientCreateWithColorComponentsAndOptions(CGColorSpaceRef, const CGFloat*, const CGFloat*, size_t, CFDictionaryRef);
 CGGradientRef CGGradientCreateWithColorsAndOptions(CGColorSpaceRef, CFArrayRef, const CGFloat*, CFDictionaryRef);
