@@ -295,6 +295,10 @@ void NetworkStorageManager::startReceivingMessageFromConnection(IPC::Connection&
         ASSERT(!m_preferencesForConnections.contains(connection));
         m_preferencesForConnections.add(connection, preferences);
 
+        // Use SQLite in-memory backing store if any connection enables it.
+        if (preferences.indexedDBSQLiteMemoryBackingStoreEnabled)
+            m_useSQLiteMemoryBackingStore = true;
+
         RunLoop::mainSingleton().dispatch([protectedThis = WTF::move(protectedThis)] { });
     });
 
@@ -341,12 +345,13 @@ void NetworkStorageManager::updateSharedPreferencesForConnection(IPC::Connection
 
     workQueue().dispatch([this, protectedThis = Ref { *this }, connection = connection.uniqueID(), preferences]() mutable {
         assertIsCurrent(workQueue());
-        if (auto iter = m_preferencesForConnections.find(connection); iter != m_preferencesForConnections.end())
+        if (auto iter = m_preferencesForConnections.find(connection); iter != m_preferencesForConnections.end()) {
             iter->value = preferences;
 
-        // Use SQLite in-memory backing store if any connection enables it.
-        if (preferences.indexedDBSQLiteMemoryBackingStoreEnabled)
-            m_useSQLiteMemoryBackingStore = true;
+            // Use SQLite in-memory backing store if any connection enables it.
+            if (preferences.indexedDBSQLiteMemoryBackingStoreEnabled)
+                m_useSQLiteMemoryBackingStore = true;
+        }
 
         RunLoop::mainSingleton().dispatch([protectedThis = WTF::move(protectedThis)] { });
     });
