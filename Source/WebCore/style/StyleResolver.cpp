@@ -646,7 +646,7 @@ std::unique_ptr<RenderStyle> Resolver::defaultStyleForElement(const Element* ele
     auto style = RenderStyle::createPtrWithRegisteredInitialValues(document().customPropertyRegistry());
 
     FontCascadeDescription fontDescription;
-    fontDescription.setOneFamily(standardFamily);
+    fontDescription.setOneFamily(WebCore::FontFamily { standardFamily, FontFamilyKind::Generic });
     fontDescription.setKeywordSizeFromIdentifier(CSSValueMedium);
 
     auto size = fontSizeForKeyword(CSSValueMedium, false, document());
