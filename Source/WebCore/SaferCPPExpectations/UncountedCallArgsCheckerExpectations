@@ -87,7 +87,6 @@ bindings/js/JSCSSRuleCustom.h
 bindings/js/JSCanvasRenderingContext2DCustom.cpp
 bindings/js/JSCustomElementInterface.cpp
 bindings/js/JSDOMBindingSecurity.cpp
-bindings/js/JSDOMBindingSecurity.h
 bindings/js/JSDOMBindingSecurityInlines.h
 bindings/js/JSDOMConvertBase.h
 bindings/js/JSDOMConvertCallbacks.h
