@@ -1310,7 +1310,7 @@ template <bool shouldBuildStrings> ALWAYS_INLINE typename Lexer<T>::StringParseR
     m_current = *found;
     if (m_current == stringQuoteCharacter) [[likely]] {
         if constexpr (shouldBuildStrings)
-            tokenData->ident = makeIdentifier(std::span { stringStart, found });
+            tokenData->ident = makeLatin1Identifier(std::span { stringStart, found });
         else
             tokenData->ident = nullptr;
         return StringParsedSuccessfully;
