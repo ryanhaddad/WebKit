@@ -1567,21 +1567,11 @@ Vector<char16_t> RenderText::previousCharacter() const
         if (previousString.is8Bit())
             previous.append(previousString[previousString.length() - 1]);
         else {
-            auto previousCharacterLength = [&] {
-                auto contentIterator = SurrogatePairAwareTextIterator { previousString.span16(), 0, previousString.length() };
-                unsigned characterLength = 0;
-                char32_t currentCharacter = 0;
-                while (contentIterator.consume(currentCharacter, characterLength))
-                    contentIterator.advance(characterLength);
-                return characterLength;
-            }();
-
-            if (previousCharacterLength > previousString.length()) {
-                ASSERT_NOT_REACHED();
-                return previous;
-            }
-            for (size_t i = previousString.length() - previousCharacterLength; i < previousString.length(); ++i)
-                previous.append(previousString[i]);
+            unsigned length = previousString.length();
+            bool hasSurrogatePair = length >= 2 && U_IS_LEAD(previousString[length - 2]) && U_IS_TRAIL(previousString[length - 1]);
+            if (hasSurrogatePair)
+                previous.append(previousString[length - 2]);
+            previous.append(previousString[length - 1]);
         }
     }
     return previous;
