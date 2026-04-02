@@ -31,9 +31,12 @@
 #import "CMUtilities.h"
 #import "FourCC.h"
 #import "LibWebRTCProvider.h"
+#import "Logging.h"
+#import "MediaStrategy.h"
 #import "PlatformMediaCapabilitiesInfo.h"
 #import "PlatformMediaCapabilitiesVideoConfiguration.h"
 #import "PlatformScreen.h"
+#import "PlatformStrategies.h"
 #import "ScreenProperties.h"
 #import "SharedBuffer.h"
 #import "SystemBattery.h"
@@ -66,9 +69,9 @@ void VP9TestingOverrides::setHardwareDecoderDisabled(std::optional<bool>&& disab
         m_configurationChangedCallback(false);
 }
 
-void VP9TestingOverrides::setVP9HardwareDecoderEnabledOverride(std::optional<bool>&& disabled)
+void VP9TestingOverrides::setVP9HardwareDecoderEnabledOverride(std::optional<bool>&& enabled)
 {
-    m_vp9HardwareDecoderEnabledOverride = WTF::move(disabled);
+    m_vp9HardwareDecoderEnabledOverride = WTF::move(enabled);
     if (m_configurationChangedCallback)
         m_configurationChangedCallback(false);
 }
@@ -197,6 +200,11 @@ bool shouldEnableSWVP9Decoder()
     return isSWDecodersAlwaysEnabled() || (!vp9HardwareDecoderAvailable() && !systemHasBattery());
 }
 
+static bool isVP9HardwareDecoderAvailabilityKnown()
+{
+    return VP9TestingOverrides::singleton().hardwareDecoderDisabled() || VP9TestingOverrides::singleton().vp9HardwareDecoderEnabledOverride();
+}
+
 bool isVP9DecoderAvailable()
 {
     if (isSWDecodersAlwaysEnabled())
@@ -215,6 +223,13 @@ bool isVP8DecoderAvailable()
 
 bool vp9HardwareDecoderAvailable()
 {
+    // If the GPUP hasn't delivered VP9 hardware decoder capability yet,
+    // ensure it's initialized and re-check.
+    if (!isVP9HardwareDecoderAvailabilityKnown() && hasPlatformStrategies()) {
+        RELEASE_LOG_ERROR(Media, "SourceBufferParserWebM::isContentTypeSupported: VP9 availability unknown, ensuring codecs support is initialized");
+        platformStrategies()->mediaStrategy()->ensureCodecsSupportChecksInitialized();
+    }
+
     if (auto disabledForTesting = VP9TestingOverrides::singleton().hardwareDecoderDisabled())
         return !*disabledForTesting;
 

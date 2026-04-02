@@ -76,6 +76,7 @@ public:
 #if ENABLE(VIDEO)
     virtual void nativeImageFromVideoFrame(const VideoFrame&, CompletionHandler<void(std::optional<RefPtr<NativeImage>>&&)>&&);
     virtual bool canDecodeExtendedType(PlatformMediaDecodingType, const ContentType&) { return false; }
+    virtual void ensureCodecsSupportChecksInitialized() { }
 #endif
 
     virtual bool enableWebMMediaPlayer() const { return true; }
