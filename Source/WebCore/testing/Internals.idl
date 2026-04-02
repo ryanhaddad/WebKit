@@ -97,7 +97,8 @@ enum ContentSizeCategory {
 enum TreeType {
     "Tree",
     "ShadowIncludingTree",
-    "ComposedTree"
+    "ComposedTree",
+    "ComposedTreeIncludingPseudoElements"
 };
 
 [Conditional=WEBGL] enum SimulatedWebGLContextEvent {

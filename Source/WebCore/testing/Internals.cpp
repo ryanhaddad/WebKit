@@ -7921,6 +7921,8 @@ constexpr TreeType NODELETE convertType(Internals::TreeType type)
         return ShadowIncludingTree;
     case Internals::ComposedTree:
         return ComposedTree;
+    case Internals::ComposedTreeIncludingPseudoElements:
+        return ComposedTreeIncludingPseudoElements;
     }
     ASSERT_NOT_REACHED();
     return Tree;

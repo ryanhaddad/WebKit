@@ -1266,10 +1266,13 @@ static AnchorsForAnchorName collectAnchorsForAnchorName(const Document& document
     // Sort them in tree order.
     for (auto& anchors : anchorsForAnchorName.values()) {
         std::ranges::sort(anchors, [](auto& a, auto& b) {
-            // FIXME: Figure out anonymous pseudo-elements.
-            if (!a->element() || !b->element())
-                return !!b->element();
-            return is_lt(treeOrder<ComposedTree>(*a->element(), *b->element()));
+            RefPtr aElement = a->element();
+            RefPtr bElement = b->element();
+
+            if (!aElement || !bElement)
+                return false;
+
+            return is_lt(treeOrder<ComposedTreeIncludingPseudoElements>(*aElement, *bElement));
         });
     }
 

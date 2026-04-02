@@ -827,7 +827,7 @@ private:
 
 bool NODELETE connectedInSameTreeScope(const Node*, const Node*);
 
-enum TreeType { Tree, ShadowIncludingTree, ComposedTree };
+enum TreeType { Tree, ShadowIncludingTree, ComposedTree, ComposedTreeIncludingPseudoElements };
 template<TreeType = Tree> ContainerNode* parent(const Node&);
 template<TreeType = Tree> Node* commonInclusiveAncestor(const Node&, const Node&);
 template<TreeType = Tree> std::partial_ordering treeOrder(const Node&, const Node&);

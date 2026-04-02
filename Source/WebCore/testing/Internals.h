@@ -1599,7 +1599,7 @@ public:
 
 #endif // ENABLE(MEDIA_SESSION)
 
-    enum TreeType : uint8_t { Tree, ShadowIncludingTree, ComposedTree };
+    enum TreeType : uint8_t { Tree, ShadowIncludingTree, ComposedTree, ComposedTreeIncludingPseudoElements };
     String treeOrder(Node&, Node&, TreeType);
     String treeOrderBoundaryPoints(Node& containerA, unsigned offsetA, Node& containerB, unsigned offsetB, TreeType);
     bool rangeContainsNode(const AbstractRange&, Node&, TreeType);

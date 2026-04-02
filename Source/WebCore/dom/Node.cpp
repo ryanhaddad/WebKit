@@ -3002,6 +3002,11 @@ template<> ContainerNode* parent<ComposedTree>(const Node& node)
     return node.parentInComposedTree();
 }
 
+template<> ContainerNode* parent<ComposedTreeIncludingPseudoElements>(const Node& node)
+{
+    return node.parentElementInComposedTree();
+}
+
 template<TreeType treeType> size_t NODELETE depth(const Node& node)
 {
     size_t depth = 0;
@@ -3055,16 +3060,26 @@ template<TreeType treeType> Node* commonInclusiveAncestor(const Node& a, const N
 template Node* commonInclusiveAncestor<Tree>(const Node&, const Node&);
 template Node* commonInclusiveAncestor<ComposedTree>(const Node&, const Node&);
 template Node* commonInclusiveAncestor<ShadowIncludingTree>(const Node&, const Node&);
+template Node* commonInclusiveAncestor<ComposedTreeIncludingPseudoElements>(const Node&, const Node&);
 
-static bool NODELETE isSiblingSubsequent(const Node& siblingA, const Node& siblingB)
+template<TreeType treeType> bool NODELETE isSiblingSubsequent(const Node& siblingA, const Node& siblingB)
 {
-    ASSERT(siblingA.parentNode());
-    ASSERT(siblingA.parentNode() == siblingB.parentNode());
     ASSERT(&siblingA != &siblingB);
+    ASSERT(parent<treeType>(siblingA));
+    ASSERT(parent<treeType>(siblingA) == parent<treeType>(siblingB));
+
+    if (siblingA.isBeforePseudoElement() || siblingB.isAfterPseudoElement())
+        return true;
+    if (siblingA.isAfterPseudoElement() || siblingB.isBeforePseudoElement())
+        return false;
+
+    ASSERT(!siblingA.isPseudoElement() && !siblingB.isPseudoElement());
+
     for (auto sibling = &siblingA; sibling; sibling = sibling->nextSibling()) {
         if (sibling == &siblingB)
             return true;
     }
+
     return false;
 }
 
@@ -3089,12 +3104,13 @@ template<TreeType treeType> std::partial_ordering treeOrder(const Node& a, const
         ASSERT_NOT_REACHED();
         return std::partial_ordering::unordered;
     }
-    return isSiblingSubsequent(*result.distinctAncestorA, *result.distinctAncestorB) ? std::partial_ordering::less : std::partial_ordering::greater;
+    return isSiblingSubsequent<treeType>(*result.distinctAncestorA, *result.distinctAncestorB) ? std::partial_ordering::less : std::partial_ordering::greater;
 }
 
 template std::partial_ordering treeOrder<Tree>(const Node&, const Node&);
 template std::partial_ordering treeOrder<ShadowIncludingTree>(const Node&, const Node&);
 template std::partial_ordering treeOrder<ComposedTree>(const Node&, const Node&);
+template std::partial_ordering treeOrder<ComposedTreeIncludingPseudoElements>(const Node&, const Node&);
 
 std::partial_ordering treeOrderForTesting(TreeType type, const Node& a, const Node& b)
 {
@@ -3105,6 +3121,8 @@ std::partial_ordering treeOrderForTesting(TreeType type, const Node& a, const No
         return treeOrder<ShadowIncludingTree>(a, b);
     case ComposedTree:
         return treeOrder<ComposedTree>(a, b);
+    case ComposedTreeIncludingPseudoElements:
+        return treeOrder<ComposedTreeIncludingPseudoElements>(a, b);
     }
     ASSERT_NOT_REACHED();
     return std::partial_ordering::unordered;
