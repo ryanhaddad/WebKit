@@ -2643,7 +2643,6 @@ imported/w3c/web-platform-tests/svg/text/reftests/text-multiline-003.svg [ Image
 imported/w3c/web-platform-tests/svg/text/reftests/text-shape-inside-001.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/text/reftests/text-shape-inside-002.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/text/reftests/text-xml-space-001.svg [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/svg/text/reftests/textpath-shape-001.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/text/reftests/xml-lang-attribute.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/text/reftests/textpath-side-001.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/text/reftests/text-font-face-load-image.html [ Skip ]
