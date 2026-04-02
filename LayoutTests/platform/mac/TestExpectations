@@ -1962,10 +1962,6 @@ webkit.org/b/259190 http/tests/images/heic-as-heif.html [ Pass ImageOnlyFailure 
 
 webkit.org/b/130490 media/video-remote-control-playpause.html [ Pass Timeout Crash ]
 
-# rdar://102494267 ([ New Test ] (248203@main): [ Sonoma ] http/tests/media/hls/track-in-band-hls-metadata-cue-duration.html is a consistent failure)
-http/tests/media/hls/track-in-band-hls-metadata-cue-duration.html [ Failure ]
-
-
 # rdar://100422705 ([ macOS iOS16 ] fast/text/system-font-fallb ack.html is a constant failure (245686))
 fast/text/system-font-fallback.html [ ImageOnlyFailure ]
 
