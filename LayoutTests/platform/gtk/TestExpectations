@@ -414,7 +414,6 @@ editing/inserting/smart-quote-with-all-configurations.html [ Skip ]
 fast/shadow-dom/touch-event-on-text-assigned-to-slot.html [ Skip ]
 
 webkit.org/b/141467 fast/multicol/pagination/LeftToRight-tb-hittest.html [ Failure ]
-webkit.org/b/141467 fast/multicol/pagination/RightToLeft-rl-hittest.html [ Failure ]
 
 # Path::addPath needs to be implemented
 webkit.org/b/130464 fast/canvas/canvas-path-addPath.html
@@ -432,9 +431,6 @@ Bug(GTK) editing/spelling/markers.html [ Skip ]
 
 # Requires ENABLE(MEDIA_CAPTURE)
 webkit.org/b/85958 fast/forms/file/file-input-capture.html [ Failure ]
-
-# This tests fail since the upgrade of GTK to 3.16 and Cairo to 1.14 on the JHBuild
-webkit.org/b/146731 fast/backgrounds/hidpi-background-image-contain-cover-scale-needs-more-precision.html [ ImageOnlyFailure Timeout ]
 
 # WebKitGTK+ doesn't have killring support.
 webkit.org/b/152379 editing/pasteboard/emacs-killring-alternating-append-prepend.html [ Failure ]
@@ -475,8 +471,6 @@ webkit.org/b/158617 fast/dom/Window/window-properties-performance-resource-timin
 
 # Resource timing tests are flaky due to redirect timing variability
 webkit.org/b/197473 imported/w3c/web-platform-tests/resource-timing/resource-timing-level1.sub.html [ Pass Failure ]
-webkit.org/b/197473 http/wpt/resource-timing/rt-cors.html [ Pass Failure ]
-webkit.org/b/197473 http/wpt/resource-timing/rt-cors.worker.html [ Pass Failure ]
 
 # No support for font-variant-* properties in @font-face declarations
 webkit.org/b/161586 css3/font-feature-settings-font-face-rendering.html [ ImageOnlyFailure ]
@@ -545,7 +539,6 @@ webkit.org/b/209275 imported/w3c/web-platform-tests/css/css-writing-modes/text-b
 webkit.org/b/209275 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-vlr-023.xht [ ImageOnlyFailure ]
 webkit.org/b/209275 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-vrl-022.xht [ ImageOnlyFailure ]
 
-webkit.org/b/257011 imported/w3c/web-platform-tests/css/css-text/hyphens/hyphens-vertical-002.html [ ImageOnlyFailure ]
 webkit.org/b/214290 imported/w3c/web-platform-tests/css/css-text/white-space/textarea-pre-wrap-012.html [ ImageOnlyFailure ]
 
 # Only flatpak based GTK Release layout test bot is constantly failing.
@@ -807,13 +800,8 @@ webkit.org/b/252878 webaudio/audioworket-out-of-memory.html [ Pass Timeout ]
 
 imported/w3c/web-platform-tests/cors/remote-origin.htm [ Pass Failure ]
 
-# Flaky tests detected on May2023
-webkit.org/b/257624 fast/mediastream/MediaStream-video-element-track-stop.html [ Failure ]
-webkit.org/b/257624 http/tests/frame-throttling/raf-throttle-in-cross-origin-subframe.html [ Failure ]
-
 # Uncomment when webkit.org/b/267992 is fixed
 #webkit.org/b/257624 http/wpt/cross-origin-opener-policy/header-parsing-with-report-to.https.html [ Failure Pass ]
-webkit.org/b/257624 imported/blink/fast/text/international/vertical-positioning-with-combining-marks.html [ Crash ImageOnlyFailure Pass ]
 webkit.org/b/257624 imported/w3c/web-platform-tests/cors/cors-safelisted-request-header.any.html [ Crash Failure Pass ]
 webkit.org/b/257624 imported/w3c/web-platform-tests/encoding/legacy-mb-japanese/euc-jp/eucjp-encode-form-errors-han.html?12001-13000 [ Failure Pass ]
 webkit.org/b/257624 imported/w3c/web-platform-tests/encoding/legacy-mb-tchinese/big5/big5-encode-form-big5-hkscs.html?12001-13000 [ Failure Pass ]
@@ -1195,7 +1183,6 @@ webkit.org/b/182763 accessibility/gtk/aria-activedescendant-changed-notification
 webkit.org/b/183902 fast/dom/frame-loading-via-document-write.html [ Failure ]
 
 # Imported css-text test suite from WPT
-webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/letter-spacing/letter-spacing-control-chars-001.html [ ImageOnlyFailure ]
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/word-break/word-break-break-all-007.html [ ImageOnlyFailure ]
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/word-break/word-break-normal-lo-000.html [ ImageOnlyFailure ]
 
@@ -1246,20 +1233,11 @@ webkit.org/b/211981 editing/pasteboard/data-transfer-get-data-on-pasting-html-us
 
 webkit.org/b/224062 webgl/1.0.x/conformance/rendering/gl-scissor-test.html [ Failure ]
 
-webkit.org/b/224076 imported/w3c/web-platform-tests/css/css-text/white-space/white-space-zero-fontsize-002.html [ ImageOnlyFailure ]
-
 imported/w3c/web-platform-tests/css/css-transforms/ttwf-css-3d-polygon-cycle.html [ ImageOnlyFailure ]
 
 webkit.org/b/279023 imported/w3c/web-platform-tests/css/css-transforms/composited-under-rotateY-180deg-perspective.html [ ImageOnlyFailure ]
 
 webkit.org/b/234782 imported/w3c/web-platform-tests/css/css-writing-modes/text-shadow-orientation-upright-001.html [ ImageOnlyFailure ]
-
-# Failing for css-highlight
-imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-iframe-003.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-iframe-004.html [ ImageOnlyFailure ]
-
-# WPT css/css-pseudo import (webkit.org/b/235197)
-imported/w3c/web-platform-tests/css/css-pseudo/selection-background-painting-order.html [ ImageOnlyFailure ]
 
 # Failing with skia only with swrast
 webkit.org/b/273396 css3/masking/clip-path-border-radius-border-box-000.html [ ImageOnlyFailure ]
@@ -1369,31 +1347,9 @@ webgl/2.0.y/conformance2/offscreencanvas/offscreencanvas-transfer-image-bitmap.h
 webgl/2.0.y/conformance/context/context-no-alpha-fbo-with-alpha.html [ Skip ]
 
 # Flaky tests on Aug-2023
-webkit.org/b/261024 http/wpt/mediarecorder/MediaRecorder-video-bitrate.html [ Crash Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/css/css-transforms/animation/transform-interpolation-rotate-slerp.html [ ImageOnlyFailure Pass ]
 webkit.org/b/261024 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/javascript-url-return-value-handling-dynamic.html [ Failure Pass ]
 webkit.org/b/261024 imported/w3c/web-platform-tests/media-source/mediasource-play.html [ Failure Pass Timeout ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/streams/readable-byte-streams/construct-byob-request.any.worker.html [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/constructor/006.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/constructor/009.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/constructor/012.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/constructor/016.html [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/cookies/003.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/cookies/004.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/cookies/006.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/008.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/send/005.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/keeping-connection-open/001.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/opening-handshake/002.html?default [ Failure Pass ]
-webkit.org/b/261024 imported/w3c/web-platform-tests/websockets/opening-handshake/005.html?default [ Failure Pass ]
 webkit.org/b/261024 inspector/canvas/recording-webgl-full.html [ Failure ]
-webkit.org/b/261024 webgl/1.0.x/conformance/canvas/buffer-offscreen-test.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/1.0.x/conformance/context/context-attribute-preserve-drawing-buffer-antialias.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/1.0.x/conformance/offscreencanvas/context-attribute-preserve-drawing-buffer.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/1.0.x/conformance/renderbuffers/framebuffer-state-restoration.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/1.0.x/conformance/rendering/color-mask-preserved-during-implicit-clears.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/2.0.y/conformance2/query/occlusion-query.html [ Pass Timeout ]
-webkit.org/b/261024 webgl/2.0.y/conformance2/textures/canvas/tex-3d-r8-red-unsigned_byte.html [ Pass Timeout ]
 
 imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-plus-filter.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/filtered-block-is-container.html [ ImageOnlyFailure ]
