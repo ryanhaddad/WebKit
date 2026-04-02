@@ -1856,7 +1856,7 @@ media/modern-media-controls/scrubber/scrubber-has-correct-ax-label.html [ Timeou
 media/modern-media-controls/volume-support/volume-support-click.html [ Timeout ]
 media/modern-media-controls/audio/audio-controls-styles.html [ Failure ]
 media/modern-media-controls/media-controller/media-controller-auto-hide-mouse-enter-over-controls-bar.html [ Failure ]
-media/modern-media-controls/media-controller/media-controller-auto-hide-mouse-leave-after-play.html [ Failure ]
+# media/modern-media-controls/media-controller/media-controller-auto-hide-mouse-leave-after-play.html [ Failure ]
 media/modern-media-controls/media-controller/media-controller-video-with-only-audio.html [ Failure ]
 media/modern-media-controls/time-label/time-label.html [ Failure ]
 media/modern-media-controls/volume-support/volume-support-drag.html [ Failure ]
@@ -3398,7 +3398,6 @@ webkit.org/b/232346 media/video-canvas-drawing-output.html [ Failure ]
 webkit.org/b/232346 media/video-orientation-canvas.html [ Failure ]
 
 webkit.org/b/307033 media/video-main-content-deny-not-in-dom.html [ Pass Timeout ]
-webkit.org/b/309436 media/video-load-preload-metadata.html [ Pass Failure ]
 
 # These are skipped globally as they only work with the web-platform.test domain.
 imported/w3c/web-platform-tests/fetch/metadata/fetch.https.sub.any.html [ Pass ]
@@ -4245,7 +4244,7 @@ webkit.org/b/145432 media/video-transformed-by-javascript.html [ Failure ]
 webkit.org/b/163523 media/track/track-manual-mode.html [ Failure ]
 webkit.org/b/163524 media/track/video-track-alternate-groups.html [ Failure Timeout ]
 webkit.org/b/198830 media/context-menu-actions.html [ Failure ]
-webkit.org/b/193638 media/video-webkit-playsinline.html [ Pass ]
+# webkit.org/b/193638 media/video-webkit-playsinline.html [ Pass ]
 webkit.org/b/224067 media/media-source/media-source-timestampoffset-trim.html [ Failure ]
 webkit.org/b/254207 media/media-source/media-source-remove-readystate.html [ Pass Failure Timeout ]
 webkit.org/b/160119 media/video-object-fit-change.html [ Pass Crash ImageOnlyFailure Timeout ]
@@ -4334,7 +4333,19 @@ webkit.org/b/229062 fast/forms/caps-lock-indicator-width.html [ Skip ]
 # Test is a flaky timeout. The test is also skipped in iOS and Windows.
 media/video-remote-control-playpause.html [ Skip ]
 
+# Timeouts due to gstreamer allocation error
+webkit.org/b/308438 compositing/video/video-clip-change-src.html [ Pass Timeout ]
+webkit.org/b/308438 media/media-source/media-source-reopen.html [ Pass Failure ]
+webkit.org/b/308438 media/modern-media-controls/media-controller/media-controller-auto-hide-mouse-leave-after-play.html [ Failure Timeout ]
+webkit.org/b/308438 media/video-concurrent-playback.html [ Pass Timeout ]
+webkit.org/b/308438 media/video-currenttime-monotonic.html [ Pass Timeout ]
+webkit.org/b/308438 media/video-main-content-autoplay.html [ Pass Timeout ]
+webkit.org/b/308438 media/video-seek-pause.html [ Pass Timeout ]
+webkit.org/b/308438 media/video-webkit-playsinline.html [ Pass Timeout ]
+webkit.org/b/309438 media/modern-media-controls/tracks-support/no-tracks.html [ Pass Timeout ]
 webkit.org/b/309438 media/remote-control-command-scrubbing.html [ Pass Timeout ]
+webkit.org/b/309438 media/video-currentTime-set2.html [ Pass Timeout ]
+webkit.org/b/309438 media/video-load-preload-metadata.html [ Pass Failure ]
 
 # Failure Pass Crash Timeout
 webkit.org/b/207062 webkit.org/b/244776 imported/w3c/web-platform-tests/media-source/mediasource-replay.html [ Skip ]
@@ -4591,7 +4602,6 @@ webkit.org/b/169918 compositing/tiling/tiled-reflection-inwindow.html [ Failure 
 webkit.org/b/169918 compositing/tiling/transform-origin-tiled.html [ Failure ]
 # See also bug #175575
 webkit.org/b/169918 compositing/video/video-object-position.html [ Failure Timeout ]
-webkit.org/b/224105 compositing/video/video-clip-change-src.html [ Pass Timeout ]
 webkit.org/b/206499 compositing/visibility/visibility-change-in-subframe.html [ Failure ]
 webkit.org/b/169918 compositing/visibility/visibility-image-layers-dynamic.html [ Failure ]
 webkit.org/b/186667 compositing/repaint/iframes/composited-iframe-with-fixed-background-doc-repaint.html [ Failure Pass ]
@@ -5328,8 +5338,6 @@ webkit.org/b/307292 imported/w3c/web-platform-tests/resource-timing/buffered-fla
 
 webkit.org/b/307293 imported/w3c/web-platform-tests/event-timing/keyup.html [ Pass Failure ]
 
-webkit.org/b/307294 media/video-concurrent-playback.html [ Pass Timeout ]
-webkit.org/b/307294 media/video-currenttime-monotonic.html [ Pass Timeout ]
 webkit.org/b/307294 media/video-pause-immediately.html [ Pass Timeout ]
 webkit.org/b/307294 media/video-playbackrate.html [ Pass Timeout ]
 webkit.org/b/307294 media/video-seek-past-end-paused.html [ Timeout Pass ]
@@ -5363,8 +5371,6 @@ webkit.org/b/308972 fast/repaint/search-field-cancel.html [ Pass ImageOnlyFailur
 webkit.org/b/308146 media/video-size.html [ Pass Failure Timeout ]
 
 webkit.org/b/308262 fast/css/view-transitions-hide-under-page-background-color.html [ Pass ImageOnlyFailure ]
-
-webkit.org/b/308265 media/media-source/media-source-reopen.html [ Pass Failure ]
 
 webkit.org/b/307586 imported/w3c/web-platform-tests/css/css-view-transitions/no-raf-while-render-blocked.html [ Failure Pass ]
 
@@ -5442,8 +5448,10 @@ webkit.org/b/311093 media/video-src-blob-replay.html [ Pass Timeout ]
 webkit.org/b/195466 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/ready-states/autoplay.html [ Failure Pass ]
 
 webkit.org/b/311276 imported/w3c/web-platform-tests/css/selectors/media/media-playback-state.html [ Pass Failure ]
+webkit.org/b/311276 imported/w3c/web-platform-tests/css/selectors/invalidation/media-pseudo-classes-in-has.html [ Pass Failure ]
 
-webkit.org/b/257624 fast/mediastream/MediaStream-video-element-track-stop.html [ Failure ]
+webkit.org/b/311317 fast/mediastream/MediaStream-video-element-track-stop.html [ Failure Timeout ]
+
 webkit.org/b/257624 http/tests/frame-throttling/raf-throttle-in-cross-origin-subframe.html [ Failure ]
 webkit.org/b/261024 fast/multicol/pagination/RightToLeft-rl-hittest.html [ Failure Pass ]
 webkit.org/b/146731 fast/backgrounds/hidpi-background-image-contain-cover-scale-needs-more-precision.html [ ImageOnlyFailure ]
@@ -5456,6 +5464,10 @@ imported/w3c/web-platform-tests/css/css-pseudo/selection-background-painting-ord
 webkit.org/b/257011 imported/w3c/web-platform-tests/css/css-text/hyphens/hyphens-vertical-002.html [ ImageOnlyFailure ]
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/letter-spacing/letter-spacing-control-chars-001.html [ ImageOnlyFailure ]
 webkit.org/b/224076 imported/w3c/web-platform-tests/css/css-text/white-space/white-space-zero-fontsize-002.html [ ImageOnlyFailure ]
+webkit.org/b/310749 imported/w3c/web-platform-tests/media-source/mediasource-config-change-mp4-v-framesize.html [ Pass Timeout Failure ]
+
+http/wpt/service-workers/fetch-service-worker-preload-download.https.html [ Pass Timeout ]
+http/tests/workers/service/service-worker-download-octet-stream-nosniff.https.html [ Pass Failure ]
 
 # Resource timing tests are flaky due to redirect timing variability
 webkit.org/b/197473 imported/w3c/web-platform-tests/speculation-rules/prefetch/navigation-timing-requestStart-responseStart.https.html?include=waitingForRedirect [ Pass Failure ]
