@@ -3767,7 +3767,7 @@ class RunJavaScriptCoreTests(shell.Test, AddToLogMixin, ShellMixin):
     FAILURE_THRESHOLD = 1000
 
     def __init__(self, **kwargs):
-        super().__init__(logEnviron=False, sigtermTime=10, timeout=3 * 60 * 60, **kwargs)
+        super().__init__(logEnviron=False, sigtermTime=10, timeout=20 * 60, **kwargs)
         self.binaryFailures = []
         self.stressTestFailures = []
         self.flaky = {}
