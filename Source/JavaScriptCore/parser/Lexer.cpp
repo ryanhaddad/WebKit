@@ -2484,8 +2484,6 @@ start:
         }
         size_t parsedLength;
         tokenData->doubleValue = parseDouble(m_buffer8, parsedLength);
-        if (token == INTEGER)
-            token = tokenTypeForIntegerLikeToken(tokenData->doubleValue);
 
         if (cannotBeIdentStart(m_current)) [[likely]] {
             m_buffer8.shrink(0);
