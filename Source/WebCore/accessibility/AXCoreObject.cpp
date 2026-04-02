@@ -36,6 +36,8 @@
 #include "AXUtilities.h"
 #include "DocumentView.h"
 #include "HTMLAreaElement.h"
+#include "HTMLOptionElement.h"
+#include "HTMLSelectElement.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "RenderObjectStyle.h"
@@ -104,6 +106,9 @@ bool AXCoreObject::isControl() const
     case AccessibilityRole::DateTime:
     case AccessibilityRole::LandmarkSearch:
     case AccessibilityRole::ListBox:
+    // FIXME: MenuItemCheckbox and MenuItemRadio should also be considered controls.
+    // Without this, Voice Control won't generate numbered overlays for them.
+    case AccessibilityRole::MenuItem:
     case AccessibilityRole::PopUpButton:
     case AccessibilityRole::RadioButton:
     case AccessibilityRole::SearchField:
@@ -923,6 +928,15 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedChildren()
         return selectedListItems();
     case AccessibilityRole::Menu:
     case AccessibilityRole::MenuBar:
+        if (Accessibility::findAncestor(*this, /* includeSelf */ false, [] (const auto& ancestor) {
+            return ancestor.isPopUpButton();
+        })) {
+            for (const auto& child : unignoredChildren()) {
+                if (child->isSelected())
+                    return { { child } };
+            }
+            break;
+        }
         if (RefPtr descendant = activeDescendant())
             return { { descendant.releaseNonNull() } };
         if (RefPtr focusedElement = focusedUIElement())

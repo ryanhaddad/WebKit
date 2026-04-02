@@ -895,6 +895,12 @@ bool AccessibilityNodeObject::canHaveChildren() const
     case AccessibilityRole::MenuItemRadio:
     case AccessibilityRole::Splitter:
     case AccessibilityRole::Meter:
+        // Base-appearance selects expose their popover and options as real
+        // AX children, so the PopUpButton must be able to have children.
+        if (role() == AccessibilityRole::PopUpButton) {
+            if (RefPtr select = dynamicDowncast<HTMLSelectElement>(node()))
+                return select->usesBaseAppearancePicker();
+        }
         return false;
     default:
         return true;
@@ -3492,6 +3498,11 @@ void AccessibilityNodeObject::visibleText(Vector<AccessibilityText>& textOrder) 
         if (isHeading())
             mode.includeFocusableContent = true;
 
+        // Base-appearance select options can have interactive content (buttons, links) whose text
+        // should be included in the menu item's title for VoiceOver to read.
+        if (RefPtr optionElement = dynamicDowncast<HTMLOptionElement>(node.get()); optionElement && optionElement->belongsToBaseAppearancePicker())
+            mode.includeFocusableContent = true;
+
         // Track nodes referenced via aria-labelledby to avoid double-counting them
         // when they're encountered again in the tree.
         HashSet<const Node*> nodesReferencedViaLabeledby;
@@ -4249,14 +4260,10 @@ String AccessibilityNodeObject::stringValue() const
     }
 
     if (RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(*node)) {
-        int selectedIndex = selectElement->selectedIndex();
-        auto& listItems = selectElement->listItems();
-        if (selectedIndex >= 0 && static_cast<size_t>(selectedIndex) < listItems.size()) {
-            if (RefPtr selectedItem = listItems[selectedIndex].get()) {
-                auto overriddenDescription = selectedItem->attributeTrimmedWithDefaultARIA(aria_labelAttr);
-                if (!overriddenDescription.isEmpty())
-                    return overriddenDescription;
-            }
+        if (RefPtr option = selectElement->selectedOption()) {
+            auto overriddenDescription = option->attributeTrimmedWithDefaultARIA(aria_labelAttr);
+            if (!overriddenDescription.isEmpty())
+                return overriddenDescription;
         }
         if (!selectElement->multiple())
             return selectElement->value();

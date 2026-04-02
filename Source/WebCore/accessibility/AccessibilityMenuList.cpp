@@ -64,10 +64,12 @@ bool AccessibilityMenuList::press()
     RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(element());
     auto notification = AXNotification::PressDidFail;
     if (selectElement && !selectElement->isDisabledFormControl()) {
+        // Note that hiding or showing the popup could trigger JS.
         if (selectElement->popupIsVisible())
             selectElement->hidePopup();
         else
             selectElement->showPopup();
+
         notification = AXNotification::PressDidSucceed;
     }
     if (CheckedPtr cache = axObjectCache())

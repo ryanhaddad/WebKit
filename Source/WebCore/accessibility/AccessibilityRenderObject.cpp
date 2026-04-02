@@ -72,6 +72,7 @@
 #include "HTMLMediaElement.h"
 #include "HTMLMeterElement.h"
 #include "HTMLNames.h"
+#include "HTMLOptGroupElement.h"
 #include "HTMLOptionElement.h"
 #include "HTMLOptionsCollection.h"
 #include "HTMLSelectElement.h"
@@ -132,6 +133,7 @@
 #include "SVGElementTypeHelpers.h"
 #include "SVGImage.h"
 #include "SVGSVGElement.h"
+#include "SelectPopoverElement.h"
 #include "ShadowRootMode.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
 #include "Text.h"
@@ -562,17 +564,12 @@ String AccessibilityRenderObject::stringValue() const
 
     // For menu list select elements, get the selected option's aria-label or label.
     if (RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(node()); selectElement && selectElement->usesMenuList()) {
-        int selectedIndex = selectElement->selectedIndex();
-        const auto& listItems = selectElement->listItems();
-        if (selectedIndex >= 0 && static_cast<size_t>(selectedIndex) < listItems.size()) {
-            if (RefPtr selectedItem = listItems[selectedIndex].get()) {
-                auto overriddenDescription = selectedItem->attributeTrimmedWithDefaultARIA(aria_labelAttr);
-                if (!overriddenDescription.isEmpty())
-                    return overriddenDescription;
-            }
-        }
-        if (RefPtr option = selectElement->item(selectedIndex))
+        if (RefPtr option = selectElement->selectedOption()) {
+            auto overriddenDescription = option->attributeTrimmedWithDefaultARIA(aria_labelAttr);
+            if (!overriddenDescription.isEmpty())
+                return overriddenDescription;
             return option->label();
+        }
         return String();
     }
 
@@ -945,6 +942,13 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     AX_ASSERT(m_initialized);
 #endif
 
+    if (is<SelectPopoverElement>(node())) {
+        // The base-appearance select popover (Menu) must always be included so that it
+        // properly wraps the menu items. Check before the !m_renderer bailout
+        // because the popover has display:contents (no renderer) when closed.
+        return false;
+    }
+
     if (!m_renderer)
         return AccessibilityNodeObject::computeIsIgnored();
 
@@ -1008,10 +1012,19 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     if (isExposableTable())
         return false;
 
-    // Ignore popup menu items because AppKit does.
     if (RefPtr node = this->node()) {
+        if (node->isInUserAgentShadowTree()) {
+            // Non-base-appearance selects delegate popup rendering to AppKit and use mock AX
+            // objects for their options, so ignore real DOM descendants to avoid duplication.
+            // Base-appearance selects render their own popover and expose real elements, so
+            // their descendants must not be ignored.
+            RefPtr select = dynamicDowncast<HTMLSelectElement>(node->shadowHost());
+            if (select && (!select->usesBaseAppearancePicker() || !is<SelectPopoverElement>(*node)))
+                return true;
+        }
+
         for (Ref ancestor : ancestorsOfType<HTMLSelectElement>(*node)) {
-            if (ancestor->usesMenuList())
+            if (ancestor->usesMenuList() && !ancestor->usesBaseAppearancePicker())
                 return true;
         }
     }
@@ -1061,8 +1074,24 @@ bool AccessibilityRenderObject::computeIsIgnored() const
             if (checkForIgnored && !ancestor->isIgnored()) {
                 checkForIgnored = false;
                 // Static text beneath MenuItems are just reported along with the menu item, so it's ignored on an individual level.
-                if (ancestor->isMenuItem())
+                if (ancestor->isMenuItem()) {
+                    // For base-appearance selects, option elements can have complex content (e.g.
+                    // text alongside buttons and links). When the option has interactive
+                    // content, expose text nodes so VoiceOver can navigate to them.
+                    // Presentational wrappers like <span> don't count.
+                    if (auto* optionElement = dynamicDowncast<HTMLOptionElement>(ancestor->node()); optionElement && optionElement->belongsToBaseAppearancePicker()) {
+                        bool hasInteractiveContent = false;
+                        for (Ref descendant : descendantsOfType<HTMLElement>(*optionElement)) {
+                            if (descendant->isInteractiveContent()) {
+                                hasInteractiveContent = true;
+                                break;
+                            }
+                        }
+                        if (hasInteractiveContent)
+                            break;
+                    }
                     return true;
+                }
             }
         }
 
@@ -1695,6 +1724,21 @@ bool AccessibilityRenderObject::press()
         return AccessibilityMediaHelpers::press(*mediaElement);
     }
 #endif
+
+    if (RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(element()); selectElement && selectElement->usesBaseAppearancePicker()) {
+        // Base-appearance selects need explicit picker toggling since they no longer use
+        // AccessibilityMenuList which had its own press() override.
+        if (selectElement->isDisabledFormControl())
+            return false;
+        if (selectElement->popupIsVisible())
+            selectElement->hidePickerPopoverElement();
+        else
+            selectElement->openPickerForUserInteraction();
+        if (CheckedPtr cache = axObjectCache())
+            cache->postNotification(selectElement.get(), AXNotification::PressDidSucceed);
+        return true;
+    }
+
     return AccessibilityObject::press();
 }
 
@@ -2228,6 +2272,9 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
     if (hasTreeRole())
         return isValidTree() ? AccessibilityRole::Tree : AccessibilityRole::Generic;
 
+    if (is<SelectPopoverElement>(node()))
+        return AccessibilityRole::Menu;
+
     if (!m_renderer)
         return AccessibilityNodeObject::determineAccessibilityRole();
 
@@ -2294,6 +2341,16 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
         if (selectElement->usesMenuList())
             return selectElement->multiple() ? AccessibilityRole::ListBox : AccessibilityRole::PopUpButton;
         return AccessibilityRole::ListBox;
+    }
+
+    // Options inside base-appearance selects are menu items.
+    if (RefPtr option = dynamicDowncast<HTMLOptionElement>(node)) {
+        if (RefPtr select = option->ownerSelectElement(); select && select->usesBaseAppearancePicker())
+            return AccessibilityRole::MenuItem;
+    }
+    if (RefPtr optGroup = dynamicDowncast<HTMLOptGroupElement>(node)) {
+        if (RefPtr select = optGroup->ownerSelectElement(); select && select->usesBaseAppearancePicker())
+            return AccessibilityRole::Group;
     }
 
     if (m_renderer->isRenderOrLegacyRenderSVGRoot())

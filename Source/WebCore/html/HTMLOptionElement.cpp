@@ -220,10 +220,7 @@ void HTMLOptionElement::finishParsingChildren()
 
 bool HTMLOptionElement::supportsFocus() const
 {
-    if (HTMLElement::supportsFocus())
-        return true;
-    RefPtr select = ownerSelectElement();
-    return select && select->usesBaseAppearancePicker();
+    return HTMLElement::supportsFocus() || belongsToBaseAppearancePicker();
 }
 
 bool HTMLOptionElement::isFocusable() const
@@ -475,6 +472,12 @@ HTMLSelectElement* HTMLOptionElement::ownerSelectElement() const
             return optGroup->ownerSelectElement();
     }
     return nullptr;
+}
+
+bool HTMLOptionElement::belongsToBaseAppearancePicker() const
+{
+    RefPtr select = ownerSelectElement();
+    return select && select->usesBaseAppearancePicker();
 }
 
 String HTMLOptionElement::label() const

@@ -67,6 +67,7 @@ public:
     static HTMLSelectElement* NODELETE findOwnerSelect(ContainerNode*, ExcludeOptGroup);
 
     WEBCORE_EXPORT int selectedIndex() const;
+    HTMLOptionElement* selectedOption();
     WEBCORE_EXPORT void setSelectedIndex(int);
 
     WEBCORE_EXPORT void optionSelectedByUser(int index, bool dispatchChangeEvent, bool allowMultipleSelection = false);
@@ -187,6 +188,7 @@ public:
 
     WEBCORE_EXPORT bool usesBaseAppearancePicker() const;
     SelectPopoverElement* NODELETE pickerPopoverElement() const;
+    void openPickerForUserInteraction(std::optional<bool> focusVisible = std::nullopt);
     void hidePickerPopoverElement();
     void queuePickerCloseForAppearanceChange();
 
@@ -285,7 +287,6 @@ private:
     void didAddUserAgentShadowRoot(ShadowRoot&) final;
 
     void showPickerInternal();
-    void openPickerForUserInteraction(std::optional<bool> focusVisible = std::nullopt);
 
     // TypeAheadDataSource functions.
     int indexOfSelectedOption() const final;

@@ -1238,6 +1238,12 @@ int HTMLSelectElement::selectedIndex() const
     return -1;
 }
 
+HTMLOptionElement* HTMLSelectElement::selectedOption()
+{
+    int index = selectedIndex();
+    return index >= 0 ? item(index) : nullptr;
+}
+
 void HTMLSelectElement::setSelectedIndex(int index)
 {
     selectOption(index, SelectOptionFlag::DeselectOtherOptions);

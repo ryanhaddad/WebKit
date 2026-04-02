@@ -71,7 +71,9 @@
 #include "HTMLInputElement.h"
 #include "HTMLModelElement.h"
 #include "HTMLNames.h"
+#include "HTMLOptionElement.h"
 #include "HTMLParserIdioms.h"
+#include "HTMLSelectElement.h"
 #include "HTMLSlotElement.h"
 #include "HTMLTableSectionElement.h"
 #include "HTMLTextAreaElement.h"
@@ -3055,7 +3057,12 @@ bool AccessibilityObject::isSelected() const
     if (isTabItem() && isTabItemSelected())
         return true;
 
-    // Menu items are considered selectable by assistive technologies
+    if (RefPtr option = dynamicDowncast<HTMLOptionElement>(node())) {
+        // Non-base-appearance select options are handled by AccessibilityMenuListOption
+        // or AccessibilityListBoxOption, so only base-appearance options reach here.
+        return option->selected();
+    }
+
     if (isMenuItem()) {
         if (isFocused())
             return true;
@@ -3437,6 +3444,9 @@ bool AccessibilityObject::supportsExpanded() const
     if (isColumnHeader() || isRowHeader())
         return hasValidAriaExpandedValue();
 
+    if (RefPtr select = dynamicDowncast<HTMLSelectElement>(node()); select && select->usesMenuList())
+        return true;
+
     switch (role()) {
     case AccessibilityRole::Details:
         return true;
@@ -3485,6 +3495,8 @@ bool AccessibilityObject::isExpanded() const
     }
 
     if (supportsExpanded()) {
+        if (RefPtr select = dynamicDowncast<HTMLSelectElement>(node()); select && select->usesMenuList())
+            return select->popupIsVisible();
         if (RefPtr commandForElement = this->commandForElement())
             return commandForElement->isPopoverShowing();
         if (RefPtr popoverTargetElement = this->popoverTargetElement())

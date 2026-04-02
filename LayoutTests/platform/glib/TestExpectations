@@ -845,6 +845,16 @@ accessibility/dynamic-content-visibility.html [ Skip ]
 accessibility/dynamic-selected-radio-button.html [ Skip ]
 accessibility/password-notifications-timing.html [ Skip ]
 
+# appearance: base-select failures. These need investigation, but it's possible they can be made to pass if the tests
+# are restructured to be more platform-agnostic.
+accessibility/base-select-basic.html [ Skip ]
+accessibility/base-select-complex-options.html [ Skip ]
+accessibility/base-select-focus-on-open.html [ Skip ]
+accessibility/base-select-notifications.html [ Skip ]
+# This one fails because it leans on a Cocoa-specific API (AccessibilityUIElement::uiElementForSearchPredicate), so
+# may be a true skip.
+accessibility/base-select-search-predicate.html [ Skip ]
+
 # Failing because the mtable cannot be found as an accessible element.
 accessibility/table-row-bounding-boxes.html [ Skip ]
 
