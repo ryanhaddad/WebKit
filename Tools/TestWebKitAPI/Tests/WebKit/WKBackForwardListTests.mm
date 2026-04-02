@@ -442,9 +442,6 @@ static RetainPtr<WKNavigation> lastNavigation;
 
 @end
 
-// _beginBackSwipeForTesting / _completeBackSwipeForTesting are not implemented on macOS.
-#if !PLATFORM(MAC)
-
 TEST(WKBackForwardList, BackSwipeNavigationSkipsItemsWithoutUserGesture)
 {
     auto webView = adoptNS([[WKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
@@ -522,8 +519,6 @@ TEST(WKBackForwardList, BackSwipeNavigationDoesNotSkipItemsWithUserGesture)
     EXPECT_EQ([webView backForwardList].backList.count, 1U);
     EXPECT_EQ([webView backForwardList].forwardList.count, 1U);
 }
-
-#endif
 
 static void runBackForwardNavigationSkipsItemsWithoutUserGestureTest(Function<void(WKWebView *, ASCIILiteral destination)>&& navigate)
 {
