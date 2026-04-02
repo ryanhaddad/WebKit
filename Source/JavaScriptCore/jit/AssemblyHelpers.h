@@ -1199,6 +1199,28 @@ public:
 #endif
     }
 
+#if USE(JSVALUE64)
+    Jump branchIfTrue(GPRReg gpr)
+    {
+        return branch64(Equal, gpr, TrustedImm64(JSValue::encode(jsBoolean(true))));
+    }
+
+    Jump branchIfNotTrue(GPRReg gpr)
+    {
+        return branch64(NotEqual, gpr, TrustedImm64(JSValue::encode(jsBoolean(true))));
+    }
+
+    Jump branchIfFalse(GPRReg gpr)
+    {
+        return branch64(Equal, gpr, TrustedImm64(JSValue::encode(jsBoolean(false))));
+    }
+
+    Jump branchIfNotFalse(GPRReg gpr)
+    {
+        return branch64(NotEqual, gpr, TrustedImm64(JSValue::encode(jsBoolean(false))));
+    }
+#endif
+
     template<typename T>
     Jump branchStructure(RelationalCondition condition, T leftHandSide, Structure* structure)
     {

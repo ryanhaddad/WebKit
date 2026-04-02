@@ -141,6 +141,38 @@ class NativeExecutable;
     macro(DeleteByValWithSymbolDeleteMissHandler, deleteByValWithSymbolDeleteMissHandler) \
     macro(CheckPrivateBrandHandler, checkPrivateBrandHandler) \
     macro(SetPrivateBrandHandler, setPrivateBrandHandler) \
+    macro(GetByValWithUndefinedKeyLoadOwnPropertyHandler, getByValWithUndefinedKeyLoadOwnPropertyHandler) \
+    macro(GetByValWithUndefinedKeyLoadPrototypePropertyHandler, getByValWithUndefinedKeyLoadPrototypePropertyHandler) \
+    macro(GetByValWithUndefinedKeyMissHandler, getByValWithUndefinedKeyMissHandler) \
+    macro(GetByValWithNullKeyLoadOwnPropertyHandler, getByValWithNullKeyLoadOwnPropertyHandler) \
+    macro(GetByValWithNullKeyLoadPrototypePropertyHandler, getByValWithNullKeyLoadPrototypePropertyHandler) \
+    macro(GetByValWithNullKeyMissHandler, getByValWithNullKeyMissHandler) \
+    macro(GetByValWithTrueKeyLoadOwnPropertyHandler, getByValWithTrueKeyLoadOwnPropertyHandler) \
+    macro(GetByValWithTrueKeyLoadPrototypePropertyHandler, getByValWithTrueKeyLoadPrototypePropertyHandler) \
+    macro(GetByValWithTrueKeyMissHandler, getByValWithTrueKeyMissHandler) \
+    macro(GetByValWithFalseKeyLoadOwnPropertyHandler, getByValWithFalseKeyLoadOwnPropertyHandler) \
+    macro(GetByValWithFalseKeyLoadPrototypePropertyHandler, getByValWithFalseKeyLoadPrototypePropertyHandler) \
+    macro(GetByValWithFalseKeyMissHandler, getByValWithFalseKeyMissHandler) \
+    macro(PutByValWithUndefinedKeyReplaceHandler, putByValWithUndefinedKeyReplaceHandler) \
+    macro(PutByValWithUndefinedKeyTransitionNonAllocatingHandler, putByValWithUndefinedKeyTransitionNonAllocatingHandler) \
+    macro(PutByValWithUndefinedKeyTransitionNewlyAllocatingHandler, putByValWithUndefinedKeyTransitionNewlyAllocatingHandler) \
+    macro(PutByValWithUndefinedKeyTransitionReallocatingHandler, putByValWithUndefinedKeyTransitionReallocatingHandler) \
+    macro(PutByValWithUndefinedKeyTransitionReallocatingOutOfLineHandler, putByValWithUndefinedKeyTransitionReallocatingOutOfLineHandler) \
+    macro(PutByValWithNullKeyReplaceHandler, putByValWithNullKeyReplaceHandler) \
+    macro(PutByValWithNullKeyTransitionNonAllocatingHandler, putByValWithNullKeyTransitionNonAllocatingHandler) \
+    macro(PutByValWithNullKeyTransitionNewlyAllocatingHandler, putByValWithNullKeyTransitionNewlyAllocatingHandler) \
+    macro(PutByValWithNullKeyTransitionReallocatingHandler, putByValWithNullKeyTransitionReallocatingHandler) \
+    macro(PutByValWithNullKeyTransitionReallocatingOutOfLineHandler, putByValWithNullKeyTransitionReallocatingOutOfLineHandler) \
+    macro(PutByValWithTrueKeyReplaceHandler, putByValWithTrueKeyReplaceHandler) \
+    macro(PutByValWithTrueKeyTransitionNonAllocatingHandler, putByValWithTrueKeyTransitionNonAllocatingHandler) \
+    macro(PutByValWithTrueKeyTransitionNewlyAllocatingHandler, putByValWithTrueKeyTransitionNewlyAllocatingHandler) \
+    macro(PutByValWithTrueKeyTransitionReallocatingHandler, putByValWithTrueKeyTransitionReallocatingHandler) \
+    macro(PutByValWithTrueKeyTransitionReallocatingOutOfLineHandler, putByValWithTrueKeyTransitionReallocatingOutOfLineHandler) \
+    macro(PutByValWithFalseKeyReplaceHandler, putByValWithFalseKeyReplaceHandler) \
+    macro(PutByValWithFalseKeyTransitionNonAllocatingHandler, putByValWithFalseKeyTransitionNonAllocatingHandler) \
+    macro(PutByValWithFalseKeyTransitionNewlyAllocatingHandler, putByValWithFalseKeyTransitionNewlyAllocatingHandler) \
+    macro(PutByValWithFalseKeyTransitionReallocatingHandler, putByValWithFalseKeyTransitionReallocatingHandler) \
+    macro(PutByValWithFalseKeyTransitionReallocatingOutOfLineHandler, putByValWithFalseKeyTransitionReallocatingOutOfLineHandler) \
 
 enum class CommonJITThunkID : uint8_t {
 #define JSC_DEFINE_COMMON_JIT_THUNK_ID(name, func) name,

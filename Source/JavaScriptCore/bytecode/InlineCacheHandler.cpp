@@ -120,7 +120,11 @@ Ref<InlineCacheHandler> InlineCacheHandler::createPreCompiled(Ref<InlineCacheHan
     case AccessCase::Load:
     case AccessCase::GetGetter:
     case AccessCase::Getter:
-    case AccessCase::Setter: {
+    case AccessCase::Setter:
+    case AccessCase::IndexedUndefinedKeyLoad:
+    case AccessCase::IndexedNullKeyLoad:
+    case AccessCase::IndexedTrueKeyLoad:
+    case AccessCase::IndexedFalseKeyLoad: {
         result->u.s1.m_holder = nullptr;
         if (auto* holder = accessCase.tryGetAlternateBase())
             result->u.s1.m_holder = holder;
@@ -135,7 +139,11 @@ Ref<InlineCacheHandler> InlineCacheHandler::createPreCompiled(Ref<InlineCacheHan
         result->u.s2.m_newStructureID = accessCase.newStructureID();
         break;
     }
-    case AccessCase::Transition: {
+    case AccessCase::Transition:
+    case AccessCase::IndexedUndefinedKeyTransition:
+    case AccessCase::IndexedNullKeyTransition:
+    case AccessCase::IndexedTrueKeyTransition:
+    case AccessCase::IndexedFalseKeyTransition: {
         result->u.s2.m_newStructureID = accessCase.newStructureID();
         result->u.s2.m_newSize = accessCase.newStructure()->outOfLineCapacity() * sizeof(JSValue);
         result->u.s2.m_oldSize = accessCase.structure()->outOfLineCapacity() * sizeof(JSValue);
