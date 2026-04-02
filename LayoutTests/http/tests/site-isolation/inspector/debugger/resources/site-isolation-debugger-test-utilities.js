@@ -19,4 +19,18 @@ window.waitForExpressionInTarget = async function waitForExpressionInTarget(targ
     return undefined;
 };
 
+// Evaluate document.location.href in each frame target and return a Map of {url => target}.
+// Useful for identifying which frame target corresponds to a particular nested frame.
+window.fetchDocumentURLsForTargets = async function fetchDocumentURLsForTargets(targets) {
+    let entries = await Promise.all(targets.map(async function (target) {
+        let { result } = await target.RuntimeAgent.evaluate.invoke({
+            expression: "document.location.href",
+            objectGroup: "test",
+            returnByValue: true,
+        });
+        return [result.value, target];
+    }));
+    return new Map(entries);
+};
+
 });
