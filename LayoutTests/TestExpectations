@@ -5364,7 +5364,6 @@ webkit.org/b/214453 imported/w3c/web-platform-tests/css/css-align/baseline-rules
 
 webkit.org/b/245347 imported/w3c/web-platform-tests/css/css-color/at-color-profile-001.html [ ImageOnlyFailure ]
 webkit.org/b/245347 imported/w3c/web-platform-tests/css/css-color/currentcolor-003.html [ ImageOnlyFailure ]
-webkit.org/b/214455 imported/w3c/web-platform-tests/css/css-color-adjust/rendering/dark-color-scheme/color-scheme-iframe-preferred.html [ ImageOnlyFailure ]
 
 webkit.org/b/245347 imported/w3c/web-platform-tests/css/css-color/lch-009.html [ ImageOnlyFailure ]
 webkit.org/b/245347 imported/w3c/web-platform-tests/css/css-color/lch-010.html [ ImageOnlyFailure ]
@@ -7605,6 +7604,7 @@ imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-ta
 imported/w3c/web-platform-tests/css/css-color/deprecated-sameas-002.html [ ImageOnlyFailure ]
 
 http/tests/site-isolation/touch-events [ Skip ]
+webkit.org/b/309611 http/tests/site-isolation/iframe-dark-mode.html [ ImageOnlyFailure ]
 http/tests/site-isolation/iframe-dark-mode-print.html [ ImageOnlyFailure ]
 
 # CSS syntax
@@ -8252,8 +8252,6 @@ webkit.org/b/308096 imported/w3c/web-platform-tests/css/cssom-view/scrollParent.
 
 webkit.org/b/296130 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested-4.html [ Pass Failure ]
 webkit.org/b/281267 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-summary-element/interactive-content.html [ Pass Failure ]
-
-imported/w3c/web-platform-tests/css/css-color-adjust/rendering/dark-color-scheme/color-scheme-iframe-preferred-page-dark.html [ ImageOnlyFailure ]
 
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-019.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-highlight-api/painting/custom-highlight-painting-020.html [ ImageOnlyFailure ]

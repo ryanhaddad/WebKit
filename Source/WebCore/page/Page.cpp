@@ -4368,24 +4368,22 @@ void Page::setUseColorAppearance(bool useDarkAppearance, bool useElevatedUserInt
 bool Page::useDarkAppearance() const
 {
 #if ENABLE(DARK_MODE_CSS)
-    RefPtr localMainFrame = this->localMainFrame();
-
-    // FIXME: If this page is being printed, this function should return false.
-    // Currently remote mainFrame() does not have this information.
-    if (!localMainFrame)
-        return m_useDarkAppearance;
-
-    RefPtr view = localMainFrame->view();
-    if (!view || view->mediaType() != screenAtom())
-        return false;
-
+    // This overrides everything else.
     if (m_useDarkAppearanceOverride)
         return m_useDarkAppearanceOverride.value();
 
-    if (auto* documentLoader = localMainFrame->loader().documentLoader()) {
-        auto colorSchemePreference = documentLoader->colorSchemePreference();
-        if (colorSchemePreference != ColorSchemePreference::NoPreference)
-            return colorSchemePreference == ColorSchemePreference::Dark;
+    if (RefPtr localMainFrame = this->localMainFrame()) {
+        // Printed page should always use light appearance (i.e return false)
+        // FIXME: implement this logic for remote main frames.
+        RefPtr view = localMainFrame->view();
+        if (!view || view->mediaType() != screenAtom())
+            return false;
+
+        if (auto* documentLoader = localMainFrame->loader().documentLoader()) {
+            auto colorSchemePreference = documentLoader->colorSchemePreference();
+            if (colorSchemePreference != ColorSchemePreference::NoPreference)
+                return colorSchemePreference == ColorSchemePreference::Dark;
+        }
     }
 
     return m_useDarkAppearance;
