@@ -201,6 +201,7 @@ public:
     [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocale() const;
     [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned) const;
     [[nodiscard]] WTF_EXPORT_PRIVATE String convertToUppercaseWithoutLocale() const;
+    [[nodiscard]] WTF_EXPORT_PRIVATE String convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned failingIndex) const;
     [[nodiscard]] WTF_EXPORT_PRIVATE String convertToLowercaseWithLocale(const AtomString& localeIdentifier) const;
     [[nodiscard]] WTF_EXPORT_PRIVATE String convertToUppercaseWithLocale(const AtomString& localeIdentifier) const;
 

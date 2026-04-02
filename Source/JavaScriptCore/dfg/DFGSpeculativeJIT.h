@@ -1730,6 +1730,7 @@ public:
     void compileObjectDefineProperty(Node*);
     void compileStringSlice(Node*);
     void compileStringSubstring(Node*);
+    void compileToUpperCase(Node*);
     void compileToLowerCase(Node*);
     void compileThrow(Node*);
     void compileThrowStaticError(Node*);

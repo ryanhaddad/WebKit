@@ -462,6 +462,7 @@ public:
     WTF_EXPORT_PRIVATE Ref<StringImpl> convertToLowercaseWithoutLocale();
     WTF_EXPORT_PRIVATE Ref<StringImpl> convertToLowercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned);
     WTF_EXPORT_PRIVATE Ref<StringImpl> convertToUppercaseWithoutLocale();
+    WTF_EXPORT_PRIVATE Ref<StringImpl> convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned);
     WTF_EXPORT_PRIVATE Ref<StringImpl> convertToLowercaseWithLocale(const AtomString& localeIdentifier);
     WTF_EXPORT_PRIVATE Ref<StringImpl> convertToUppercaseWithLocale(const AtomString& localeIdentifier);
 
@@ -571,7 +572,6 @@ private:
     template<typename CharacterType> static Expected<Ref<StringImpl>, UTF8ConversionError> reallocateInternal(Ref<StringImpl>&&, unsigned, CharacterType*&);
     template<typename CharacterType> static Ref<StringImpl> createInternal(std::span<const CharacterType>);
     WTF_EXPORT_PRIVATE NEVER_INLINE unsigned hashSlowCase() const;
-    Ref<StringImpl> convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned);
     Ref<StringImpl> convertToUppercaseWithoutLocaleUpconvert();
 
     // The bottom bit in the ref count indicates a static (immortal) string.

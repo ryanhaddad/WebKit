@@ -1666,6 +1666,32 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
     }
 
+    case ToUpperCase: {
+        AbstractValue& property = forNode(m_graph.child(node, 0));
+        if (JSValue value = property.value()) {
+            if (value.isString()) {
+                JSString* string = asString(value);
+                if (const StringImpl* a = asString(string)->tryGetValueImpl()) {
+                    bool upper = true;
+                    for (unsigned index = 0; index < a->length(); ++index) {
+                        char16_t character = a->at(index);
+                        if (!isASCII(character) || isASCIILower(character)) {
+                            upper = false;
+                            break;
+                        }
+                    }
+
+                    if (upper) {
+                        setConstant(node, *m_graph.freeze(string));
+                        break;
+                    }
+                }
+            }
+        }
+        setTypeForNode(node, SpecString);
+        break;
+    }
+
     case MapIterationEntryKey:
     case MapIterationEntryValue:
     case MapIteratorKey:

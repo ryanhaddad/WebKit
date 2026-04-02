@@ -1820,6 +1820,57 @@ void SpeculativeJIT::compileStringSubstring(Node* node)
     cellResult(resultGPR, node);
 }
 
+void SpeculativeJIT::compileToUpperCase(Node* node)
+{
+    ASSERT(node->op() == ToUpperCase);
+    SpeculateCellOperand string(this, node->child1());
+    GPRTemporary temp(this);
+    GPRTemporary index(this);
+    GPRTemporary charReg(this);
+    GPRTemporary length(this);
+
+    GPRReg stringGPR = string.gpr();
+    GPRReg tempGPR = temp.gpr();
+    GPRReg indexGPR = index.gpr();
+    GPRReg charGPR = charReg.gpr();
+    GPRReg lengthGPR = length.gpr();
+
+    speculateString(node->child1(), stringGPR);
+
+    JumpList slowPath;
+
+    move(TrustedImmPtr(nullptr), indexGPR);
+
+    loadPtr(Address(stringGPR, JSString::offsetOfValue()), tempGPR);
+    if (canBeRope(node->child1()))
+        slowPath.append(branchIfRopeStringImpl(tempGPR));
+    slowPath.append(branchTest32(
+        Zero, Address(tempGPR, StringImpl::flagsOffset()),
+        TrustedImm32(StringImpl::flagIs8Bit())));
+    load32(Address(tempGPR, StringImpl::lengthMemoryOffset()), lengthGPR);
+    loadPtr(Address(tempGPR, StringImpl::dataOffset()), tempGPR);
+
+    auto loopStart = label();
+    auto loopDone = branch32(AboveOrEqual, indexGPR, lengthGPR);
+    load8(BaseIndex(tempGPR, indexGPR, TimesOne), charGPR);
+    slowPath.append(branchTest32(NonZero, charGPR, TrustedImm32(~0x7F)));
+    sub32(TrustedImm32('a'), charGPR);
+    slowPath.append(branch32(BelowOrEqual, charGPR, TrustedImm32('z' - 'a')));
+
+    add32(TrustedImm32(1), indexGPR);
+    jump().linkTo(loopStart, this);
+
+    slowPath.link(this);
+    callOperationWithSilentSpill(operationToUpperCase, lengthGPR, LinkableConstant::globalObject(*this, node), stringGPR, indexGPR);
+    auto done = jump();
+
+    loopDone.link(this);
+    move(stringGPR, lengthGPR);
+
+    done.link(this);
+    cellResult(lengthGPR, node);
+}
+
 void SpeculativeJIT::compileToLowerCase(Node* node)
 {
     ASSERT(node->op() == ToLowerCase);

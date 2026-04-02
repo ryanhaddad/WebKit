@@ -3288,6 +3288,25 @@ JSC_DEFINE_JIT_OPERATION(operationStringSubstringWithEnd, JSString*, (JSGlobalOb
     OPERATION_RETURN(scope, stringSubstring(globalObject, string, start, end));
 }
 
+JSC_DEFINE_JIT_OPERATION(operationToUpperCase, JSString*, (JSGlobalObject* globalObject, JSString* string, uint32_t failingIndex))
+{
+    VM& vm = globalObject->vm();
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto inputString = string->value(globalObject);
+    OPERATION_RETURN_IF_EXCEPTION(scope, nullptr);
+    if (!inputString->length())
+        OPERATION_RETURN(scope, vm.smallStrings.emptyString());
+
+    String uppercasedString = inputString->is8Bit() ? inputString->convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(failingIndex) : inputString->convertToUppercaseWithoutLocale();
+    if (uppercasedString.impl() == inputString->impl())
+        OPERATION_RETURN(scope, string);
+    OPERATION_RETURN(scope, jsString(vm, WTF::move(uppercasedString)));
+}
+
 JSC_DEFINE_JIT_OPERATION(operationToLowerCase, JSString*, (JSGlobalObject* globalObject, JSString* string, uint32_t failingIndex))
 {
     VM& vm = globalObject->vm();

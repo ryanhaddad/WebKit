@@ -2487,6 +2487,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         def(PureValue(node));
         return;
 
+    case ToUpperCase:
     case ToLowerCase:
         def(PureValue(node));
         return;

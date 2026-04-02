@@ -1223,6 +1223,7 @@ private:
         case StringValueOf:
         case StringSlice:
         case StringSubstring:
+        case ToUpperCase:
         case ToLowerCase:
             setPrediction(SpecString);
             break;

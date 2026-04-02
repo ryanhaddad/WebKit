@@ -160,6 +160,11 @@ String String::convertToUppercaseWithLocale(const AtomString& localeIdentifier) 
     SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToUppercaseWithLocale(localeIdentifier) : String { };
 }
 
+String String::convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(unsigned failingIndex) const
+{
+    SUPPRESS_UNCOUNTED_ARG return m_impl ? m_impl->convertToUppercaseWithoutLocaleStartingAtFailingIndex8Bit(failingIndex) : String { };
+}
+
 String String::trim(CodeUnitMatchFunction predicate) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?

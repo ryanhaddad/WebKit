@@ -612,6 +612,7 @@ namespace JSC { namespace DFG {
     macro(StringSubstring, NodeResultJS) \
     macro(StringLocaleCompare, NodeMustGenerate | NodeResultInt32) \
     macro(ToLowerCase, NodeResultJS) \
+    macro(ToUpperCase, NodeResultJS) \
     /* Nodes for DOM JIT */\
     macro(CallDOMGetter, NodeResultJS | NodeMustGenerate) \
     macro(CallDOM, NodeResultJS | NodeMustGenerate) \

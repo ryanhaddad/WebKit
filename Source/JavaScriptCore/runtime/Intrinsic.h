@@ -132,6 +132,7 @@ namespace JSC {
     macro(StringPrototypeSliceIntrinsic) \
     macro(StringPrototypeSubstringIntrinsic) \
     macro(StringPrototypeToLowerCaseIntrinsic) \
+    macro(StringPrototypeToUpperCaseIntrinsic) \
     macro(NumberPrototypeToStringIntrinsic) \
     macro(NumberIsFiniteIntrinsic) \
     macro(NumberIsNaNIntrinsic) \
