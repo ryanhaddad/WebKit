@@ -376,7 +376,6 @@ inspector/dom-debugger/attribute-modified-style.html [ Failure ]
 inspector/runtime/execution-context-in-scriptless-page.html [ Failure ]
 inspector/runtime/executionContextCreated-onEnable.html [ Failure ]
 inspector/shadow-realm-console.html [ Failure ]
-inspector/unit-tests/target-manager.html [ Failure ]
 inspector/unit-tests/weakmap-utilities.html [ Failure ]
 js/dom/dfg-inline-resolve.html [ Failure ]
 js/dom/modules/import-from-handler.html [ Failure ]
@@ -531,3 +530,7 @@ imported/w3c/web-platform-tests/cookies/third-party-cookies/third-party-cookies.
 # full path.
 http/tests/security/block-top-level-navigation-to-different-scheme-by-third-party-iframes.html [ Failure ]
 http/tests/security/block-top-level-navigations-by-third-party-iframes.html [ Failure ]
+
+# This test has different output with site isolation enabled. A copy with site isolation enabled is
+# stored and run separately at http/tests/site-isolation/inspector/unit-tests/target-manager.html.
+inspector/unit-tests/target-manager.html [ Skip ]
