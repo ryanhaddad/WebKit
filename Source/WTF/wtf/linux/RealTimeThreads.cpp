@@ -125,13 +125,15 @@ void RealTimeThreads::promoteThreadToRealTime(const Thread& thread)
     struct sched_param param;
     param.sched_priority = std::clamp(s_realTimeThreadPriority, sched_get_priority_min(SCHED_RR), sched_get_priority_max(SCHED_RR));
     auto error = sched_setscheduler(thread.id(), SCHED_RR | SCHED_RESET_ON_FORK, &param);
-    if (error) {
+    // Skip fallback for short-lived threads that no longer exist (ESRCH).
+    if (!error || errno == ESRCH)
+        return;
+
 #if USE(GLIB)
-        realTimeKitMakeThreadRealTime(getpid(), thread.id(), param.sched_priority);
+    realTimeKitMakeThreadRealTime(getpid(), thread.id(), param.sched_priority);
 #else
-        LOG_ERROR("Failed to set thread %d as real time: %s", thread.id(), safeStrerror(error).data());
+    LOG_ERROR("Failed to set thread %d as real time: %s", thread.id(), safeStrerror(error).data());
 #endif
-    }
 }
 
 void RealTimeThreads::demoteThreadFromRealTime(const Thread& thread)
@@ -221,7 +223,12 @@ void RealTimeThreads::realTimeKitMakeThreadRealTime(uint64_t processID, uint64_t
     GRefPtr<GVariant> result = adoptGRef(g_dbus_proxy_call_sync(m_realTimeKitProxy->get(), "MakeThreadRealtimeWithPID",
         g_variant_new("(ttu)", processID, threadID, priority), G_DBUS_CALL_FLAGS_NONE, s_dbusCallTimeout.millisecondsAs<int>(), nullptr, &error.outPtr()));
     if (!result) {
-        LOG_ERROR("Failed to make thread real time: %s", error->message);
+        // We use portal to promote sandboxed threads to real-time, as it takes care
+        // of mapping them. However, this fails under certain containers (e.g. webkit-container-sdk).
+        if (shouldUsePortal() && g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            LOG_ERROR("Portal was unable to make sandboxed process p%" PRId64 ", t%" PRId64 " real time", processID, threadID);
+        else
+            LOG_ERROR("Failed to make thread p%" PRId64 ", t%" PRId64 " real time: %s", processID, threadID, error->message);
         if (!g_error_matches(error.get(), G_DBUS_ERROR, G_DBUS_ERROR_UNKNOWN_INTERFACE))
             m_realTimeKitProxy = nullptr;
     }
