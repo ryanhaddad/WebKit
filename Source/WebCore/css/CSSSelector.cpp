@@ -34,8 +34,8 @@
 #include "MutableCSSSelector.h"
 #include "SelectorPseudoTypeMap.h"
 #include <memory>
-#include <queue>
 #include <wtf/Assertions.h>
+#include <wtf/Deque.h>
 #include <wtf/Hasher.h>
 #include <wtf/SmallMap.h>
 #include <wtf/StdLibExtras.h>
@@ -890,21 +890,19 @@ CSSSelector::CSSSelector(const CSSSelector& other, MutableSelectorCopyTag)
 
 bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPseudoClasses visitFunctionalPseudoClasses, VisitOnlySubject visitOnlySubject) const
 {
-    std::queue<const CSSSelector*> worklist;
-    worklist.push(this);
-    while (!worklist.empty()) {
-        auto current = worklist.front();
-        worklist.pop();
+    Deque<const CSSSelector*, 16> worklist;
+    worklist.append(this);
+    while (!worklist.isEmpty()) {
+        auto current = worklist.takeFirst();
 
-        // Effective C++ advices for this cast to deal with generic const/non-const member function.
-        if (functor(*const_cast<CSSSelector*>(current)))
+        if (functor(*current))
             return true;
 
         // Visit the selector list member (if any) recursively (such as: :has(<list>), :is(<list>),...)
         if (visitFunctionalPseudoClasses == VisitFunctionalPseudoClasses::Yes) {
             if (auto selectorList = current->selectorList()) {
                 for (auto& selector : *selectorList)
-                    worklist.push(&selector);
+                    worklist.append(&selector);
             }
         }
 
@@ -912,7 +910,7 @@ bool CSSSelector::visitSimpleSelectors(VisitFunctor&& functor, VisitFunctionalPs
         if (auto next = current->precedingInComplexSelector()) {
             // We stop visiting at the end of the compound selector (= when relation is anything else than subselector) if we are in subject only mode.
             if (current->relation() != Relation::Subselector || visitOnlySubject != VisitOnlySubject::Yes)
-                worklist.push(next);
+                worklist.append(next);
         }
     }
     return false;
