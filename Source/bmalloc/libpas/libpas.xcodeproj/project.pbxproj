@@ -563,7 +563,7 @@
 		2B2E2FD22949A41100F85C38 /* pas_malloc_stack_logging.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B2E2FD02949A41100F85C38 /* pas_malloc_stack_logging.h */; };
 		2B6055E42805368B00C8BDAC /* BmallocTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B6055E32805368B00C8BDAC /* BmallocTests.cpp */; };
 		2BDF4F4529E8B36F0056BF50 /* pas_report_crash.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BDF4F4429E8B36F0056BF50 /* pas_report_crash.h */; };
-		2BDF4F4729E8B3AD0056BF50 /* (null) in Sources */ = {isa = PBXBuildFile; };
+		2BDF4F4729E8B3AD0056BF50 /* pas_report_crash.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BDF4F4829E8B5510056BF50 /* pas_report_crash.c */; };
 		2BE4B7CB2D2D845E0099B3C5 /* pas_small_medium_bootstrap_free_heap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BE4B7C72D2D845E0099B3C5 /* pas_small_medium_bootstrap_free_heap.h */; };
 		2BE4B7CC2D2D845E0099B3C5 /* pas_small_medium_bootstrap_heap_page_provider.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BE4B7C92D2D845E0099B3C5 /* pas_small_medium_bootstrap_heap_page_provider.h */; };
 		2BE4B7CD2D2D845E0099B3C5 /* pas_small_medium_bootstrap_heap_page_provider.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BE4B7CA2D2D845E0099B3C5 /* pas_small_medium_bootstrap_heap_page_provider.c */; };
@@ -2782,7 +2782,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2BDF4F4729E8B3AD0056BF50 /* (null) in Sources */,
 				0F8A806625EECC1D00790B4A /* bmalloc_heap.c in Sources */,
 				0F8A806825EECC1D00790B4A /* bmalloc_heap_config.c in Sources */,
 				2C11E8912728A893002162D0 /* bmalloc_type.c in Sources */,
@@ -2899,6 +2898,7 @@
 				0FD48B3023A9ABB30026C46D /* pas_random.c in Sources */,
 				0FF08F3422A58F1200386575 /* pas_red_black_tree.c in Sources */,
 				0FA5E4592492D5BA00CE962A /* pas_redundant_local_allocator_node.c in Sources */,
+				2BDF4F4729E8B3AD0056BF50 /* pas_report_crash.c in Sources */,
 				0F5B6091235E88EF00CAE629 /* pas_reserved_memory_provider.c in Sources */,
 				0F4F60FA25979BC8008B4A82 /* pas_root.c in Sources */,
 				0F99999C36AAAA0000213121 /* pas_runtime_config.c in Sources */,
