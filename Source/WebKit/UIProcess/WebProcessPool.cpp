@@ -297,7 +297,7 @@ WebProcessPool::WebProcessPool(API::ProcessPoolConfiguration& configuration)
 
     platformInitialize(needsGlobalStaticInitialization);
 
-#if OS(LINUX)
+#if OS(LINUX) && !OS(ANDROID)
     if (!MemoryPressureMonitor::disabled())
         MemoryPressureMonitor::singleton().start();
 #endif
@@ -452,7 +452,7 @@ void WebProcessPool::fullKeyboardAccessModeChanged(bool fullKeyboardAccessEnable
     sendToAllProcesses(Messages::WebProcess::FullKeyboardAccessModeChanged(fullKeyboardAccessEnabled));
 }
 
-#if OS(LINUX)
+#if OS(LINUX) && !OS(ANDROID)
 void WebProcessPool::sendMemoryPressureEvent(bool isCritical)
 {
     sendToAllProcesses(Messages::AuxiliaryProcess::DidReceiveMemoryPressureEvent(isCritical));
