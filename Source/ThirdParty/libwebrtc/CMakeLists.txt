@@ -1984,7 +1984,6 @@ if (WTF_CPU_ARM OR WTF_CPU_ARM64)
         Source/webrtc/common_audio/signal_processing/downsample_fast_neon.c
         Source/webrtc/common_audio/signal_processing/min_max_operations_neon.c
         Source/webrtc/common_audio/third_party/ooura/fft_size_128/ooura_fft_neon.cc
-        Source/webrtc/modules/audio_processing/aecm/aecm_core_neon.cc
     )
     list(APPEND webrtc_SOURCES ${webrtc_neon_SOURCES})
     add_definitions(-DWEBRTC_HAS_NEON)
@@ -2015,7 +2014,6 @@ if (WTF_CPU_MIPS)
         Source/webrtc/common_audio/signal_processing/vector_scaling_operations_mips.c
         Source/webrtc/common_audio/third_party/ooura/fft_size_128/ooura_fft_mips.cc
         Source/webrtc/common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor_mips.c
-        Source/webrtc/modules/audio_processing/aecm/aecm_core_mips.cc
     )
     list(APPEND vpx_SOURCES
         Source/third_party/libvpx/source/config/linux/loongarch/vpx_config.c
