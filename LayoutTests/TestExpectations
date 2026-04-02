@@ -2147,6 +2147,12 @@ imported/w3c/web-platform-tests/mathml/relations/css-styling/padding-border-marg
 imported/w3c/web-platform-tests/mathml/relations/css-styling/table-width-3.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/relations/css-styling/width-height-002.html [ ImageOnlyFailure ]
 
+# https://bugs.webkit.org/show_bug.cgi?id=310864
+imported/w3c/web-platform-tests/mathml/relations/html5-tree/href-click-001.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/mathml/relations/html5-tree/href-click-002.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/mathml/relations/html5-tree/href-click-004.tentative.html [ Timeout ]
+imported/w3c/web-platform-tests/mathml/relations/html5-tree/link-color-002.tentative.html [ ImageOnlyFailure ]
+
 # This MathML test should be rewritten.
 webkit.org/b/201356 mathml/presentation/stretchy-depth-height-symmetric.html [ Skip ]
 

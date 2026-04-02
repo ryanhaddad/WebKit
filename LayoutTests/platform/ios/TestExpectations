@@ -7585,6 +7585,7 @@ imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished
 imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-4-2.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/presentation-markup/operators/embellished-op-4-3.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/relations/html5-tree/tabindex-002.tentative.html [ Skip ]
+imported/w3c/web-platform-tests/mathml/relations/html5-tree/maction-click.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/relations/css-styling/mozilla-393760-1.xml [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/mathml/presentation-markup/scripts/subsup-legacy-scriptshift-attributes-001.tentative.html [ ImageOnlyFailure ]
 
