@@ -973,10 +973,11 @@ bool SelectorChecker::checkOne(CheckingContext& checkingContext, LocalContext& c
                         continue;
 
                     if (result.match == Match::SelectorMatches) {
-                        if (result.matchType == MatchType::Element)
-                            localMatchType = MatchType::Element;
-
                         hasMatchedAnything = true;
+                        if (result.matchType == MatchType::Element) {
+                            localMatchType = MatchType::Element;
+                            break;
+                        }
                     }
                 }
                 if (hasMatchedAnything)
