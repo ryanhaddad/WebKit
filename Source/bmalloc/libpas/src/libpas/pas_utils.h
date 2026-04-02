@@ -255,13 +255,13 @@ static PAS_ALWAYS_INLINE PAS_NO_RETURN void pas_assertion_failed_inline(
 extern "C" {
 #endif
 
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl0(uint64_t reason);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl1(uint64_t reason, uint64_t);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl2(uint64_t reason, uint64_t, uint64_t);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl3(uint64_t reason, uint64_t, uint64_t, uint64_t);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl4(uint64_t reason, uint64_t, uint64_t, uint64_t, uint64_t);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl5(uint64_t reason, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
-PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl6(uint64_t reason, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl0(size_t reason);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl1(size_t reason, size_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl2(size_t reason, size_t, size_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl3(size_t reason, size_t, size_t, size_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl4(size_t reason, size_t, size_t, size_t, size_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl5(size_t reason, size_t, size_t, size_t, size_t, size_t);
+PAS_NEVER_INLINE PAS_NO_RETURN void pas_crash_with_info_impl6(size_t reason, size_t, size_t, size_t, size_t, size_t, size_t);
 
 #ifdef __cplusplus
 }
@@ -288,7 +288,7 @@ static PAS_ALWAYS_INLINE PAS_NO_RETURN void pas_assertion_failed_inline(
 #endif /* PAS_OS(DARWIN) && PAS_VA_OPT_SUPPORTED */
 
 PAS_API PAS_NO_RETURN PAS_NEVER_INLINE void pas_assertion_failed_no_inline(const char* filename, int line, const char* function, const char* expression);
-PAS_API PAS_NO_RETURN PAS_NEVER_INLINE void pas_assertion_failed_no_inline_with_extra_detail(const char* filename, int line, const char* function, const char* expression, uint64_t extra);
+PAS_API PAS_NO_RETURN PAS_NEVER_INLINE void pas_assertion_failed_no_inline_with_extra_detail(const char* filename, int line, const char* function, const char* expression, size_t extra);
 
 #if PAS_OS(DARWIN) && PAS_VA_OPT_SUPPORTED
 
@@ -323,49 +323,49 @@ static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer0(
     const char* filename, int line, const char* function, const char* expression)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl0((uint64_t)line);
+    pas_crash_with_info_impl0((size_t)line);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer1(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl1((uint64_t)line, misc1);
+    pas_crash_with_info_impl1((size_t)line, misc1);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer2(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1, uint64_t misc2)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1, size_t misc2)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl2((uint64_t)line, misc1, misc2);
+    pas_crash_with_info_impl2((size_t)line, misc1, misc2);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer3(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1, uint64_t misc2, uint64_t misc3)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1, size_t misc2, size_t misc3)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl3((uint64_t)line, misc1, misc2, misc3);
+    pas_crash_with_info_impl3((size_t)line, misc1, misc2, misc3);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer4(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1, uint64_t misc2, uint64_t misc3, uint64_t misc4)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1, size_t misc2, size_t misc3, size_t misc4)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl4((uint64_t)line, misc1, misc2, misc3, misc4);
+    pas_crash_with_info_impl4((size_t)line, misc1, misc2, misc3, misc4);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer5(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1, uint64_t misc2, uint64_t misc3, uint64_t misc4, uint64_t misc5)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1, size_t misc2, size_t misc3, size_t misc4, size_t misc5)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl5((uint64_t)line, misc1, misc2, misc3, misc4, misc5);
+    pas_crash_with_info_impl5((size_t)line, misc1, misc2, misc3, misc4, misc5);
 }
 
 static PAS_ALWAYS_INLINE void pas_assertion_failed_noreturn_silencer6(
-    const char* filename, int line, const char* function, const char* expression, uint64_t misc1, uint64_t misc2, uint64_t misc3, uint64_t misc4, uint64_t misc5, uint64_t misc6)
+    const char* filename, int line, const char* function, const char* expression, size_t misc1, size_t misc2, size_t misc3, size_t misc4, size_t misc5, size_t misc6)
 {
     PAS_REPORT_ASSERTION_FAILED(filename, line, function, expression);
-    pas_crash_with_info_impl6((uint64_t)line, misc1, misc2, misc3, misc4, misc5, misc6);
+    pas_crash_with_info_impl6((size_t)line, misc1, misc2, misc3, misc4, misc5, misc6);
 }
 
 #ifdef __cplusplus
@@ -867,22 +867,30 @@ static inline bool pas_compare_and_swap_bool_strong(bool* ptr, bool old_value, b
 
 static inline bool pas_compare_and_swap_uintptr_weak(uintptr_t* ptr, uintptr_t old_value, uintptr_t new_value)
 {
+#if PAS_CPU(ADDRESS64)
     return pas_compare_and_swap_uint64_weak((uint64_t*)ptr, (uint64_t)old_value, (uint64_t)new_value);
+#else
+    return pas_compare_and_swap_uint32_weak((uint32_t*)ptr, (uint32_t)old_value, (uint32_t)new_value);
+#endif
 }
 
 static inline uintptr_t pas_compare_and_swap_uintptr_strong(uintptr_t* ptr, uintptr_t old_value, uintptr_t new_value)
 {
+#if PAS_CPU(ADDRESS64)
     return (uintptr_t)pas_compare_and_swap_uint64_strong((uint64_t*)ptr, (uint64_t)old_value, (uint64_t)new_value);
+#else
+    return (uintptr_t)pas_compare_and_swap_uint32_strong((uint32_t*)ptr, (uint32_t)old_value, (uint32_t)new_value);
+#endif
 }
 
 static inline bool pas_compare_and_swap_ptr_weak(void* ptr, const void* old_value, const void* new_value)
 {
-    return pas_compare_and_swap_uint64_weak((uint64_t*)ptr, (uint64_t)old_value, (uint64_t)new_value);
+    return pas_compare_and_swap_uintptr_weak((uintptr_t*)ptr, (uintptr_t)old_value, (uintptr_t)new_value);
 }
 
 static inline void* pas_compare_and_swap_ptr_strong(void* ptr, const void* old_value, const void* new_value)
 {
-    return (void*)pas_compare_and_swap_uint64_strong((uint64_t*)ptr, (uint64_t)old_value, (uint64_t)new_value);
+    return (void*)pas_compare_and_swap_uintptr_strong((uintptr_t*)ptr, (uintptr_t)old_value, (uintptr_t)new_value);
 }
 
 #define pas_compiler_fence __pas_compiler_fence
@@ -913,7 +921,7 @@ static PAS_ALWAYS_INLINE uintptr_t pas_opaque(uintptr_t value)
     return value;
 }
 
-#if PAS_COMPILER(CLANG)
+#if PAS_COMPILER(CLANG) || PAS_ARM32
 
 struct pas_pair;
 typedef struct pas_pair pas_pair;
@@ -1004,6 +1012,9 @@ PAS_IGNORE_WARNINGS_BEGIN("atomic-alignment")
 #endif
     return __c11_atomic_compare_exchange_weak((_Atomic pas_pair*)raw_ptr, &old_value, new_value, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 PAS_IGNORE_WARNINGS_END
+#elif PAS_ARM32
+    PAS_ASSERT_IF(true, !"Should not be reached");
+    return false;
 #else
     return __atomic_compare_exchange_n((pas_pair*)raw_ptr, &old_value, new_value, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #endif
@@ -1048,6 +1059,9 @@ PAS_IGNORE_WARNINGS_BEGIN("atomic-alignment")
     __c11_atomic_compare_exchange_strong((_Atomic pas_pair*)raw_ptr, &old_value, new_value, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 PAS_IGNORE_WARNINGS_END
     return old_value;
+#elif PAS_ARM32
+    PAS_ASSERT_IF(true, !"Should not be reached");
+    return old_value;
 #else
     __atomic_compare_exchange_n((pas_pair*)raw_ptr, &old_value, new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
     return old_value;
@@ -1061,6 +1075,9 @@ static inline pas_pair pas_atomic_load_pair_relaxed(void* raw_ptr)
 PAS_IGNORE_WARNINGS_BEGIN("atomic-alignment")
     return __c11_atomic_load((_Atomic pas_pair*)raw_ptr, __ATOMIC_RELAXED);
 PAS_IGNORE_WARNINGS_END
+#elif PAS_ARM32
+    PAS_ASSERT_IF(true, !"Should not be reached");
+    return old_value;
 #else
     return __atomic_load_n((pas_pair*)raw_ptr, __ATOMIC_RELAXED);
 #endif
@@ -1086,6 +1103,8 @@ static inline void pas_atomic_store_pair(void* raw_ptr, pas_pair value)
 PAS_IGNORE_WARNINGS_BEGIN("atomic-alignment")
     __c11_atomic_store((_Atomic pas_pair*)raw_ptr, value, __ATOMIC_SEQ_CST);
 PAS_IGNORE_WARNINGS_END
+#elif PAS_ARM32
+    PAS_ASSERT_IF(true, !"Should not be reached");
 #else
     __atomic_store_n((pas_pair*)raw_ptr, value, __ATOMIC_SEQ_CST);
 #endif
@@ -1098,6 +1117,9 @@ static inline void pas_atomic_store_pair_relaxed(void* raw_ptr, pas_pair value)
 PAS_IGNORE_WARNINGS_BEGIN("atomic-alignment")
     __c11_atomic_store((_Atomic pas_pair*)raw_ptr, value, __ATOMIC_RELAXED);
 PAS_IGNORE_WARNINGS_END
+#elif PAS_ARM32
+    PAS_ASSERT_IF(true, !"Should not be reached");
+    return old_value;
 #else
     __atomic_store_n((pas_pair*)raw_ptr, value, __ATOMIC_RELAXED);
 #endif

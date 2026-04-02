@@ -41,7 +41,7 @@ static MallocSpan<uint8_t> copyBuffer(std::span<const uint8_t> buffer)
 {
     auto bufferCopy = MallocSpan<uint8_t>::tryMalloc(buffer.size());
     if (!bufferCopy) {
-        RELEASE_LOG_FAULT(IPC, "Decoder::copyBuffer: tryMalloc(%lu) failed", buffer.size());
+        RELEASE_LOG_FAULT(IPC, "Decoder::copyBuffer: tryMalloc(%zu) failed", buffer.size());
         return { };
     }
     memcpySpan(bufferCopy.mutableSpan(), buffer);
@@ -62,7 +62,7 @@ std::unique_ptr<Decoder> Decoder::create(std::span<const uint8_t> buffer, Buffer
     ASSERT(bufferDeallocator);
     ASSERT(!!buffer.data());
     if (!buffer.data()) [[unlikely]] {
-        RELEASE_LOG_FAULT(IPC, "Decoder::create() called with a null buffer (buffer size: %lu)", buffer.size_bytes());
+        RELEASE_LOG_FAULT(IPC, "Decoder::create() called with a null buffer (buffer size: %zu)", buffer.size_bytes());
         return nullptr;
     }
     auto decoder = std::unique_ptr<Decoder>(new Decoder(buffer, WTF::move(bufferDeallocator), WTF::move(attachments)));

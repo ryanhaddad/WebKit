@@ -173,8 +173,14 @@ if (COMPILER_IS_GCC_OR_CLANG)
     endif ()
 
     # Warnings to be enabled
-    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-Wcast-align
-                                         -Wformat-security
+    # -Wcast-align is too noisy on 32-bit, and most of these warnings come from
+    # cases (like in glib) where we already know that, despite the natural alignment
+    # of two types being different, they are always allocated correctly inside glib.
+    # Fixing this properly would burden the 64-bit ports for little gain.
+    if (NOT WTF_CPU_ARM)
+        WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-Wcast-align)
+    endif ()
+    WEBKIT_PREPEND_GLOBAL_COMPILER_FLAGS(-Wformat-security
                                          -Wmissing-format-attribute
                                          -Wpointer-arith
                                          -Wundef)

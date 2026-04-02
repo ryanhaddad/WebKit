@@ -2937,7 +2937,7 @@ sub generateBuildSystemFromCMakeProject
         $ENV{"CXXFLAGS"} = "-m32" . ($ENV{"CXXFLAGS"} || "");
         $ENV{"LDFLAGS"} = "-m32" . ($ENV{"LDFLAGS"} || "");
     }
-    if (architecture() eq "arm64" && shouldBuild32Bit()) {
+    if (architecture() =~ /^(arm64|armv8l?)$/ && shouldBuild32Bit()) {
         my $compiler = "";
         $compiler = $ENV{'CC'} if (defined($ENV{'CC'}));
         # CMAKE_LIBRARY_ARCHITECTURE is needed to get the right .pc
