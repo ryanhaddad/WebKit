@@ -784,7 +784,7 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             };
 
             Vector<ScopingRootWithDistance> scopingRootsWithinScope;
-            for (auto scopingRootWithDistance : scopingRoots) {
+            for (auto& scopingRootWithDistance : scopingRoots) {
                 bool anyScopingLimitMatch = false;
                 for (const auto& selector : scopeEnd) {
                     if (match(scopingRootWithDistance.scopingRoot.get(), selector)) {
