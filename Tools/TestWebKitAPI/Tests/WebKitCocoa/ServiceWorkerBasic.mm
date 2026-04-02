@@ -4709,7 +4709,7 @@ TEST(ServiceWorker, ServiceWorkerProcessSwapWithNoDelay)
                 TestWebKitAPI::Util::runFor(0.5_s);
                 size_t contentLength = 4000000 + strlen(ServiceWorkerCOOPNavigateMain);
                 co_await connection.awaitableSend(makeString("HTTP/1.1 200 OK\r\nCross-Origin-Opener-Policy:same-origin\r\nContent-Type:text/html\r\nContent-Length: "_s, contentLength, "\r\n\r\n"_s));
-                co_await connection.awaitableSend(Vector<uint8_t>(4000000, ' '));
+                co_await connection.awaitableSend(Vector<uint8_t>(FillWith { }, 4000000, ' '));
 
                 while (responsePolicyCount <= 1)
                     TestWebKitAPI::Util::spinRunLoop();

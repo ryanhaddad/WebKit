@@ -1215,7 +1215,7 @@ TEST(EvaluateJavaScript, LongStrings)
     {
         bool didRunCase1 = false;
         RetainPtr<NSString> evalResult;
-        Vector<Latin1Character> longLatin1Data(1024*1024, ' ');
+        Vector<Latin1Character> longLatin1Data(FillWith { }, 1024*1024, ' ');
         auto s1 = makeString("'a'"_s, String { longLatin1Data }, "+ 'b'"_s);
         RetainPtr ns1 = s1.createNSString();
         [webView evaluateJavaScript:ns1.get() completionHandler:[&](id value, NSError *error) {
@@ -1231,7 +1231,7 @@ TEST(EvaluateJavaScript, LongStrings)
     {
         bool didRunCase2 = false;
         RetainPtr<NSString> evalResult;
-        Vector<char16_t> longUnicodeData(1024*1200, u' ');
+        Vector<char16_t> longUnicodeData(FillWith { }, 1024*1200, u' ');
         auto s2 = makeString(u"'z'"_str, String { longUnicodeData }, u"+ 'u'"_str);
         RetainPtr ns2 = s2.createNSString();
         [webView evaluateJavaScript:ns2.get() completionHandler:[&](id value, NSError *error) {

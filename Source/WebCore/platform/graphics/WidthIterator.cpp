@@ -596,8 +596,8 @@ struct CharacterToGlyphMapping {
     Vector<float> advanceWidths;
 
     CharacterToGlyphMapping(unsigned length)
-        : characterIndexToGlyphIndexRange(length, std::nullopt)
-        , advanceWidths(length, 0)
+        : characterIndexToGlyphIndexRange(FillWith { }, length, std::nullopt)
+        , advanceWidths(FillWith { }, length, 0)
     {
     }
 };

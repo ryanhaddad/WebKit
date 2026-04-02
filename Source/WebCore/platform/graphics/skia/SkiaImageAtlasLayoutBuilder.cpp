@@ -160,7 +160,7 @@ int SkiaImageAtlasLayoutBuilder::calculateOptimalAtlasSize(const Vector<IntSize>
 Vector<Ref<SkiaImageAtlasLayout>> SkiaImageAtlasLayoutBuilder::packMultipleAtlases(const Vector<IntSize>& allSizes)
 {
     Vector<Ref<SkiaImageAtlasLayout>> result;
-    Vector<bool> packed(allSizes.size(), false);
+    Vector<bool> packed(FillWith { }, allSizes.size(), false);
     size_t totalPacked = 0;
 
     // Sort indices by area (largest first) for better packing.

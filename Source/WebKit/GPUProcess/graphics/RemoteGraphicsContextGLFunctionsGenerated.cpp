@@ -459,7 +459,7 @@ void RemoteGraphicsContextGL::getFloatv(uint32_t pname, uint64_t valueSize, Comp
     assertIsCurrent(workQueue());
     if (!WTF::isValidCapacityForVector<GCGLfloat>(valueSize))
         valueSize = 16;
-    Vector<GCGLfloat, 16> value(valueSize, 0);
+    Vector<GCGLfloat, 16> value(FillWith { }, valueSize, 0);
     protect(m_context)->getFloatv(pname, value);
     completionHandler(spanReinterpretCast<const float>(value.span()));
 }
@@ -469,7 +469,7 @@ void RemoteGraphicsContextGL::getIntegerv(uint32_t pname, uint64_t valueSize, Co
     assertIsCurrent(workQueue());
     if (!WTF::isValidCapacityForVector<GCGLint>(valueSize))
         valueSize = 4;
-    Vector<GCGLint, 4> value(valueSize, 0);
+    Vector<GCGLint, 4> value(FillWith { }, valueSize, 0);
     protect(m_context)->getIntegerv(pname, value);
     completionHandler(spanReinterpretCast<const int32_t>(value.span()));
 }
@@ -514,7 +514,7 @@ void RemoteGraphicsContextGL::getBooleanv(uint32_t pname, uint64_t valueSize, Co
     assertIsCurrent(workQueue());
     if (!WTF::isValidCapacityForVector<GCGLboolean>(valueSize))
         valueSize = 4;
-    Vector<GCGLboolean, 4> value(valueSize, 0);
+    Vector<GCGLboolean, 4> value(FillWith { }, valueSize, 0);
     protect(m_context)->getBooleanv(pname, value);
     completionHandler(spanReinterpretCast<const bool>(value.span()));
 }
@@ -601,7 +601,7 @@ void RemoteGraphicsContextGL::getUniformfv(uint32_t program, int32_t location, u
         program = m_objectNames.get(program);
     if (!WTF::isValidCapacityForVector<GCGLfloat>(valueSize))
         valueSize = 16;
-    Vector<GCGLfloat, 16> value(valueSize, 0);
+    Vector<GCGLfloat, 16> value(FillWith { }, valueSize, 0);
     protect(m_context)->getUniformfv(program, location, value);
     completionHandler(spanReinterpretCast<const float>(value.span()));
 }
@@ -614,7 +614,7 @@ void RemoteGraphicsContextGL::getUniformiv(uint32_t program, int32_t location, u
         program = m_objectNames.get(program);
     if (!WTF::isValidCapacityForVector<GCGLint>(valueSize))
         valueSize = 4;
-    Vector<GCGLint, 4> value(valueSize, 0);
+    Vector<GCGLint, 4> value(FillWith { }, valueSize, 0);
     protect(m_context)->getUniformiv(program, location, value);
     completionHandler(spanReinterpretCast<const int32_t>(value.span()));
 }
@@ -627,7 +627,7 @@ void RemoteGraphicsContextGL::getUniformuiv(uint32_t program, int32_t location, 
         program = m_objectNames.get(program);
     if (!WTF::isValidCapacityForVector<GCGLuint>(valueSize))
         valueSize = 4;
-    Vector<GCGLuint, 4> value(valueSize, 0);
+    Vector<GCGLuint, 4> value(FillWith { }, valueSize, 0);
     protect(m_context)->getUniformuiv(program, location, value);
     completionHandler(spanReinterpretCast<const uint32_t>(value.span()));
 }
@@ -1724,7 +1724,7 @@ void RemoteGraphicsContextGL::getActiveUniformBlockiv(uint32_t program, uint32_t
         program = m_objectNames.get(program);
     if (!WTF::isValidCapacityForVector<GCGLint>(paramsSize))
         paramsSize = 4;
-    Vector<GCGLint, 4> params(paramsSize, 0);
+    Vector<GCGLint, 4> params(FillWith { }, paramsSize, 0);
     protect(m_context)->getActiveUniformBlockiv(program, uniformBlockIndex, pname, params);
     completionHandler(spanReinterpretCast<const int32_t>(params.span()));
 }
@@ -1921,7 +1921,7 @@ void RemoteGraphicsContextGL::getInternalformativ(uint32_t target, uint32_t inte
     assertIsCurrent(workQueue());
     if (!WTF::isValidCapacityForVector<GCGLint>(paramsSize))
         paramsSize = 4;
-    Vector<GCGLint, 4> params(paramsSize, 0);
+    Vector<GCGLint, 4> params(FillWith { }, paramsSize, 0);
     protect(m_context)->getInternalformativ(target, internalformat, pname, params);
     completionHandler(spanReinterpretCast<const int32_t>(params.span()));
 }

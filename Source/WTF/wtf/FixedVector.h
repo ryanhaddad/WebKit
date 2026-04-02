@@ -86,7 +86,7 @@ public:
         : m_storage(size ? Storage::create(size).moveToUniquePtr() : nullptr)
     { }
 
-    FixedVector(size_t size, const T& value)
+    FixedVector(FillWith, size_t size, const T& value)
         : m_storage(size ? Storage::createFilled(size, value).moveToUniquePtr() : nullptr)
     { }
 

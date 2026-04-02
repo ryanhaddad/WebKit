@@ -5507,7 +5507,7 @@ void Internals::setAudioContextRestrictions(AudioContext& context, StringView re
 
 Vector<float> Internals::waveShaperProcessCurveWithData(Vector<float> source, Vector<float> curve)
 {
-    Vector<float> destination(source.size(), 0.0f);
+    Vector<float> destination(FillWith { }, source.size(), 0.0f);
     WaveShaperDSPKernel::processCurveWithData(std::span { source }, std::span { destination }, std::span { curve });
     return destination;
 }

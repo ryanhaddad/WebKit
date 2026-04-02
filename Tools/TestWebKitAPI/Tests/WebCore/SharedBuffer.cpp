@@ -131,9 +131,9 @@ TEST_F(FragmentedSharedBufferTest, getReturnsContiguous)
 
 TEST_F(FragmentedSharedBufferTest, tryCreateArrayBufferLargeSegments)
 {
-    Vector<uint8_t> vector0(0x4000, 'a');
-    Vector<uint8_t> vector1(0x4000, 'b');
-    Vector<uint8_t> vector2(0x4000, 'c');
+    Vector<uint8_t> vector0(FillWith { }, 0x4000, 'a');
+    Vector<uint8_t> vector1(FillWith { }, 0x4000, 'b');
+    Vector<uint8_t> vector2(FillWith { }, 0x4000, 'c');
 
     SharedBufferBuilder builder(std::in_place, WTF::move(vector0));
     builder.append(WTF::move(vector1));
@@ -409,7 +409,7 @@ TEST_F(FragmentedSharedBufferTest, isSpanWithinBounds)
     // Use a Provider-backed SharedBuffer so the underlying data lives in our
     // controlled allocation, allowing safe pointer arithmetic to construct
     // out-of-bounds spans for testing.
-    Vector<uint8_t> backing(200, 'x');
+    Vector<uint8_t> backing(FillWith { }, 200, 'x');
     auto* base = backing.span().data();
     constexpr size_t bufferOffset = 50;
     constexpr size_t bufferSize = 100;

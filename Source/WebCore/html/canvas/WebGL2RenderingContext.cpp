@@ -2514,7 +2514,7 @@ WebGLAny WebGL2RenderingContext::getActiveUniformBlockParameter(WebGLProgram& pr
     case GraphicsContextGL::UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES: {
         RefPtr context = m_context;
         GCGLint size = context->getActiveUniformBlocki(program.object(), uniformBlockIndex, GraphicsContextGL::UNIFORM_BLOCK_ACTIVE_UNIFORMS);
-        Vector<GCGLint> params(size, 0);
+        Vector<GCGLint> params(FillWith { }, size, 0);
         context->getActiveUniformBlockiv(program.object(), uniformBlockIndex, pname, params);
         return toWebGLAny(Uint32Array::tryCreate(spanReinterpretCast<const GCGLuint>(params.span())));
     }

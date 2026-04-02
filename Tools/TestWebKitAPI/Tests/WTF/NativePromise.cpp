@@ -1371,14 +1371,14 @@ TEST(NativePromise, ImplicitConversionWithForwardPreviousReturn)
 TEST(NativePromise, ChainTo)
 {
     using VectorPromise = NativePromise<Ref<RefCountedFixedVector<int>>, bool, PromiseOption::Default | PromiseOption::NonExclusive>;
-    auto resultVector = RefCountedFixedVector<int>::createFromVector(Vector<int>(5, 42));
+    auto resultVector = RefCountedFixedVector<int>::createFromVector(Vector<int>(FillWith { }, 5, 42));
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer(), producer2 = VectorPromise::Producer()](auto& runLoop) mutable {
         auto promise = VectorPromise::createAndResolve(resultVector);
         producer1->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(5, 42)).get()); },
+            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(FillWith { }, 5, 42)).get()); },
             doFail());
         producer2->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(5, 42)).get()); },
+            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(FillWith { }, 5, 42)).get()); },
             doFail());
 
         // As promise1 is already resolved, it will automatically resolve/reject producer1 and producer2 with its resolved/reject value.
@@ -1388,7 +1388,7 @@ TEST(NativePromise, ChainTo)
 
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer(), producer2 = VectorPromise::Producer()](auto& runLoop) mutable {
         producer2->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(5, 42)).get()); },
+            [&](const auto& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(FillWith { }, 5, 42)).get()); },
             doFail());
 
         // When producer1 is resolved, it will automatically settle producer2 with the resolved/reject value.
@@ -1399,7 +1399,7 @@ TEST(NativePromise, ChainTo)
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer()](auto& runLoop) mutable {
         auto promise = VectorPromise::createAndResolve(resultVector);
         producer1->then(runLoop,
-            [&](auto&& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(5, 42)).get()); },
+            [&](auto&& resolveValue) { EXPECT_EQ(resolveValue.get(), RefCountedFixedVector<int>::createFromVector(Vector<int>(FillWith { }, 5, 42)).get()); },
             doFail());
 
         // As promise1 is already resolved, it will automatically resolve/reject producer1 with its resolved/reject value.
@@ -1411,12 +1411,12 @@ TEST(NativePromise, ChainToNonMovable)
 {
     using VectorPromise = NativePromise<std::unique_ptr<Vector<int>>, bool, PromiseOption::Default | PromiseOption::NonExclusive>;
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer(), producer2 = VectorPromise::Producer()](auto& runLoop) mutable {
-        auto promise = VectorPromise::createAndResolve(makeUnique<Vector<int>>(5, 42));
+        auto promise = VectorPromise::createAndResolve(makeUnique<Vector<int>>(FillWith { }, 5, 42));
         producer1->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(5, 42)); },
+            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(FillWith { }, 5, 42)); },
             doFail());
         producer2->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(5, 42)); },
+            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(FillWith { }, 5, 42)); },
             doFail());
 
         // As promise1 is already resolved, it will automatically resolve/reject producer1 and producer2 with its resolved/reject value.
@@ -1426,18 +1426,18 @@ TEST(NativePromise, ChainToNonMovable)
 
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer(), producer2 = VectorPromise::Producer()](auto& runLoop) mutable {
         producer2->then(runLoop,
-            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(5, 42)); },
+            [&](const auto& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(FillWith { }, 5, 42)); },
             doFail());
 
         // When producer1 is resolved, it will automatically settle producer2 with the resolved/reject value.
         producer1->chainTo(WTF::move(producer2));
-        VectorPromise::createAndResolve(makeUnique<Vector<int>>(5, 42))->chainTo(WTF::move(producer1));
+        VectorPromise::createAndResolve(makeUnique<Vector<int>>(FillWith { }, 5, 42))->chainTo(WTF::move(producer1));
     });
 
     runInCurrentRunLoop([&, producer1 = VectorPromise::Producer()](auto& runLoop) mutable {
-        auto promise = VectorPromise::createAndResolve(makeUnique<Vector<int>>(5, 42));
+        auto promise = VectorPromise::createAndResolve(makeUnique<Vector<int>>(FillWith { }, 5, 42));
         producer1->then(runLoop,
-            [&](auto&& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(5, 42)); },
+            [&](auto&& resolveValue) { EXPECT_EQ(*resolveValue, Vector<int>(FillWith { }, 5, 42)); },
             doFail());
 
         // As promise1 is already resolved, it will automatically resolve/reject producer1 with its resolved/reject value.

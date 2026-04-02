@@ -441,7 +441,7 @@ TEST(WKWebExtensionAPIWebNavigation, ErrorOccurredEventDuringProvisionalLoad)
 template<size_t length>
 String longString(Latin1Character c)
 {
-    Vector<Latin1Character> vector(length, c);
+    Vector<Latin1Character> vector(FillWith { }, length, c);
     return vector.span();
 }
 

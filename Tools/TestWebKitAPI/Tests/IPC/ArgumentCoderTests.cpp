@@ -106,7 +106,7 @@ private:
         WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(Impl);
 
         Impl()
-            : buffer(1024, static_cast<uint8_t>(0))
+            : buffer(FillWith { }, 1024, static_cast<uint8_t>(0))
             , encoder(EncoderDecoderTest::name(), buffer.mutableSpan())
         { }
 

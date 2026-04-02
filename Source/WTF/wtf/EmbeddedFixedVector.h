@@ -87,7 +87,7 @@ public:
 
     static UniqueRef<EmbeddedFixedVector> createFilled(unsigned size, const T& value)
     {
-        return UniqueRef { *new (NotNull, Malloc::malloc(Base::allocationSize(size))) EmbeddedFixedVector(typename Base::FillWith { }, size, value) };
+        return UniqueRef { *new (NotNull, Malloc::malloc(Base::allocationSize(size))) EmbeddedFixedVector(FillWith { }, size, value) };
     }
 
     template<typename... Args>
@@ -156,7 +156,7 @@ private:
     {
     }
 
-    EmbeddedFixedVector(typename Base::FillWith fillWith, unsigned size, const T& value)
+    EmbeddedFixedVector(FillWith fillWith, unsigned size, const T& value)
         : Base(fillWith, size, value)
     {
     }

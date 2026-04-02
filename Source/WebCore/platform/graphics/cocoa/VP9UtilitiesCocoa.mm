@@ -541,7 +541,7 @@ static Ref<VideoInfo> createVideoInfoFromVPCodecConfigurationRecord(const VPCode
             .size = size,
             .displaySize = displaySize,
             .colorSpace = colorSpaceFromVPCodecConfigurationRecord(record),
-            .extensionAtoms = { 1, { computeBoxType(codecName), SharedBuffer::create(vpcCFromVPCodecConfigurationRecord(record)) } },
+            .extensionAtoms = { FillWith { }, 1, { computeBoxType(codecName), SharedBuffer::create(vpcCFromVPCodecConfigurationRecord(record)) } },
         }
     });
 }

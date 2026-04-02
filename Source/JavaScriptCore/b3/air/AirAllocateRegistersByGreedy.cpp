@@ -749,7 +749,7 @@ public:
         , m_map(code)
         , m_useDefLists()
         , m_splitMetadata(1) // Sacrifice index 0.
-        , m_spillSlotTable(1, nullptr) // Sacrifice index 0.
+        , m_spillSlotTable(FillWith { }, 1, nullptr) // Sacrifice index 0.
         , m_regRanges(Reg::maxIndex() + 1)
         , m_insertionSets(code.size())
         , m_useCounts(m_code)

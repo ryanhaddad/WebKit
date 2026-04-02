@@ -460,7 +460,7 @@ public:
         grow(numBits);
     }
 
-    FastBitVector(size_t numBits, bool value)
+    FastBitVector(FillWith, size_t numBits, bool value)
     {
         grow(numBits);
         fill(value);

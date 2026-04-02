@@ -306,7 +306,7 @@ JSBigInt* JSBigInt::createFrom(JSGlobalObject* globalObject, double value)
     ASSERT(rawExponent >= 0x3ff); // Since value is integer, exponent should be >= 0 + bias (0x3ff).
     int32_t exponent = rawExponent - 0x3ff;
     int32_t digits = exponent / digitBits + 1;
-    Vector<Digit, 64> resultVector(digits, 0);
+    Vector<Digit, 64> resultVector(FillWith { }, digits, 0);
     auto result = resultVector.mutableSpan();
 
     // We construct a BigInt from the double value by shifting its mantissa
@@ -618,7 +618,7 @@ JSBigInt::ImplResult JSBigInt::exponentiateImpl(JSGlobalObject* globalObject, Bi
         // Fast path for 2^n.
         int neededDigits = 1 + (n / digitBits);
 
-        Vector<Digit, 16> resultVector(neededDigits, 0);
+        Vector<Digit, 16> resultVector(FillWith { }, neededDigits, 0);
         auto result = resultVector.mutableSpan();
 
         // All bits are zero. Now set the n-th bit.

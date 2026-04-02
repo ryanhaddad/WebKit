@@ -291,7 +291,7 @@ public:
             counter = 0;
         m_flattenedTransitions.resize(flattenedTransitionsSize);
 
-        Vector<uint32_t> transitionPerRangeOffset(m_transitionPartition.size(), 0);
+        Vector<uint32_t> transitionPerRangeOffset(FillWith { }, m_transitionPartition.size(), 0);
 
         for (unsigned i = 0; i < dfa.nodes.size(); ++i) {
             const DFANode& node = dfa.nodes[i];

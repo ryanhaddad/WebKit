@@ -59,7 +59,7 @@ static void dumpHistogram(const AbstractLocker&, const Vector<double>& values, d
     if (values.isEmpty() || min == max)
         return;
 
-    Vector<size_t> bins(binCount, 0);
+    Vector<size_t> bins(FillWith { }, binCount, 0);
     double binSize = (max - min) / binCount;
 
     for (double value : values) {

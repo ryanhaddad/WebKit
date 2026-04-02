@@ -336,7 +336,7 @@ struct DestructorObserver {
 
 TEST(WTF_FixedVector, Destructor)
 {
-    Vector<bool> flags(3, false);
+    Vector<bool> flags(FillWith { }, 3, false);
     {
         FixedVector<DestructorObserver> vector(flags.size());
         for (unsigned i = 0; i < flags.size(); ++i)
@@ -350,7 +350,7 @@ TEST(WTF_FixedVector, Destructor)
 
 TEST(WTF_FixedVector, DestructorAfterMove)
 {
-    Vector<bool> flags(3, false);
+    Vector<bool> flags(FillWith { }, 3, false);
     {
         FixedVector<DestructorObserver> outerVector;
         {
@@ -438,7 +438,7 @@ TEST(WTF_FixedVector, Equal)
 
 TEST(WTF_FixedVector, SizeAndValueConstructorPOD)
 {
-    FixedVector<unsigned> vec(5, 42U);
+    FixedVector<unsigned> vec(FillWith { }, 5, 42U);
     EXPECT_EQ(5U, vec.size());
     for (unsigned i = 0; i < vec.size(); ++i)
         EXPECT_EQ(42U, vec[i]);
@@ -447,7 +447,7 @@ TEST(WTF_FixedVector, SizeAndValueConstructorPOD)
 TEST(WTF_FixedVector, SizeAndValueConstructorNonPOD)
 {
     String value = "hello"_s;
-    FixedVector<String> vec(3, value);
+    FixedVector<String> vec(FillWith { }, 3, value);
     EXPECT_EQ(3U, vec.size());
     for (unsigned i = 0; i < vec.size(); ++i)
         EXPECT_STREQ("hello", vec[i].utf8().data());
@@ -455,21 +455,21 @@ TEST(WTF_FixedVector, SizeAndValueConstructorNonPOD)
 
 TEST(WTF_FixedVector, SizeAndValueConstructorZeroSize)
 {
-    FixedVector<unsigned> vec(0, 42U);
+    FixedVector<unsigned> vec(FillWith { }, 0, 42U);
     EXPECT_TRUE(vec.isEmpty());
     EXPECT_EQ(0U, vec.size());
 }
 
 TEST(WTF_FixedVector, SizeAndValueConstructorSingleElement)
 {
-    FixedVector<unsigned> vec(1, 99U);
+    FixedVector<unsigned> vec(FillWith { }, 1, 99U);
     EXPECT_EQ(1U, vec.size());
     EXPECT_EQ(99U, vec[0]);
 }
 
 TEST(WTF_FixedVector, MoveAssignNonEmptyToNonEmpty)
 {
-    Vector<bool> flags(3, false);
+    Vector<bool> flags(FillWith { }, 3, false);
     {
         FixedVector<DestructorObserver> vec1(3);
         for (unsigned i = 0; i < 3; ++i)
@@ -519,7 +519,7 @@ TEST(WTF_FixedVector, MoveAssignVectorEmpty)
 
 TEST(WTF_FixedVector, MoveAssignVectorOverNonEmpty)
 {
-    Vector<bool> flags(3, false);
+    Vector<bool> flags(FillWith { }, 3, false);
     {
         FixedVector<DestructorObserver> vec(3);
         for (unsigned i = 0; i < 3; ++i)

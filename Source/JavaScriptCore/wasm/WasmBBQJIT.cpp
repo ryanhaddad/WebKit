@@ -5484,7 +5484,7 @@ void BBQJIT::emitShuffle(Vector<Value, N, OverflowHandler>& srcVector, Vector<Lo
 
     // For multi-value return, a parallel move might be necessary. This is comparatively complex
     // and slow, so we limit it to this slow path.
-    Vector<ShuffleStatus, N, OverflowHandler> statusVector(srcVector.size(), ShuffleStatus::ToMove);
+    Vector<ShuffleStatus, N, OverflowHandler> statusVector(FillWith { }, srcVector.size(), ShuffleStatus::ToMove);
     for (unsigned i = 0; i < srcVector.size(); i ++) {
         if (statusVector[i] == ShuffleStatus::ToMove)
             emitShuffleMove(srcVector, dstVector, statusVector, i);

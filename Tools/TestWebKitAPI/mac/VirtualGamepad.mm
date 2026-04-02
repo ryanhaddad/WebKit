@@ -46,8 +46,8 @@ VirtualGamepad::VirtualGamepad(const GamepadMapping& gamepadMapping)
     m_dispatchQueue = adoptOSObject(dispatch_queue_create(0, DISPATCH_QUEUE_SERIAL));
     m_uniqueID = NSUUID.UUID.UUIDString;
 
-    m_buttonValues = Vector<float>(m_gamepadMapping.buttonCount, 0.0);
-    m_axisValues = Vector<float>(m_gamepadMapping.axisCount, 0.0);
+    m_buttonValues = Vector<float>(FillWith { }, m_gamepadMapping.buttonCount, 0.0);
+    m_axisValues = Vector<float>(FillWith { }, m_gamepadMapping.axisCount, 0.0);
 
     auto descriptor = adoptNS([[NSData alloc] initWithBytes:m_gamepadMapping.descriptorData length:m_gamepadMapping.descriptorDataSize]);
     auto properties = adoptNS([[NSMutableDictionary alloc] init]);

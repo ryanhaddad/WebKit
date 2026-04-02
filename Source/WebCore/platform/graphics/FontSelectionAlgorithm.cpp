@@ -176,7 +176,7 @@ void FontSelectionAlgorithm::filterCapability(std::span<bool> eliminated, Distan
 const Vector<bool>& FontSelectionAlgorithm::ensureEliminatedCapabilities()
 {
     if (!m_eliminatedCapabilities) {
-        Vector<bool, 256> eliminated(m_capabilities.size(), false);
+        Vector<bool, 256> eliminated(FillWith { }, m_capabilities.size(), false);
         filterCapability(eliminated.mutableSpan(), &FontSelectionAlgorithm::widthDistance, &Capabilities::width);
         filterCapability(eliminated.mutableSpan(), &FontSelectionAlgorithm::styleDistance, &Capabilities::slope);
         filterCapability(eliminated.mutableSpan(), &FontSelectionAlgorithm::weightDistance, &Capabilities::weight);

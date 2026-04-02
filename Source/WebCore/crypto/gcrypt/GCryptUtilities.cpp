@@ -157,7 +157,7 @@ std::optional<Vector<uint8_t>> mpiZeroPrefixedData(gcry_mpi_t paramMPI, size_t t
 
     // Fill out the output buffer with zeros. Properly determine the zero prefix length,
     // and copy the MPI data into memory area following the prefix (if any).
-    Vector<uint8_t> output(targetLength, 0);
+    Vector<uint8_t> output(FillWith { }, targetLength, 0);
     size_t prefixLength = targetLength - *length;
     gcry_error_t error = gcry_mpi_print(GCRYMPI_FMT_USG, const_cast<uint8_t*>(output.subspan(prefixLength).data()), targetLength, nullptr, paramMPI);
     if (error != GPG_ERR_NO_ERROR) {

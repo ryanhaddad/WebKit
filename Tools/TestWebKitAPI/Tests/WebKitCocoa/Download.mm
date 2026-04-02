@@ -1157,7 +1157,7 @@ TEST(WKDownload, ResumedDownloadCanHandleAuthenticationChallenge)
                 "ETag: test\r\n"
                 "Content-Length: 10000\r\n\r\n"_s;
                 connection.send(responseHeader, [=] {
-                    connection.send(Vector<uint8_t>(5000, 0));
+                    connection.send(Vector<uint8_t>(FillWith { }, 5000, 0));
                 });
             });
             return;
@@ -1176,7 +1176,7 @@ TEST(WKDownload, ResumedDownloadCanHandleAuthenticationChallenge)
                     "Content-Range: bytes 5000-9999/10000\r\n"
                     "Content-Length: 5000\r\n\r\n"_s;
                     connection.send(responseHeader, [=] {
-                        connection.send(Vector<uint8_t>(5000, 1));
+                        connection.send(Vector<uint8_t>(FillWith { }, 5000, 1));
                     });
                 });
             });
@@ -1205,7 +1205,7 @@ TEST(WKDownload, ResumedDownloadCanHandleAuthenticationChallenge)
 template<size_t length>
 String longString(Latin1Character c)
 {
-    Vector<Latin1Character> vector(length, c);
+    Vector<Latin1Character> vector(FillWith { }, length, c);
     return vector.span();
 }
 

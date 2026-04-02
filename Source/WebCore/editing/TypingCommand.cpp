@@ -508,7 +508,7 @@ bool TypingCommand::willAddTypingToOpenCommand(Type commandType, TextGranularity
     if (!range || isEditingTextAreaOrTextInput())
         return document().editor().willApplyEditing(*this, CompositeEditCommand::targetRangesForBindings());
 
-    return document().editor().willApplyEditing(*this, { 1, StaticRange::create(*range) });
+    return document().editor().willApplyEditing(*this, { FillWith { }, 1, StaticRange::create(*range) });
 }
 
 void TypingCommand::typingAddedToOpenCommand(Type commandTypeForAddedTyping)

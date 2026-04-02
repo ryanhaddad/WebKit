@@ -89,9 +89,9 @@ TEST(WebKit, HTTPReferer)
         Util::run(&done);
     };
     
-    Vector<char> a5k(5000, 'a');
+    Vector<char> a5k(FillWith { }, 5000, 'a');
     a5k.append(0);
-    Vector<char> a3k(3000, 'a');
+    Vector<char> a3k(FillWith { }, 3000, 'a');
     a3k.append(0);
     NSString *longPath = [NSString stringWithFormat:@"http://webkit.org/%s?asdf", a5k.span().data()];
     NSString *shorterPath = [NSString stringWithFormat:@"http://webkit.org/%s?asdf", a3k.span().data()];
@@ -655,7 +655,7 @@ TEST(_WKDataTask, Challenge)
 
 void sendLoop(TestWebKitAPI::Connection connection, bool& sentWithError)
 {
-    Vector<uint8_t> bytes(1000, 0);
+    Vector<uint8_t> bytes(FillWith { }, 1000, 0);
     connection.sendAndReportError(WTF::move(bytes), [&, connection] (bool sawError) {
         if (sawError)
             sentWithError = true;

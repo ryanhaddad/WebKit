@@ -59,7 +59,7 @@ public:
     explicit CallLinkStatus(JSValue);
     
     CallLinkStatus(CallVariant variant)
-        : m_variants(1, variant)
+        : m_variants(FillWith { }, 1, variant)
     {
     }
     

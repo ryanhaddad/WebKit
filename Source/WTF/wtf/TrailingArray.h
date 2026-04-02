@@ -88,8 +88,7 @@ protected:
         std::uninitialized_copy(first, last, begin());
     }
 
-    struct FillWith { };
-    TrailingArray(FillWith, unsigned size, const T& value)
+    TrailingArray(WTF::FillWith, unsigned size, const T& value)
         : m_size(size)
     {
         static_assert(std::is_final_v<Derived>);

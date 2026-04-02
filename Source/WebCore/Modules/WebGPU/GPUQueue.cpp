@@ -579,7 +579,7 @@ static void imageBytesForSource(WebGPU::Queue& backing, const GPUImageCopyExtern
                 return callback(byteSpan.first(sizeInBytes), rawWidth, rawHeight);
 
             auto bytesPerRow = CGImageGetBytesPerRow(platformImage.get()) / (bitsPerComponent / 8);
-            Vector<uint8_t> tempBuffer(requiredSize, 255);
+            Vector<uint8_t> tempBuffer(FillWith { }, requiredSize, 255);
             auto bytesPerPixel = sizeInBytes / (rawWidth * rawHeight);
             bool flipY = sourceDescriptor.flipY;
             needsYFlip = false;

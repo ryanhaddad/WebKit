@@ -79,7 +79,7 @@ static void handleFraction(Duration& duration, int factor, StringView fractionSt
     ASSERT(fractionLength && fractionLength <= 9 && fractionString.containsOnlyASCII());
     ASSERT(fractionType == TemporalUnit::Hour || fractionType == TemporalUnit::Minute || fractionType == TemporalUnit::Second);
 
-    Vector<Latin1Character, 9> padded(9, '0');
+    Vector<Latin1Character, 9> padded(FillWith { }, 9, '0');
     for (unsigned i = 0; i < fractionLength; i++)
         padded[i] = fractionString[i];
 
@@ -362,7 +362,7 @@ static std::optional<PlainTime> parseTimeSpec(StringParsingBuffer<CharacterType>
     if (!digits)
         return std::nullopt;
 
-    Vector<Latin1Character, 9> padded(9, '0');
+    Vector<Latin1Character, 9> padded(FillWith { }, 9, '0');
     for (size_t i = 0; i < digits; ++i)
         padded[i] = buffer[i];
     buffer.advanceBy(digits);

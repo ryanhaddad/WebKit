@@ -174,7 +174,7 @@ public:
         m_graph.ensureCPSNaturalLoops();
 
         uint32_t loopCount = m_graph.m_cpsNaturalLoops->numLoops();
-        Vector<std::tuple<const NaturalLoop*, int32_t>, 16> loops(loopCount, std::tuple { nullptr, INT_MIN });
+        Vector<std::tuple<const NaturalLoop*, int32_t>, 16> loops(FillWith { }, loopCount, std::tuple { nullptr, INT_MIN });
         for (uint32_t loopIndex = loopCount; loopIndex--;) {
             const NaturalLoop& loop = m_graph.m_cpsNaturalLoops->loop(loopIndex);
             ASSERT(loop.index() == loopIndex && std::get<1>(loops[loopIndex]) == INT_MIN);
@@ -686,7 +686,7 @@ void LoopUnrollingPhase::LoopData::analyzeLoopNode(Graph& graph, Node* node)
 void LoopUnrollingPhase::dumpLoopNodeTypeStats(LoopData& data)
 {
     dataLogLn("Loop unrolling candidate of function ", m_graph.m_codeBlock->inferredNameWithHash(), " with data=", data);
-    Vector<uint32_t> counter(numberOfNodeTypes + 1, 0);
+    Vector<uint32_t> counter(FillWith { }, numberOfNodeTypes + 1, 0);
     for (uint32_t i = 0; i < data.loopSize(); ++i) {
         BasicBlock* body = data.loopBody(i);
         for (Node* node : *body)

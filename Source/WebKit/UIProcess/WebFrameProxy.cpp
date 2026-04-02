@@ -637,7 +637,7 @@ void WebFrameProxy::getFrameTree(CompletionHandler<void(std::optional<FrameTreeN
     private:
         FrameInfoCallbackAggregator(CompletionHandler<void(std::optional<FrameTreeNodeData>&&)>&& completionHandler, size_t childCount)
             : m_completionHandler(WTF::move(completionHandler))
-            , m_childFrameData(childCount, { }) { }
+            , m_childFrameData(FillWith { }, childCount, { }) { }
 
         CompletionHandler<void(std::optional<FrameTreeNodeData>&&)> m_completionHandler;
         std::optional<FrameInfoData> m_currentFrameData;

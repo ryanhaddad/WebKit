@@ -51,7 +51,7 @@ static Lock fftSetupsLock;
 static Vector<FFTSetup>& fftSetups() WTF_REQUIRES_LOCK(fftSetupsLock)
 {
     ASSERT(fftSetupsLock.isHeld());
-    static NeverDestroyed<Vector<FFTSetup>> fftSetups(kMaxFFTPow2Size, nullptr);
+    static NeverDestroyed<Vector<FFTSetup>> fftSetups(FillWith { }, kMaxFFTPow2Size, nullptr);
     return fftSetups;
 }
 

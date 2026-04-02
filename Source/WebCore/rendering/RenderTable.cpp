@@ -73,7 +73,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(RenderTable);
 
 RenderTable::RenderTable(Type type, Element& element, RenderStyle&& style)
     : RenderBlock(type, element, WTF::move(style), { })
-    , m_columnPos(1, 0)
+    , m_columnPos(FillWith { }, 1, 0)
     , m_currentBorder(nullptr)
     , m_collapsedBordersValid(false)
     , m_collapsedEmptyBorderIsPresent(false)
@@ -93,7 +93,7 @@ RenderTable::RenderTable(Type type, Element& element, RenderStyle&& style)
 
 RenderTable::RenderTable(Type type, Document& document, RenderStyle&& style)
     : RenderBlock(type, document, WTF::move(style), { })
-    , m_columnPos(1, 0)
+    , m_columnPos(FillWith { }, 1, 0)
     , m_currentBorder(nullptr)
     , m_collapsedBordersValid(false)
     , m_collapsedEmptyBorderIsPresent(false)

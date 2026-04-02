@@ -494,7 +494,7 @@ TEST(SiteIsolation, LoadingCallbacksAndPostMessage)
                 co_await connection.awaitableSend(makeString("HTTP/1.1 200 OK\r\nContent-Length: "_s, contentLength, "\r\n\r\n"_s));
 
                 co_await connection.awaitableSend(webkitHTML);
-                co_await connection.awaitableSend(Vector<uint8_t>(1000000, ' '));
+                co_await connection.awaitableSend(Vector<uint8_t>(FillWith { }, 1000000, ' '));
 
                 while (framesCommitted < 2)
                     Util::spinRunLoop();
@@ -502,7 +502,7 @@ TEST(SiteIsolation, LoadingCallbacksAndPostMessage)
                 EXPECT_EQ(framesCommitted, 2u);
 
                 EXPECT_FALSE(finishedLoading);
-                co_await connection.awaitableSend(Vector<uint8_t>(1000000, ' '));
+                co_await connection.awaitableSend(Vector<uint8_t>(FillWith { }, 1000000, ' '));
                 continue;
             }
             EXPECT_FALSE(true);

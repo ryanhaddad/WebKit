@@ -72,13 +72,13 @@ TEST(StringCF, ConstructFromUTF16WithLatin1Characters)
     // Create a long CFString from UTF-16 characters that are all in the Latin-1 range.
     // Use a long string so CF is likely to expose its internal UTF-16 buffer via
     // CFStringGetCharactersSpan, exercising the create8BitIfPossible narrowing path.
-    Vector<char16_t> characters(4096, 'A');
+    Vector<char16_t> characters(FillWith { }, 4096, 'A');
     auto cfString = adoptCF(CFStringCreateWithCharacters(kCFAllocatorDefault, reinterpret_cast<const UniChar*>(characters.span().data()), characters.size()));
 
     String string(cfString.get());
     EXPECT_EQ(string.length(), 4096u);
     EXPECT_TRUE(string.is8Bit());
-    EXPECT_EQ(string, String(Vector<Latin1Character>(4096, 'A')));
+    EXPECT_EQ(string, String(Vector<Latin1Character>(FillWith { }, 4096, 'A')));
 }
 
 TEST(StringCF, ConstructFromUTF16WithHighLatin1Characters)

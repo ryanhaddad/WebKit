@@ -64,7 +64,7 @@ public:
     AbstractColoringAllocator(Code& code, const Vector<Reg>& regsInPriorityOrder, IndexType lastPrecoloredRegisterIndex, unsigned tmpArraySize, const BitVector& unspillableTmps, const UseCounts& useCounts)
         : m_regsInPriorityOrder(regsInPriorityOrder)
         , m_lastPrecoloredRegisterIndex(lastPrecoloredRegisterIndex)
-        , m_coalescedTmps(tmpArraySize, 0)
+        , m_coalescedTmps(FillWith { }, tmpArraySize, 0)
         , m_unspillableTmps(unspillableTmps)
         , m_useCounts(useCounts)
         , m_code(code)
@@ -1902,7 +1902,7 @@ private:
         unsigned numTmps = m_code.numTmps(bank);
         unsigned arraySize = AbsoluteTmpMapper<bank>::absoluteIndex(numTmps);
 
-        Vector<Range, 0, UnsafeVectorOverflow> ranges(arraySize, Range());
+        Vector<Range, 0, UnsafeVectorOverflow> ranges(FillWith { }, arraySize, Range());
 
         unsigned globalIndex = 0;
         for (BasicBlock* block : m_code) {

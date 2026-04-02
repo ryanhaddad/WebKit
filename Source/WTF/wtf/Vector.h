@@ -628,7 +628,7 @@ public:
             TypeOperations::initializeIfNonPOD(begin(), end());
     }
 
-    Vector(size_t size, const T& val)
+    Vector(FillWith, size_t size, const T& val)
         : Base(size, size)
     {
         asanSetInitialBufferSizeTo(size);

@@ -432,7 +432,7 @@ Vector<Ref<StaticRange>> CompositeEditCommand::targetRanges() const
     if (!firstRange)
         return { };
 
-    return { 1, StaticRange::create(WTF::move(*firstRange)) };
+    return { FillWith { }, 1, StaticRange::create(WTF::move(*firstRange)) };
 }
 
 Vector<Ref<StaticRange>> CompositeEditCommand::targetRangesForBindings() const

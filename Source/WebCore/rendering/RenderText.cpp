@@ -225,7 +225,7 @@ static inline size_t capitalizeCharacter(String textContent, unsigned startChara
 
 String capitalize(const String& string)
 {
-    Vector<char16_t> previousCharacter(1, ' ');
+    Vector<char16_t> previousCharacter(FillWith { }, 1, ' ');
     return capitalize(string, previousCharacter);
 }
 
@@ -1689,7 +1689,7 @@ static String convertToMathAuto(const String& string)
 
 String applyTextTransform(const RenderStyle& style, const String& text)
 {
-    Vector<char16_t> previousCharacter(1, ' ');
+    Vector<char16_t> previousCharacter(FillWith { }, 1, ' ');
     return applyTextTransform(style, text, previousCharacter);
 }
 
