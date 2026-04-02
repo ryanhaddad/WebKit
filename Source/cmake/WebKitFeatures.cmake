@@ -481,11 +481,6 @@ macro(WEBKIT_CHECK_HAVE_STRUCT _variable _struct _member _header)
     SET_AND_EXPOSE_TO_BUILD(${_variable} ${${_variable}_value})
 endmacro()
 
-macro(WEBKIT_CHECK_SOURCE_COMPILES _variable _source)
-    check_cxx_source_compiles("${_source}" ${_variable}_value)
-    SET_AND_EXPOSE_TO_BUILD(${_variable} ${${_variable}_value})
-endmacro()
-
 option(ENABLE_EXPERIMENTAL_FEATURES "Enable experimental features" OFF)
 SET_AND_EXPOSE_TO_BUILD(ENABLE_EXPERIMENTAL_FEATURES ${ENABLE_EXPERIMENTAL_FEATURES})
 
