@@ -34,6 +34,10 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/WeakPtr.h>
 
+#if PLATFORM(IOS_FAMILY)
+#import <pal/spi/ios/UIKitSPI.h>
+#endif
+
 namespace WebKit {
 #if USE(EXTENSIONKIT)
 using ProcessAndVisibilityPropagatorPair = std::pair<WeakPtr<AuxiliaryProcessProxy>, RetainPtr<id<UIInteraction>>>;
