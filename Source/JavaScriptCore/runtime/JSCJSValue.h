@@ -1118,7 +1118,7 @@ inline double JSValue::toIntegerWithTruncation(JSGlobalObject* globalObject) con
 {
     if (isInt32())
         return asInt32();
-    return trunc(toNumber(globalObject) + 0.0);
+    return std::trunc(toNumber(globalObject) + 0.0);
 }
 
 // https://tc39.es/ecma262/#sec-tointegerorinfinity
@@ -1127,7 +1127,7 @@ inline double JSValue::toIntegerOrInfinity(JSGlobalObject* globalObject) const
     if (isInt32())
         return asInt32();
     double d = toNumber(globalObject);
-    return isnan(d) ? 0.0 : trunc(d) + 0.0;
+    return std::isnan(d) ? 0.0 : std::trunc(d) + 0.0;
 }
 
 inline bool JSValue::isUInt32() const
