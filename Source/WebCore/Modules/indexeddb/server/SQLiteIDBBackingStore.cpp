@@ -2263,9 +2263,13 @@ IDBError SQLiteIDBBackingStore::getAllObjectStoreRecords(const IDBResourceIdenti
             LOG_ERROR("Unable to deserialize key data from database while getting all records");
             return IDBError { ExceptionCode::UnknownError, "Unable to deserialize key data while getting all records"_s };
         }
+
+        if (getAllRecordsData.getAllType == IndexedDB::GetAllType::Records)
+            result.addPrimaryKey(IDBKeyData(keyData));
+
         result.addKey(WTF::move(keyData));
 
-        if (getAllRecordsData.getAllType == IndexedDB::GetAllType::Values) {
+        if (getAllRecordsData.getAllType == IndexedDB::GetAllType::Values || getAllRecordsData.getAllType == IndexedDB::GetAllType::Records) {
             ThreadSafeDataBuffer valueResultBuffer = ThreadSafeDataBuffer::create(statement->columnBlob(1));
 
             auto recordID = statement->columnInt64(2);

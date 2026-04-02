@@ -22,9 +22,7 @@ PASS IDBIndex openCursor() method with throwing/invalid keys
 PASS IDBIndex openKeyCursor() method with throwing/invalid keys
 PASS IDBObjectStore getAll() method with throwing/invalid keys
 PASS IDBObjectStore getAllKeys() method with throwing/invalid keys
-FAIL IDBObjectStore getAllRecords() method with throwing/invalid keys assert_throws_dom: options query key conversion with invalid key should throw DataError function "() => {
-    receiver[method]({query: invalid_key});
-  }" threw object "NotSupportedError: getAllRecords is not yet supported" that is not a DOMException DataError: property "code" is equal to 9, expected 0
+PASS IDBObjectStore getAllRecords() method with throwing/invalid keys
 PASS IDBIndex getAll() method with throwing/invalid keys
 PASS IDBIndex getAllKeys() method with throwing/invalid keys
 PASS IDBIndex getAllRecords() method with throwing/invalid keys
