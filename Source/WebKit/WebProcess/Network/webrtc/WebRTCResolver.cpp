@@ -68,8 +68,6 @@ void WebRTCResolver::setResolvedAddress(const Vector<RTCNetwork::IPAddress>& add
 
         if (auto callback = takeResolverCallback())
             callback();
-
-        ASSERT(!factory->resolver(identifier));
     });
 }
 
