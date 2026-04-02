@@ -63,7 +63,6 @@ private:
 
     bool parseLibrariesReadPacket(StringView packet, size_t& offset, size_t& maxSize);
     bool handleChunkedLibrariesResponse(size_t offset, size_t maxSize, String& response);
-    String buildWasmCallStackResponse();
 };
 
 } // namespace Wasm

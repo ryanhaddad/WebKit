@@ -270,7 +270,7 @@ macro checkStackOverflow(callee, scratch)
 
 if not ADDRESS64
     bpbeq scratch, cfr, .checkTrapAwareSoftStackLimit
-    ipintException(StackOverflow)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(StackOverflow)
 .checkTrapAwareSoftStackLimit:
 end
     bpbeq JSWebAssemblyInstance::m_stackMirror + StackManager::Mirror::m_trapAwareSoftStackLimit[wasmInstance], scratch, .stackHeightOK
@@ -284,7 +284,8 @@ if X86_64
 else
         move callee, a2
 end
-        cCall3(_ipint_extern_check_stack_and_vm_traps)
+        move cfr, a3
+        cCall4(_ipint_extern_check_stack_and_vm_traps)
     end)
 
 .stackHeightOK:
@@ -391,6 +392,11 @@ macro operationCallMayThrowImpl(fn, sizeOfExtraRegistersPreserved)
     bpneq r1, (constexpr JSC::IPInt::SlowPathExceptionTag), .continuation
 
     storei r0, ArgumentCountIncludingThis + PayloadOffset[cfr]
+    if ARM64 or ARM64E
+        move cfr, a1
+        move sp, a2
+        operationCall(macro() cCall3(_ipint_extern_handle_debugger_trap_if_needed) end)
+    end
     addp sizeOfExtraRegistersPreserved + (4 * MachineRegisterSize), sp
     jmp _wasm_throw_from_slow_path_trampoline
 .continuation:
@@ -414,9 +420,16 @@ macro operationCallMayThrowPreservingVolatileRegisters(fn)
 end
 
 # Exception handling
-macro ipintException(exception)
+#
+# debugger-aware trap. 2 instructions; heavy logic in _wasm_ipint_check_debugger_hook_and_throw_trap due to fixed-size IPInt dispatch slots.
+macro handleDebuggerTrapIfNeededAndThrowWasmTrap(exception)
     storei constexpr Wasm::ExceptionType::%exception%, ArgumentCountIncludingThis + PayloadOffset[cfr]
+if ADDRESS64 and (ARM64 or ARM64E)
+   # Currently, only ARM64 and ARM64E with ADDRESS64 platforms support the WasmDebugger.
+    jmp _wasm_ipint_check_debugger_hook_and_throw_trap
+else
     jmp _wasm_throw_from_slow_path_trampoline
+end
 end
 
 # OSR
@@ -1166,6 +1179,27 @@ macro jumpToException()
     end
 end
 
+macro handleDebuggerTrapIfNeeded()
+    push PC, MC
+    push PL, ws0    # sp[0]=PL, sp[1]=ws0 (IPIntCallee*), sp[2]=PC, sp[3]=MC
+    move cfr, a1
+    move sp, a2     # a2 = pointer to saved [PL, ws0, PC, MC]
+    operationCall(macro() cCall3(_ipint_extern_handle_debugger_trap_if_needed) end)
+    addp 4 * MachineRegisterSize, sp
+end
+
+op(wasm_ipint_check_debugger_hook_and_throw_trap, macro ()
+    handleDebuggerTrapIfNeeded()
+    # r0 == 0 i.e. DebuggerTrapStatus::ResolvedByDebugger i.e. this was purely a debugger trap / breakpoint,
+    #              and has been handled.  We should continue executing because it's not a Wasm trap.
+    # r0 == 1 i.e. DebuggerTrapStatus::NotResolvedByDebugger i.e. this was a fatal Wasm trap.  We should
+    #              throw it to terminate Wasm execution.
+    btpz r0, .continue
+    jmp _wasm_throw_from_slow_path_trampoline
+.continue:
+    nextIPIntInstruction()
+end)
+
 op(wasm_throw_from_slow_path_trampoline, macro ()
     validateOpcodeConfig(t5)
     loadp JSWebAssemblyInstance::m_vm[wasmInstance], t5
@@ -1196,6 +1230,14 @@ op(wasm_unwind_from_slow_path_trampoline, macro()
 end)
 
 op(wasm_throw_from_fault_handler_trampoline_reg_instance, macro ()
+    # enableWasmDebugger disables BBQ/OMG, so this trampoline is only
+    # reached from IPInt when the debugger is active. The signal handler only patches
+    # the machine PC, so IPInt registers (PC, MC, PL, ws0, cfr) are still live.
+    # Exception type comes from instance->m_exception; copy to CFR slot for handle_debugger_trap_if_needed.
+    loadi JSWebAssemblyInstance::m_exception[wasmInstance], t0
+    storei t0, ArgumentCountIncludingThis + PayloadOffset[cfr]
+    handleDebuggerTrapIfNeeded()
+
     move wasmInstance, a2
     loadp JSWebAssemblyInstance::m_vm[a2], a0
     loadp VM::topEntryFrame[a0], a0

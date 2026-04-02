@@ -339,12 +339,13 @@ Vector<FrameInfo> collectCallStack(VirtualAddress stopAddress, CallFrame* startF
     return frames;
 }
 
-StopData::StopData(IPIntCallee* callee, JSWebAssemblyInstance* instance)
+StopData::StopData(IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame)
     : code(Code::Stop)
     , location(Location::Prologue)
     , address(VirtualAddress::toVirtual(instance, callee->functionIndex(), callee->bytecode()))
     , callee(callee)
     , instance(instance)
+    , callFrame(callFrame)
 {
 }
 
@@ -382,9 +383,10 @@ StopData::StopData(Breakpoint::Type type, VirtualAddress address, uint8_t origin
 {
 }
 
-StopData::StopData(IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack)
+StopData::StopData(IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack, Wasm::ExceptionType type)
     : StopData(Location::Trap, Code::Trap, VirtualAddress::toVirtual(instance, callee->functionIndex(), pc), 0, pc, mc, locals, stack, callee, instance, callFrame)
 {
+    wasmTrapType = type;
 }
 
 StopData::~StopData() = default;

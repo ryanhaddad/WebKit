@@ -117,7 +117,6 @@ public:
     void setPort(uint64_t port) { m_port = port; }
 
     JS_EXPORT_PRIVATE bool NODELETE isConnected() const;
-    bool shouldHandleUnreachable() const;
 
     JS_EXPORT_PRIVATE void handlePacket(StringView packet);
 

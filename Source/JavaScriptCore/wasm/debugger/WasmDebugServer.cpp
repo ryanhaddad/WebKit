@@ -439,9 +439,9 @@ void DebugServer::handlePacket(StringView packet)
         dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Routing halt reason query to ExecutionHandler");
         m_executionHandler->interrupt();
         // After the initial interrupt is handled and the stop reply is sent, the debugger has
-        // established a known VM state. Any unreachable trap encountered in future execution
+        // established a known VM state. Any trap encountered in future execution
         // (after the user sends 'c') will be properly intercepted.
-        m_executionHandler->setUnreachableHandlingEnabled(true);
+        m_executionHandler->setTrapHandlingEnabled(true);
         break;
     case 'k':
         dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] Kill request");
@@ -573,11 +573,6 @@ bool DebugServer::isConnected() const
         return true;
 #endif
     return isSocketValid(m_clientSocket);
-}
-
-bool DebugServer::shouldHandleUnreachable() const
-{
-    return isConnected() && m_executionHandler->isUnreachableHandlingEnabled();
 }
 
 }

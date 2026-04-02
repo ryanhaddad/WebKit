@@ -210,29 +210,6 @@ bool QueryHandler::handleChunkedLibrariesResponse(size_t offset, size_t maxSize,
     return true;
 }
 
-String QueryHandler::buildWasmCallStackResponse()
-{
-    auto* state = m_debugServer.execution().debuggeeStateSafe();
-    if (!state->atBreakpointOrTrap()) {
-        dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] buildWasmCallStackResponse: not stopped at breakpoint or trap, returning empty");
-        return String();
-    }
-
-    auto& stopData = *state->stopData;
-    RELEASE_ASSERT(stopData.callFrame);
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] buildWasmCallStackResponse: walking call stack from CallFrame ", RawPointer(stopData.callFrame));
-
-    Vector<FrameInfo> frames = collectCallStack(stopData.address, stopData.callFrame, stopData.instance->vm());
-
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] buildWasmCallStackResponse: finished walking, ", frames.size(), " frames");
-
-    StringBuilder result;
-    for (const auto& frame : frames)
-        result.append(toNativeEndianHex(frame.address));
-    dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] buildWasmCallStackResponse: response length: ", result.length());
-    return result.toString();
-}
-
 void QueryHandler::handleStartNoAckMode()
 {
     // Format: QStartNoAckMode
@@ -378,7 +355,7 @@ void QueryHandler::handleWasmLocal(StringView packet)
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] qWasmLocal frame=", frameIndex, ", variable=", localIndex);
 
     auto* state = m_debugServer.execution().debuggeeStateSafe();
-    if (!state->atBreakpointOrTrap()) {
+    if (state->atSystemCall() || state->atPrologue()) {
         m_debugServer.sendErrorReply(ProtocolError::UnknownCommand);
         return;
     }
@@ -460,7 +437,7 @@ void QueryHandler::handleWasmGlobal(StringView packet)
     dataLogLnIf(Options::verboseWasmDebugger(), "[Debugger] qWasmGlobal frame=", frameIndex, ", global=", globalIndex);
 
     auto* state = m_debugServer.execution().debuggeeStateSafe();
-    if (!state->atBreakpointOrTrap()) {
+    if (state->atSystemCall()) {
         m_debugServer.sendErrorReply(ProtocolError::UnknownCommand);
         return;
     }

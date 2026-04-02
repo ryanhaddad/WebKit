@@ -34,6 +34,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 #include <JavaScriptCore/CallFrame.h>
 #include <JavaScriptCore/JSWebAssemblyInstance.h>
+#include <JavaScriptCore/WasmExceptionType.h>
 #include <JavaScriptCore/WasmIPIntGenerator.h>
 #include <JavaScriptCore/WasmVirtualAddress.h>
 #include <memory>
@@ -155,9 +156,9 @@ struct StopData {
 
     StopData(Breakpoint::Type, VirtualAddress, uint8_t originalBytecode, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal*, IPInt::IPIntStackEntry*, IPIntCallee*, JSWebAssemblyInstance*, CallFrame*);
 
-    StopData(IPIntCallee*, JSWebAssemblyInstance*);
+    StopData(IPIntCallee*, JSWebAssemblyInstance*, CallFrame*);
 
-    StopData(IPIntCallee*, JSWebAssemblyInstance*, CallFrame*, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal*, IPInt::IPIntStackEntry*);
+    StopData(IPIntCallee*, JSWebAssemblyInstance*, CallFrame*, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal*, IPInt::IPIntStackEntry*, Wasm::ExceptionType);
 
     ~StopData();
 
@@ -174,6 +175,7 @@ struct StopData {
     RefPtr<IPIntCallee> callee;
     JSWebAssemblyInstance* instance { nullptr };
     CallFrame* callFrame { nullptr };
+    std::optional<Wasm::ExceptionType> wasmTrapType;
 
 private:
     StopData(Location, Code, VirtualAddress, uint8_t originalBytecode, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal*, IPInt::IPIntStackEntry*, IPIntCallee*, JSWebAssemblyInstance*, CallFrame*);
@@ -192,9 +194,9 @@ struct DebugState {
 
     DebugState() = default;
 
-    void setPrologueStopData(JSWebAssemblyInstance* instance, IPIntCallee* callee)
+    void setPrologueStopData(JSWebAssemblyInstance* instance, IPIntCallee* callee, CallFrame* callFrame)
     {
-        stopData = makeUnique<StopData>(callee, instance);
+        stopData = makeUnique<StopData>(callee, instance, callFrame);
     }
 
     void setBreakpointStopData(Breakpoint::Type type, VirtualAddress address, uint8_t originalBytecode, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack, IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame)
@@ -202,16 +204,15 @@ struct DebugState {
         stopData = makeUnique<StopData>(type, address, originalBytecode, pc, mc, locals, stack, callee, instance, callFrame);
     }
 
-    void setTrapStopData(IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack)
+    void setTrapStopData(IPIntCallee* callee, JSWebAssemblyInstance* instance, CallFrame* callFrame, uint8_t* pc, uint8_t* mc, IPInt::IPIntLocal* locals, IPInt::IPIntStackEntry* stack, Wasm::ExceptionType wasmTrapType)
     {
-        stopData = makeUnique<StopData>(callee, instance, callFrame, pc, mc, locals, stack);
+        stopData = makeUnique<StopData>(callee, instance, callFrame, pc, mc, locals, stack, wasmTrapType);
     }
 
     bool atSystemCall() const { return !stopData; }
     bool atPrologue() const { return !!stopData && stopData->location == StopData::Location::Prologue; }
     bool atBreakpoint() const { return !!stopData && stopData->location == StopData::Location::Breakpoint; }
-    bool atTrap() const { return !!stopData && stopData->location == StopData::Location::Trap; }
-    bool atBreakpointOrTrap() const { return atBreakpoint() || atTrap(); }
+    bool isWasmTrap() const { return !!stopData && stopData->wasmTrapType.has_value(); }
 
     void clearStop()
     {
@@ -230,7 +231,7 @@ struct DebugState {
     bool takeStepIntoThrow() { return stepIntoEvent.take(StepIntoEvent::StepIntoThrow); }
 
     State state { State::Running };
-    std::unique_ptr<const StopData> stopData { nullptr };
+    std::unique_ptr<StopData> stopData { nullptr };
 
     // Step-into tracking (for step debugging behavior)
     StepIntoEvent stepIntoEvent;
@@ -290,6 +291,11 @@ inline StringView getErrorReply(ProtocolError error)
         return "E00"_s;
     }
 }
+
+enum class DebuggerTrapStatus : uint8_t {
+    ResolvedByDebugger,
+    NotResolvedByDebugger,
+};
 
 } // namespace Wasm
 } // namespace JSC

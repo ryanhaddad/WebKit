@@ -276,7 +276,6 @@ void setupTestEnvironment(DebugServer*& debugServer, ExecutionHandler*& executio
 
     executionHandler = &debugServer->execution();
     executionHandler->setDebugServerThreadId(Thread::currentSingleton().uid());
-    executionHandler->setUnreachableHandlingEnabled(true);
 
     dataLogLnIf(verboseLogging, "DebugServer setup complete in RWI mode");
 }

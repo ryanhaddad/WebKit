@@ -1851,3 +1851,120 @@ class WasmUnreachableFaultTestCase(BaseTestCase):
                 "frame #1: 0xc000000000000000",
             ]
         )
+
+
+class WasmDivByZeroTrapTestCase(BaseTestCase):
+
+    def __init__(self, build_config: str = None, port: int = None):
+        super().__init__(build_config, port)
+
+    def execute(self):
+        self.setup_debugging_session_or_raise("resources/wasm/trap-div-by-zero.js")
+
+        try:
+            for _ in range(1):
+                self.faultTest()
+
+        except Exception as e:
+            raise Exception(f"Test failed: {e}")
+
+    def faultTest(self):
+        for _ in range(10):
+            self.send_lldb_command_or_raise("c", patterns=["Process 1 stopped", "Division by zero"])
+            self.send_lldb_command_or_raise("dis", patterns=["->  0x400000000000002d: i32.div_s"])
+
+        self.send_lldb_command_or_raise(
+            "bt",
+            patterns=[
+                "frame #0: 0x400000000000002d",
+                "frame #1: 0xc000000000000000",
+            ]
+        )
+
+
+class WasmOutOfBoundsCallIndirectTrapTestCase(BaseTestCase):
+
+    def __init__(self, build_config: str = None, port: int = None):
+        super().__init__(build_config, port)
+
+    def execute(self):
+        self.setup_debugging_session_or_raise("resources/wasm/trap-out-of-bounds-call-indirect.js")
+
+        try:
+            for _ in range(1):
+                self.faultTest()
+
+        except Exception as e:
+            raise Exception(f"Test failed: {e}")
+
+    def faultTest(self):
+        for _ in range(10):
+            self.send_lldb_command_or_raise("c", patterns=["Process 1 stopped", "Out of bounds call_indirect"])
+            self.send_lldb_command_or_raise("dis", patterns=["->  0x4000000000000034: drop"])
+
+        self.send_lldb_command_or_raise(
+            "bt",
+            patterns=[
+                "frame #0: 0x4000000000000034",
+                "frame #1: 0xc000000000000000",
+            ]
+        )
+
+
+class WasmStackOverflowTrapTestCase(BaseTestCase):
+
+    def __init__(self, build_config: str = None, port: int = None):
+        super().__init__(build_config, port)
+
+    def execute(self):
+        self.setup_debugging_session_or_raise("resources/wasm/trap-stack-overflow.js", extra_jsc_options=["--maxPerThreadStackUsage=524288"])
+
+        try:
+            for _ in range(1):
+                self.faultTest()
+
+        except Exception as e:
+            raise Exception(f"Test failed: {e}")
+
+    def faultTest(self):
+        for _ in range(10):
+            self.send_lldb_command_or_raise("c", patterns=["Process 1 stopped", "Stack overflow"])
+            self.send_lldb_command_or_raise("dis", patterns=["->  0x4000000000000028: call"])
+
+        self.send_lldb_command_or_raise(
+            "bt",
+            patterns=[
+                "frame #0: 0x4000000000000028",
+                "frame #1: 0x400000000000002a",
+                "frame #99: 0x400000000000002a",
+            ]
+        )
+
+
+class WasmOobMemoryTrapTestCase(BaseTestCase):
+
+    def __init__(self, build_config: str = None, port: int = None):
+        super().__init__(build_config, port)
+
+    def execute(self):
+        self.setup_debugging_session_or_raise("resources/wasm/trap-oob-memory.js")
+
+        try:
+            for _ in range(1):
+                self.faultTest()
+
+        except Exception as e:
+            raise Exception(f"Test failed: {e}")
+
+    def faultTest(self):
+        for _ in range(10):
+            self.send_lldb_command_or_raise("c", patterns=["Process 1 stopped", "Out of bounds memory access"])
+            self.send_lldb_command_or_raise("dis", patterns=["->  0x4000000000000032: i32.load"])
+
+        self.send_lldb_command_or_raise(
+            "bt",
+            patterns=[
+                "frame #0: 0x4000000000000032",
+                "frame #1: 0xc000000000000000",
+            ]
+        )

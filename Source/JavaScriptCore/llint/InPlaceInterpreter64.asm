@@ -235,26 +235,7 @@ end
     #############################
 
 ipintOp(_unreachable, macro()
-    # unreachable
-
-    # Push to stack for the handler
-    push PC, MC
-    push PL, ws0
-
-    move cfr, a1
-    move sp, a2
-    operationCall(macro() cCall3(_ipint_extern_unreachable_handler) end)
-
-    # Remove pushed values
-    addq 4 * SlotSize, sp
-
-    bqeq r0, 0, .exception
-
-.continue:
-    nextIPIntInstruction()
-
-.exception:
-    ipintException(Unreachable)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(Unreachable)
 end)
 
 ipintOp(_nop, macro()
@@ -396,7 +377,7 @@ ipintOp(_throw_ref, macro()
     jumpToException()
 
 .throw_null_ref:
-    throwException(NullExnrefReference)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(NullExnrefReference)
 end)
 
 macro uintDispatch()
@@ -927,7 +908,7 @@ macro ipintCheckMemoryBound(mem, scratch, size)
     # Memory indices are 32 bit
     leap size - 1[mem], scratch
     bpb scratch, boundsCheckingSize, .continuation
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 .continuation:
 end
 
@@ -994,7 +975,7 @@ macro loadStoreAdvanceMCAndMakePointer(instrLenReg, wasmAddrReg, size, scratch, 
     jmp .done
 
 .outOfBounds:
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 .done:
 end
 
@@ -1845,10 +1826,10 @@ ipintOp(_i32_div_s, macro()
     nextIPIntInstruction()
 
 .ipint_i32_div_s_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 
 .ipint_i32_div_s_throwIntegerOverflow:
-    ipintException(IntegerOverflow)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(IntegerOverflow)
 end)
 
 ipintOp(_i32_div_u, macro()
@@ -1870,7 +1851,7 @@ ipintOp(_i32_div_u, macro()
     nextIPIntInstruction()
 
 .ipint_i32_div_u_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i32_rem_s, macro()
@@ -1908,7 +1889,7 @@ ipintOp(_i32_rem_s, macro()
     nextIPIntInstruction()
 
 .ipint_i32_rem_s_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i32_rem_u, macro()
@@ -1934,7 +1915,7 @@ ipintOp(_i32_rem_u, macro()
     nextIPIntInstruction()
 
 .ipint_i32_rem_u_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i32_and, macro()
@@ -2117,10 +2098,10 @@ ipintOp(_i64_div_s, macro()
     nextIPIntInstruction()
 
 .ipint_i64_div_s_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 
 .ipint_i64_div_s_throwIntegerOverflow:
-    ipintException(IntegerOverflow)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(IntegerOverflow)
 end)
 
 ipintOp(_i64_div_u, macro()
@@ -2142,7 +2123,7 @@ ipintOp(_i64_div_u, macro()
     nextIPIntInstruction()
 
 .ipint_i64_div_u_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i64_rem_s, macro()
@@ -2180,7 +2161,7 @@ ipintOp(_i64_rem_s, macro()
     nextIPIntInstruction()
 
 .ipint_i64_rem_s_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i64_rem_u, macro()
@@ -2206,7 +2187,7 @@ ipintOp(_i64_rem_u, macro()
     nextIPIntInstruction()
 
 .ipint_i64_rem_u_throwDivisionByZero:
-    ipintException(DivisionByZero)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(DivisionByZero)
 end)
 
 ipintOp(_i64_and, macro()
@@ -2734,7 +2715,7 @@ ipintOp(_i32_trunc_f32_s, macro()
     nextIPIntInstruction()
 
 .ipint_trunc_i32_f32_s_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i32_trunc_f32_u, macro()
@@ -2753,7 +2734,7 @@ ipintOp(_i32_trunc_f32_u, macro()
     nextIPIntInstruction()
 
 .ipint_trunc_i32_f32_u_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i32_trunc_f64_s, macro()
@@ -2772,7 +2753,7 @@ ipintOp(_i32_trunc_f64_s, macro()
     nextIPIntInstruction()
 
 .ipint_trunc_i32_f64_s_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i32_trunc_f64_u, macro()
@@ -2791,7 +2772,7 @@ ipintOp(_i32_trunc_f64_u, macro()
     nextIPIntInstruction()
 
 .ipint_trunc_i32_f64_u_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i64_extend_i32_s, macro()
@@ -2828,7 +2809,7 @@ ipintOp(_i64_trunc_f32_s, macro()
     nextIPIntInstruction()
 
 .ipint_trunc_i64_f32_s_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i64_trunc_f32_u, macro()
@@ -2847,7 +2828,7 @@ ipintOp(_i64_trunc_f32_u, macro()
     nextIPIntInstruction()
 
 .ipint_i64_f32_u_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i64_trunc_f64_s, macro()
@@ -2866,7 +2847,7 @@ ipintOp(_i64_trunc_f64_s, macro()
     nextIPIntInstruction()
 
 .ipint_i64_f64_s_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_i64_trunc_f64_u, macro()
@@ -2885,7 +2866,7 @@ ipintOp(_i64_trunc_f64_u, macro()
     nextIPIntInstruction()
 
 .ipint_i64_f64_u_outOfBoundsTrunc:
-    ipintException(OutOfBoundsTrunc)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsTrunc)
 end)
 
 ipintOp(_f32_convert_i32_s, macro()
@@ -3111,7 +3092,7 @@ ipintOp(_ref_as_non_null, macro()
     advancePC(1)
     nextIPIntInstruction()
 .ref_as_non_null_nullRef:
-    throwException(NullRefAsNonNull)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(NullRefAsNonNull)
 end)
 
 ipintOp(_br_on_null, macro()
@@ -3477,7 +3458,7 @@ ipintOp(_array_len, macro()
     nextIPIntInstruction()
 
 .nullArray:
-    throwException(NullAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(NullAccess)
 end)
 
 ipintOp(_array_fill, macro()
@@ -3663,7 +3644,7 @@ ipintOp(_i31_get_s, macro()
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
     nextIPIntInstruction()
 .i31_get_throw:
-    throwException(NullI31Get)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(NullI31Get)
 end)
 
 ipintOp(_i31_get_u, macro()
@@ -3677,7 +3658,7 @@ ipintOp(_i31_get_u, macro()
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
     nextIPIntInstruction()
 .i31_get_throw:
-    throwException(NullI31Get)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(NullI31Get)
 end)
 
     #############################
@@ -9080,11 +9061,11 @@ macro ipintCheckMemoryBoundWithAlignmentCheck(mem, scratch, size)
     leap size - 1[mem], scratch
     bpb scratch, boundsCheckingSize, .continuationInBounds
 .throwOOB:
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 .continuationInBounds:
     btpz mem, (size - 1), .continuationAligned
 .throwUnaligned:
-    throwException(UnalignedMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(UnalignedMemoryAccess)
 .continuationAligned:
 end
 
@@ -9122,7 +9103,7 @@ ipintOp(_memory_atomic_notify, macro()
     nextIPIntInstruction()
 
 .atomic_notify_throw:
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 end)
 
 ipintOp(_memory_atomic_wait32, macro()
@@ -9147,7 +9128,7 @@ ipintOp(_memory_atomic_wait32, macro()
     nextIPIntInstruction()
 
 .atomic_wait32_throw:
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 end)
 
 ipintOp(_memory_atomic_wait64, macro()
@@ -9172,7 +9153,7 @@ ipintOp(_memory_atomic_wait64, macro()
     nextIPIntInstruction()
 
 .atomic_wait64_throw:
-    ipintException(OutOfBoundsMemoryAccess)
+    handleDebuggerTrapIfNeededAndThrowWasmTrap(OutOfBoundsMemoryAccess)
 end)
 
 ipintOp(_atomic_fence, macro()
