@@ -41,9 +41,17 @@ CSSSubstitutionValue::CSSSubstitutionValue(Ref<CSSVariableData>&& data)
     cacheSimpleReference();
 }
 
-Ref<CSSSubstitutionValue> CSSSubstitutionValue::create(const CSSParserTokenRange& range, const CSSParserContext& context)
+CSSSubstitutionValue::CSSSubstitutionValue(Ref<CSSVariableData>&& data, const CSSNamespacePrefixMap& namespacePrefixMap)
+    : CSSValue(ClassType::Substitution)
+    , m_data(WTF::move(data))
+    , m_namespacePrefixMap(namespacePrefixMap)
 {
-    return adoptRef(*new CSSSubstitutionValue(CSSVariableData::create(range, context)));
+    cacheSimpleReference();
+}
+
+Ref<CSSSubstitutionValue> CSSSubstitutionValue::create(const CSSParserTokenRange& range, const CSSNamespacePrefixMap& namespacePrefixMap, const CSSParserContext& context)
+{
+    return adoptRef(*new CSSSubstitutionValue(CSSVariableData::create(range, context), namespacePrefixMap));
 }
 
 Ref<CSSSubstitutionValue> CSSSubstitutionValue::create(Ref<CSSVariableData>&& data)

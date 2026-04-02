@@ -78,7 +78,7 @@ RefPtr<CSSStyleValue> CSSStyleValueFactory::constructStyleValueForShorthandSeria
     CSSTokenizer tokenizer(serialization);
     if (serialization.contains("var("_s))
         return CSSUnparsedValue::create(tokenizer.tokenRange());
-    return CSSStyleValue::create(CSSSubstitutionValue::create(tokenizer.tokenRange(), { document }));
+    return CSSStyleValue::create(CSSSubstitutionValue::create(tokenizer.tokenRange(), { }, { document }));
 }
 
 ExceptionOr<RefPtr<CSSValue>> CSSStyleValueFactory::extractCSSValue(Document& document, const CSSPropertyID& propertyID, const String& cssText)

@@ -301,7 +301,13 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
     if (!element)
         return false;
 
-    auto& attributeValue = element->getAttribute(QualifiedName { nullAtom(), attributeName, nullAtom() });
+    // Resolve namespace prefix to URI.
+    auto namespaceURI = [&]() -> AtomString {
+        auto& prefix = parsedName->namespacePrefix;
+        if (prefix.isEmpty())
+            return nullAtom();
+        return m_substitutionValue->m_namespacePrefixMap.get(prefix);
+    }();
 
     // Check if this attribute is already being substituted (cycle detection).
     auto isInCycle = !m_styleBuilder.state().m_inProgressAttrAttributes.add(attributeName).isNewEntry;
@@ -333,6 +339,10 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
         return true;
     };
 
+    // If a non-empty prefix was given but couldn't be resolved, trigger fallback.
+    if (!parsedName->namespacePrefix.isEmpty() && namespaceURI.isNull())
+        return substituteFailure();
+
     if (isInCycle) {
         // Mark as in-cycle within attr() type() context for transitive detection.
         if (m_isInAttrTypeSyntax)
@@ -342,9 +352,7 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
         return substituteFailure();
     }
 
-    // FIXME: Resolve namespace prefixes using the stylesheet's @namespace rules instead of always triggering fallback.
-    if (!parsedName->namespacePrefix.isNull())
-        return substituteFailure();
+    auto& attributeValue = element->getAttribute(QualifiedName { nullAtom(), attributeName, namespaceURI });
 
     if (attributeValue.isNull())
         return substituteFailure();
@@ -559,6 +567,7 @@ RefPtr<CSSVariableData> SubstitutionResolver::substitute(const CSSSubstitutionVa
 {
     m_isAttrTainted = false;
     m_hasTaintedURL = false;
+    m_substitutionValue = &value;
 
     if (auto data = trySimpleSubstitution(value)) {
         propagateAttrTaint(data->isAttrTainted(), data->tokens());

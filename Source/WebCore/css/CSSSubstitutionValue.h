@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include <WebCore/CSSNamespacePrefixMap.h>
 #include <WebCore/CSSPropertyNames.h>
 #include <WebCore/CSSValue.h>
 #include <WebCore/CSSValueKeywords.h>
@@ -50,7 +51,7 @@ class SubstitutionResolver;
 // https://drafts.csswg.org/css-values-5/#arbitrary-substitution
 class CSSSubstitutionValue final : public CSSValue {
 public:
-    static Ref<CSSSubstitutionValue> create(const CSSParserTokenRange&, const CSSParserContext&);
+    static Ref<CSSSubstitutionValue> create(const CSSParserTokenRange&, const CSSNamespacePrefixMap&, const CSSParserContext&);
     static Ref<CSSSubstitutionValue> create(Ref<CSSVariableData>&&);
 
     bool equals(const CSSSubstitutionValue&) const;
@@ -64,10 +65,12 @@ private:
     friend class Style::SubstitutionResolver;
 
     explicit CSSSubstitutionValue(Ref<CSSVariableData>&&);
+    CSSSubstitutionValue(Ref<CSSVariableData>&&, const CSSNamespacePrefixMap&);
 
     void cacheSimpleReference();
 
     const Ref<CSSVariableData> m_data;
+    CSSNamespacePrefixMap m_namespacePrefixMap;
     mutable String m_stringValue;
 
     // For quickly resolving simple substitution functions.

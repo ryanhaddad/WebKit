@@ -156,7 +156,7 @@ ExceptionOr<CSSUnparsedSegment> CSSUnparsedValue::setItem(size_t index, CSSUnpar
 RefPtr<CSSValue> CSSUnparsedValue::toCSSValue() const
 {
     CSSTokenizer tokenizer(toString());
-    return CSSSubstitutionValue::create(tokenizer.tokenRange(), strictCSSParserContext());
+    return CSSSubstitutionValue::create(tokenizer.tokenRange(), { }, strictCSSParserContext());
 }
 
 } // namespace WebCore

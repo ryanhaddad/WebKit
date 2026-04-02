@@ -38,10 +38,12 @@
 #include "CSSParserTokenRange.h"
 #include "CSSPropertyParser.h"
 #include "CSSPropertyParserConsumer+Primitives.h"
+#include "CSSSubstitutionValue.h"
 #include "CSSTokenizer.h"
 #include "CSSUnits.h"
 #include "CSSValueKeywords.h"
 #include "StyleCustomProperty.h"
+#include "StyleSheetContents.h"
 #include <stack>
 
 namespace WebCore {
@@ -305,7 +307,7 @@ bool CSSSubstitutionParser::containsSubstitutionFunctions(CSSParserTokenRange ra
     return type->classifyBlockResult.hasSubstitutionFunctions && !type->classifyBlockResult.hasTopLevelBraceBlockMixedWithOtherValues;
 }
 
-RefPtr<CSSCustomPropertyValue> CSSSubstitutionParser::parseDeclarationValue(const AtomString& variableName, CSSParserTokenRange range, const CSSParserContext& parserContext)
+RefPtr<CSSCustomPropertyValue> CSSSubstitutionParser::parseDeclarationValue(const AtomString& variableName, CSSParserTokenRange range, const CSSParserContext& parserContext, const CSSNamespacePrefixMap& namespaceMap)
 {
     auto type = classifyVariableRange(range, parserContext);
     if (!type)
@@ -315,7 +317,7 @@ RefPtr<CSSCustomPropertyValue> CSSSubstitutionParser::parseDeclarationValue(cons
         return CSSCustomPropertyValue::createWithCSSWideKeyword(variableName, *type->cssWideKeyword);
 
     if (type->classifyBlockResult.hasSubstitutionFunctions)
-        return CSSCustomPropertyValue::createUnresolved(variableName, CSSSubstitutionValue::create(range, parserContext));
+        return CSSCustomPropertyValue::createUnresolved(variableName, CSSSubstitutionValue::create(range, namespaceMap, parserContext));
 
     return CSSCustomPropertyValue::createSyntaxAll(variableName, CSSVariableData::create(range, parserContext));
 }

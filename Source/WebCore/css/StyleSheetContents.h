@@ -20,16 +20,15 @@
 
 #pragma once
 
+#include <WebCore/CSSNamespacePrefixMap.h>
 #include <WebCore/CSSParserContext.h>
 #include <optional>
 #include <wtf/CheckedRef.h>
 #include <wtf/Function.h>
-#include <wtf/HashMap.h>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/URL.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakPtr.h>
-#include <wtf/text/AtomStringHash.h>
 
 namespace WebCore {
 
@@ -68,6 +67,7 @@ public:
     
     const AtomString& defaultNamespace() LIFETIME_BOUND { return m_defaultNamespace; }
     const AtomString& NODELETE namespaceURIFromPrefix(const AtomString& prefix);
+    const CSSNamespacePrefixMap& namespacePrefixMap() const { return m_namespacePrefixMap; }
 
     bool parseAuthorStyleSheet(const CachedCSSStyleSheet*, const SecurityOrigin*);
     WEBCORE_EXPORT bool parseString(const String&);
@@ -180,8 +180,7 @@ private:
     Vector<Ref<StyleRuleImport>> m_importRules;
     Vector<Ref<StyleRuleNamespace>> m_namespaceRules;
     Vector<Ref<StyleRuleBase>> m_childRules;
-    typedef HashMap<AtomString, AtomString> PrefixNamespaceURIMap;
-    PrefixNamespaceURIMap m_namespaces;
+    CSSNamespacePrefixMap m_namespacePrefixMap;
     AtomString m_defaultNamespace;
 
     bool m_isUserStyleSheet;

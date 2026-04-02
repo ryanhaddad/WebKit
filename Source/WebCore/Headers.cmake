@@ -1077,6 +1077,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/CSSGroupingRule.h
     css/CSSImportRule.h
     css/CSSMediaRule.h
+    css/CSSNamespacePrefixMap.h
     css/CSSPageDescriptors.h
     css/CSSPageRule.h
     css/CSSPrimitiveValue.h
