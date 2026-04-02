@@ -3346,9 +3346,8 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     m_usesSIMD = true;
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDLoad(ExpressionType pointer, uint32_t uoffset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addSIMDLoad(ExpressionType pointer, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex)
 {
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     result = emitCheckAndPrepareAndMaterializePointerApply(pointer, uoffset, bytesForWidth(Width::Width128), memoryIndex, [&](auto location) -> Value {
         consume(pointer);
         Value result = topValue(TypeKind::V128);
@@ -3360,9 +3359,8 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t uoffset)
+[[nodiscard]] PartialResult BBQJIT::addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t uoffset, uint8_t memoryIndex)
 {
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     emitCheckAndPrepareAndMaterializePointerApply(pointer, uoffset, bytesForWidth(Width::Width128), memoryIndex, [&](auto location) -> void {
         Location valueLocation = loadIfNecessary(value);
         consume(pointer);
@@ -3619,7 +3617,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex)
 {
     Width width;
     switch (op) {
@@ -3638,7 +3636,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     default:
         RELEASE_ASSERT_NOT_REACHED();
     }
-    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width));
+    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width), memoryIndex);
     Address address = materializePointer(pointerLocation, uoffset);
 
     result = topValue(TypeKind::V128);
@@ -3672,7 +3670,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointer, ExpressionType vector, uint32_t uoffset, uint8_t lane, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointer, ExpressionType vector, uint32_t uoffset, uint8_t lane, ExpressionType& result, uint8_t memoryIndex)
 {
     Width width;
     switch (op) {
@@ -3691,7 +3689,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     default:
         RELEASE_ASSERT_NOT_REACHED();
     }
-    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width));
+    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width), memoryIndex);
     Address address = materializePointer(pointerLocation, uoffset);
 
     Location vectorLocation = loadIfNecessary(vector);
@@ -3723,7 +3721,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType pointer, ExpressionType vector, uint32_t uoffset, uint8_t lane)
+[[nodiscard]] PartialResult BBQJIT::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType pointer, ExpressionType vector, uint32_t uoffset, uint8_t lane, uint8_t memoryIndex)
 {
     Width width;
     switch (op) {
@@ -3742,7 +3740,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     default:
         RELEASE_ASSERT_NOT_REACHED();
     }
-    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width));
+    Location pointerLocation = emitCheckAndPreparePointer(pointer, uoffset, bytesForWidth(width), memoryIndex);
     Address address = materializePointer(pointerLocation, uoffset);
 
     Location vectorLocation = loadIfNecessary(vector);
@@ -3770,7 +3768,7 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex)
 {
     SIMDLane lane;
     SIMDSignMode signMode;
@@ -3804,7 +3802,6 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     result = emitCheckAndPrepareAndMaterializePointerApply(pointer, uoffset, sizeof(double), memoryIndex, [&](auto location) -> Value {
         consume(pointer);
         Value result = topValue(TypeKind::V128);
@@ -3820,9 +3817,8 @@ void NODELETE BBQJIT::notifyFunctionUsesSIMD()
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointer, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex)
 {
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     result = emitCheckAndPrepareAndMaterializePointerApply(pointer, uoffset, op == SIMDLaneOperation::LoadPad32 ? sizeof(float) : sizeof(double), memoryIndex, [&](auto location) -> Value {
         consume(pointer);
         Value result = topValue(TypeKind::V128);

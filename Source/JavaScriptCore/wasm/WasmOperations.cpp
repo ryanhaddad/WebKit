@@ -1622,19 +1622,19 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationGetWasmTableSize, UCPUStrictInt32, (J
     return toUCPUStrictInt32(tableSize(instance, tableIndex));
 }
 
-JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicWait32, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int32_t value, int64_t timeoutInNanoseconds))
+JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicWait32, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int32_t value, int64_t timeoutInNanoseconds, uint8_t memoryIndex))
 {
-    return toUCPUStrictInt32(memoryAtomicWait32(instance, base, offset, value, timeoutInNanoseconds));
+    return toUCPUStrictInt32(memoryAtomicWait32(instance, base, offset, value, timeoutInNanoseconds, memoryIndex));
 }
 
-JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicWait64, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int64_t value, int64_t timeoutInNanoseconds))
+JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicWait64, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int64_t value, int64_t timeoutInNanoseconds, uint8_t memoryIndex))
 {
-    return toUCPUStrictInt32(memoryAtomicWait64(instance, base, offset, value, timeoutInNanoseconds));
+    return toUCPUStrictInt32(memoryAtomicWait64(instance, base, offset, value, timeoutInNanoseconds, memoryIndex));
 }
 
-JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicNotify, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int32_t countValue))
+JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationMemoryAtomicNotify, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned base, unsigned offset, int32_t countValue, uint8_t memoryIndex))
 {
-    return toUCPUStrictInt32(memoryAtomicNotify(instance, base, offset, countValue));
+    return toUCPUStrictInt32(memoryAtomicNotify(instance, base, offset, countValue, memoryIndex));
 }
 
 JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmMemoryInit, UCPUStrictInt32, (JSWebAssemblyInstance* instance, unsigned dataSegmentIndex, uint32_t dstAddress, uint32_t srcAddress, uint32_t length, uint8_t memoryIndex))

@@ -479,17 +479,17 @@ public:
     // SIMD
     bool NODELETE usesSIMD() { return m_info.usesSIMD(m_functionIndex); }
     void NODELETE notifyFunctionUsesSIMD() { ASSERT(m_info.usesSIMD(m_functionIndex)); }
-    [[nodiscard]] PartialResult addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    [[nodiscard]] PartialResult addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset);
+    [[nodiscard]] PartialResult addSIMDLoad(ExpressionType pointer, uint32_t offset, ExpressionType& result, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult addSIMDStore(ExpressionType value, ExpressionType pointer, uint32_t offset, uint8_t memoryIndex);
     [[nodiscard]] PartialResult addSIMDSplat(SIMDLane, ExpressionType scalar, ExpressionType& result);
     [[nodiscard]] PartialResult addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType b, ExpressionType& result);
     [[nodiscard]] PartialResult addSIMDShift(SIMDLaneOperation, SIMDInfo, ExpressionType v, ExpressionType shift, ExpressionType& result);
     [[nodiscard]] PartialResult addSIMDExtmul(SIMDLaneOperation, SIMDInfo, ExpressionType lhs, ExpressionType rhs, ExpressionType& result);
-    [[nodiscard]] PartialResult addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    [[nodiscard]] PartialResult addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result);
-    [[nodiscard]] PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex);
-    [[nodiscard]] PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
-    [[nodiscard]] PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addSIMDLoadSplat(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult addSIMDLoadLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, ExpressionType& result, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult addSIMDStoreLane(SIMDLaneOperation, ExpressionType pointer, ExpressionType vector, uint32_t offset, uint8_t laneIndex, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult addSIMDLoadExtend(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult addSIMDLoadPad(SIMDLaneOperation, ExpressionType pointer, uint32_t offset, ExpressionType& result, uint8_t memoryIndex);
 
     [[nodiscard]] ExpressionType addSIMDConstant(v128_t value)
     {
@@ -739,13 +739,13 @@ public:
     [[nodiscard]] PartialResult addDataDrop(unsigned);
 
     // Atomics
-    [[nodiscard]] PartialResult atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset);
-    [[nodiscard]] PartialResult atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset);
-    [[nodiscard]] PartialResult atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
-    [[nodiscard]] PartialResult atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicLoad(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType& result, uint32_t offset, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult atomicStore(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, uint32_t offset, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult atomicBinaryRMW(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult atomicCompareExchange(ExtAtomicOpType, Type, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset, uint8_t memoryIndex);
 
-    [[nodiscard]] PartialResult atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset);
-    [[nodiscard]] PartialResult atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset);
+    [[nodiscard]] PartialResult atomicWait(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType timeout, ExpressionType& result, uint32_t offset, uint8_t memoryIndex);
+    [[nodiscard]] PartialResult atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset, uint8_t memoryIndex);
     [[nodiscard]] PartialResult atomicFence(ExtAtomicOpType, uint8_t flags);
 
     // Saturated truncation.
@@ -2729,7 +2729,7 @@ inline Value* OMGIRGenerator::emitAtomicLoadOp(ExtAtomicOpType op, Type valueTyp
     return sanitizeAtomicResult(op, valueType, atomic);
 }
 
-auto OMGIRGenerator::atomicLoad(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicLoad(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     ASSERT(pointer.type() == Int32);
 
@@ -2753,7 +2753,6 @@ auto OMGIRGenerator::atomicLoad(ExtAtomicOpType op, Type valueType, ExpressionTy
             break;
         }
     } else {
-        uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
         result = push(emitAtomicLoadOp(op, valueType, emitCheckAndPreparePointer(get(pointer), offset, sizeOfAtomicOpMemoryAccess(op), memoryIndex), offset));
     }
 
@@ -2771,7 +2770,7 @@ inline void OMGIRGenerator::emitAtomicStoreOp(ExtAtomicOpType op, Type valueType
     m_heaps.decorateFencedAccess(&m_heaps.WebAssemblyMemory, atomic);
 }
 
-auto OMGIRGenerator::atomicStore(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicStore(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     ASSERT(pointer.type() == Int32);
 
@@ -2783,7 +2782,6 @@ auto OMGIRGenerator::atomicStore(ExtAtomicOpType op, Type valueType, ExpressionT
             this->emitExceptionCheck(jit, origin, ExceptionType::OutOfBoundsMemoryAccess);
         });
     } else {
-        uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
         emitAtomicStoreOp(op, valueType, emitCheckAndPreparePointer(get(pointer), offset, sizeOfAtomicOpMemoryAccess(op), memoryIndex), get(value), offset);
     }
 
@@ -2864,7 +2862,7 @@ inline Value* OMGIRGenerator::emitAtomicBinaryRMWOp(ExtAtomicOpType op, Type val
     return sanitizeAtomicResult(op, valueType, atomic);
 }
 
-auto OMGIRGenerator::atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     ASSERT(pointer.type() == Int32);
 
@@ -2888,7 +2886,6 @@ auto OMGIRGenerator::atomicBinaryRMW(ExtAtomicOpType op, Type valueType, Express
             break;
         }
     } else {
-        uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
         result = push(emitAtomicBinaryRMWOp(op, valueType, emitCheckAndPreparePointer(get(pointer), offset, sizeOfAtomicOpMemoryAccess(op), memoryIndex), get(value), offset));
     }
 
@@ -2978,7 +2975,7 @@ Value* OMGIRGenerator::emitAtomicCompareExchange(ExtAtomicOpType op, Type valueT
     return fieldType.is<Type>() && isRefType(fieldType.unpacked());
 }
 
-auto OMGIRGenerator::atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     ASSERT(pointer.type() == Int32);
 
@@ -3002,14 +2999,13 @@ auto OMGIRGenerator::atomicCompareExchange(ExtAtomicOpType op, Type valueType, E
             break;
         }
     } else {
-        uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
         result = push(emitAtomicCompareExchange(op, valueType, emitCheckAndPreparePointer(get(pointer), offset, sizeOfAtomicOpMemoryAccess(op), memoryIndex), get(expected), get(value), offset));
     }
 
     return { };
 }
 
-auto OMGIRGenerator::atomicWait(ExtAtomicOpType op, ExpressionType pointerVar, ExpressionType valueVar, ExpressionType timeoutVar, ExpressionType& result, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicWait(ExtAtomicOpType op, ExpressionType pointerVar, ExpressionType valueVar, ExpressionType timeoutVar, ExpressionType& result, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     Value* pointer = get(pointerVar);
     Value* value = get(valueVar);
@@ -3017,10 +3013,10 @@ auto OMGIRGenerator::atomicWait(ExtAtomicOpType op, ExpressionType pointerVar, E
     Value* resultValue = nullptr;
     if (op == ExtAtomicOpType::MemoryAtomicWait32) {
         resultValue = callWasmOperation(m_currentBlock, Int32, operationMemoryAtomicWait32,
-            instanceValue(), pointer, constant(Int32, offset), value, timeout);
+            instanceValue(), pointer, constant(Int32, offset), value, timeout, constant(Int32, memoryIndex));
     } else {
         resultValue = callWasmOperation(m_currentBlock, Int32, operationMemoryAtomicWait64,
-            instanceValue(), pointer, constant(Int32, offset), value, timeout);
+            instanceValue(), pointer, constant(Int32, offset), value, timeout, constant(Int32, memoryIndex));
     }
 
     {
@@ -3036,10 +3032,10 @@ auto OMGIRGenerator::atomicWait(ExtAtomicOpType op, ExpressionType pointerVar, E
     return { };
 }
 
-auto OMGIRGenerator::atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType count, ExpressionType& result, uint32_t offset) -> PartialResult
+auto OMGIRGenerator::atomicNotify(ExtAtomicOpType, ExpressionType pointer, ExpressionType count, ExpressionType& result, uint32_t offset, uint8_t memoryIndex) -> PartialResult
 {
     Value* resultValue = callWasmOperation(m_currentBlock, Int32, operationMemoryAtomicNotify,
-        instanceValue(), get(pointer), constant(Int32, offset), get(count));
+        instanceValue(), get(pointer), constant(Int32, offset), get(count), constant(Int32, memoryIndex));
     {
         result = push(resultValue);
         CheckValue* check = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(),
@@ -4298,9 +4294,8 @@ auto OMGIRGenerator::addSIMDShuffle(v128_t imm, ExpressionType a, ExpressionType
     return { };
 }
 
-auto OMGIRGenerator::addSIMDLoad(ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addSIMDLoad(ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex) -> PartialResult
 {
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, 16, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* value = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(Load), B3::V128, origin(), ptr, offset);
@@ -4310,9 +4305,8 @@ auto OMGIRGenerator::addSIMDLoad(ExpressionType pointerVariable, uint32_t uoffse
     return { };
 }
 
-auto OMGIRGenerator::addSIMDStore(ExpressionType value, ExpressionType pointerVariable, uint32_t uoffset) -> PartialResult
+auto OMGIRGenerator::addSIMDStore(ExpressionType value, ExpressionType pointerVariable, uint32_t uoffset, uint8_t memoryIndex) -> PartialResult
 {
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, 16, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* store = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(Store), origin(), get(value), ptr, offset);
@@ -4321,7 +4315,7 @@ auto OMGIRGenerator::addSIMDStore(ExpressionType value, ExpressionType pointerVa
     return { };
 }
 
-auto OMGIRGenerator::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex) -> PartialResult
 {
     size_t byteSize;
 
@@ -4357,7 +4351,6 @@ auto OMGIRGenerator::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType point
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, byteSize, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* memLoad = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(loadOp), type, origin(), ptr, offset);
@@ -4367,7 +4360,7 @@ auto OMGIRGenerator::addSIMDLoadSplat(SIMDLaneOperation op, ExpressionType point
     return { };
 }
 
-auto OMGIRGenerator::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointerVariable, ExpressionType vectorVariable, uint32_t uoffset, uint8_t laneIndex, ExpressionType& result) -> PartialResult 
+auto OMGIRGenerator::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointerVariable, ExpressionType vectorVariable, uint32_t uoffset, uint8_t laneIndex, ExpressionType& result, uint8_t memoryIndex) -> PartialResult
 {
     size_t byteSize;
     B3::Opcode loadOp;
@@ -4402,7 +4395,6 @@ auto OMGIRGenerator::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointe
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, byteSize, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* memLoad = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(loadOp), type, origin(), ptr, offset);
@@ -4412,7 +4404,7 @@ auto OMGIRGenerator::addSIMDLoadLane(SIMDLaneOperation op, ExpressionType pointe
     return { };
 }
 
-auto OMGIRGenerator::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType pointerVariable, ExpressionType vectorVariable, uint32_t uoffset, uint8_t laneIndex) -> PartialResult 
+auto OMGIRGenerator::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType pointerVariable, ExpressionType vectorVariable, uint32_t uoffset, uint8_t laneIndex, uint8_t memoryIndex) -> PartialResult
 {
     size_t byteSize;
     B3::Opcode storeOp;
@@ -4447,7 +4439,6 @@ auto OMGIRGenerator::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType point
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, byteSize, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     Value* laneValue = m_currentBlock->appendNew<SIMDValue>(m_proc, origin(), B3::VectorExtractLane, type, lane, byteSize < 4 ? SIMDSignMode::Unsigned : SIMDSignMode::None, laneIndex, get(vectorVariable));
@@ -4457,7 +4448,7 @@ auto OMGIRGenerator::addSIMDStoreLane(SIMDLaneOperation op, ExpressionType point
     return { };
 }
 
-auto OMGIRGenerator::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result) -> PartialResult 
+auto OMGIRGenerator::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex) -> PartialResult
 {
     B3::Opcode loadOp = Load;
     size_t byteSize = 8;
@@ -4492,7 +4483,6 @@ auto OMGIRGenerator::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType poin
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, byteSize, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* memLoad = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(loadOp), B3::Double, origin(), ptr, offset);
@@ -4502,7 +4492,7 @@ auto OMGIRGenerator::addSIMDLoadExtend(SIMDLaneOperation op, ExpressionType poin
     return { };
 }
 
-auto OMGIRGenerator::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result) -> PartialResult 
+auto OMGIRGenerator::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointerVariable, uint32_t uoffset, ExpressionType& result, uint8_t memoryIndex) -> PartialResult
 {
     B3::Type loadType;
     unsigned byteSize;
@@ -4523,7 +4513,6 @@ auto OMGIRGenerator::addSIMDLoadPad(SIMDLaneOperation op, ExpressionType pointer
         RELEASE_ASSERT_NOT_REACHED();
     }
 
-    uint8_t memoryIndex = 0; // FIXME(wasm-multimemory)
     Value* ptr = emitCheckAndPreparePointer(get(pointerVariable), uoffset, byteSize, memoryIndex);
     int32_t offset = fixupPointerPlusOffset(ptr, uoffset);
     auto* memLoad = m_currentBlock->appendNew<MemoryValue>(m_proc, memoryKind(Load), loadType, origin(), ptr, offset);
