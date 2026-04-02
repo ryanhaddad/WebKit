@@ -2472,3 +2472,5 @@ webkit.org/b/308856 [ Debug ] http/tests/websocket/tests/hybi/handshake-ok-with-
 [ Tahoe ] accessibility/mac/intersection-with-selection-range.html [ Skip ]
 
 webkit.org/b/309850 [ Debug ] imported/w3c/web-platform-tests/uievents/mouse/mouse_boundary_events_after_removing_last_over_element.html [ Pass Failure ]
+
+webkit.org/b/308334 [ Debug ] http/tests/webgpu/webgpu/api/validation/gpu_external_texture_expiration.html [ Skip ]
