@@ -45,6 +45,7 @@
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebpagePreferencesPrivate.h>
+#import <WebKit/WKWebsiteDataRecordPrivate.h>
 #import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <WebKit/WebKit.h>
 #import <WebKit/_WKFeature.h>
@@ -54,6 +55,7 @@
 #import <wtf/Assertions.h>
 #import <wtf/Function.h>
 #import <wtf/RetainPtr.h>
+#import <wtf/WallTime.h>
 #import <wtf/text/MakeString.h>
 
 using namespace TestWebKitAPI;
@@ -1246,33 +1248,33 @@ static RetainPtr<NSString> emptyEnhancedSecuritySitesPath()
 static void createEnhancedSecuritySitesTable(WebCore::SQLiteDatabase& database)
 {
     constexpr auto createEnhancedSecuritySitesTable = "CREATE TABLE sites ("
-        "site TEXT PRIMARY KEY, enhanced_security_state INT NOT NULL)"_s;
+        "site TEXT PRIMARY KEY, enhanced_security_state INT NOT NULL, last_modified REAL NOT NULL DEFAULT 0)"_s;
 
     EXPECT_TRUE(database.executeCommand(createEnhancedSecuritySitesTable));
 }
 
-static void addEnhancedSecuritySite(WebCore::SQLiteDatabase& database, String site, SeenOutsideEnhancedSecurity seenOutsideEnhancedSecurity)
+static void addEnhancedSecuritySite(WebCore::SQLiteDatabase& database, String site, SeenOutsideEnhancedSecurity seenOutsideEnhancedSecurity, double lastModified = 0.0)
 {
-    constexpr auto query = "INSERT INTO sites (site, enhanced_security_state) VALUES (?, ?)"_s;
+    constexpr auto query = "INSERT INTO sites (site, enhanced_security_state, last_modified) VALUES (?, ?, ?)"_s;
     auto statement = database.prepareStatement(query);
-    EXPECT_TRUE(!!statement);
+    ASSERT_TRUE(!!statement);
 
     EXPECT_EQ(statement->bindText(1, site), SQLITE_OK);
     EXPECT_EQ(statement->bindInt(2, seenOutsideEnhancedSecurity == SeenOutsideEnhancedSecurity::Seen ? 0 : 1), SQLITE_OK);
+    EXPECT_EQ(statement->bindDouble(3, lastModified), SQLITE_OK);
     EXPECT_EQ(statement->step(), SQLITE_DONE);
     EXPECT_EQ(statement->reset(), SQLITE_OK);
 }
 
-static void setUpEnhancedSecuritySeenValues(std::initializer_list<std::pair<String, SeenOutsideEnhancedSecurity>> priorValues)
+static void setUpEnhancedSecuritySeenValues(std::initializer_list<std::tuple<String, SeenOutsideEnhancedSecurity, double>> priorValues)
 {
     auto database = makeUniqueRef<WebCore::SQLiteDatabase>();
     EXPECT_TRUE(database->open(emptyEnhancedSecuritySitesPath().get()));
 
     createEnhancedSecuritySitesTable(database.get());
 
-    RetainPtr<NSMutableDictionary> itemsDictionary = adoptNS([[NSMutableDictionary alloc] initWithCapacity:priorValues.size()]);
-    for (auto& pair : priorValues)
-        addEnhancedSecuritySite(database.get(), pair.first, pair.second);
+    for (auto& [site, state, lastModified] : priorValues)
+        addEnhancedSecuritySite(database.get(), site, state, lastModified);
 
     database->close();
 }
@@ -1290,7 +1292,7 @@ static void cleanUpEnhancedSecuritySites()
 static void runHttpThenNavigateToHttpsSiteWithCookiesViaAndExpectations(bool useSiteIsolation, SeenOutsideEnhancedSecurity seenOutsideEnhancedSecurity, ExpectedEnhancedSecurity finalExpectedEnhancedSecurity)
 {
     setUpEnhancedSecuritySeenValues({
-        { "different.internal"_s, seenOutsideEnhancedSecurity }
+        { "different.internal"_s, seenOutsideEnhancedSecurity, WallTime::now().secondsSinceEpoch().value() }
     });
 
     HTTPServer plaintextServer({
@@ -1468,6 +1470,127 @@ static void runForceDisabledOverridesHeuristics(bool useSiteIsolation)
     });
 }
 TEST_WITH_AND_WITHOUT_SITE_ISOLATION(ForceDisabledOverridesHeuristics)
+
+// MARK: - Stale Row Expiry Tests
+
+static void waitForEnhancedSecurityDatabaseOpen(WKWebView *webView)
+{
+    // Fetching EnhancedSecurityRecord data dispatches to the same serial work queue
+    // that openDatabase runs on, so completing this fetch guarantees openDatabase is done.
+    __block bool done = false;
+    NSSet *dataTypes = [NSSet setWithObject:_WKWebsiteDataTypeEnhancedSecurityRecord];
+    [[webView configuration].websiteDataStore fetchDataRecordsOfTypes:dataTypes completionHandler:^(NSArray<WKWebsiteDataRecord *> *) {
+        done = true;
+    }];
+    TestWebKitAPI::Util::run(&done);
+}
+
+static int countSitesInDatabase(WebCore::SQLiteDatabase& database, const String& site)
+{
+    constexpr auto query = "SELECT COUNT(*) FROM sites WHERE site = ?"_s;
+    auto statement = database.prepareStatement(query);
+    if (!statement || statement->bindText(1, site) != SQLITE_OK || statement->step() != SQLITE_ROW)
+        return -1;
+    return statement->columnInt(0);
+}
+
+TEST(EnhancedSecurityPolicies, StaleDisabledSiteIsRemovedOnDatabaseOpen)
+{
+    setUpEnhancedSecuritySeenValues({
+        std::tuple { "stale.internal"_s, SeenOutsideEnhancedSecurity::Seen, 0.0 }
+    });
+
+    auto webView = enhancedSecurityTestConfiguration(nullptr, nullptr, /* useSiteIsolation */ false, /* useNonPersistentStore */ false);
+    waitForEnhancedSecurityDatabaseOpen(webView.get());
+
+    auto verifyDB = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(verifyDB->open(enhancedSecuritySitesPath().path));
+    EXPECT_EQ(countSitesInDatabase(verifyDB.get(), "stale.internal"_s), 0);
+    verifyDB->close();
+
+    cleanUpEnhancedSecuritySites();
+}
+
+TEST(EnhancedSecurityPolicies, RecentDisabledSiteIsKeptOnDatabaseOpen)
+{
+    setUpEnhancedSecuritySeenValues({
+        std::tuple { "recent.internal"_s, SeenOutsideEnhancedSecurity::Seen, WallTime::now().secondsSinceEpoch().value() }
+    });
+
+    auto webView = enhancedSecurityTestConfiguration(nullptr, nullptr, /* useSiteIsolation */ false, /* useNonPersistentStore */ false);
+    waitForEnhancedSecurityDatabaseOpen(webView.get());
+
+    auto verifyDB = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(verifyDB->open(enhancedSecuritySitesPath().path));
+    EXPECT_EQ(countSitesInDatabase(verifyDB.get(), "recent.internal"_s), 1);
+    verifyDB->close();
+
+    cleanUpEnhancedSecuritySites();
+}
+
+TEST(EnhancedSecurityPolicies, StaleEnabledSiteIsKeptOnDatabaseOpen)
+{
+    setUpEnhancedSecuritySeenValues({
+        std::tuple { "stale-enabled.internal"_s, SeenOutsideEnhancedSecurity::NotSeen, 0.0 }
+    });
+
+    auto webView = enhancedSecurityTestConfiguration(nullptr, nullptr, /* useSiteIsolation */ false, /* useNonPersistentStore */ false);
+    waitForEnhancedSecurityDatabaseOpen(webView.get());
+
+    auto verifyDB = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(verifyDB->open(enhancedSecuritySitesPath().path));
+    EXPECT_EQ(countSitesInDatabase(verifyDB.get(), "stale-enabled.internal"_s), 1);
+    verifyDB->close();
+
+    cleanUpEnhancedSecuritySites();
+}
+
+TEST(EnhancedSecurityPolicies, MigrationAddsLastModifiedColumnToExistingDatabase)
+{
+    auto dbPath = emptyEnhancedSecuritySitesPath();
+
+    {
+        auto database = makeUniqueRef<WebCore::SQLiteDatabase>();
+        EXPECT_TRUE(database->open(dbPath.get()));
+        EXPECT_TRUE(database->executeCommand("CREATE TABLE sites (site TEXT PRIMARY KEY, enhanced_security_state INT NOT NULL)"_s));
+        EXPECT_TRUE(database->executeCommand("CREATE INDEX idx_sites_enhanced_security_state ON sites(enhanced_security_state)"_s));
+
+        {
+            auto insertStmt = database->prepareStatement("INSERT INTO sites (site, enhanced_security_state) VALUES (?, ?)"_s);
+            ASSERT_TRUE(!!insertStmt);
+            EXPECT_EQ(insertStmt->bindText(1, "disabled-old.internal"_s), SQLITE_OK);
+            EXPECT_EQ(insertStmt->bindInt(2, 0), SQLITE_OK);
+            EXPECT_EQ(insertStmt->step(), SQLITE_DONE);
+            EXPECT_EQ(insertStmt->reset(), SQLITE_OK);
+
+            EXPECT_EQ(insertStmt->bindText(1, "enabled-old.internal"_s), SQLITE_OK);
+            EXPECT_EQ(insertStmt->bindInt(2, 1), SQLITE_OK);
+            EXPECT_EQ(insertStmt->step(), SQLITE_DONE);
+        }
+
+        database->close();
+    }
+
+    auto webView = enhancedSecurityTestConfiguration(nullptr, nullptr, /* useSiteIsolation */ false, /* useNonPersistentStore */ false);
+    waitForEnhancedSecurityDatabaseOpen(webView.get());
+
+    auto verifyDB = makeUniqueRef<WebCore::SQLiteDatabase>();
+    EXPECT_TRUE(verifyDB->open(dbPath.get()));
+
+    {
+        auto columnCheckStmt = verifyDB->prepareStatement("SELECT COUNT(*) FROM pragma_table_info('sites') WHERE name = 'last_modified'"_s);
+        EXPECT_TRUE(!!columnCheckStmt);
+        EXPECT_EQ(columnCheckStmt->step(), SQLITE_ROW);
+        EXPECT_GT(columnCheckStmt->columnInt(0), 0);
+    }
+
+    EXPECT_EQ(countSitesInDatabase(verifyDB.get(), "disabled-old.internal"_s), 0);
+    EXPECT_EQ(countSitesInDatabase(verifyDB.get(), "enabled-old.internal"_s), 1);
+
+    verifyDB->close();
+
+    cleanUpEnhancedSecuritySites();
+}
 
 #if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/EnhancedSecurityPoliciesAdditions.mm>)
 #import <WebKitAdditions/EnhancedSecurityPoliciesAdditions.mm>
