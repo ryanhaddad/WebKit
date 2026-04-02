@@ -747,7 +747,7 @@ class RunJavaScriptCoreTests(TestWithFailureCount, CustomFlagsMixin, ShellMixin)
 
     def __init__(self, *args, **kwargs):
         kwargs['logEnviron'] = False
-        kwargs['timeout'] = 20 * 60 * 60
+        kwargs['timeout'] = 20 * 60
         if 'sigtermTime' not in kwargs:
             kwargs['sigtermTime'] = 10
         super().__init__(*args, **kwargs)
