@@ -131,11 +131,6 @@ ExceptionOr<Ref<IDBKeyRange>> IDBKeyRange::bound(JSGlobalObject& state, JSValue 
     return create(WTF::move(lower), WTF::move(upper), lowerOpen, upperOpen);
 }
 
-bool IDBKeyRange::isOnlyKey() const
-{
-    return m_lower && m_upper && !m_isLowerOpen && !m_isUpperOpen && m_lower->isEqual(*m_upper);
-}
-
 ExceptionOr<bool> IDBKeyRange::includes(JSC::JSGlobalObject& state, JSC::JSValue keyValue)
 {
     VM& vm = state.vm();

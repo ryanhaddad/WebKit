@@ -65,8 +65,6 @@ public:
 
     ExceptionOr<bool> includes(JSC::JSGlobalObject&, JSC::JSValue key);
 
-    WEBCORE_EXPORT bool isOnlyKey() const;
-
 private:
     IDBKeyRange(RefPtr<IDBKey>&& lower, RefPtr<IDBKey>&& upper, bool isLowerOpen, bool isUpperOpen);
 
