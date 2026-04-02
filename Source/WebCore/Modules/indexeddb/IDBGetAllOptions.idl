@@ -25,7 +25,7 @@
 
 // https://w3c.github.io/IndexedDB/#dictdef-idbgetalloptions
 [
-    EnabledBySetting=IndexedDBGetAllRecordsEnabled
+    EnabledBySetting=IndexedDBGetAllRecordsAndGetAllOptionsEnabled
 ] dictionary IDBGetAllOptions {
     any query = null;
     [EnforceRange] unsigned long count;

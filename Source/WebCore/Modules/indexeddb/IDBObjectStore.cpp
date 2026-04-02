@@ -667,7 +667,7 @@ ExceptionOr<Ref<IDBRequest>> IDBObjectStore::getAll(JSGlobalObject& execState, J
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
         }
 
-        if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
+        if (!context || !context->settingsValues().indexedDBGetAllRecordsAndGetAllOptionsEnabled)
             return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);
@@ -696,7 +696,7 @@ ExceptionOr<Ref<IDBRequest>> IDBObjectStore::getAllKeys(JSGlobalObject& execStat
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
         }
 
-        if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
+        if (!context || !context->settingsValues().indexedDBGetAllRecordsAndGetAllOptionsEnabled)
             return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);

@@ -25,7 +25,7 @@
 
 // https://w3c.github.io/IndexedDB/#idbrecord
 [
-    EnabledBySetting=IndexedDBGetAllRecordsEnabled,
+    EnabledBySetting=IndexedDBGetAllRecordsAndGetAllOptionsEnabled,
     Exposed=(Window,Worker)
 ] interface IDBRecord {
     [CustomGetter] readonly attribute any key;

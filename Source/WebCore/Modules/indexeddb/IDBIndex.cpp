@@ -408,7 +408,7 @@ ExceptionOr<Ref<IDBRequest>> IDBIndex::getAll(JSGlobalObject& execState, JSValue
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
         }
 
-        if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
+        if (!context || !context->settingsValues().indexedDBGetAllRecordsAndGetAllOptionsEnabled)
             return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);
@@ -437,7 +437,7 @@ ExceptionOr<Ref<IDBRequest>> IDBIndex::getAllKeys(JSGlobalObject& execState, JSV
             return ParsedGetAllQueryOrOptions { onlyResult.releaseReturnValue(), count };
         }
 
-        if (!context || !context->settingsValues().indexedDBGetAllRecordsEnabled)
+        if (!context || !context->settingsValues().indexedDBGetAllRecordsAndGetAllOptionsEnabled)
             return Exception(ExceptionCode::DataError, "The parameter is not a valid key."_s);
 
         return parseGetAllOptions(*execState, keyOrOptions);
