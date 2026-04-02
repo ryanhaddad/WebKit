@@ -875,6 +875,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/webxr/WebXRRenderState+Layers.idl \
     $(WebCore)/Modules/webxr/WebXRRigidTransform.idl \
     $(WebCore)/Modules/webxr/WebXRSession+AR.idl \
+    $(WebCore)/Modules/webxr/WebXRSession+Layers.idl \
     $(WebCore)/Modules/webxr/WebXRSession+HitTest.idl \
     $(WebCore)/Modules/webxr/WebXRSession.idl \
     $(WebCore)/Modules/webxr/WebXRSpace.idl \

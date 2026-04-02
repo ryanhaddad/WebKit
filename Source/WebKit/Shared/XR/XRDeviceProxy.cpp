@@ -50,7 +50,9 @@ XRDeviceProxy::XRDeviceProxy(XRDeviceInfo&& deviceInfo, PlatformXRSystemProxy& x
     m_supportsOrientationTracking = deviceInfo.supportsOrientationTracking;
     m_recommendedResolution = deviceInfo.recommendedResolution;
     m_minimumNearClipPlane = deviceInfo.minimumNearClipPlane;
-
+#if ENABLE(WEBXR_LAYERS)
+    m_maxRenderLayers = deviceInfo.maxRenderLayers;
+#endif
     if (!deviceInfo.vrFeatures.contains(SessionFeature::WebGPU))
         deviceInfo.vrFeatures.append(SessionFeature::WebGPU);
 #if ENABLE(WEBXR_LAYERS)

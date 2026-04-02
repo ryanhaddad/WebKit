@@ -142,6 +142,10 @@ void OpenXRCoordinator::getPrimaryDeviceInfo(WebPageProxy& page, DeviceInfoCallb
     deviceInfo.vrFeatures.append(PlatformXR::SessionFeature::ReferenceSpaceTypeLocalFloor);
     deviceInfo.arFeatures.append(PlatformXR::SessionFeature::ReferenceSpaceTypeLocalFloor);
 
+#if ENABLE(WEBXR_LAYERS)
+    deviceInfo.maxRenderLayers = runtimeProperties.maxLayerCount;
+#endif
+
     callback(WTF::move(deviceInfo));
 }
 

@@ -193,6 +193,10 @@ ExceptionOr<void> WebXRSession::updateRenderState(const XRRenderStateInit& newSt
         if (!m_requestedFeatures.contains(PlatformXR::SessionFeature::Layers) && newState.layers->size() > 1)
             return Exception { ExceptionCode::NotSupportedError, "Cannot set layers when the Layers feature is not enabled for this session."_s };
 
+        auto maxLayers = maxRenderLayers();
+        if (newState.layers->size() > maxLayers)
+            return Exception { ExceptionCode::NotSupportedError, makeString("Cannot set more layers than the session's maxRenderLayers limit of "_s, maxLayers) };
+
         if (!m_pendingRenderState)
             m_pendingRenderState = m_activeRenderState->clone();
 
@@ -935,6 +939,14 @@ void WebXRSession::addSessionListener(const WebXRSessionListener& listener)
 {
     m_sessionListeners.append(&listener);
 }
+
+#if ENABLE(WEBXR_LAYERS)
+unsigned WebXRSession::maxRenderLayers() const
+{
+    RefPtr device = m_device.get();
+    return device ? device->maxRenderLayers() : 0;
+}
+#endif
 
 WebCoreOpaqueRoot root(WebXRSession* session)
 {

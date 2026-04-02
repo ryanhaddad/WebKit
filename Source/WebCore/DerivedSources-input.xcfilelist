@@ -1140,6 +1140,7 @@ $(PROJECT_DIR)/Modules/webxr/WebXRRenderState+Layers.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRRenderState.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRRigidTransform.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRSession+AR.idl
+$(PROJECT_DIR)/Modules/webxr/WebXRSession+Layers.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRSession+HitTest.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRSession.idl
 $(PROJECT_DIR)/Modules/webxr/WebXRSpace.idl

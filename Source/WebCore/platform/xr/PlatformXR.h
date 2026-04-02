@@ -545,6 +545,11 @@ public:
     using RequestFrameCallback = Function<void(FrameData&&)>;
     virtual void requestFrame(std::optional<RequestData>&&, RequestFrameCallback&&) = 0;
     virtual void submitFrame(Vector<DeviceLayer>&&) { };
+
+#if ENABLE(WEBXR_LAYERS)
+    unsigned maxRenderLayers() const { return m_maxRenderLayers; }
+#endif
+
 protected:
     Device() = default;
 
@@ -558,6 +563,10 @@ protected:
     bool m_supportsOrientationTracking { false };
     bool m_supportsViewportScaling { false };
     WeakPtr<TrackingAndRenderingClient> m_trackingAndRenderingClient;
+
+#if ENABLE(WEBXR_LAYERS)
+    unsigned m_maxRenderLayers { 1 };
+#endif
 };
 
 using DeviceList = Vector<Ref<Device>>;

@@ -1877,6 +1877,7 @@ list(APPEND WebCore_NON_SVG_IDL_FILES
     Modules/webxr/WebXRRenderState.idl
     Modules/webxr/WebXRRigidTransform.idl
     Modules/webxr/WebXRSession+AR.idl
+    Modules/webxr/WebXRSession+Layers.idl
     Modules/webxr/WebXRSession+HitTest.idl
     Modules/webxr/WebXRSession.idl
     Modules/webxr/WebXRSpace.idl

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Igalia S.L. All rights reserved.
+ * Copyright (C) 2020-2026 Igalia S.L. All rights reserved.
  * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -132,6 +132,10 @@ public:
     void requestHitTestSourceForTransientInput(const XRTransientInputHitTestOptionsInit&, RequestHitTestSourceForTransientInputPromise&&);
     ExceptionOr<void> cancelHitTestSource(PlatformXR::HitTestSource);
     ExceptionOr<void> cancelTransientInputHitTestSource(PlatformXR::TransientInputHitTestSource);
+#endif
+
+#if ENABLE(WEBXR_LAYERS)
+    unsigned maxRenderLayers() const;
 #endif
 
     void initializeTrackingAndRendering(std::optional<XRCanvasConfiguration>&&);

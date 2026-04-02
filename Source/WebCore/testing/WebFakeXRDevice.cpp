@@ -62,6 +62,11 @@ SimulatedXRDevice::SimulatedXRDevice()
     : m_frameTimer(*this, &SimulatedXRDevice::frameTimerFired)
 {
     m_supportsOrientationTracking = true;
+#if ENABLE(WEBXR_LAYERS)
+    // Same approach as Chromium. From a typical 16 max layer limit we remove the projection layer which is always there
+    // and then we divide by 2 to account for the fact that each layer can be stereo (two views).
+    m_maxRenderLayers = (16 - 1) / 2;
+#endif
 }
 
 SimulatedXRDevice::~SimulatedXRDevice()
