@@ -223,13 +223,13 @@ auto toStyle(const CSSCalc::Random::Sharing& randomSharing, const ToStyleConvers
 
     return WTF::switchOn(randomSharing,
         [&](const CSSCalc::Random::SharingOptions& sharingOptions) -> Random::Fixed {
-            if (!sharingOptions.elementShared.has_value()) {
+            if (!sharingOptions.elementScoped.has_value()) {
                 ASSERT(options.evaluation.conversionData->styleBuilderState()->element());
             }
 
             auto baseValue = protect(options.evaluation.conversionData->styleBuilderState())->lookupCSSRandomBaseValue(
                 sharingOptions.identifier,
-                sharingOptions.elementShared
+                sharingOptions.elementScoped
             );
 
             return Random::Fixed { baseValue };
