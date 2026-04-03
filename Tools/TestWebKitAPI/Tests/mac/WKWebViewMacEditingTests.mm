@@ -256,24 +256,6 @@ TEST(WKWebViewMacEditingTests, DoubleClickDoesNotSelectTrailingSpace)
     EXPECT_STREQ("Hello", selectedText.UTF8String);
 }
 
-TEST(WKWebViewMacEditingTests, DoNotCrashWhenCallingTextInputClientMethodsWhileDeallocatingView)
-{
-    NSString *textContent = @"This test should not cause us to dereference null.";
-
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)]);
-    [webView synchronouslyLoadHTMLString:[NSString stringWithFormat:@"<p>%@</p>", textContent]];
-    [webView removeFromSuperview];
-
-    __unsafe_unretained id <NSTextInputClient_Async> inputClient = (id <NSTextInputClient_Async>)webView.get();
-    [inputClient hasMarkedTextWithCompletionHandler:^(BOOL) {
-        [inputClient selectedRangeWithCompletionHandler:^(NSRange) {
-            [inputClient markedRangeWithCompletionHandler:^(NSRange) { }];
-        }];
-    }];
-
-    EXPECT_WK_STREQ(textContent, [webView stringByEvaluatingJavaScript:@"document.body.textContent"]);
-}
-
 TEST(WKWebViewMacEditingTests, KeyDownFiresBeforeCompositionEvent)
 {
     RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);

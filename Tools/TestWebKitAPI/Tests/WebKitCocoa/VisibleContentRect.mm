@@ -37,7 +37,7 @@
 @end
 
 @interface TestWKWebViewWithEnclosingView : TestWKWebView
-@property (nonatomic, assign) UIView *test_enclosingViewForExposedRectComputation;
+@property (nonatomic, weak) UIView *test_enclosingViewForExposedRectComputation;
 @end
 
 @implementation TestWKWebViewWithEnclosingView
