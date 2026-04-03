@@ -283,6 +283,7 @@ platform/audio/cocoa/CARingBuffer.cpp
 platform/audio/cocoa/FFTFrameCocoa.cpp
 platform/audio/cocoa/MediaSessionManagerCocoa.mm @nonARC
 platform/audio/cocoa/PlatformRawAudioDataCocoa.cpp
+platform/audio/cocoa/PitchShiftAudioUnit.mm @nonARC
 platform/audio/cocoa/SpatialAudioExperienceHelper.mm @nonARC
 platform/audio/cocoa/WebAudioBufferList.cpp
 platform/audio/ios/AudioOutputUnitAdaptorIOS.cpp @no-unify

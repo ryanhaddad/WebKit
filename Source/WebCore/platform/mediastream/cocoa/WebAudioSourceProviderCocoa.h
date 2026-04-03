@@ -34,6 +34,8 @@
 #include <wtf/Lock.h>
 #include <wtf/RefCounted.h>
 #include <wtf/RefPtr.h>
+#include <wtf/RetainPtr.h>
+#include <wtf/SystemFree.h>
 
 typedef struct AudioBufferList AudioBufferList;
 typedef struct OpaqueAudioConverter* AudioConverterRef;
@@ -48,19 +50,30 @@ class LoggerHelper;
 namespace WebCore {
 
 class CAAudioStreamDescription;
+class MultiChannelResampler;
+class PitchShiftAudioUnit;
 class PlatformAudioData;
 class WebAudioBufferList;
 
-class WEBCORE_EXPORT WebAudioSourceProviderCocoa
+class WebAudioSourceProviderCocoa
     : public WebAudioSourceProvider {
 public:
-    WebAudioSourceProviderCocoa();
-    ~WebAudioSourceProviderCocoa();
+    WEBCORE_EXPORT WebAudioSourceProviderCocoa();
+    WEBCORE_EXPORT ~WebAudioSourceProviderCocoa();
+
+    CARingBuffer* ringBuffer() const { return m_ringBuffer.get(); }
+
+    WEBCORE_EXPORT void setPlaybackRate(double);
+    double playbackRate() const { return m_playbackRate; }
+
+    WEBCORE_EXPORT void setPreservesPitch(bool);
+    bool preservesPitch() const { return m_preservesPitch; }
+
+    WEBCORE_EXPORT void audioStorageChanged(std::unique_ptr<CARingBuffer>&&, const AudioStreamDescription&);
+    WEBCORE_EXPORT void receivedNewAudioSamples(const PlatformAudioData&, const AudioStreamDescription&, size_t);
+    WEBCORE_EXPORT void setNeedsFlush();
 
 protected:
-    using NeedsFlush = AudioSampleDataSource::NeedsFlush;
-    void receivedNewAudioSamples(const PlatformAudioData&, const AudioStreamDescription&, size_t, NeedsFlush = NeedsFlush::No);
-
     void setPollSamplesCount(size_t);
 
 private:
@@ -70,22 +83,28 @@ private:
 #endif
 
     // AudioSourceProvider
-    void provideInput(AudioBus&, size_t) final;
-    void setClient(WeakPtr<AudioSourceProviderClient>&&) final;
+    WEBCORE_EXPORT void provideInput(AudioBus&, size_t) final;
+    bool provideInputInternal(AudioBus&, size_t);
+    WEBCORE_EXPORT void setClient(WeakPtr<AudioSourceProviderClient>&&) final;
 
     void prepare(const AudioStreamBasicDescription&);
 
     Lock m_lock;
     WeakPtr<AudioSourceProviderClient> m_client;
 
+    std::unique_ptr<PitchShiftAudioUnit> m_pitchShifter;
+    std::unique_ptr<MultiChannelResampler> m_multiChannelResampler;
     std::optional<CAAudioStreamDescription> m_inputDescription;
     std::optional<CAAudioStreamDescription> m_outputDescription;
-    std::unique_ptr<WebAudioBufferList> m_audioBufferList;
-    RefPtr<AudioSampleDataSource> m_dataSource;
+    std::unique_ptr<AudioBufferList, WTF::SystemFree<AudioBufferList>> m_list;
+    AudioConverterRef m_converter;
+    std::unique_ptr<CARingBuffer> m_ringBuffer;
 
+    double m_playbackRate { 1 };
+    bool m_preservesPitch { true };
     size_t m_pollSamplesCount { 3 };
-    uint64_t m_writeCount { 0 };
     uint64_t m_readCount { 0 };
+    bool m_underflowed { true };
 };
 
 inline void WebAudioSourceProviderCocoa::setPollSamplesCount(size_t count)

@@ -1218,6 +1218,8 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
     if (RefPtr provider = m_provider) {
         provider->setPlayerItem(m_avPlayerItem.get());
         provider->setAudioTrack(firstEnabledAudibleTrack());
+        if (auto player = this->player())
+            provider->setPreservesPitch(player->preservesPitch());
     }
 #endif
 
@@ -1752,6 +1754,10 @@ void MediaPlayerPrivateAVFoundationObjC::setPreservesPitch(bool preservesPitch)
     auto player = this->player();
     if (m_avPlayerItem && player)
         [m_avPlayerItem setAudioTimePitchAlgorithm:MediaSessionManagerCocoa::audioTimePitchAlgorithmForMediaPlayerPitchCorrectionAlgorithm(player->pitchCorrectionAlgorithm(), preservesPitch, m_requestedRate).createNSString().get()];
+#if ENABLE(WEB_AUDIO) && USE(MEDIATOOLBOX)
+    if (RefPtr provider = m_provider)
+        provider->setPreservesPitch(preservesPitch);
+#endif
 }
 
 void MediaPlayerPrivateAVFoundationObjC::setPitchCorrectionAlgorithm(MediaPlayer::PitchCorrectionAlgorithm pitchCorrectionAlgorithm)

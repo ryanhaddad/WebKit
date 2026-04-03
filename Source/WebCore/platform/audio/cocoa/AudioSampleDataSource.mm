@@ -214,7 +214,7 @@ bool AudioSampleDataSource::pullSamples(AudioBufferList& buffer, size_t sampleCo
     if (seekTo != NoSeek)
         m_readCount = seekTo;
 
-    auto [startFrame, endFrame] = m_ringBuffer->getFetchTimeBounds();
+    auto [startFrame, endFrame, writeAhead] = m_ringBuffer->getFetchTimeBounds();
     startFrame = std::max(m_readCount, startFrame);
 
     ASSERT(m_waitToStartForPushCount);
@@ -303,7 +303,7 @@ bool AudioSampleDataSource::pullAvailableSamplesAsChunks(AudioBufferList& buffer
     if (buffer.mNumberBuffers != m_ringBuffer->channelCount())
         return false;
 
-    auto [startFrame, endFrame] = m_ringBuffer->getFetchTimeBounds();
+    auto [startFrame, endFrame, writeAhead] = m_ringBuffer->getFetchTimeBounds();
     if (m_shouldComputeOutputSampleOffset) {
         m_outputSampleOffset = timeStamp + (endFrame - sampleCountPerChunk);
         m_shouldComputeOutputSampleOffset = false;

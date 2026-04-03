@@ -31,20 +31,23 @@
 #import "AudioBus.h"
 #import "AudioChannel.h"
 #import "AudioSourceProviderClient.h"
+#import "AudioUtilities.h"
 #import "Logging.h"
+#import "MultiChannelResampler.h"
+#import "PitchShiftAudioUnit.h"
 #import "WebAudioBufferList.h"
 #import <objc/runtime.h>
+#import <wtf/IndexedRange.h>
 #import <wtf/MainThread.h>
 
 #if !LOG_DISABLED
 #import <wtf/StringPrintStream.h>
 #endif
 
+#import <pal/cf/AudioToolboxSoftLink.h>
 #import <pal/cf/CoreMediaSoftLink.h>
 
 namespace WebCore {
-
-static const double kRingBufferDuration = 1;
 
 WebAudioSourceProviderCocoa::WebAudioSourceProviderCocoa()
 {
@@ -52,6 +55,10 @@ WebAudioSourceProviderCocoa::WebAudioSourceProviderCocoa()
 
 WebAudioSourceProviderCocoa::~WebAudioSourceProviderCocoa()
 {
+    if (m_converter) {
+        PAL::AudioConverterDispose(m_converter);
+        m_converter = nullptr;
+    }
 }
 
 void WebAudioSourceProviderCocoa::setClient(WeakPtr<AudioSourceProviderClient>&& client)
@@ -59,7 +66,48 @@ void WebAudioSourceProviderCocoa::setClient(WeakPtr<AudioSourceProviderClient>&&
     if (m_client == client)
         return;
     m_client = WTF::move(client);
+
     hasNewClient(m_client.get());
+}
+
+void WebAudioSourceProviderCocoa::setPlaybackRate(double playbackRate)
+{
+    if (m_playbackRate == playbackRate)
+        return;
+
+    Locker locker { m_lock };
+    m_playbackRate = playbackRate;
+
+    if (!m_outputDescription)
+        return;
+
+    if (m_pitchShifter)
+        m_pitchShifter->setRate(m_playbackRate);
+    m_multiChannelResampler = makeUnique<MultiChannelResampler>(m_playbackRate, m_outputDescription->numberOfChannels(), AudioUtilities::renderQuantumSize, [weakThis = ThreadSafeWeakPtr { *this }](AudioBus& inputBus, size_t numberOfFrames) {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->provideInputInternal(inputBus, numberOfFrames);
+    });
+
+}
+
+void WebAudioSourceProviderCocoa::setPreservesPitch(bool preservesPitch)
+{
+    if (m_preservesPitch == preservesPitch)
+        return;
+
+    Locker locker { m_lock };
+    m_preservesPitch = preservesPitch;
+}
+
+void WebAudioSourceProviderCocoa::audioStorageChanged(std::unique_ptr<CARingBuffer>&& ringBuffer, const AudioStreamDescription& description)
+{
+    Locker locker { m_lock };
+    m_ringBuffer = WTF::move(ringBuffer);
+
+    ASSERT(description.platformDescription().type == PlatformDescription::CAAudioStreamBasicType);
+    auto& basicDescription = *std::get<const AudioStreamBasicDescription*>(description.platformDescription().description);
+    if (!m_inputDescription || m_inputDescription->streamDescription() != basicDescription)
+        prepare(basicDescription);
 }
 
 void WebAudioSourceProviderCocoa::provideInput(AudioBus& bus, size_t framesToProcess)
@@ -69,45 +117,80 @@ void WebAudioSourceProviderCocoa::provideInput(AudioBus& bus, size_t framesToPro
         return;
     }
     Locker locker { AdoptLock, m_lock };
-    if (!m_dataSource || !m_audioBufferList) {
+
+    if (!m_playbackRate) {
         bus.zero();
         return;
     }
 
-    if (m_writeCount <= m_readCount) {
-        bus.zero();
+    if (m_pitchShifter && m_preservesPitch && m_playbackRate != 1.0) {
+        m_pitchShifter->render(bus, framesToProcess);
         return;
     }
 
-    if (bus.numberOfChannels() < m_audioBufferList->bufferCount()) {
-        bus.zero();
+    if (m_multiChannelResampler && !m_preservesPitch && m_playbackRate != 1.0) {
+        m_multiChannelResampler->process(bus, framesToProcess);
         return;
     }
 
-    for (unsigned i = 0; i < bus.numberOfChannels(); ++i) {
-        auto& channel = *bus.channel(i);
-        if (i >= m_audioBufferList->bufferCount()) {
-            channel.zero();
-            continue;
+    provideInputInternal(bus, framesToProcess);
+}
+
+bool WebAudioSourceProviderCocoa::provideInputInternal(AudioBus& bus, size_t framesToProcess)
+{
+    if (!m_ringBuffer) {
+        bus.zero();
+        return false;
+    }
+
+    auto [startFrame, endFrame, writeAhead] = m_ringBuffer->getFetchTimeBounds();
+
+    if (m_readCount >= endFrame) {
+        bus.zero();
+        m_underflowed = true;
+        return false;
+    }
+
+    size_t framesAvailable = static_cast<size_t>(endFrame - m_readCount);
+    if (framesAvailable < framesToProcess) {
+        bus.zero();
+        framesToProcess = framesAvailable;
+    }
+
+    if (m_underflowed) {
+        // Wait for enough future data to be written before restarting:
+        if (framesAvailable < writeAhead) {
+            bus.zero();
+            return false;
         }
-        auto* buffer = m_audioBufferList->buffer(i);
-        buffer->mNumberChannels = 1;
-        buffer->mData = channel.mutableData();
-        buffer->mDataByteSize = channel.length() * sizeof(float);
+        m_underflowed = false;
     }
 
-    ASSERT(framesToProcess <= bus.length());
-    m_dataSource->pullSamples(*m_audioBufferList->list(), framesToProcess, m_readCount, 0, AudioSampleDataSource::Copy);
+    ASSERT(bus.numberOfChannels() == m_ringBuffer->channelCount());
+    if (bus.numberOfChannels() != m_ringBuffer->channelCount()) {
+        bus.zero();
+        return false;
+    }
+
+    for (auto [i, buffer] : indexedRange(span(*m_list))) {
+        AudioChannel* channel = bus.channel(i);
+        buffer.mNumberChannels = 1;
+        buffer.mData = channel->mutableData();
+        buffer.mDataByteSize = channel->length() * sizeof(float);
+    }
+
+    m_ringBuffer->fetch(m_list.get(), framesToProcess, m_readCount);
     m_readCount += framesToProcess;
+
+    if (m_converter)
+        PAL::AudioConverterConvertComplexBuffer(m_converter, framesToProcess, m_list.get(), m_list.get());
+
+    return true;
 }
 
 void WebAudioSourceProviderCocoa::prepare(const AudioStreamBasicDescription& format)
 {
     DisableMallocRestrictionsForCurrentThreadScope scope;
-
-    Locker locker { m_lock };
-
-    LOG(Media, "WebAudioSourceProviderCocoa::prepare(%p)", this);
 
     m_inputDescription = CAAudioStreamDescription(format);
     int numberOfChannels = format.mChannelsPerFrame;
@@ -122,12 +205,28 @@ void WebAudioSourceProviderCocoa::prepare(const AudioStreamBasicDescription& for
     AudioStreamBasicDescription outputDescription { };
     FillOutASBDForLPCM(outputDescription, sampleRate, numberOfChannels, bitsPerByte * bytesPerFloat, bitsPerByte * bytesPerFloat, isFloat, isBigEndian, isNonInterleaved);
     m_outputDescription = CAAudioStreamDescription(outputDescription);
-    m_audioBufferList = makeUnique<WebAudioBufferList>(m_outputDescription.value());
+    m_list = PAL::createAudioBufferList(numberOfChannels, PAL::ShouldZeroMemory::Yes);
 
-    if (!m_dataSource)
-        m_dataSource = AudioSampleDataSource::create(kRingBufferDuration * sampleRate, loggerHelper(), m_pollSamplesCount);
-    m_dataSource->setInputFormat(m_inputDescription.value());
-    m_dataSource->setOutputFormat(m_outputDescription.value());
+    m_pitchShifter = makeUnique<PitchShiftAudioUnit>(CAAudioStreamDescription(*m_outputDescription));
+    m_pitchShifter->setRate(m_playbackRate);
+    m_pitchShifter->setInputCallback([weakThis = ThreadSafeWeakPtr { *this }](AudioBus& inputBus, size_t numberOfFrames) {
+        if (RefPtr protectedThis = weakThis.get())
+            return protectedThis->provideInputInternal(inputBus, numberOfFrames);
+        return false;
+    });
+
+    m_multiChannelResampler = makeUnique<MultiChannelResampler>(m_playbackRate, numberOfChannels, AudioUtilities::renderQuantumSize, [weakThis = ThreadSafeWeakPtr { *this }](AudioBus& inputBus, size_t numberOfFrames) {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->provideInputInternal(inputBus, numberOfFrames);
+    });
+
+    if (*m_inputDescription != *m_outputDescription) {
+        if (m_converter) {
+            PAL::AudioConverterDispose(m_converter);
+            m_converter = nullptr;
+        }
+        PAL::AudioConverterNew(&m_inputDescription->streamDescription(), &m_outputDescription->streamDescription(), &m_converter);
+    }
 
     callOnMainThread([protectedThis = Ref { *this }, numberOfChannels, sampleRate] {
         if (protectedThis->m_client)
@@ -136,19 +235,22 @@ void WebAudioSourceProviderCocoa::prepare(const AudioStreamBasicDescription& for
 }
 
 // May get called on a background thread.
-void WebAudioSourceProviderCocoa::receivedNewAudioSamples(const PlatformAudioData& data, const AudioStreamDescription& description, size_t frameCount, NeedsFlush needsFlush)
+void WebAudioSourceProviderCocoa::receivedNewAudioSamples(const PlatformAudioData& data, const AudioStreamDescription&, size_t frameCount)
 {
-    ASSERT(description.platformDescription().type == PlatformDescription::CAAudioStreamBasicType);
-    auto& basicDescription = *std::get<const AudioStreamBasicDescription*>(description.platformDescription().description);
-    if (!m_inputDescription || m_inputDescription->streamDescription() != basicDescription)
-        prepare(basicDescription);
-
-    if (!m_dataSource)
+    if (!m_ringBuffer)
         return;
 
-    m_dataSource->pushSamples(MediaTime(m_writeCount, m_inputDescription->sampleRate()), data, frameCount, needsFlush);
+    auto [startFrame, endFrame, writeAhead] = m_ringBuffer->getStoreTimeBounds();
+    m_ringBuffer->store(downcast<WebAudioBufferList>(data).list(), frameCount, endFrame, writeAhead);
+}
 
-    m_writeCount += frameCount;
+void WebAudioSourceProviderCocoa::setNeedsFlush()
+{
+    if (!m_ringBuffer)
+        return;
+    auto [startFrame, endFrame, writeAhead] = m_ringBuffer->getFetchTimeBounds();
+    m_readCount = startFrame;
+    m_underflowed = true;
 }
 
 }

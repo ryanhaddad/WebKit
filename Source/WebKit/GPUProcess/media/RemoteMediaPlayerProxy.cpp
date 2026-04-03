@@ -313,6 +313,10 @@ void RemoteMediaPlayerProxy::setPrivateBrowsingMode(bool privateMode)
 void RemoteMediaPlayerProxy::setPreservesPitch(bool preservesPitch)
 {
     protect(m_player)->setPreservesPitch(preservesPitch);
+#if ENABLE(WEB_AUDIO) && PLATFORM(COCOA)
+    if (RefPtr provider = m_remoteAudioSourceProvider)
+        provider->setPreservesPitch(preservesPitch);
+#endif
 }
 
 void RemoteMediaPlayerProxy::setPitchCorrectionAlgorithm(WebCore::MediaPlayer::PitchCorrectionAlgorithm algorithm)
@@ -504,7 +508,17 @@ void RemoteMediaPlayerProxy::mediaPlayerRateChanged()
     sendCachedState();
 
     RefPtr player = m_player;
-    protect(m_webProcessConnection)->send(Messages::MediaPlayerPrivateRemote::RateChanged(player->effectiveRate(), timeUpdateData(*player, player->currentTime())), m_id);
+    if (!player)
+        return;
+
+    auto effectiveRate = player->effectiveRate();
+
+#if ENABLE(WEB_AUDIO) && PLATFORM(COCOA)
+    if (RefPtr provider = m_remoteAudioSourceProvider)
+        provider->setPlaybackRate(effectiveRate);
+#endif
+
+    protect(m_webProcessConnection)->send(Messages::MediaPlayerPrivateRemote::RateChanged(effectiveRate, timeUpdateData(*player, player->currentTime())), m_id);
 }
 
 void RemoteMediaPlayerProxy::mediaPlayerEngineFailedToLoad()
@@ -1252,7 +1266,10 @@ void RemoteMediaPlayerProxy::createAudioSourceProvider()
     if (!provider)
         return;
 
-    m_remoteAudioSourceProvider = RemoteAudioSourceProviderProxy::create(m_id, m_webProcessConnection.copyRef(), *provider);
+    Ref proxy = RemoteAudioSourceProviderProxy::create(m_id, m_webProcessConnection.copyRef(), *provider);
+    proxy->setPlaybackRate(player->effectiveRate());
+    proxy->setPreservesPitch(player->preservesPitch());
+    m_remoteAudioSourceProvider = WTF::move(proxy);
 #endif
 }
 

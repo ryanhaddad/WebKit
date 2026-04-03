@@ -1919,6 +1919,7 @@ webkit.org/b/298269 imported/w3c/web-platform-tests/html/anonymous-iframe/sessio
 webkit.org/b/305509 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/track/track-element/track-cues-pause-on-exit.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/played-loop.html [ Skip ] # timeout
 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/playing-the-media-resource/fragmented-mp4-end.html [ Skip ] # timeout
+imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/preserves-pitch.html [ Skip ]
 
 imported/w3c/web-platform-tests/html/anonymous-iframe/local-storage.tentative.https.window.html [ Failure Pass ]
 
@@ -2569,6 +2570,8 @@ webaudio/crashtest/audioworklet-concurrent-resampler-crash.html [ Timeout Pass ]
 webkit.org/b/309202 webaudio/audiomix-bufferingpolicy.html [ Pass Timeout Crash ]
 webkit.org/b/307727 webaudio/decode-audio-data-aac.html [ Failure ]
 webkit.org/b/307727 webaudio/decode-audio-data-mp3-8000.html [ Failure ]
+
+webaudio/MediaElementAudioSource/mediaelementaudiosourcenode-playbackrate.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of WebAudio-related bugs

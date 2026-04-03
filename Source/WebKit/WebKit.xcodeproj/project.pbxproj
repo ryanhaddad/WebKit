@@ -8489,6 +8489,9 @@
 		CDF1B914266F395F0007EC10 /* GroupActivitiesSessionNotifier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GroupActivitiesSessionNotifier.h; sourceTree = "<group>"; };
 		CDF1B919267021D60007EC10 /* WebKitSwiftSoftLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebKitSwiftSoftLink.h; sourceTree = "<group>"; };
 		CDF1B91A267021D60007EC10 /* WebKitSwiftSoftLink.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WebKitSwiftSoftLink.mm; sourceTree = "<group>"; };
+		CDFE82BA2F7DE9C300547599 /* RemoteAudioDestinationManagerMessageReceiver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RemoteAudioDestinationManagerMessageReceiver.cpp; path = /Volumes/WebKitBuild/Debug/DerivedSources/WebKit/IPC/RemoteAudioDestinationManagerMessageReceiver.cpp; sourceTree = "<absolute>"; };
+		CDFE82BB2F7DE9C300547599 /* RemoteAudioSourceProviderManagerMessageReceiver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RemoteAudioSourceProviderManagerMessageReceiver.cpp; path = /Volumes/WebKitBuild/Debug/DerivedSources/WebKit/IPC/RemoteAudioSourceProviderManagerMessageReceiver.cpp; sourceTree = "<absolute>"; };
+		CDFE82BC2F7DE9C300547599 /* RemoteAudioSourceProviderManagerMessages.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RemoteAudioSourceProviderManagerMessages.h; path = /Volumes/WebKitBuild/Debug/DerivedSources/WebKit/IPC/RemoteAudioSourceProviderManagerMessages.h; sourceTree = "<absolute>"; };
 		CDFF2D082EAB3CAA00899478 /* _WKCaptionStyleMenuControllerIOS.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = _WKCaptionStyleMenuControllerIOS.mm; sourceTree = "<group>"; };
 		CE11AD4F1CBC47F800681EE5 /* CodeSigning.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CodeSigning.mm; sourceTree = "<group>"; };
 		CE11AD511CBC482F00681EE5 /* CodeSigning.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CodeSigning.h; sourceTree = "<group>"; };
@@ -13486,12 +13489,15 @@
 				51EE7B5A2A95B5820016FF78 /* PushClientConnectionMessages.h */,
 				1C55A593275457C900EB7E95 /* RemoteAdapterMessageReceiver.cpp */,
 				1C55A5B1275457CD00EB7E95 /* RemoteAdapterMessages.h */,
+				CDFE82BA2F7DE9C300547599 /* RemoteAudioDestinationManagerMessageReceiver.cpp */,
 				CD20CE7725CD2B9D0069B542 /* RemoteAudioHardwareListenerMessageReceiver.cpp */,
 				CD20CE7925CD2B9E0069B542 /* RemoteAudioHardwareListenerMessages.h */,
 				CDD53576240DDE0700F7B8C4 /* RemoteAudioSessionMessageReceiver.cpp */,
 				CDD53575240DDE0700F7B8C4 /* RemoteAudioSessionMessages.h */,
 				CDD53571240DDE0600F7B8C4 /* RemoteAudioSessionProxyMessageReceiver.cpp */,
 				CDD53572240DDE0600F7B8C4 /* RemoteAudioSessionProxyMessages.h */,
+				CDFE82BB2F7DE9C300547599 /* RemoteAudioSourceProviderManagerMessageReceiver.cpp */,
+				CDFE82BC2F7DE9C300547599 /* RemoteAudioSourceProviderManagerMessages.h */,
 				5132290C2E77A368009E1992 /* RemoteAudioVideoRendererProxyManagerMessageReceiver.cpp */,
 				5132290D2E77A368009E1992 /* RemoteAudioVideoRendererProxyManagerMessages.h */,
 				1C55A582275457C600EB7E95 /* RemoteBindGroupLayoutMessageReceiver.cpp */,

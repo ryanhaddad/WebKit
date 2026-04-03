@@ -27,17 +27,29 @@
 
 #if ENABLE(WEB_AUDIO) && ENABLE(MEDIA_STREAM)
 
+#include "AudioSampleDataSource.h"
 #include "MediaStreamTrackPrivate.h"
 #include "RealtimeMediaSource.h"
-#include "WebAudioSourceProviderCocoa.h"
+#include "WebAudioSourceProvider.h"
+#include <CoreAudio/CoreAudioTypes.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/MediaTime.h>
 #include <wtf/TZoneMalloc.h>
 
+typedef struct AudioBufferList AudioBufferList;
+typedef struct OpaqueAudioConverter* AudioConverterRef;
+typedef struct AudioStreamBasicDescription AudioStreamBasicDescription;
+typedef const struct opaqueCMFormatDescription *CMFormatDescriptionRef;
+typedef struct opaqueCMSampleBuffer *CMSampleBufferRef;
+
 namespace WebCore {
 
+class CAAudioStreamDescription;
+class PlatformAudioData;
+class WebAudioBufferList;
+
 class MediaStreamTrackAudioSourceProviderCocoa final
-    : public WebAudioSourceProviderCocoa
+    : public WebAudioSourceProvider
     , MediaStreamTrackPrivateObserver
     , RealtimeMediaSource::AudioSampleObserver
     , public CanMakeCheckedPtr<MediaStreamTrackAudioSourceProviderCocoa> {
@@ -47,8 +59,8 @@ public:
     static Ref<MediaStreamTrackAudioSourceProviderCocoa> create(MediaStreamTrackPrivate&);
     ~MediaStreamTrackAudioSourceProviderCocoa();
 
-    void ref() const final { WebAudioSourceProviderCocoa::ref(); }
-    void deref() const final { WebAudioSourceProviderCocoa::deref(); }
+    void ref() const final { WebAudioSourceProvider::ref(); }
+    void deref() const final { WebAudioSourceProvider::deref(); }
 
 private:
     explicit MediaStreamTrackAudioSourceProviderCocoa(MediaStreamTrackPrivate&);
@@ -60,10 +72,16 @@ private:
     void decrementCheckedPtrCount() const final { CanMakeCheckedPtr::decrementCheckedPtrCount(); }
     void setDidBeginCheckedPtrDeletion() final { CanMakeCheckedPtr::setDidBeginCheckedPtrDeletion(); }
 
-    // WebAudioSourceProviderCocoa
-    void hasNewClient(AudioSourceProviderClient*) final;
+    void setPollSamplesCount(size_t);
+
+    void hasNewClient(AudioSourceProviderClient*);
+
+    // AudioSourceProvider
+    void provideInput(AudioBus&, size_t) final;
+    void setClient(WeakPtr<AudioSourceProviderClient>&&) final;
+    void prepare(const AudioStreamBasicDescription&);
 #if !RELEASE_LOG_DISABLED
-    WTF::LoggerHelper& loggerHelper() final { return m_source.get(); }
+    WTF::LoggerHelper& loggerHelper() { return m_source.get(); }
 #endif
 
     // MediaStreamTrackPrivateObserver
@@ -75,11 +93,27 @@ private:
     // RealtimeMediaSource::AudioSampleObserver
     void audioSamplesAvailable(const WTF::MediaTime&, const PlatformAudioData&, const AudioStreamDescription&, size_t) final;
 
+    Lock m_lock;
+    WeakPtr<AudioSourceProviderClient> m_client;
+
+    std::optional<CAAudioStreamDescription> m_inputDescription;
+    std::optional<CAAudioStreamDescription> m_outputDescription;
+    std::unique_ptr<WebAudioBufferList> m_audioBufferList;
+    RefPtr<AudioSampleDataSource> m_dataSource;
+
+    size_t m_pollSamplesCount { 3 };
+    uint64_t m_writeCount { 0 };
+    uint64_t m_readCount { 0 };
     WeakPtr<MediaStreamTrackPrivate> m_captureSource;
     const Ref<RealtimeMediaSource> m_source;
     bool m_enabled { true };
     bool m_connected { false };
 };
+
+inline void MediaStreamTrackAudioSourceProviderCocoa::setPollSamplesCount(size_t count)
+{
+    m_pollSamplesCount = count;
+}
 
 }
 

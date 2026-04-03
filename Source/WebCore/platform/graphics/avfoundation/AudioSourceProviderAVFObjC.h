@@ -52,7 +52,10 @@ namespace WebCore {
 class AudioStreamDescription;
 class CAAudioStreamDescription;
 class CARingBuffer;
+class MultiChannelResampler;
+class PitchShiftAudioUnit;
 class PlatformAudioData;
+class WebAudioBufferList;
 
 class AudioSourceProviderAVFObjC : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<AudioSourceProviderAVFObjC>, public AudioSourceProvider {
 public:
@@ -63,6 +66,7 @@ public:
     void setPlayerItem(AVPlayerItem *);
     void setAudioTrack(AVAssetTrack *);
     void setPlaybackRate(double);
+    void setPreservesPitch(bool);
 
     using AudioCallback = Function<void(uint64_t startFrame, uint64_t numberOfFrames, bool needFlush)>;
     WEBCORE_EXPORT void setAudioCallback(AudioCallback&&);
@@ -79,6 +83,7 @@ private:
 
     // AudioSourceProvider
     void provideInput(AudioBus&, size_t framesToProcess) override;
+    bool provideInputInternal(AudioBus&, size_t framesToProcess);
     void setClient(WeakPtr<AudioSourceProviderClient>&&) override;
     bool isHandlingAVPlayer() const final { return true; }
 
@@ -96,7 +101,9 @@ private:
     RetainPtr<AVAssetTrack> m_avAssetTrack;
     RetainPtr<AVMutableAudioMix> m_avAudioMix;
     RetainPtr<MTAudioProcessingTapRef> m_tap;
-    RetainPtr<AudioConverterRef> m_converter;
+    AudioConverterRef m_converter;
+    std::unique_ptr<PitchShiftAudioUnit> m_pitchShifter;
+    std::unique_ptr<MultiChannelResampler> m_multiChannelResampler;
     std::unique_ptr<AudioBufferList, WTF::SystemFree<AudioBufferList>> m_list;
     std::unique_ptr<AudioStreamBasicDescription> m_tapDescription;
     std::unique_ptr<AudioStreamBasicDescription> m_outputDescription;
@@ -104,11 +111,11 @@ private:
 
     MediaTime m_startTimeAtLastProcess;
     MediaTime m_endTimeAtLastProcess;
-    uint64_t m_writeAheadCount { 0 };
     uint64_t m_readCount { 0 };
     enum { NoSeek = std::numeric_limits<uint64_t>::max() };
     uint64_t m_seekTo { NoSeek };
     bool m_paused { true };
+    bool m_preservesPitch { true };
     double m_playbackRate { 1. };
     WeakPtr<AudioSourceProviderClient> m_client;
     WeakPtrFactory<AudioSourceProviderAVFObjC> m_weakFactory;

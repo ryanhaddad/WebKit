@@ -48,6 +48,8 @@ public:
     ~RemoteAudioSourceProviderProxy();
 
     void newAudioSamples(uint64_t startFrame, uint64_t endFrame, bool);
+    void setPlaybackRate(double);
+    void setPreservesPitch(bool);
 
     void ref() const final { ThreadSafeRefCounted::ref(); }
     void deref() const final { ThreadSafeRefCounted::deref(); }

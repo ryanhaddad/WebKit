@@ -230,6 +230,7 @@ Tests/WebKitCocoa/PasteRTFD.mm @nonARC
 Tests/WebKitCocoa/PasteWebArchive.mm @nonARC
 Tests/WebKitCocoa/PermissionsAPI.mm @nonARC
 Tests/WebKitCocoa/PictureInPictureDelegate.mm @nonARC
+Tests/WebKitCocoa/PitchShiftAudioUnitTests.cpp
 Tests/WebKitCocoa/Preconnect.mm @nonARC
 Tests/WebKitCocoa/Preferences.mm @nonARC
 Tests/WebKitCocoa/PreferredAudioBufferSize.mm @nonARC

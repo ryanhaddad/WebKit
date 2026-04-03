@@ -69,7 +69,6 @@ ExceptionOr<Ref<MediaElementAudioSourceNode>> MediaElementAudioSourceNode::creat
 MediaElementAudioSourceNode::MediaElementAudioSourceNode(BaseAudioContext& context, Ref<HTMLMediaElement>&& mediaElement)
     : AudioNode(context, NodeTypeMediaElementAudioSource)
     , m_mediaElement(WTF::move(mediaElement))
-    , m_playbackRate { abs(m_mediaElement->reportedPlaybackRate()) }
 {
     // Default to stereo. This could change depending on what the media element .src is set to.
     addOutput(2);
@@ -116,24 +115,10 @@ void MediaElementAudioSourceNode::setFormat(size_t numberOfChannels, float sourc
     }
 }
 
-void MediaElementAudioSourceNode::setPlaybackRate(double playbackRate)
-{
-    playbackRate = abs(playbackRate);
-    if (!playbackRate || playbackRate == m_playbackRate)
-        return;
-
-    Locker locker { m_processLock };
-    m_playbackRate = playbackRate;
-    updateResamplerIfNeeded();
-}
-
 void MediaElementAudioSourceNode::updateResamplerIfNeeded()
 {
-    // Account for both sample rate conversion and playback rate
-    double effectiveSampleRate = m_sourceSampleRate * m_playbackRate;
-
-    if (effectiveSampleRate != sampleRate()) {
-        double scaleFactor = effectiveSampleRate / sampleRate();
+    if (m_sourceSampleRate != sampleRate()) {
+        double scaleFactor = m_sourceSampleRate / sampleRate();
         m_multiChannelResampler = makeUnique<MultiChannelResampler>(scaleFactor, m_sourceNumberOfChannels, AudioUtilities::renderQuantumSize, std::bind(&MediaElementAudioSourceNode::provideInput, this, std::placeholders::_1, std::placeholders::_2));
     } else {
         // Bypass resampling.
