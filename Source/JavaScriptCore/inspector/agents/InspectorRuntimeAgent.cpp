@@ -61,9 +61,7 @@ InspectorRuntimeAgent::InspectorRuntimeAgent(AgentContext& context)
 {
 }
 
-InspectorRuntimeAgent::~InspectorRuntimeAgent()
-{
-}
+InspectorRuntimeAgent::~InspectorRuntimeAgent() = default;
 
 static Ref<Protocol::Runtime::ErrorRange> buildErrorRangeObject(const JSTokenLocation& tokenLocation)
 {

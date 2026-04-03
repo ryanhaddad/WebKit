@@ -199,9 +199,7 @@ public:
 };
 
 template <typename LexerType>
-Parser<LexerType>::~Parser()
-{
-}
+Parser<LexerType>::~Parser() = default;
 
 void JSToken::dump(PrintStream& out) const
 {

@@ -517,9 +517,7 @@ static inline JSTokenType NODELETE tokenTypeForIntegerLikeToken(double doubleVal
 }
 
 template <typename T>
-Lexer<T>::~Lexer()
-{
-}
+Lexer<T>::~Lexer() = default;
 
 template <typename T>
 String Lexer<T>::invalidCharacterMessage() const

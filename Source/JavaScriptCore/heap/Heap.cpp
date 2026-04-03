@@ -3481,9 +3481,7 @@ Heap::Heap(JSC::Heap& heap)
 {
 }
 
-Heap::~Heap()
-{
-}
+Heap::~Heap() = default;
 
 #undef INIT_CLIENT_ISO_SUBSPACE
 #undef CLIENT_ISO_SUBSPACE_INIT_FROM_SPACE_AND_SET

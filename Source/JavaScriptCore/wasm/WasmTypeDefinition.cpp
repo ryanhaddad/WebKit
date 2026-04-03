@@ -102,9 +102,7 @@ FunctionSignature::FunctionSignature(FunctionArgCount argumentCount, FunctionArg
     , m_retCount(returnCount)
 { }
 
-FunctionSignature::~FunctionSignature()
-{
-}
+FunctionSignature::~FunctionSignature() = default;
 
 String StructType::toString() const
 {
