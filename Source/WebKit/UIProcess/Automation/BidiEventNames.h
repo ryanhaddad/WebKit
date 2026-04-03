@@ -47,6 +47,11 @@ namespace Log {
 static constexpr auto EntryAdded = "log.entryAdded"_s;
 } // namespace Log
 
+namespace Script {
+static constexpr auto RealmCreated = "script.realmCreated"_s;
+static constexpr auto RealmDestroyed = "script.realmDestroyed"_s;
+} // namespace Script
+
 } // namespace BidiEventNames
 
 } // namespace WebKit

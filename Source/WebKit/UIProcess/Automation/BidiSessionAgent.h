@@ -68,7 +68,6 @@ public:
     bool eventIsEnabled(const String& eventName, const HashSet<String>& browsingContexts);
 
 private:
-
     void unsubscribeByEventName(RefPtr<JSON::Array>&& events, Inspector::CommandCallback<void>&&);
 
     WeakPtr<WebAutomationSession> m_session;

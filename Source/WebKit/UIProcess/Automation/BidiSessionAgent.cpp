@@ -28,9 +28,12 @@
 
 #if ENABLE(WEBDRIVER_BIDI)
 
+#include "BidiEventNames.h"
+#include "BidiScriptAgent.h"
 #include "Logging.h"
 #include "WebAutomationSession.h"
 #include "WebAutomationSessionMacros.h"
+#include "WebDriverBidiProcessor.h"
 #include "WebDriverBidiProtocolObjects.h"
 #include "WebPageProxy.h"
 #include <wtf/HashSet.h>
@@ -39,6 +42,24 @@
 namespace WebKit {
 
 using namespace Inspector;
+
+static bool shouldReplayRealmCreatedEvents(const HashSet<AtomString>& events)
+{
+    return events.contains(AtomString { BidiEventNames::Script::RealmCreated });
+}
+
+static bool subscriptionMatchesScope(const BidiEventSubscription& subscription, const HashSet<String>& browsingContexts)
+{
+    if (subscription.isGlobal())
+        return true;
+
+    for (const auto& browsingContext : browsingContexts) {
+        if (subscription.browsingContextIDs.contains(browsingContext))
+            return true;
+    }
+
+    return false;
+}
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(BidiSessionAgent);
 
@@ -67,14 +88,27 @@ void BidiSessionAgent::subscribe(Ref<JSON::Array>&& events, RefPtr<JSON::Array>&
 
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(contexts && userContexts && (contexts->length() > 0) && (userContexts->length() > 0), InvalidParameter, "Contexts and user contexts cannot be used together."_s);
 
-    // FIXME: Support by-context subscriptions.
-    // https://webkit.org/b/282981
-    // Also: spec says we need to convert into top-level browsing contexts.
-    ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(contexts && contexts->length(), NotImplemented, "Subscriptions by context are not supported yet."_s);
-
     // FIXME: Support by-userContext subscriptions
     // https://webkit.org/b/309502
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(userContexts && userContexts->length(), NotImplemented, "Subscriptions by userContext are not supported yet."_s);
+
+    HashSet<BrowsingContext> browsingContextIDs;
+    if (contexts) {
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(!contexts->length(), InvalidParameter, "At least one browsing context must be provided."_s);
+
+        RefPtr session = m_session.get();
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!session, InternalError);
+
+        for (const auto& context : *contexts) {
+            auto browsingContext = context->asString();
+            ASYNC_FAIL_WITH_PREDEFINED_ERROR_AND_DETAILS_IF(browsingContext.isEmpty(), InvalidParameter, "Browsing context must be a valid non-empty string."_s);
+
+            [[maybe_unused]] auto handles = session->extractBrowsingContextHandles(browsingContext);
+            ASYNC_FAIL_IF_UNEXPECTED_RESULT(handles);
+
+            browsingContextIDs.add(browsingContext);
+        }
+    }
 
     for (const auto& event : atomEventNames) {
         auto addResult = m_eventSubscriptionCounts.add(event, 1);
@@ -85,7 +119,13 @@ void BidiSessionAgent::subscribe(Ref<JSON::Array>&& events, RefPtr<JSON::Array>&
     LOG(Automation, "BidiSessionAgent::subscribe: adding subscriptionID=%s, events=%s",
         subscriptionID.utf8().data(),
         events->toJSONString().utf8().data());
-    m_eventSubscriptions.add(subscriptionID, BidiEventSubscription { subscriptionID, WTF::move(atomEventNames), { }, { } });
+    m_eventSubscriptions.add(subscriptionID, BidiEventSubscription { subscriptionID, WTF::move(atomEventNames), WTF::move(browsingContextIDs), { } });
+
+    if (shouldReplayRealmCreatedEvents(m_eventSubscriptions.get(subscriptionID).events)) {
+        RefPtr session = m_session.get();
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!session, InternalError);
+        session->bidiProcessor().scriptAgent().emitEventsForActiveRealms(m_eventSubscriptions.get(subscriptionID).browsingContextIDs);
+    }
 
     callback({ subscriptionID });
 }
@@ -191,12 +231,7 @@ bool BidiSessionAgent::eventIsEnabled(const String& eventName, const HashSet<Str
         return false;
 
     for (const auto& subscription : m_eventSubscriptions) {
-        // FIXME: Add support to subscribe to specific browsing contexts
-        // https://bugs.webkit.org/show_bug.cgi?id=282981
-        if (!subscription.value.isGlobal())
-            continue;
-
-        if (subscription.value.events.contains(atomEventName))
+        if (subscription.value.events.contains(atomEventName) && subscriptionMatchesScope(subscription.value, browsingContexts))
             return true;
     }
 

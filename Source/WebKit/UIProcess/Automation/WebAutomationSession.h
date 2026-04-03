@@ -39,6 +39,7 @@
 #include <JavaScriptCore/InspectorFrontendChannel.h>
 #include <WebCore/FrameIdentifier.h>
 #include <WebCore/NavigationIdentifier.h>
+#include <WebCore/SecurityOriginData.h>
 #include <WebCore/ShareableBitmap.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/CompletionHandler.h>
@@ -50,6 +51,10 @@
 
 #if ENABLE(REMOTE_INSPECTOR)
 #include <JavaScriptCore/RemoteAutomationTarget.h>
+#endif
+
+#if ENABLE(WEBDRIVER_BIDI)
+#include "IdentifierTypes.h"
 #endif
 
 namespace API {
@@ -291,7 +296,9 @@ public:
 
 #if ENABLE(WEBDRIVER_BIDI)
     Inspector::CommandResult<void> processBidiMessage(const String&) override;
+    Inspector::CommandResult<void> emitActiveBidiScriptRealmCreatedEvents() override;
     void sendBidiMessage(const String&);
+    WebDriverBidiProcessor& bidiProcessor() const { return m_bidiProcessor; }
 #endif
 
 #if PLATFORM(MAC)
@@ -349,6 +356,10 @@ private:
 
     // Called by WebAutomationSession messages.
     void logEntryAdded(const JSC::MessageSource&, const JSC::MessageLevel&, const String& messageText, const JSC::MessageType&, const WallTime&);
+#if ENABLE(WEBDRIVER_BIDI)
+    void scriptRealmCreated(WebCore::FrameIdentifier, RealmIdentifier, const WebCore::SecurityOriginData&);
+    void scriptRealmDestroyed(WebCore::FrameIdentifier, RealmIdentifier);
+#endif
 
     // Platform-dependent implementations.
 #if ENABLE(WEBDRIVER_MOUSE_INTERACTIONS)

@@ -62,6 +62,7 @@ WebDriverBidiProcessor::WebDriverBidiProcessor(WebAutomationSession& session)
     , m_storageAgent(makeUniqueRef<BidiStorageAgent>(session, m_backendDispatcher))
     , m_browsingContextDomainNotifier(makeUniqueRef<BidiBrowsingContextFrontendDispatcher>(m_frontendRouter))
     , m_logDomainNotifier(makeUniqueRef<BidiLogFrontendDispatcher>(m_frontendRouter))
+    , m_scriptDomainNotifier(makeUniqueRef<BidiScriptFrontendDispatcher>(m_frontendRouter))
 {
     m_frontendRouter->connectFrontend(*this);
 }

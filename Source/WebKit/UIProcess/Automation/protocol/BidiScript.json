@@ -244,5 +244,27 @@
                 { "name": "realms", "type": "array", "items": { "$ref": "BidiScript.RealmInfo" }, "description": "List of realms." }
             ]
         }
+    ],
+    "events": [
+        {
+            "name": "realmCreated",
+            "description": "Event fired when a script realm is created.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-script-realmCreated",
+            "parameters": [
+                { "name": "realm", "$ref": "BidiScript.Realm", "description": "Unique identifier of the realm." },
+                { "name": "origin", "type": "string", "description": "The serialized origin of the realm." },
+                { "name": "type", "$ref": "BidiScript.RealmType", "description": "The type of the realm." },
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext", "optional": true, "description": "Browsing context of the realm. Not present for worklet/worker realms." }
+            ]
+        },
+        {
+            "name": "realmDestroyed",
+            "description": "Event fired when a script realm is destroyed.",
+            "spec": "https://w3c.github.io/webdriver-bidi/#event-script-realmDestroyed",
+            "parameters": [
+                { "name": "realm", "$ref": "BidiScript.Realm", "description": "Unique identifier of the destroyed realm." },
+                { "name": "context", "$ref": "BidiBrowsingContext.BrowsingContext", "optional": true, "description": "Browsing context of the realm. Not present for worklet/worker realms." }
+            ]
+        }
     ]
 }

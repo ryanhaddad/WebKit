@@ -30,10 +30,12 @@
 #if ENABLE(WEBDRIVER_BIDI)
 
 #include "AutomationProtocolObjects.h"
+#include "BidiEventNames.h"
 #include "FrameTreeNodeData.h"
 #include "PageLoadState.h"
 #include "WebAutomationSession.h"
 #include "WebAutomationSessionMacros.h"
+#include "WebDriverBidiProcessor.h"
 #include "WebDriverBidiProtocolObjects.h"
 #include "WebFrameMetrics.h"
 #include "WebFrameProxy.h"
@@ -232,18 +234,18 @@ void BidiScriptAgent::evaluate(const String& expression, bool awaitPromise, Ref<
     ASYNC_FAIL_IF_UNEXPECTED_RESULT(pageAndFrameHandles);
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!session->webPageProxyForHandle(*browsingContext), FrameNotFound);
 
-    String realmId = m_realmRegistry.realmIdForContext(*browsingContext);
+    String realmID = generateRealmIdForBrowsingContext(*browsingContext);
 
     session->evaluateBidiScript(*browsingContext, emptyString(), expression, awaitPromise, 1, std::nullopt,
-        [weakThis = WeakPtr { *this }, callback = WTF::move(callback), realmId = realmId.isolatedCopy(), expression = expression.isolatedCopy()](Inspector::CommandResult<String>&& result) mutable {
+        [weakThis = WeakPtr { *this }, callback = WTF::move(callback), realmID = realmID.isolatedCopy(), expression = expression.isolatedCopy()](Inspector::CommandResult<String>&& result) mutable {
             CheckedPtr protectedThis = weakThis.get();
             if (!protectedThis)
                 return;
-            protectedThis->finishEvaluateBidiScriptResult(realmId, expression, WTF::move(result), WTF::move(callback));
+            protectedThis->finishEvaluateBidiScriptResult(realmID, expression, WTF::move(result), WTF::move(callback));
         });
 }
 
-void BidiScriptAgent::finishEvaluateBidiScriptResult(const String& realmId, const String& expression, Inspector::CommandResult<String>&& result, Inspector::CommandCallbackOf<Inspector::Protocol::BidiScript::EvaluateResultType, String, RefPtr<Inspector::Protocol::BidiScript::RemoteValue>, RefPtr<Inspector::Protocol::BidiScript::ExceptionDetails>>&& callback)
+void BidiScriptAgent::finishEvaluateBidiScriptResult(const String& realmID, const String& expression, Inspector::CommandResult<String>&& result, Inspector::CommandCallbackOf<Inspector::Protocol::BidiScript::EvaluateResultType, String, RefPtr<Inspector::Protocol::BidiScript::RemoteValue>, RefPtr<Inspector::Protocol::BidiScript::ExceptionDetails>>&& callback)
 {
     // FIXME: Implement full BiDi exception details (stack traces, line/column numbers, exception type)
     // https://bugs.webkit.org/show_bug.cgi?id=304548
@@ -274,7 +276,7 @@ void BidiScriptAgent::finishEvaluateBidiScriptResult(const String& realmId, cons
             .setException(WTF::move(exceptionRemote))
             .setStackTrace(WTF::move(stackTrace))
             .release();
-        callback({ { BidiScript::EvaluateResultType::Exception, realmId, nullptr, WTF::move(exceptionDetails) } });
+        callback({ { BidiScript::EvaluateResultType::Exception, realmID, nullptr, WTF::move(exceptionDetails) } });
         return;
     }
 
@@ -302,7 +304,7 @@ void BidiScriptAgent::finishEvaluateBidiScriptResult(const String& realmId, cons
             .setException(WTF::move(exceptionAsRemoteValue))
             .setStackTrace(WTF::move(stackTrace))
             .release();
-        callback({ { BidiScript::EvaluateResultType::Exception, realmId, nullptr, WTF::move(exceptionDetails) } });
+        callback({ { BidiScript::EvaluateResultType::Exception, realmID, nullptr, WTF::move(exceptionDetails) } });
         return;
     }
 
@@ -347,26 +349,13 @@ void BidiScriptAgent::finishEvaluateBidiScriptResult(const String& realmId, cons
             .setException(WTF::move(exceptionRemote))
             .setStackTrace(WTF::move(stackTrace))
             .release();
-        callback({ { BidiScript::EvaluateResultType::Exception, realmId, nullptr, WTF::move(exceptionDetails) } });
+        callback({ { BidiScript::EvaluateResultType::Exception, realmID, nullptr, WTF::move(exceptionDetails) } });
         return;
     }
 
     auto resultValue = envelopeObject->getValue("result"_s);
     auto remote = deserializeRemoteValue(resultValue.get());
-    callback({ { BidiScript::EvaluateResultType::Success, realmId, WTF::move(remote), nullptr } });
-}
-
-// RealmRegistryStub implementation.
-String BidiScriptAgent::RealmRegistryStub::realmIdForContext(const String& contextId) const
-{
-    return makeString("realm-"_s, contextId);
-}
-
-std::optional<String> BidiScriptAgent::RealmRegistryStub::contextForRealmId(const String& realmId) const
-{
-    if (realmId.startsWith("realm-"_s))
-        return realmId.substring(6);
-    return std::nullopt;
+    callback({ { BidiScript::EvaluateResultType::Success, realmID, WTF::move(remote), nullptr } });
 }
 
 void BidiScriptAgent::getRealms(const BrowsingContext& optionalBrowsingContext, std::optional<Inspector::Protocol::BidiScript::RealmType>&& optionalRealmType, Inspector::CommandCallback<Ref<JSON::ArrayOf<Inspector::Protocol::BidiScript::RealmInfo>>>&& callback)
@@ -434,7 +423,6 @@ void BidiScriptAgent::getRealms(const BrowsingContext& optionalBrowsingContext, 
     processRealmsForPagesAsync(WTF::move(pagesToProcess), WTF::move(optionalRealmType), WTF::move(contextHandleFilter), { }, WTF::move(callback));
 }
 
-
 RefPtr<Inspector::Protocol::BidiScript::RealmInfo> BidiScriptAgent::createRealmInfoForFrame(const FrameInfoData& frameInfo)
 {
     ASSERT(frameInfo.documentID);
@@ -448,94 +436,50 @@ RefPtr<Inspector::Protocol::BidiScript::RealmInfo> BidiScriptAgent::createRealmI
     if (!contextHandle)
         return nullptr;
 
-    // Generate or reuse a realm id based on the frame's execution state so it changes on navigation/reload.
-    String realmId = generateRealmIdForFrame(frameInfo);
+    RealmIdentifier realmIdentifier = generateRealmIdForFrame(frameInfo);
+    String realmID = makeString("realm-"_s, realmIdentifier.loggingString());
     String origin = originStringFromSecurityOriginData(frameInfo.securityOrigin);
 
     auto realmInfo = Inspector::Protocol::BidiScript::RealmInfo::create()
-        .setRealm(realmId)
+        .setRealm(realmID)
         .setOrigin(origin)
         .setType(Inspector::Protocol::BidiScript::RealmType::Window)
         .release();
 
-    // Set optional context field (required for window realms).
     realmInfo->setContext(*contextHandle);
 
     return realmInfo;
 }
 
-String BidiScriptAgent::generateRealmIdForFrame(const FrameInfoData& frameInfo)
+RealmIdentifier BidiScriptAgent::generateRealmIdForFrame(const FrameInfoData& frameInfo)
 {
-    String currentURL = frameInfo.request.url().string();
-    std::optional<String> currentDocumentID = frameInfo.documentID ? std::optional<String>(frameInfo.documentID->toString()) : std::nullopt;
-
-    if (auto it = m_frameRealmCache.find(frameInfo.frameID); it != m_frameRealmCache.end()) {
-        const auto& cachedEntry = it->value;
-
-        if (cachedEntry.url == currentURL && cachedEntry.documentID == currentDocumentID)
-            return cachedEntry.realmId;
-
-        // FIXME: This is a workaround until realm.created/realm.destroyed events are implemented.
-        // https://bugs.webkit.org/show_bug.cgi?id=304062
-        // If only the documentID changed but URL is the same, reuse the cached realm ID to keep
-        // realm IDs stable between getRealms() and evaluate()/callFunction() calls on the same document.
-        // Once realm lifecycle events are implemented, they will handle cache updates properly.
-        if (cachedEntry.url == currentURL && currentURL != "about:blank"_s) {
-            m_frameRealmCache.set(frameInfo.frameID, FrameRealmCacheEntry { currentURL, currentDocumentID, cachedEntry.realmId });
-            return cachedEntry.realmId;
-        }
-
-        // Special case: Transitioning to/from about:blank is typically not a navigation,
-        // it's either the initial page load or a new test/session starting.
-        // Don't treat this as a state change that increments the counter.
-        bool transitioningToOrFromBlank = (cachedEntry.url == "about:blank"_s) != (currentURL == "about:blank"_s);
-
-        if (transitioningToOrFromBlank) {
-            m_frameRealmCache.remove(frameInfo.frameID);
-            m_frameRealmCounters.remove(frameInfo.frameID);
-        }
-    }
-
-    // Generate a new realm ID - the state has changed or this is a new frame.
     auto contextHandle = contextHandleForFrame(frameInfo);
-
-    String newRealmId;
-
     if (!contextHandle) {
-        // Fallback to frame-based ID if we can't get context handle.
-        newRealmId = makeString("realm-frame-"_s, String::number(frameInfo.frameID.toUInt64()));
-    } else {
-        // Use the contextHandle directly - it's already unique for both main frames and iframes.
-        // For the first load of a context, use just the context handle.
-        // For subsequent navigations/reloads, append a counter to make it unique.
-        auto counterIt = m_frameRealmCounters.find(frameInfo.frameID);
-        if (counterIt == m_frameRealmCounters.end()) {
-            // First realm for this frame - no counter suffix.
-            newRealmId = makeString("realm-"_s, *contextHandle);
-            // Start counter at 1 so the NEXT navigation will use "-1" suffix.
-            m_frameRealmCounters.set(frameInfo.frameID, 1);
-        } else {
-            // Subsequent realm (reload/navigation) - use and increment counter.
-            uint64_t counter = counterIt->value;
-            newRealmId = makeString("realm-"_s, *contextHandle, "-"_s, String::number(counter));
-            counterIt->value = counter + 1;
-        }
+        // Fallback: generate a new realm identifier if we can't get context handle.
+        return RealmIdentifier::generate();
     }
 
-    // Update the cache with the new realm ID.
-    m_frameRealmCache.set(frameInfo.frameID, FrameRealmCacheEntry { currentURL, currentDocumentID, newRealmId });
+    // Look up existing realm identifier for this browsing context.
+    auto it = m_browsingContextToRealmId.find(*contextHandle);
+    if (it == m_browsingContextToRealmId.end()) {
+        // No realm has been created yet for this context - generate a new identifier.
+        auto newRealmId = RealmIdentifier::generate();
+        m_browsingContextToRealmId.set(*contextHandle, newRealmId);
+        return newRealmId;
+    }
 
-    return newRealmId;
+    return it->value;
 }
 
 String BidiScriptAgent::generateRealmIdForBrowsingContext(const String& browsingContext)
 {
-    // For evaluate/callFunction, we need to generate consistent realm IDs based on the browsing context.
-    // This simplified version works for main window contexts (page handles).
-    // For now, we just use the browsing context handle as the realm ID base.
-    // This will match what getRealms() generates for main frames since contextHandleForFrame returns the page handle.
+    // Look up the actual RealmIdentifier for this browsing context.
+    auto it = m_browsingContextToRealmId.find(browsingContext);
+    if (it != m_browsingContextToRealmId.end())
+        return makeString("realm-"_s, it->value.loggingString());
 
-    // The realm ID should match the format used by generateRealmIdForFrame().
+    // Fallback: if no realm exists yet, this is an error condition.
+    // evaluate/callFunction should only be called on existing realms.
     return makeString("realm-"_s, browsingContext);
 }
 
@@ -565,7 +509,6 @@ void BidiScriptAgent::processRealmsForPagesAsync(Deque<Ref<WebPageProxy>>&& page
         return;
     }
 
-    // Process the first page and recursively handle the rest.
     Ref<WebPageProxy> currentPage = pagesToProcess.first();
     pagesToProcess.removeFirst();
 
@@ -591,12 +534,8 @@ bool BidiScriptAgent::isFrameExecutionReady(const FrameInfoData& frameInfo)
     // For enumerating realms (getRealms), we only require a committed document (documentID).
     // Remote frames (out-of-process) must still be considered: they have realms even if we
     // cannot execute scripts directly from the UI process.
-
-    // Must have a valid document/script execution context.
     if (!frameInfo.documentID)
         return false;
-
-    // Do not exclude remote frames for enumeration purposes.
 
     // We intentionally do not check errorOccurred. Per spec, iframe realms may exist despite
     // loading errors, and tests expect realms to be present.
@@ -648,10 +587,78 @@ void BidiScriptAgent::collectExecutionReadyFrameRealms(const FrameTreeNodeData& 
     // FIXME: The recurseSubframes parameter is currently always called with false since this PR
     // only supports main frame contexts. When iframe support is added, this will be used to
     // recursively collect realms from nested browsing contexts (iframes).
-    // Recurse into subframes if requested
     if (recurseSubframes) {
         for (const auto& child : frameTree.children)
             collectExecutionReadyFrameRealms(child, realms, contextHandleFilter, true);
+    }
+}
+
+void BidiScriptAgent::sendRealmCreatedEvent(const String& realmID, const WebCore::SecurityOriginData& origin, Inspector::Protocol::BidiScript::RealmType type, Inspector::Protocol::BidiBrowsingContext::BrowsingContext context)
+{
+    RefPtr session = m_session.get();
+    if (!session)
+        return;
+
+    session->bidiProcessor().emitEventIfEnabled(BidiEventNames::Script::RealmCreated, { context }, [&]() {
+        session->bidiProcessor().scriptDomainNotifier().realmCreated(realmID, originStringFromSecurityOriginData(origin), type, context);
+    });
+}
+
+void BidiScriptAgent::notifyRealmCreated(RealmIdentifier realmIdentifier, Inspector::Protocol::BidiBrowsingContext::BrowsingContext browsingContext, const WebCore::SecurityOriginData& origin)
+{
+    // The WebProcess owns realm identifier creation and passes the identifier across IPC.
+    String realmID = makeString("realm-"_s, realmIdentifier.loggingString());
+
+    // Track the current realm for this browsing context.
+    m_browsingContextToRealmId.set(browsingContext, realmIdentifier);
+
+    RealmInfo realmInfo { origin.isolatedCopy(), Inspector::Protocol::BidiScript::RealmType::Window, browsingContext };
+    m_activeRealms.set(realmIdentifier, WTF::move(realmInfo));
+
+    sendRealmCreatedEvent(realmID, origin, Inspector::Protocol::BidiScript::RealmType::Window, browsingContext);
+}
+
+void BidiScriptAgent::notifyRealmDestroyed(RealmIdentifier realmIdentifier, Inspector::Protocol::BidiBrowsingContext::BrowsingContext browsingContext)
+{
+    RefPtr session = m_session.get();
+    if (!session)
+        return;
+
+    // Match the realm identifier that the WebProcess reported for this realm.
+    String realmID = makeString("realm-"_s, realmIdentifier.loggingString());
+
+    // Remove the realm from active realms.
+    m_activeRealms.remove(realmIdentifier);
+
+    // Remove the browsing context mapping (realm will be regenerated on next navigation).
+    m_browsingContextToRealmId.remove(browsingContext);
+
+    session->bidiProcessor().emitEventIfEnabled(BidiEventNames::Script::RealmDestroyed, { browsingContext }, [&]() {
+        session->bidiProcessor().scriptDomainNotifier().realmDestroyed(realmID, browsingContext);
+    });
+}
+
+std::optional<RealmIdentifier> BidiScriptAgent::realmIdentifierForBrowsingContext(const String& browsingContext) const
+{
+    auto it = m_browsingContextToRealmId.find(browsingContext);
+    if (it == m_browsingContextToRealmId.end())
+        return std::nullopt;
+    return it->value;
+}
+
+void BidiScriptAgent::emitEventsForActiveRealms(const HashSet<String>& contextFilter)
+{
+    // Per W3C BiDi spec: when subscribing to script.realmCreated with subscribe priority 2,
+    // emit events for all currently active realms.
+    for (const auto& entry : m_activeRealms) {
+        const RealmIdentifier& realmIdentifier = entry.key;
+        const RealmInfo& realmInfo = entry.value;
+
+        if (!contextFilter.isEmpty() && !contextFilter.contains(realmInfo.context))
+            continue;
+
+        String realmID = makeString("realm-"_s, realmIdentifier.loggingString());
+        sendRealmCreatedEvent(realmID, realmInfo.origin, realmInfo.type, realmInfo.context);
     }
 }
 

@@ -161,6 +161,9 @@ template: struct WebKit::MessageBatchIdentifierType
 template: struct WebKit::NetworkResourceLoadIdentifierType
 template: struct WebKit::PDFPluginIdentifierType
 template: struct WebKit::PageGroupIdentifierType
+#if ENABLE(WEBDRIVER_BIDI)
+template: struct WebKit::RealmIdentifierType
+#endif
 template: struct WebKit::RemoteAudioDestinationIdentifierType
 template: struct WebKit::RemoteAudioHardwareListenerIdentifierType
 template: struct WebKit::RemoteMediaResourceLoaderIdentifierType
