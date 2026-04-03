@@ -60,7 +60,7 @@ public:
 private:
     void setTextInternal(const String&, bool force) override;
 
-    Vector<char16_t> previousCharacter() const override;
+    char32_t previousCharacter() const override;
 
     unsigned m_start;
     unsigned m_end;

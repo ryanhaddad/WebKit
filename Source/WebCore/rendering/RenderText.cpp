@@ -225,22 +225,24 @@ static inline size_t capitalizeCharacter(String textContent, unsigned startChara
 
 String capitalize(const String& string)
 {
-    Vector<char16_t> previousCharacter(FillWith { }, 1, ' ');
-    return capitalize(string, previousCharacter);
+    return capitalize(string, ' ');
 }
 
-String capitalize(const String& string, Vector<char16_t> previousCharacter)
+String capitalize(const String& string, char32_t previousCharacter)
 {
     int32_t length = string.length();
-    int32_t previousCharacterLength = previousCharacter.size();
     auto& stringImpl = *string.impl();
 
     static_assert(String::MaxLength < std::numeric_limits<unsigned>::max(), "Must be able to add one without overflowing unsigned");
 
     // Replace NO BREAK SPACE with a normal spaces since ICU does not treat it as a word separator.
+    std::array<char16_t, 2> previousCharacterUTF16;
+    int32_t previousCharacterLength = 0;
+    U16_APPEND_UNSAFE(previousCharacterUTF16, previousCharacterLength, convertNoBreakSpaceToSpace(previousCharacter));
+
     Vector<char16_t> stringWithPrevious(previousCharacterLength + length);
     for (int32_t i = 0; i < previousCharacterLength; ++i)
-        stringWithPrevious[i] = convertNoBreakSpaceToSpace(previousCharacter[i]);
+        stringWithPrevious[i] = previousCharacterUTF16[i];
     for (int32_t i = previousCharacterLength; i < length + previousCharacterLength; ++i)
         stringWithPrevious[i] = convertNoBreakSpaceToSpace(stringImpl[i - previousCharacterLength]);
 
@@ -1549,7 +1551,7 @@ static inline bool NODELETE isInlineFlowOrEmptyText(const RenderObject& renderer
     return textRenderer && textRenderer->text().isEmpty();
 }
 
-Vector<char16_t> RenderText::previousCharacter() const
+char32_t RenderText::previousCharacter() const
 {
     const RenderObject* previousText = this;
     while ((previousText = previousText->previousInPreOrder())) {
@@ -1559,22 +1561,18 @@ Vector<char16_t> RenderText::previousCharacter() const
             break;
     }
     auto* renderText = dynamicDowncast<RenderText>(previousText);
-    Vector<char16_t> previous;
     if (!renderText)
-        previous.append(' ');
-    else {
-        auto& previousString = renderText->text();
-        if (previousString.is8Bit())
-            previous.append(previousString[previousString.length() - 1]);
-        else {
-            unsigned length = previousString.length();
-            bool hasSurrogatePair = length >= 2 && U_IS_LEAD(previousString[length - 2]) && U_IS_TRAIL(previousString[length - 1]);
-            if (hasSurrogatePair)
-                previous.append(previousString[length - 2]);
-            previous.append(previousString[length - 1]);
-        }
-    }
-    return previous;
+        return ' ';
+    auto& previousString = renderText->text();
+    unsigned length = previousString.length();
+    if (!length)
+        return ' ';
+    if (previousString.is8Bit())
+        return previousString[length - 1];
+    unsigned offset = length;
+    char32_t codePoint;
+    U16_PREV(previousString, 0, offset, codePoint);
+    return codePoint;
 }
 
 static String convertToFullSizeKana(const String& string)
@@ -1679,11 +1677,10 @@ static String convertToMathAuto(const String& string)
 
 String applyTextTransform(const RenderStyle& style, const String& text)
 {
-    Vector<char16_t> previousCharacter(FillWith { }, 1, ' ');
-    return applyTextTransform(style, text, previousCharacter);
+    return applyTextTransform(style, text, ' ');
 }
 
-String applyTextTransform(const RenderStyle& style, const String& text, Vector<char16_t> previousCharacter)
+String applyTextTransform(const RenderStyle& style, const String& text, char32_t previousCharacter)
 {
     auto transform = style.textTransform();
 
