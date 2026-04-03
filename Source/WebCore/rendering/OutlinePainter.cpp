@@ -402,7 +402,7 @@ bool OutlinePainter::collectFocusRingRectsForBlock(const RenderBlock& renderer, 
 
 void OutlinePainter::collectFocusRingRectsForChildBox(const RenderBox& box, Vector<LayoutRect>& rects, const LayoutPoint& additionalOffset, const RenderLayerModelObject* paintContainer)
 {
-    if (box.isRenderListMarker() || box.isOutOfFlowPositioned())
+    if (box.style().pseudoElementType() || box.isOutOfFlowPositioned())
         return;
 
     FloatPoint pos;
