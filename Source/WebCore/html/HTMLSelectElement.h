@@ -306,6 +306,7 @@ private:
     bool m_multiple;
     bool m_activeSelectionState;
     bool m_allowsNonContiguousSelection;
+    bool m_isCapturingMouseEvents { false };
     mutable bool m_shouldRecalcListItems;
     unsigned m_selectedContentDescendantCount { 0 };
 

@@ -1814,15 +1814,25 @@ void HTMLSelectElement::listBoxDefaultEventHandler(Event& event)
                     updateListBoxSelection(true);
                 }
             }
+            if (frame) {
+                frame->eventHandler().setCapturingMouseEventsElement(this);
+                m_isCapturingMouseEvents = true;
+            }
+
             mouseEvent->setDefaultHandled();
         }
-    } else if (event.type() == eventNames.mouseupEvent && mouseEvent && mouseEvent->button() == MouseButton::Left && frame && frame->eventHandler().autoscrollRenderer() != renderer()) {
-        // This click or drag event was not over any of the options.
+    } else if (event.type() == eventNames.mouseupEvent && mouseEvent && mouseEvent->button() == MouseButton::Left && frame) {
+        if (m_isCapturingMouseEvents) {
+            frame->eventHandler().setCapturingMouseEventsElement(nullptr);
+            m_isCapturingMouseEvents = false;
+        }
+        // If this select is autoscrolling, stopAutoscroll() will call
+        // listBoxOnChange() when the autoscroll timer stops,
+        // so avoid calling it here.
+        if (frame->eventHandler().autoscrollRenderer() == renderer())
+            return;
         if (m_lastOnChangeSelection.isEmpty())
             return;
-        // This makes sure we fire dispatchFormControlChangeEvent for a single
-        // click. For drag selection, onChange will fire when the autoscroll
-        // timer stops.
         listBoxOnChange();
     } else if (event.type() == eventNames.keydownEvent) {
         RefPtr keyboardEvent = dynamicDowncast<KeyboardEvent>(event);
