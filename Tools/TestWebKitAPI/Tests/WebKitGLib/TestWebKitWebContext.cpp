@@ -988,6 +988,8 @@ static void testWebContextTimeZoneOverrideInWorker(WebViewTest* test, gconstpoin
         "time-zone-override", "Europe/Berlin", nullptr)));
     g_assert_cmpstr(webkit_web_context_get_time_zone_override(webContext.get()), ==, "Europe/Berlin");
     auto webView = test->createWebView("web-context", webContext.get(), nullptr);
+    webkit_web_view_load_uri(webView.get(), kServer->getURIForPath("/").data());
+    test->waitUntilLoadFinished(webView.get());
 
     test->runJavaScriptAndWaitUntilFinished(
         "window.results = [Intl.DateTimeFormat().resolvedOptions().timeZone];"
