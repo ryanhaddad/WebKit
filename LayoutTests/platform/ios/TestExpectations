@@ -8616,3 +8616,5 @@ webkit.org/b/311222 [ Release ] imported/w3c/web-platform-tests/navigation-api/n
 
 # rdar://173890240 ([iOS] imported/w3c/web-platform-tests/css/css-images/gradient/gradient-analogous-missing-components-003.html has 2 component pixel difference)
 imported/w3c/web-platform-tests/css/css-images/gradient/gradient-analogous-missing-components-003.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/311378 http/wpt/mediarecorder/MediaRecorder-audio-samplingrate-change.html [ Pass Failure ]
