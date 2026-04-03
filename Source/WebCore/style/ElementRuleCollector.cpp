@@ -549,7 +549,7 @@ static Vector<AtomString> classListForNamedViewTransitionPseudoElement(const Doc
     return capturedElement->classList;
 }
 
-inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned& specificity, ScopeOrdinal styleScopeOrdinal, std::optional<ScopingRootWithDistance> scopingRoot)
+inline bool ElementRuleCollector::ruleMatches(const RuleData& ruleData, unsigned& specificity, ScopeOrdinal styleScopeOrdinal, const ScopingRootWithDistance* scopingRoot)
 {
     // We know a sufficiently simple single part selector matches simply because we found it from the rule hash when filtering the RuleSet.
     // This is limited to HTML only so we don't need to check the namespace (because of tag name match).
@@ -665,15 +665,16 @@ void ElementRuleCollector::collectMatchingRulesForListSlow(const RuleSet::RuleDa
         if (rule.properties().isEmpty() && !m_shouldIncludeEmptyRules)
             continue;
 
-        auto addRuleIfMatches = [&] (const ScopingRootWithDistance& scopingRootWithDistance = { }) {
+        auto addRuleIfMatches = [&] (const ScopingRootWithDistance* scopingRootWithDistance = nullptr) {
             unsigned specificity;
+            auto distance = scopingRootWithDistance ? scopingRootWithDistance->distance : std::numeric_limits<unsigned>::max();
             if (ruleMatches(ruleData, specificity, matchRequest.styleScopeOrdinal, scopingRootWithDistance))
-                addMatchedRule(ruleData, specificity, scopingRootWithDistance.distance, matchRequest);
+                addMatchedRule(ruleData, specificity, distance, matchRequest);
         };
 
         if (scopingRoots) {
             for (auto& scopingRoot : *scopingRoots)
-                addRuleIfMatches(scopingRoot);
+                addRuleIfMatches(&scopingRoot);
             continue;
         }
 
