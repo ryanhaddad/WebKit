@@ -225,7 +225,6 @@ http/tests/security/XFrameOptions/x-frame-options-multiple-headers-sameorigin-de
 http/tests/security/XFrameOptions/x-frame-options-parent-same-origin-deny.html [ Failure ]
 http/tests/security/allow-top-level-navigations-by-third-party-iframes-with-previous-user-activation.html [ Failure ]
 http/tests/security/allow-top-level-navigations-by-third-party-iframes-with-user-activation.html [ Failure ]
-http/tests/security/block-top-level-navigations-by-sandboxed-iframe-with-propagated-user-gesture.html [ Failure ]
 http/tests/security/block-top-level-navigations-by-third-party-sandboxed-iframe.html [ Failure ]
 http/tests/security/contentSecurityPolicy/1.1/frame-ancestors/frame-ancestors-nested-cross-in-same-none-block.html [ Failure ]
 http/tests/security/contentSecurityPolicy/1.1/frame-ancestors/frame-ancestors-nested-cross-in-same-self-block.html [ Failure ]
@@ -442,10 +441,11 @@ fast/block/float/independent-align-positioning.html [ Missing ]
 ####################################
 # Tests with intentional text fail #
 ####################################
-# The following two tests have a different console log with Site Isolation enabled
+# The following tests have a different console log with Site Isolation enabled
 # vs disabled. The difference is that with Site Isolation enabled, the error message
 # only includes the protocol and origin of a RemoteFrame when with Site Isolation
 # is disabled the other frame is a LocalFrame which we log the URL with the
 # full path.
 http/tests/security/block-top-level-navigation-to-different-scheme-by-third-party-iframes.html [ Failure ]
+http/tests/security/block-top-level-navigations-by-sandboxed-iframe-with-propagated-user-gesture.html [ Failure ]
 http/tests/security/block-top-level-navigations-by-third-party-iframes.html [ Failure ]
