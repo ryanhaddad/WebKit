@@ -188,6 +188,7 @@ protected:
 private:
     bool isAccessibilityRenderObject() const final { return true; }
     bool isAllowedChildOfTree() const;
+    bool isInsideIgnoredImageOverlay() const;
     AccessibilityObject* containingTree() const;
     CharacterRange documentBasedSelectedTextRange() const;
     RefPtr<Element> rootEditableElementForPosition(const Position&) const;

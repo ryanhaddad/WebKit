@@ -84,6 +84,7 @@
 #include "HitTestRequest.h"
 #include "HitTestResult.h"
 #include "Image.h"
+#include "ImageOverlay.h"
 #include "InlineIteratorBoxInlines.h"
 #include "InlineIteratorLogicalOrderTraversal.h"
 #include "InlineIteratorTextBoxInlines.h"
@@ -965,6 +966,12 @@ bool AccessibilityRenderObject::computeIsIgnored() const
         return true;
 
     if (role() == AccessibilityRole::Ignored)
+        return true;
+
+    // Image overlay children (text recognized in images) should be ignored if
+    // their host image is accessibility-ignored (e.g. role="presentation" or
+    // aria-hidden="true").
+    if (isInsideIgnoredImageOverlay())
         return true;
 
     // Needs to happen before the presentational role check, since we want to expose table cells if they are in an exposable table (even if within a presentational role).
@@ -2411,11 +2418,28 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
     return AccessibilityRole::Unknown;
 }
 
+bool AccessibilityRenderObject::isInsideIgnoredImageOverlay() const
+{
+    RefPtr node = this->node();
+    if (!node || !ImageOverlay::isInsideOverlay(*node))
+        return false;
+
+    CheckedPtr cache = axObjectCache();
+    if (RefPtr hostObject = cache ? cache->getOrCreate(node->shadowHost()) : nullptr)
+        return hostObject->isIgnored();
+    return false;
+}
+
 std::optional<AXCoreObject::AccessibilityChildrenVector> AccessibilityRenderObject::imageOverlayElements()
 {
     AXTRACE("AccessibilityRenderObject::imageOverlayElements"_s);
 
     if (!m_renderer || !toSimpleImage(*m_renderer))
+        return std::nullopt;
+
+    // Don't expose image overlay elements for images that are accessibility-ignored
+    // (e.g. due to role="presentation" or aria-hidden="true").
+    if (isIgnored())
         return std::nullopt;
 
     const auto& children = this->unignoredChildren();
