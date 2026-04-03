@@ -1867,7 +1867,7 @@ CloseWatcherEnabled:
 
 ClosedbyAttributeEnabled:
   type: bool
-  status: testable
+  status: preview
   category: html
   humanReadableName: "HTML closedby attribute"
   humanReadableDescription: "Enable HTML closedby attribute support"
