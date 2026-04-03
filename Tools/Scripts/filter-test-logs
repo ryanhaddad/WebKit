@@ -110,6 +110,8 @@ def filter_scan_build(log_file_name):
             elif line.startswith('**'):
                 print_all_lines = True
                 print(line, end='')
+            elif ': error:' in line:
+                print(line, end='')
             else:
                 keep_alive_stdout.maybe_update_progress()
 
