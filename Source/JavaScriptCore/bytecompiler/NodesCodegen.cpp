@@ -5788,18 +5788,16 @@ RegisterID* YieldExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
 {
     if (!delegate()) {
         RefPtr<RegisterID> arg = nullptr;
-        if (argument()) {
-            arg = generator.newTemporary();
-            generator.emitNode(arg.get(), argument());
-        } else
+        if (argument())
+            arg = generator.emitNode(argument());
+        else
             arg = generator.emitLoad(nullptr, jsUndefined());
         RefPtr<RegisterID> value = generator.emitYield(arg.get());
         if (dst == generator.ignoredResult())
             return nullptr;
         return generator.move(generator.finalDestination(dst), value.get());
     }
-    RefPtr<RegisterID> arg = generator.newTemporary();
-    generator.emitNode(arg.get(), argument());
+    RefPtr<RegisterID> arg = generator.emitNode(argument());
     RefPtr<RegisterID> value = generator.emitDelegateYield(arg.get(), this);
     if (dst == generator.ignoredResult())
         return nullptr;
@@ -5810,8 +5808,7 @@ RegisterID* YieldExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
 
 RegisterID* AwaitExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID* dst)
 {
-    RefPtr<RegisterID> arg = generator.newTemporary();
-    generator.emitNode(arg.get(), argument());
+    RefPtr<RegisterID> arg = generator.emitNode(argument());
     return generator.emitAwait(dst ? dst : generator.newTemporary(), arg.get(), position());
 }
 
