@@ -315,6 +315,11 @@ void RemoteScrollingCoordinatorProxy::sendScrollingTreeNodeUpdate()
         webPageProxy->sendScrollUpdateForNode(m_scrollingTree->frameIDForScrollingNodeID(update.nodeID), update, isLastUpdate);
         m_waitingForDidScrollReply = true;
     }
+
+#if ENABLE(ACCESSIBILITY_LOCAL_FRAME)
+    if (!scrollUpdates.isEmpty())
+        webPageProxy->scheduleAccessibilityFrameGeometryUpdate();
+#endif
 }
 
 void RemoteScrollingCoordinatorProxy::scrollingThreadAddedPendingUpdate()
