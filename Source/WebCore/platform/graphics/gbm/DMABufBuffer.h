@@ -29,7 +29,7 @@
 #include "DMABufBufferAttributes.h"
 #include <wtf/ThreadSafeRefCounted.h>
 
-typedef void* EGLDisplay;
+typedef int32_t EGLint;
 typedef void* EGLImage;
 
 namespace WebCore {
@@ -64,9 +64,8 @@ public:
     void setTransferFunction(TransferFunction transferFunction) { m_transferFunction = transferFunction; }
 
     EGLImage createEGLImage(GLDisplay&) const;
-    EGLImage createEGLImage(EGLDisplay) const;
     static EGLImage createEGLImage(GLDisplay&, const Attributes&);
-    static EGLImage createEGLImage(EGLDisplay, const Attributes&);
+    static std::optional<Vector<EGLint>> buildEGLImageAttributes(const Attributes&, Attributes::EnableModifiers = Attributes::EnableModifiers::Yes);
 
     CoordinatedPlatformLayerBuffer* buffer() const LIFETIME_BOUND { return m_buffer.get(); }
     void setBuffer(std::unique_ptr<CoordinatedPlatformLayerBuffer>&&);

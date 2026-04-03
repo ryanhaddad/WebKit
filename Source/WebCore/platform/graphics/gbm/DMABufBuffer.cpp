@@ -157,11 +157,6 @@ static std::optional<Vector<EGLAttrib>> buildEGLAttributesForDMABuf(const DMABuf
     return eglAttributes;
 }
 
-EGLImage DMABufBuffer::createEGLImage(EGLDisplay eglDisplay) const
-{
-    return createEGLImage(eglDisplay, m_attributes);
-}
-
 EGLImage DMABufBuffer::createEGLImage(GLDisplay& display, const Attributes& dmaBufAttributes)
 {
     auto enableModifiers = display.extensions().EXT_image_dma_buf_import_modifiers
@@ -172,20 +167,14 @@ EGLImage DMABufBuffer::createEGLImage(GLDisplay& display, const Attributes& dmaB
     return display.createImage(EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, *eglAttributes);
 }
 
-EGLImage DMABufBuffer::createEGLImage(EGLDisplay eglDisplay, const Attributes& dmaBufAttributes)
+std::optional<Vector<EGLint>> DMABufBuffer::buildEGLImageAttributes(const Attributes& dmaBufAttributes, Attributes::EnableModifiers enableModifiers)
 {
-    auto eglAttributes = buildEGLAttributesForDMABuf(dmaBufAttributes, DMABufBuffer::Attributes::EnableModifiers::Yes);
-    if (!eglAttributes || eglDisplay == EGL_NO_DISPLAY)
-        return EGL_NO_IMAGE;
-
-    static PFNEGLCREATEIMAGEKHRPROC s_eglCreateImageKHR = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(eglGetProcAddress("eglCreateImageKHR"));
-    if (!s_eglCreateImageKHR)
-        return EGL_NO_IMAGE;
-
-    auto intAttributes = eglAttributes->map<Vector<EGLint>>([](EGLAttrib value) {
+    auto eglAttributes = buildEGLAttributesForDMABuf(dmaBufAttributes, enableModifiers);
+    if (!eglAttributes)
+        return std::nullopt;
+    return eglAttributes->map<Vector<EGLint>>([](EGLAttrib value) {
         return static_cast<EGLint>(value);
     });
-    return s_eglCreateImageKHR(eglDisplay, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, intAttributes.span().data());
 }
 
 } // namespace WebCore

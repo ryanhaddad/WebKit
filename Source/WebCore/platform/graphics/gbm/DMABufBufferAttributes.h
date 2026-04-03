@@ -43,6 +43,8 @@ public:
     // EGL_EXT_image_dma_buf_import supports up to 4 planes (PLANE0..PLANE3).
     static constexpr unsigned maxPlaneCountForEGLImage = 4;
 
+    enum class EnableModifiers : bool { No, Yes };
+
     IntSize size;
     FourCC fourcc;
     Vector<WTF::UnixFileDescriptor> fds;
@@ -51,7 +53,6 @@ public:
     uint64_t modifier { 0 };
 
 #if USE(GBM)
-    enum class EnableModifiers : bool { No, Yes };
     static std::optional<DMABufBufferAttributes> fromGBMBufferObject(struct gbm_bo*, EnableModifiers = EnableModifiers::Yes);
 #endif
 };

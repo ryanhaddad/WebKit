@@ -140,9 +140,13 @@ GraphicsContextGLTextureMapperGBM::DrawingBuffer GraphicsContextGLTextureMapperG
     }
 
     Ref dmaBuf = DMABufBuffer::create(WTF::move(*dmaBufAttributes));
-    auto image = dmaBuf->createEGLImage(m_displayObj);
+    auto eglAttributes = DMABufBuffer::buildEGLImageAttributes(dmaBuf->attributes());
     gbm_bo_destroy(bo);
 
+    if (!eglAttributes)
+        return { };
+
+    auto image = EGL_CreateImageKHR(m_displayObj, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, eglAttributes->span().data());
     if (!image)
         return { };
 
@@ -260,7 +264,14 @@ GCGLExternalImage GraphicsContextGLTextureMapperGBM::createExternalImage(Externa
     }
 
     DMABufBufferAttributes dmaBufAttributes { imageSource.size, imageSource.fourcc, WTF::move(imageSource.fds), WTF::move(imageSource.offsets), WTF::move(imageSource.strides), imageSource.modifier };
-    auto eglImage = DMABufBuffer::createEGLImage(m_displayObj, dmaBufAttributes);
+    auto enableModifiers = PlatformDisplay::sharedDisplay().eglExtensions().EXT_image_dma_buf_import_modifiers
+        ? DMABufBufferAttributes::EnableModifiers::Yes : DMABufBufferAttributes::EnableModifiers::No;
+    auto eglAttributes = DMABufBuffer::buildEGLImageAttributes(dmaBufAttributes, enableModifiers);
+    if (!eglAttributes) {
+        addError(GCGLErrorCode::InvalidOperation);
+        return { };
+    }
+    auto eglImage = EGL_CreateImageKHR(m_displayObj, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, eglAttributes->span().data());
     if (!eglImage) {
         LOG(XR, "invalid operation importing the image %d", EGL_GetError());
         addError(GCGLErrorCode::InvalidOperation);
