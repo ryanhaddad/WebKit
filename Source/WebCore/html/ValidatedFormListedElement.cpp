@@ -320,7 +320,27 @@ void ValidatedFormListedElement::parseReadOnlyAttribute(const AtomString& value)
     bool newHasReadOnlyAttribute = !value.isNull();
     if (m_hasReadOnlyAttribute != newHasReadOnlyAttribute) {
         bool newMatchesReadWrite = supportsReadOnly() && !newHasReadOnlyAttribute;
-        Style::PseudoClassChangeInvalidation readWriteInvalidation(asHTMLElement(), { { CSSSelector::PseudoClass::ReadWrite, newMatchesReadWrite }, { CSSSelector::PseudoClass::ReadOnly, !newMatchesReadWrite } });
+        Ref element = asHTMLElement();
+
+        // :in-range/:out-of-range/:valid/:invalid depend on willValidate() which is affected by the readonly state.
+        // Temporarily apply the new readonly state to compute the new pseudo-class values.
+        m_hasReadOnlyAttribute = newHasReadOnlyAttribute;
+        m_willValidateInitialized = false;
+        bool newMatchesValid = matchesValidPseudoClass();
+        bool newMatchesInvalid = matchesInvalidPseudoClass();
+        bool newMatchesInRange = element->isInRange();
+        bool newMatchesOutOfRange = element->isOutOfRange();
+        // Restore old state so PseudoClassChangeInvalidation constructors capture the before-change state.
+        m_hasReadOnlyAttribute = !newHasReadOnlyAttribute;
+        m_willValidateInitialized = false;
+
+        Style::PseudoClassChangeInvalidation readWriteInvalidation(element, { { CSSSelector::PseudoClass::ReadWrite, newMatchesReadWrite }, { CSSSelector::PseudoClass::ReadOnly, !newMatchesReadWrite } });
+        Style::PseudoClassChangeInvalidation rangeAndValidityInvalidation(element, {
+            { CSSSelector::PseudoClass::InRange, newMatchesInRange },
+            { CSSSelector::PseudoClass::OutOfRange, newMatchesOutOfRange },
+            { CSSSelector::PseudoClass::Valid, newMatchesValid },
+            { CSSSelector::PseudoClass::Invalid, newMatchesInvalid },
+        });
         m_hasReadOnlyAttribute = newHasReadOnlyAttribute;
         readOnlyStateChanged();
     }

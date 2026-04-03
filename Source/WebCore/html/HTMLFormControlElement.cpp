@@ -162,15 +162,6 @@ void HTMLFormControlElement::disabledStateChanged()
         renderer->repaint();
 }
 
-void HTMLFormControlElement::readOnlyStateChanged()
-{
-    ValidatedFormListedElement::readOnlyStateChanged();
-
-    // Some input pseudo classes like :in-range/out-of-range change based on the readonly state.
-    // FIXME: Use PseudoClassChangeInvalidation instead for :has() support and more efficiency.
-    invalidateStyleForSubtree();
-}
-
 void HTMLFormControlElement::requiredStateChanged()
 {
     updateValidity();
