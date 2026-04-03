@@ -152,11 +152,11 @@
 @implementation _WKTextExtractionResult {
     RetainPtr<NSString> _textContent;
     RetainPtr<NSDictionary<NSString *, NSURL *>> _shortenedURLs;
-    HashMap<String, Vector<WebKit::FrameAndNodeIdentifiers>> _textToContainerMap;
+    HashMap<String, Vector<WebKit::ExtractedNodeInfo>> _textToContainerMap;
     __weak WKWebView *_webView;
 }
 
-- (instancetype)initWithWebView:(WKWebView *)webView textContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText shortenedURLs:(NSDictionary<NSString *, NSURL *> *)shortenedURLs textToContainerMap:(HashMap<String, Vector<WebKit::FrameAndNodeIdentifiers>>&&)textToContainerMap
+- (instancetype)initWithWebView:(WKWebView *)webView textContent:(NSString *)textContent filteredOutAnyText:(BOOL)filteredOutAnyText shortenedURLs:(NSDictionary<NSString *, NSURL *> *)shortenedURLs textToContainerMap:(HashMap<String, Vector<WebKit::ExtractedNodeInfo>>&&)textToContainerMap
 {
     if (self = [super init]) {
         _textContent = textContent;
@@ -168,7 +168,7 @@
     return self;
 }
 
-- (Expected<std::optional<WebKit::FrameAndNodeIdentifiers>, String>)resolveContainerForSearchText:(NSString *)searchText
+- (Expected<std::optional<WebKit::ExtractedNodeInfo>, String>)resolveContainerForSearchText:(NSString *)searchText
 {
     if (!searchText.length)
         return { std::nullopt };
@@ -181,10 +181,24 @@
     if (containers.isEmpty())
         return { std::nullopt };
 
-    if (containers.size() > 1)
-        return makeUnexpected(makeString("Multiple matches for '"_s, String { searchText }, "'; use a uid to disambiguate"_s));
+    if (containers.size() == 1)
+        return { containers.first() };
 
-    return { containers.first() };
+    std::optional<WebKit::ExtractedNodeInfo> interactiveContainer;
+    for (auto& container : containers) {
+        if (container.interactivity != WebKit::ExtractedNodeInfo::IsInteractive::Yes)
+            continue;
+
+        if (interactiveContainer)
+            return makeUnexpected(makeString("Multiple interactive matches for '"_s, String { searchText }, "'; use a uid to disambiguate"_s));
+
+        interactiveContainer = container;
+    }
+
+    if (interactiveContainer)
+        return { *interactiveContainer };
+
+    return makeUnexpected(makeString("Multiple matches for '"_s, String { searchText }, "'; use a uid to disambiguate"_s));
 }
 
 - (NSString *)textContent

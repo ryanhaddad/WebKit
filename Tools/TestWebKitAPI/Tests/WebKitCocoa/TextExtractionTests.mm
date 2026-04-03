@@ -1397,4 +1397,35 @@ TEST(TextExtractionTests, ShortenURLsWithTopHostName)
     EXPECT_TRUE([debugText containsString:@"example.com/other"]);
 }
 
+TEST(TextExtractionTests, ExtractionContextPrefersInteractiveElement)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [[configuration preferences] _setTextExtractionEnabled:YES];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView synchronouslyLoadHTMLString:@R"HTML(
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name='viewport' content='width=device-width, initial-scale=1'>
+        </head>
+        <body>
+            <h1>Sign in</h1>
+            <button onclick="document.getElementById('result').textContent = 'submitted'">Sign in</button>
+            <div id="result">none</div>
+        </body>
+        </html>
+    )HTML"];
+
+    RetainPtr extractionResult = [webView synchronouslyExtractDebugTextResult:nil];
+    EXPECT_TRUE([[extractionResult textContent] containsString:@"Sign in"]);
+
+    RetainPtr click = adoptNS([[_WKTextExtractionInteraction alloc] initWithAction:_WKTextExtractionActionClick extractionContext:extractionResult.get()]);
+    [click setText:@"Sign in"];
+    RetainPtr result = [webView synchronouslyPerformInteraction:click.get()];
+    EXPECT_NULL([result error]);
+
+    EXPECT_WK_STREQ("submitted", [webView stringByEvaluatingJavaScript:@"document.getElementById('result').textContent"]);
+}
+
 } // namespace TestWebKitAPI

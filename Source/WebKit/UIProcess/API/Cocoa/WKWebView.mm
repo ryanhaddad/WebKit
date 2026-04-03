@@ -7171,7 +7171,7 @@ static RetainPtr<_WKTextExtractionResult> createEmptyTextExtractionResult()
         }
     }();
 
-    if (auto identifiers = WebKit::parseFrameAndNodeIdentifiers(String { wkInteraction.nodeIdentifier })) {
+    if (auto identifiers = WebKit::parseExtractedNodeInfo(String { wkInteraction.nodeIdentifier })) {
         interaction.nodeIdentifier = { WTF::move(identifiers->nodeIdentifier) };
         frameIdentifier = WTF::move(identifiers->frameIdentifier);
     }
@@ -7791,7 +7791,7 @@ static OptionSet<WebCore::DataDetectorType> NODELETE coreDataDetectorTypes(_WKTe
 
 - (void)_requestJSHandleForNodeIdentifier:(NSString *)nodeIdentifierString searchText:(NSString *)searchText completionHandler:(void (^)(_WKJSHandle *))completion
 {
-    auto identifiers = WebKit::parseFrameAndNodeIdentifiers(String { nodeIdentifierString });
+    auto identifiers = WebKit::parseExtractedNodeInfo(String { nodeIdentifierString });
     if (!identifiers && !searchText.length)
         return completion(nil);
 
@@ -7813,7 +7813,7 @@ static OptionSet<WebCore::DataDetectorType> NODELETE coreDataDetectorTypes(_WKTe
 
 - (void)_requestContainerJSHandleForNodeIdentifier:(NSString *)nodeIdentifierString searchText:(NSString *)searchText completionHandler:(void (^)(_WKJSHandle *))completion
 {
-    auto identifiers = WebKit::parseFrameAndNodeIdentifiers(String { nodeIdentifierString });
+    auto identifiers = WebKit::parseExtractedNodeInfo(String { nodeIdentifierString });
     if (!identifiers && !searchText.length)
         return completion(nil);
 
@@ -7840,7 +7840,7 @@ static OptionSet<WebCore::DataDetectorType> NODELETE coreDataDetectorTypes(_WKTe
 
     RefPtr targetFrame = _page->mainFrame();
     std::optional<WebCore::NodeIdentifier> targetNodeIdentifier;
-    if (auto identifiers = WebKit::parseFrameAndNodeIdentifiers(String { nodeIdentifierString })) {
+    if (auto identifiers = WebKit::parseExtractedNodeInfo(String { nodeIdentifierString })) {
         targetNodeIdentifier = identifiers->nodeIdentifier;
         if (identifiers->frameIdentifier)
             targetFrame = WebKit::WebFrameProxy::webFrame(identifiers->frameIdentifier);

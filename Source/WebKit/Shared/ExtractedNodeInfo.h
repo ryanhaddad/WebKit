@@ -30,11 +30,14 @@
 
 namespace WebKit {
 
-struct FrameAndNodeIdentifiers {
+struct ExtractedNodeInfo {
+    enum class IsInteractive : bool { No, Yes };
+
     std::optional<WebCore::FrameIdentifier> frameIdentifier;
     WebCore::NodeIdentifier nodeIdentifier;
+    IsInteractive interactivity { IsInteractive::No };
 
-    bool operator==(const FrameAndNodeIdentifiers& other) const
+    bool operator==(const ExtractedNodeInfo& other) const
     {
         return frameIdentifier == other.frameIdentifier && nodeIdentifier == other.nodeIdentifier;
     }

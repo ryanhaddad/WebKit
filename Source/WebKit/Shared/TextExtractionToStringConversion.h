@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "FrameAndNodeIdentifiers.h"
+#include "ExtractedNodeInfo.h"
 #include "TextExtractionURLCache.h"
 #include <wtf/CompletionHandler.h>
 #include <wtf/NativePromise.h>
@@ -114,11 +114,11 @@ struct TextExtractionResult {
     String textContent;
     bool filteredOutAnyText { false };
     Vector<String> shortenedURLStrings;
-    HashMap<String, Vector<FrameAndNodeIdentifiers>> textToContainerMap;
+    HashMap<String, Vector<ExtractedNodeInfo>> textToContainerMap;
 };
 
 void convertToText(WebCore::TextExtraction::Item&&, TextExtractionOptions&&, CompletionHandler<void(TextExtractionResult&&)>&&);
 
-std::optional<FrameAndNodeIdentifiers> parseFrameAndNodeIdentifiers(StringView);
+std::optional<ExtractedNodeInfo> parseExtractedNodeInfo(StringView);
 
 } // namespace WebKit

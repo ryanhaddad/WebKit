@@ -262,7 +262,7 @@ static bool isEmptyMarkdownListItem(StringView line)
     return line == "-"_s || line == "- "_s;
 }
 
-std::optional<FrameAndNodeIdentifiers> parseFrameAndNodeIdentifiers(StringView identifierString)
+std::optional<ExtractedNodeInfo> parseExtractedNodeInfo(StringView identifierString)
 {
     Vector<uint64_t, 3> values;
     for (auto component : identifierString.split('_')) {
@@ -704,16 +704,17 @@ public:
         return makeString(frameIdentifierValue >> 32, '_', (frameIdentifierValue & 0xFFFFFFFF), '_', nodeIdentifier.toUInt64());
     }
 
-    void collectTextMapping(const String& text, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& nodeIdentifier)
+    void collectTextMapping(const String& text, const std::optional<FrameIdentifier>& frameIdentifier, const std::optional<NodeIdentifier>& nodeIdentifier, ExtractedNodeInfo::IsInteractive interactivity = ExtractedNodeInfo::IsInteractive::No)
     {
-        if (text.isEmpty() || !nodeIdentifier)
+        auto trimmedText = text.trim(isASCIIWhitespace);
+        if (trimmedText.isEmpty() || !nodeIdentifier)
             return;
 
-        auto& containers = m_textToContainerMap.ensure(text, [&] {
-            return Vector<FrameAndNodeIdentifiers> { };
+        auto& containers = m_textToContainerMap.ensure(trimmedText, [&] {
+            return Vector<ExtractedNodeInfo> { };
         }).iterator->value;
 
-        if (auto identifiers = FrameAndNodeIdentifiers { frameIdentifier, *nodeIdentifier }; containers.isEmpty() || containers.last() != identifiers)
+        if (auto identifiers = ExtractedNodeInfo { frameIdentifier, *nodeIdentifier, interactivity }; containers.isEmpty() || containers.last() != identifiers)
             containers.append(WTF::move(identifiers));
     }
 
@@ -823,7 +824,7 @@ private:
     TextExtractionVersionBehaviors m_versionBehaviors;
     bool m_filteredOutAnyText { false };
     Vector<String> m_shortenedURLStrings;
-    HashMap<String, Vector<FrameAndNodeIdentifiers>> m_textToContainerMap;
+    HashMap<String, Vector<ExtractedNodeInfo>> m_textToContainerMap;
     RefPtr<JSON::Object> m_rootJSONObject;
 };
 
@@ -1018,7 +1019,7 @@ static void populateJSONForItem(JSON::Object& jsonObject, const TextExtraction::
 
     WTF::switchOn(item.data,
         [&](const TextExtraction::TextItemData& textData) {
-            aggregator.collectTextMapping(textData.content, item.frameIdentifier, identifier);
+            aggregator.collectTextMapping(textData.content, item.frameIdentifier, identifier, item.nodeIdentifier ? ExtractedNodeInfo::IsInteractive::Yes : ExtractedNodeInfo::IsInteractive::No);
             addJSONTextContent(Ref { jsonObject }, textData, item.frameIdentifier, identifier, aggregator);
         },
         [&](const TextExtraction::ScrollableItemData& scrollableData) {
@@ -1605,7 +1606,7 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
         identifier = enclosingNode;
 
     if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
-        aggregator.collectTextMapping(std::get<TextExtraction::TextItemData>(item.data).content, item.frameIdentifier, identifier);
+        aggregator.collectTextMapping(std::get<TextExtraction::TextItemData>(item.data).content, item.frameIdentifier, identifier, item.nodeIdentifier ? ExtractedNodeInfo::IsInteractive::Yes : ExtractedNodeInfo::IsInteractive::No);
 
     if (aggregator.usePlainTextOutput()) {
         if (std::holds_alternative<TextExtraction::TextItemData>(item.data))
@@ -1685,7 +1686,7 @@ static void addTextRepresentationRecursive(const TextExtraction::Item& item, std
 
     if (item.children.size() == 1) {
         if (auto text = item.children[0].dataAs<TextExtraction::TextItemData>()) {
-            aggregator.collectTextMapping(text->content.trim(isASCIIWhitespace), item.frameIdentifier, identifier);
+            aggregator.collectTextMapping(text->content.trim(isASCIIWhitespace), item.frameIdentifier, identifier, item.nodeIdentifier ? ExtractedNodeInfo::IsInteractive::Yes : ExtractedNodeInfo::IsInteractive::No);
 
             if (omitChildTextNode)
                 return;
