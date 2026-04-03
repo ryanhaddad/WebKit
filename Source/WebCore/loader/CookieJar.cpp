@@ -45,6 +45,10 @@
 #include <wtf/CompletionHandler.h>
 #include <wtf/SystemTracing.h>
 
+#if HAVE(LOCALHOST_TIED_TO_LOOPBACK)
+#include "SecurityOrigin.h"
+#endif
+
 namespace WebCore {
 
 static ShouldRelaxThirdPartyCookieBlocking NODELETE shouldRelaxThirdPartyCookieBlocking(const Document& document)
@@ -61,7 +65,11 @@ Ref<CookieJar> CookieJar::create(Ref<StorageSessionProvider>&& storageSessionPro
 
 IncludeSecureCookies CookieJar::shouldIncludeSecureCookies(const URL& url)
 {
+#if HAVE(LOCALHOST_TIED_TO_LOOPBACK)
+    return shouldTreatAsPotentiallyTrustworthy(url) ? IncludeSecureCookies::Yes : IncludeSecureCookies::No;
+#else
     return url.protocolIs("https"_s) ? IncludeSecureCookies::Yes : IncludeSecureCookies::No;
+#endif
 }
 
 SameSiteInfo CookieJar::sameSiteInfo(const Document& document, IsForDOMCookieAccess isAccessForDOM)
