@@ -32,10 +32,10 @@
 
 #if ENABLE(WEBDRIVER_BIDI)
 
-#include "FrameIdentifier.h"
-#include "SecurityOriginData.h"
 #include <JavaScriptCore/ConsoleMessage.h>
 #include <JavaScriptCore/ConsoleTypes.h>
+#include <WebCore/FrameIdentifier.h>
+#include <WebCore/SecurityOriginData.h>
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Function.h>
