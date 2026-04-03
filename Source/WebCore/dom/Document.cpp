@@ -6470,7 +6470,7 @@ void Document::invalidateEventListenerRegions()
 
 void Document::invalidateRenderingDependentRegions()
 {
-#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+#if ENABLE(IOS_TOUCH_EVENTS)
     setTouchEventRegionsNeedUpdate();
 #endif
 
@@ -10854,11 +10854,11 @@ void Document::addTopLayerElement(Element& element)
         CheckedPtr dialogElement = dynamicDowncast<HTMLDialogElement>(*candidatePopover);
         if (dialogElement && dialogElement->isModal())
             return;
-#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+#if ENABLE(IOS_TOUCH_EVENTS)
         bool neededEventHandling = needsPointerEventHandlingForPopoverOrDialog();
 #endif
         auto result = m_autoPopoverList.add(*candidatePopover);
-#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+#if ENABLE(IOS_TOUCH_EVENTS)
         if (!neededEventHandling) {
             invalidateRenderingDependentRegions();
             invalidateEventListenerRegions();
@@ -10875,7 +10875,7 @@ void Document::removeTopLayerElement(Element& element)
     RELEASE_ASSERT(didRemove);
     if (auto* candidatePopover = dynamicDowncast<HTMLElement>(element); candidatePopover && candidatePopover->isPopoverShowing() && candidatePopover->popoverState() == PopoverState::Auto) {
         m_autoPopoverList.remove(*candidatePopover);
-#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+#if ENABLE(IOS_TOUCH_EVENTS)
         if (!needsPointerEventHandlingForPopoverOrDialog()) {
             invalidateRenderingDependentRegions();
             invalidateEventListenerRegions();

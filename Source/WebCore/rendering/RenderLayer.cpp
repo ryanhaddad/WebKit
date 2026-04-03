@@ -6287,7 +6287,7 @@ void RenderLayer::styleChanged(Style::Difference diff, const RenderStyle* oldSty
     if (oldStyle && oldStyle->hasViewportConstrainedPosition() != isViewportConstrained())
         dirtyAncestorChainHasViewportConstrainedDescendantStatus();
 
-#if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
+#if ENABLE(IOS_TOUCH_EVENTS)
     if (diff == Style::DifferenceResult::RecompositeLayer || diff >= Style::DifferenceResult::LayoutOutOfFlowMovementOnly)
         renderer().document().invalidateRenderingDependentRegions();
 #else
