@@ -172,5 +172,3 @@ class LinuxBrowserDriver(BrowserDriver):
             monitor = display.get_primary_monitor()
             return monitor.get_geometry()
 
-    def _save_screenshot_to_path(self, output_directory, filename):
-        pass
