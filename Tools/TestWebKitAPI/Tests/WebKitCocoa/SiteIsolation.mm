@@ -6655,11 +6655,10 @@ TEST(SiteIsolation, SharedProcessWithResourceLoadStatistics)
     NSURL *dataStoreRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessWithResourceLoadStatisticsTestDataStore"] isDirectory:YES];
     NSURL *itpRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessWithResourceLoadStatisticsTestITP"] isDirectory:YES];
     auto defaultFileManager = [NSFileManager defaultManager];
-    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
-    [defaultFileManager removeItemAtPath:itpDatabaseFile.path error:nil];
-    EXPECT_FALSE([defaultFileManager fileExistsAtPath:itpDatabaseFile.path]);
+    [defaultFileManager removeItemAtPath:itpRoot.path error:nil];
 
     [defaultFileManager createDirectoryAtURL:itpRoot withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
     NSURL *sourceFile = [NSBundle.test_resourcesBundle URLForResource:@"basicITPDatabase" withExtension:@"db"];
     EXPECT_TRUE([defaultFileManager fileExistsAtPath:sourceFile.path]);
     [defaultFileManager copyItemAtPath:sourceFile.path toPath:itpDatabaseFile.path error:nil];
@@ -6754,11 +6753,10 @@ TEST(SiteIsolation, SharedProcessAfterClick)
     NSURL *dataStoreRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessAfterClickDataStore"] isDirectory:YES];
     NSURL *itpRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessAfterClickTestITP"] isDirectory:YES];
     auto defaultFileManager = [NSFileManager defaultManager];
-    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
-    [defaultFileManager removeItemAtPath:itpDatabaseFile.path error:nil];
-    EXPECT_FALSE([defaultFileManager fileExistsAtPath:itpDatabaseFile.path]);
+    [defaultFileManager removeItemAtPath:itpRoot.path error:nil];
 
     [defaultFileManager createDirectoryAtURL:itpRoot withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
     NSURL *sourceFile = [NSBundle.test_resourcesBundle URLForResource:@"basicITPDatabase" withExtension:@"db"];
     EXPECT_TRUE([defaultFileManager fileExistsAtPath:sourceFile.path]);
     [defaultFileManager copyItemAtPath:sourceFile.path toPath:itpDatabaseFile.path error:nil];
@@ -6817,11 +6815,10 @@ TEST(SiteIsolation, SharedProcessAfterKeyDown)
     NSURL *dataStoreRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessAfterKeyDownDataStore"] isDirectory:YES];
     NSURL *itpRoot = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:@"SharedProcessAfterKeyDownTestITP"] isDirectory:YES];
     auto defaultFileManager = [NSFileManager defaultManager];
-    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
-    [defaultFileManager removeItemAtPath:itpDatabaseFile.path error:nil];
-    EXPECT_FALSE([defaultFileManager fileExistsAtPath:itpDatabaseFile.path]);
+    [defaultFileManager removeItemAtPath:itpRoot.path error:nil];
 
     [defaultFileManager createDirectoryAtURL:itpRoot withIntermediateDirectories:YES attributes:nil error:nil];
+    NSURL *itpDatabaseFile = [itpRoot URLByAppendingPathComponent:@"observations.db"];
     NSURL *sourceFile = [NSBundle.test_resourcesBundle URLForResource:@"basicITPDatabase" withExtension:@"db"];
     EXPECT_TRUE([defaultFileManager fileExistsAtPath:sourceFile.path]);
     [defaultFileManager copyItemAtPath:sourceFile.path toPath:itpDatabaseFile.path error:nil];
