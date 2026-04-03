@@ -4053,7 +4053,16 @@ static Expected<bool, WebCore::RemoteFrameGeometryTransformer> handleTouchEvent(
     if (!localFrame || !localFrame->view())
         return false;
 
-    return localFrame->eventHandler().handleTouchEvent(platform(touchEvent));
+    WeakPtr weakPage = page;
+    if (weakPage)
+        weakPage->pointerCaptureController().resetPointerDownDefaultPrevention();
+
+    auto result = localFrame->eventHandler().handleTouchEvent(platform(touchEvent));
+
+    if (weakPage && !result.value_or(false) && weakPage->pointerCaptureController().wasPointerDownDefaultPrevented())
+        return true;
+
+    return result;
 }
 #endif
 
