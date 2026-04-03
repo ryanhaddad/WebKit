@@ -454,6 +454,7 @@ platform/mac/plugins/bindings-objc-method-name-conversion.html
 platform/mac/plugins/bindings-test-objc.html
 platform/mac/plugins/call-as-function-test.html
 platform/mac/plugins/root-object-premature-delete-crash.html
+platform/mac/plugins/runtime-object-prevent-gc-crash.html
 platform/mac/plugins/undefined-property-crash.html
 platform/mac/plugins/webScriptObject-exception-deadlock.html
 
