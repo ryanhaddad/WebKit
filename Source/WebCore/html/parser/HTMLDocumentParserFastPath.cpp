@@ -526,6 +526,15 @@ private:
         struct Li : ContainerTag<HTMLLIElement, PermittedParents::FlowContent> {
             static constexpr ElementName tagName = ElementNames::HTML::li;
             static constexpr std::array<CharacterType, 2> tagNameCharacters { 'l', 'i' };
+
+            static RefPtr<HTMLElement> parseChild(ContainerNode& parent, HTMLFastPathParser& self)
+            {
+                bool wasInsideOfTagLi = self.m_insideOfTagLi;
+                self.m_insideOfTagLi = true;
+                auto result = ContainerTag<HTMLLIElement, PermittedParents::FlowContent>::parseChild(parent, self);
+                self.m_insideOfTagLi = wasInsideOfTagLi;
+                return result;
+            }
         };
 
         struct Label : ContainsPhrasingContentTag<HTMLLabelElement, PermittedParents::PhrasingOrFlowContent> {
