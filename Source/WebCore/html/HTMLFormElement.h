@@ -55,7 +55,7 @@ public:
     bool isSupportedPropertyName(const AtomString&);
 
     bool isSupportedPropertyIndex(unsigned index) const { return index < length(); }
-    WEBCORE_EXPORT unsigned length() const;
+    WEBCORE_EXPORT unsigned NODELETE length() const;
     HTMLElement* item(unsigned index);
     std::optional<Variant<Ref<RadioNodeList>, Ref<Element>>> namedItem(const AtomString&);
     Vector<AtomString> NODELETE supportedPropertyNames() const;

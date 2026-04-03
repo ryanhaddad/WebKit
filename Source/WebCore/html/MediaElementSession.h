@@ -117,9 +117,9 @@ public:
 #endif
 
     bool requiresFullscreenForVideoPlayback() const;
-    WEBCORE_EXPORT bool allowsPictureInPicture() const;
+    WEBCORE_EXPORT bool NODELETE allowsPictureInPicture() const;
     MediaPlayer::Preload effectivePreloadForElement() const;
-    bool allowsAutomaticMediaDataLoading() const;
+    bool NODELETE allowsAutomaticMediaDataLoading() const;
 
     void mediaEngineUpdated();
 
@@ -127,7 +127,7 @@ public:
 
     void suspendBuffering() override;
     void resumeBuffering() override;
-    bool bufferingSuspended() const;
+    bool NODELETE bufferingSuspended() const;
     void updateBufferingPolicy() { scheduleClientDataBufferingCheck(); }
 
     // Restrictions to modify default behaviors.
@@ -173,7 +173,7 @@ public:
     bool isMainContentForPurposesOfAutoplayEvents() const;
     Markable<MonotonicTime> NODELETE mostRecentUserInteractionTime() const;
 
-    bool allowsPlaybackControlsForAutoplayingAudio() const;
+    bool NODELETE allowsPlaybackControlsForAutoplayingAudio() const;
 
     static bool isMediaElementSessionMediaType(MediaType type)
     {

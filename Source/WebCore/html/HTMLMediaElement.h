@@ -530,7 +530,7 @@ public:
 
 #if ENABLE(FULLSCREEN_API)
     void documentFullscreenChanged(bool isChildOfElementFullscreen);
-    WEBCORE_EXPORT bool isChildOfElementFullscreen() const;
+    WEBCORE_EXPORT bool NODELETE isChildOfElementFullscreen() const;
 #endif
 
     bool hasClosedCaptions() const override;

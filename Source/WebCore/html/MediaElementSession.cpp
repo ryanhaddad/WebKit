@@ -1319,7 +1319,7 @@ bool MediaElementSession::allowsPlaybackControlsForAutoplayingAudio() const
 
 #if ENABLE(MEDIA_SESSION)
 #if ENABLE(MEDIA_STREAM)
-static bool isDocumentPlayingSeveralMediaStreamsAndCapturing(Document& document)
+static bool NODELETE isDocumentPlayingSeveralMediaStreamsAndCapturing(Document& document)
 {
     // We restrict to capturing document for now, until we have a good way to state to the UIProcess application that audio rendering is muted from here.
     auto* page = document.page();
