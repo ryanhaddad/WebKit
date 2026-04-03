@@ -1971,22 +1971,22 @@
         "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/288104"}},
         "subtests": {
             "test_simple_prompts[alert-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_simple_prompts[confirm-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_simple_prompts[prompt-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_default_handler[alert-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_default_handler[confirm-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_default_handler[prompt-accept]": {
-                "expected": { "all": { "status": ["PASS"]}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_file[accept]": {
                 "expected": { "all": { "status": ["PASS"]}}
@@ -2703,10 +2703,10 @@
     "imported/w3c/webdriver/tests/bidi/browsing_context/reload/wait.py": {
         "subtests": {
             "test_slow_page[none-False]": {
-                "expected": { "all": { "status": ["PASS"] }}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_slow_script_blocks_domContentLoaded[none-False]": {
-                "expected": { "all": { "status": ["PASS"] }}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             }
         },
         "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/288332"}}
@@ -3943,13 +3943,13 @@
     "imported/w3c/webdriver/tests/bidi/session/subscribe/contexts.py": {
         "subtests": {
             "test_subscribe_to_all_context_and_then_to_one_again": {
-                "expected": { "all": { "status": ["PASS"], "bug": "webkit.org/b/287929"}}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_subscribe_to_top_context_with_iframes": {
-                "expected": { "all": { "status": ["PASS"] }}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_subscribe_to_child_context": {
-                "expected": { "all": { "status": ["PASS"] }}
+                "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             }
         },
         "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/283784"}}
@@ -3971,7 +3971,12 @@
     "imported/w3c/webdriver/tests/bidi/session/subscribe/invalid.py": {
         "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/286763"}},
         "subtests": {
+            "test_params_contexts_invalid_type[True]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_contexts_invalid_type[foo]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_contexts_invalid_type[42]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_contexts_invalid_type[value3]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_empty": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_events_value_invalid_event_name[]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[None]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[True]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[foo]": {"expected": {"all": {"status": ["PASS"]}}},
@@ -3991,13 +3996,20 @@
             },
             "test_params_events_value_invalid_type[value4]": {
                 "expected": { "all": { "status": ["PASS"], "bug": "webkit.org/b/286793"}}
-            }
+            },
+            "test_params_user_context_and_contexts": {
+                "expected": { "all": { "status": ["PASS"], "bug": "webkit.org/b/286793"}}
+            },
+            "test_params_user_context_invalid_type[True]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_user_context_invalid_type[foo]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_user_context_invalid_type[42]": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_user_context_invalid_type[value3]": {"expected": {"all": {"status": ["PASS"]}}}
         }
     },
     "imported/w3c/webdriver/tests/bidi/session/subscribe/user_contexts.py": {
         "subtests": {
             "test_subscribe_multiple_user_contexts": {
-                "expected": {"all": {"status": ["PASS"]}}
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/309502"}}
             },
             "test_buffered_event": {
                 "expected": { "all": { "status": ["TIMEOUT"], "bug": "webkit.org/b/288107"}}
@@ -4020,6 +4032,7 @@
         "expected": { "all": { "status": ["FAIL"], "bug": "webkit.org/b/287930"}},
         "subtests": {
             "test_params_empty": {"expected": {"all": {"status": ["PASS"]}}},
+            "test_params_events_empty": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[None]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[True]": {"expected": {"all": {"status": ["PASS"]}}},
             "test_params_events_invalid_type[foo]": {"expected": {"all": {"status": ["PASS"]}}},
@@ -4064,13 +4077,13 @@
     "imported/w3c/webdriver/tests/bidi/session/unsubscribe/subscriptions.py": {
         "subtests": {
             "test_unsubscribe_with_subscription_id": {
-                "expected": {"all": {"status": ["PASS"]}}
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_unsubscribe_with_multiple_subscription_ids": {
                 "expected": {"all": {"status": ["PASS"]}}
             },
             "test_unsubscribe_from_closed_context": {
-                "expected": {"all": {"status": ["PASS"]}}
+                "expected": {"all": {"status": ["FAIL"], "bug": "webkit.org/b/282981"}}
             },
             "test_unsubscribe_with_event_and_subscriptions": {
                 "expected": {"all": {"status": ["PASS"]}}

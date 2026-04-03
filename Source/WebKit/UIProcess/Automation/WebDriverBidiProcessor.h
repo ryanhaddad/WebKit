@@ -40,6 +40,7 @@ class BidiBrowserAgent;
 class BidiBrowsingContextAgent;
 class BidiPermissionsAgent;
 class BidiScriptAgent;
+class BidiSessionAgent;
 class BidiStorageAgent;
 class WebAutomationSession;
 class WebPageProxy;
@@ -64,6 +65,9 @@ public:
     Inspector::BidiBrowsingContextFrontendDispatcher& browsingContextDomainNotifier() const LIFETIME_BOUND { return m_browsingContextDomainNotifier; }
     Inspector::BidiLogFrontendDispatcher& logDomainNotifier() const LIFETIME_BOUND { return m_logDomainNotifier; }
 
+    bool eventIsEnabled(const String& eventName, const HashSet<String>& contexts);
+    void emitEventIfEnabled(const String& eventName, const HashSet<String>& browsingContexts, NOESCAPE const Function<void()>&);
+
 private:
     WeakPtr<WebAutomationSession> m_session;
 
@@ -74,6 +78,7 @@ private:
     const UniqueRef<BidiBrowsingContextAgent> m_browsingContextAgent;
     const UniqueRef<BidiPermissionsAgent> m_permissionsAgent;
     const UniqueRef<BidiScriptAgent> m_scriptAgent;
+    const UniqueRef<BidiSessionAgent> m_sessionAgent;
     const UniqueRef<BidiStorageAgent> m_storageAgent;
     const UniqueRef<Inspector::BidiBrowsingContextFrontendDispatcher> m_browsingContextDomainNotifier;
     const UniqueRef<Inspector::BidiLogFrontendDispatcher> m_logDomainNotifier;
