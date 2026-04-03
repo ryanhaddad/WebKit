@@ -6255,6 +6255,18 @@
    },
    {
       "emails" : [
+         "mgorse@suse.com",
+         "mgorse@alum.wpi.edu"
+      ],
+      "github" : "mgorse",
+      "name" : "Mike Gorse",
+      "nicks" : [
+         "mgorse"
+      ],
+      "status" : "committer"
+   },
+   {
+      "emails" : [
          "mikelawther@chromium.org"
       ],
       "name" : "Mike Lawther",
