@@ -1982,6 +1982,10 @@ webkit.org/b/243614 imported/w3c/web-platform-tests/IndexedDB/idb-partitioned-co
 
 webkit.org/b/216298 imported/w3c/web-platform-tests/IndexedDB/blob-valid-after-deletion.any.html [ Pass Failure ]
 
+imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll.any.html [ Failure ]
+imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll.any.serviceworker.html [ Failure ]
+imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll.any.sharedworker.html [ Failure ]
+imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll.any.worker.html [ Failure ]
 imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll-options.any.html [ Failure ]
 imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll-options.any.serviceworker.html [ Failure ]
 imported/w3c/web-platform-tests/IndexedDB/idbindex_getAll-options.any.sharedworker.html [ Failure ]
