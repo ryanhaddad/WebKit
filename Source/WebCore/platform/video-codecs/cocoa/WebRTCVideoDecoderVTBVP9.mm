@@ -58,7 +58,7 @@ static RetainPtr<CMVideoFormatDescriptionRef> createVP9FormatDescriptionFromData
 }
 
 WebRTCVideoDecoderVTBVP9::WebRTCVideoDecoderVTBVP9(WebRTCVideoDecoderCallback callback)
-    : WebRTCVideoDecoderVTB(createMultiImageCallback(WTF::move(callback)))
+    : WebRTCVideoDecoderVTB(callback)
 {
 }
 
