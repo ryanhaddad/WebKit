@@ -673,8 +673,11 @@ void ElementRuleCollector::collectMatchingRulesForListSlow(const RuleSet::RuleDa
         };
 
         if (scopingRoots) {
-            for (auto& scopingRoot : *scopingRoots)
+            for (auto& scopingRoot : *scopingRoots) {
                 addRuleIfMatches(&scopingRoot);
+                if (isFirstMatchModeAndHasMatchedAnyRules())
+                    return;
+            }
             continue;
         }
 
