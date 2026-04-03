@@ -39,8 +39,9 @@ TEST(NavigationAPI, PushStateUpdatesCurrentEntryKeyWithoutAllowPrivacySensitiveO
         { "/example"_s, { "example"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
+    // This will also set a non-persistent data store on the configuration.
     RetainPtr configuration = server.httpsProxyConfiguration();
-    [configuration setWebsiteDataStore:[WKWebsiteDataStore nonPersistentDataStore]];
+    EXPECT_FALSE([configuration.get().websiteDataStore isPersistent]);
     [configuration preferences]._allowPrivacySensitiveOperationsInNonPersistentDataStores = NO;
 
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 300, 300) configuration:configuration.get()]);
@@ -65,8 +66,9 @@ TEST(NavigationAPI, ReplaceStateUpdatesCurrentEntryIDWithoutAllowPrivacySensitiv
         { "/example"_s, { "example"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
+    // This will also set a non-persistent data store on the configuration.
     RetainPtr configuration = server.httpsProxyConfiguration();
-    [configuration setWebsiteDataStore:[WKWebsiteDataStore nonPersistentDataStore]];
+    EXPECT_FALSE([configuration.get().websiteDataStore isPersistent]);
     [configuration preferences]._allowPrivacySensitiveOperationsInNonPersistentDataStores = NO;
 
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 300, 300) configuration:configuration.get()]);
