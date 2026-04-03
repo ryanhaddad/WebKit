@@ -1020,6 +1020,8 @@ bool SVGElement::hasPresentationalHintsForAttribute(const QualifiedName& name) c
 {
     if (cssPropertyIdForSVGAttributeName(name, document().settings()) > 0)
         return true;
+    if (name.matches(XMLNames::langAttr) || name.matches(HTMLNames::langAttr))
+        return true;
     return StyledElement::hasPresentationalHintsForAttribute(name);
 }
 
@@ -1028,6 +1030,8 @@ void SVGElement::collectPresentationalHintsForAttribute(const QualifiedName& nam
     CSSPropertyID propertyID = cssPropertyIdForSVGAttributeName(name, document().settings());
     if (propertyID > 0)
         addPropertyToPresentationalHintStyle(style, propertyID, value);
+    else if (name.matches(XMLNames::langAttr) || (name.matches(HTMLNames::langAttr) && !hasAttributeWithoutSynchronization(XMLNames::langAttr)))
+        mapLanguageAttributeToLocale(value, style);
 }
 
 void SVGElement::updateSVGRendererForElementChange()
