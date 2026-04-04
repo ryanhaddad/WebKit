@@ -233,6 +233,63 @@ TEST(FocusWebView, MultipleFrames)
     EXPECT_WK_STREQ([uiDelegate waitForAlert], "https://apple.com focused");
 }
 
+static void runFocusNavigationIntoFrameWithNestedRemoteFrameTest(bool siteIsolationEnabled)
+{
+    auto mainHTML = "<body>"
+        "<input id='mainInput'>"
+        "<iframe id='outerFrame' src='https://webkit.org/outerframe'></iframe>"
+        "</body>"_s;
+
+    auto outerFrameHTML = "<body>"
+        "<iframe src='https://apple.com/innerframe'></iframe>"
+        "<input id='outerInput'>"
+        "<script>document.getElementById('outerInput').addEventListener('focusin', () => alert('outerInput focused'));</script>"
+        "</body>"_s;
+
+    auto innerFrameHTML = "<body>"
+        "<input id='innerInput'>"
+        "<script>document.getElementById('innerInput').addEventListener('focusin', () => alert('innerInput focused'));</script>"
+        "</body>"_s;
+
+    HTTPServer server({
+        { "/main"_s, { mainHTML } },
+        { "/outerframe"_s, { outerFrameHTML } },
+        { "/innerframe"_s, { innerFrameHTML } },
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    RetainPtr configuration = server.httpsProxyConfiguration();
+    if (siteIsolationEnabled)
+        [[configuration preferences] _setSiteIsolationEnabled:YES];
+
+    auto [webView, navigationDelegate, uiDelegate] = makeWebViewAndDelegates(WTF::move(configuration));
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/main"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    [webView evaluateJavaScript:@""
+        "document.getElementById('mainInput').addEventListener('focusin', () => alert('mainInput focused'));"
+        "document.getElementById('mainInput').focus();" completionHandler:nil];
+    EXPECT_WK_STREQ([uiDelegate waitForAlert], "mainInput focused");
+
+    [webView typeCharacter:'\t'];
+    EXPECT_WK_STREQ([uiDelegate waitForAlert], "innerInput focused");
+
+    if (!siteIsolationEnabled) {
+        [webView typeCharacter:'\t'];
+        EXPECT_WK_STREQ([uiDelegate waitForAlert], "outerInput focused");
+    }
+}
+
+TEST(FocusWebView, FocusNavigationIntoFrameWithNestedRemoteFrame)
+{
+    runFocusNavigationIntoFrameWithNestedRemoteFrameTest(false);
+}
+
+TEST(FocusWebView, FocusNavigationIntoFrameWithNestedRemoteFrameSiteIsolation)
+{
+    runFocusNavigationIntoFrameWithNestedRemoteFrameTest(true);
+}
+
 TEST(FocusWebView, DoNotFocusWebViewWhenUnparented)
 {
     auto *configuration = [WKWebViewConfiguration _test_configurationWithTestPlugInClassName:@"WebProcessPlugInWithInternals" configureJSCForTesting:YES];
