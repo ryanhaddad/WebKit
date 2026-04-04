@@ -2723,9 +2723,9 @@ webkit.org/b/308025 webgl/2.0.y/conformance2/query/occlusion-query-scissor.html 
 webkit.org/b/258296 webrtc/canvas-to-peer-connection.html [ Failure Timeout ]
 
 # The MediaStream implementation is not completed yet
-webkit.org/b/79203 fast/mediastream/RTCPeerConnection-ice.html [ Failure Timeout Crash ]
-webkit.org/b/79203 fast/mediastream/RTCPeerConnection-inspect-offer-bundlePolicy-bundle-only.html [ Failure Crash ]
-webkit.org/b/79203 fast/mediastream/RTCPeerConnection-stats.html [ Timeout Crash ]
+webkit.org/b/79203 fast/mediastream/RTCPeerConnection-ice.html [ Timeout ]
+webkit.org/b/79203 fast/mediastream/RTCPeerConnection-inspect-offer-bundlePolicy-bundle-only.html [ Failure ]
+webkit.org/b/79203 fast/mediastream/RTCPeerConnection-stats.html [ Timeout ]
 webkit.org/b/79203 fast/mediastream/video-srcObject-fit-fill.html [ Pass Timeout ]
 webkit.org/b/187603 fast/mediastream/media-stream-track-source-failure.html [ Crash Timeout Failure Pass ]
 
@@ -2762,7 +2762,7 @@ fast/mediastream/apply-constraints-video.html [ Failure ]
 fast/mediastream/cloned-video-stream-aspect-ratio.html [ Failure ]
 fast/mediastream/getDisplayMedia-frame-rate.html [ Failure ]
 fast/mediastream/getDisplayMedia-size.html [ Failure ]
-fast/mediastream/getUserMedia-default.html [ Crash Failure ]
+fast/mediastream/getUserMedia-default.html [ Failure ]
 fast/mediastream/getUserMedia-video-rescaling.html [ Failure ]
 fast/mediastream/getUserMedia-frame-rate.html [ Failure ]
 fast/mediastream/get-user-media-constraints.html [ Failure ]
@@ -3510,7 +3510,7 @@ imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-playback-temporary-
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-playback-temporary-setMediaKeys-onencrypted.https.html [ Pass ]
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-playback-temporary-two-videos.https.html [ Crash Failure Pass ]
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-playback-temporary-waitingforkey.https.html [ Pass ]
-imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-requestmediakeysystemaccess.https.html [ Crash Failure Pass ]
+imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-requestmediakeysystemaccess.https.html [ Failure ]
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-setmediakeys-at-same-time.https.html [ Pass ]
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-setmediakeys.https.html [ Pass ]
 imported/w3c/web-platform-tests/encrypted-media/clearkey-mp4-setmediakeys-multiple-times-with-different-mediakeys.https.html [ Pass ]
@@ -3576,7 +3576,7 @@ media/unsupported-rtsp.html [ WontFix Skip ]
 media/video-does-not-loop.html [ WontFix Timeout Crash ]
 
 # No support for MPEG-4 caption support
-webkit.org/b/131546 media/track/track-forced-subtitles-in-band.html [ Timeout Failure Crash ]
+webkit.org/b/131546 media/track/track-forced-subtitles-in-band.html [ Timeout Failure ]
 media/track/track-in-band-chapters.html [ Timeout Failure ]
 media/track/track-in-band-layout.html [ Skip ]
 media/track/track-paint-on-captions.html [ Skip ]
@@ -4226,7 +4226,7 @@ webkit.org/b/198830 media/context-menu-actions.html [ Failure ]
 # webkit.org/b/193638 media/video-webkit-playsinline.html [ Pass ]
 webkit.org/b/224067 media/media-source/media-source-timestampoffset-trim.html [ Failure ]
 webkit.org/b/254207 media/media-source/media-source-remove-readystate.html [ Pass Timeout ]
-webkit.org/b/160119 media/video-object-fit-change.html [ Pass Crash ImageOnlyFailure Timeout ]
+webkit.org/b/160119 media/video-object-fit-change.html [ Pass ImageOnlyFailure Timeout ]
 
 webkit.org/b/61487 http/tests/media/video-cross-site.html [ Failure Timeout ]
 
@@ -4458,7 +4458,7 @@ imported/w3c/web-platform-tests/css/css-color/system-color-hightlights-vs-getSel
 imported/w3c/web-platform-tests/css/css-color/body-opacity-0-to-1-stacking-context.html [ Pass ImageOnlyFailure ]
 
 # Flakily crashing on GTK and WPE bots
-webkit.org/b/262949 media/media-garbage-collection.html [ Pass Crash Timeout Failure ]
+webkit.org/b/262949 media/media-garbage-collection.html [ Pass Timeout Failure ]
 webkit.org/b/286131 imported/w3c/web-platform-tests/css/css-transforms/transform-box/cssbox-content-box-002.html [ Pass Crash ]
 
 imported/w3c/web-platform-tests/css/css-overscroll-behavior/overscroll-behavior.html [ Skip ]
@@ -4825,7 +4825,7 @@ webkit.org/b/208984 fast/events/touch/touch-slider-no-js-touch-listener.html [ F
 
 webkit.org/b/210373 media/track/track-user-stylesheet.html [ Timeout Pass ]
 
-webkit.org/b/210374 http/tests/media/user-gesture-preserved-across-xmlhttprequest.html [ Timeout Crash Failure ]
+webkit.org/b/210374 http/tests/media/user-gesture-preserved-across-xmlhttprequest.html [ Timeout Failure ]
 
 webkit.org/b/213331 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-mediaelementaudiosourcenode-interface/mediaElementAudioSourceToScriptProcessorTest.html [ Failure ]
 
