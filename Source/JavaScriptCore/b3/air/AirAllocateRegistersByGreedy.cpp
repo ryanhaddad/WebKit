@@ -61,12 +61,16 @@ static_assert(unspillableCost > fastTmpSpillCost);
 static_assert(unspillableCost > maxSpillableSpillCost);
 
 // Phase constants used for the PhaseInsertionSet. Ensures that the fixup and spill/fill instructions
-// inserted in a particular gap ends up in the correct order.
+// inserted in a particular gap end up in the correct order.
+// "MoveTo" = value flows toward the original tmp (or its spill slot).
+// "MoveFrom" = value flows away from the original tmp (or its spill slot).
 enum InsertionPhase : unsigned {
-    SpillStore,
-    SplitMoveTo,
-    SplitMoveFrom,
-    SpillLoad,
+    SpillMoveTo,
+    ClobberMoveTo,
+    IntraBlockMoveTo,
+    IntraBlockMoveFrom,
+    ClobberMoveFrom,
+    SpillMoveFrom,
 };
 
 static bool NODELETE verbose() { return Options::airGreedyRegAllocVerbose(); }
@@ -2139,6 +2143,8 @@ private:
                 case Stage::Spill:
                     doStageSpill<bank>(tmp, tmpData);
                     continue;
+                case Stage::Replaced:
+                    continue; // Split tmp no longer needed; skip stale queue entry.
                 default:
                     dataLogLn("Invalid stage tmp = ", tmp, " tmpData = ", tmpData);
                     // Tmps in these stages should not have been enqueued.
@@ -2372,16 +2378,19 @@ private:
             });
             return result;
         };
+        ASSERT(tmpData.spillCost() != unspillableCost); // Should have evicted.
 
         Reg bestSplitReg;
-        float minSplitCost = unspillableCost;
+        constexpr float invalidSplitCost = std::numeric_limits<float>::infinity();
+        const float splitMultiplier = Options::airGreedyRegAllocSplitMultiplier();
+        const float splitCostLimit = splitMultiplier > 0.0 ? tmpData.useDefCost / splitMultiplier : invalidSplitCost;
+        float minSplitCost = splitCostLimit;
         Width width = widthForConflicts<bank>(tmp);
         for (Reg r : m_allowedRegistersInPriorityOrder[bank]) {
             float splitCost = 0.0f;
             m_regRanges[r].forEachConflict(tmpData.liveRange, width,
                 [&](auto& conflict) -> IterationStatus {
                     if (conflict.tmp.isReg() && conflict.interval.distance() == 1) {
-                        // Block freq * rare block penalty
                         BasicBlock* block = findBlockContainingPoint(conflict.interval.begin());
                         unsigned instIndex = this->instIndex(positionOfHead(block), conflict.interval.begin());
                         Inst& inst = block->at(instIndex);
@@ -2390,15 +2399,17 @@ private:
                             // can't split the tmp around this clobber.
                             // FIXME: could allow uses, but then we'd have to make split tmp conflict with any
                             // spill tmps used by this instruction, so unclear if that's better.
-                            splitCost = unspillableCost;
+                            splitCost = invalidSplitCost;
                             return IterationStatus::Done;
                         }
                         // Times 2 for 'MOV tmp, gapTmp' and 'MOV gapTmp, tmp'
                         splitCost += adjustedBlockFrequency(block) * 2;
+                        if (splitCost >= minSplitCost)
+                            return IterationStatus::Done; // Not the best or already over limit, exit early.
                         return IterationStatus::Continue;
                     }
                     // Conflicts with another Tmp already assigned to this register so splitting around the clobbers won't help.
-                    splitCost = unspillableCost;
+                    splitCost = invalidSplitCost;
                     return IterationStatus::Done;
                 });
             if (splitCost < minSplitCost) {
@@ -2406,13 +2417,9 @@ private:
                 bestSplitReg = r;
             }
         }
-        ASSERT(tmpData.spillCost() != unspillableCost); // Should have evicted.
-        if (minSplitCost >= unspillableCost)
-            return false; // Other conflicts exist, so splitting is not productive
-        // Multiplier of 0 means split around clobbers at every opportunity. The higher the multiplier,
-        // the less often the split will be applied (i.e. treats splitting as more costly).
-        if (minSplitCost * Options::airGreedyRegAllocSplitMultiplier() >= tmpData.spillCost())
-            return false; // Better to spill than to split
+        if (minSplitCost >= splitCostLimit)
+            return false; // No register found or better to spill than to split
+        ASSERT(bestSplitReg);
 
         LiveRange holeRange;
         m_regRanges[bestSplitReg].forEachConflict(tmpData.liveRange, width,
@@ -2835,7 +2842,7 @@ private:
                     // when there are back-to-back Move spill-spill-scratch instructions (scratch is early-def, late-use).
                     // See https://bugs.webkit.org/show_bug.cgi?id=163548#c2 for more info.
                     // FIXME: reconsider this, https://bugs.webkit.org/show_bug.cgi?id=288122
-                    m_insertionSets[block].insert(instIndex, SpillLoad, Nop, inst.origin);
+                    m_insertionSets[block].insert(instIndex, SpillMoveFrom, Nop, inst.origin);
                     continue;
                 }
 
@@ -2873,13 +2880,13 @@ private:
                             if constexpr (bank == GP) {
                                 int64_t value = m_useCounts.constant<bank>(tmpIndex);
                                 if (Arg::isValidImmForm(value) && isValidForm(Move, Arg::Imm, Arg::Tmp)) {
-                                    m_insertionSets[block].insert(instIndex, SpillLoad, Move, inst.origin, Arg::imm(value), tmp);
+                                    m_insertionSets[block].insert(instIndex, SpillMoveFrom, Move, inst.origin, Arg::imm(value), tmp);
                                     m_stats[bank].numRematerializeConst++;
                                     dataLogLnIf(verbose(), "Rematerialized (imm) BB", *block, " ", originalTmp, ": ", tmp, " <- ", WTF::RawHex(value));
                                     return true;
                                 }
                                 RELEASE_ASSERT(isValidForm(Move, Arg::BigImm, Arg::Tmp));
-                                m_insertionSets[block].insert(instIndex, SpillLoad, Move, inst.origin, Arg::bigImm(value), tmp);
+                                m_insertionSets[block].insert(instIndex, SpillMoveFrom, Move, inst.origin, Arg::bigImm(value), tmp);
                                 m_stats[bank].numRematerializeConst++;
                                 dataLogLnIf(verbose(), "Rematerialized (bigImm) BB", *block, " ", originalTmp, ": ", tmp, " <- ", WTF::RawHex(value));
                                 return true;
@@ -2909,7 +2916,7 @@ private:
                                 }
 
                                 if (imm && isValidForm(constMove, imm.kind(), Arg::Tmp)) {
-                                    m_insertionSets[block].insert(instIndex, SpillLoad, constMove, inst.origin, imm, tmp);
+                                    m_insertionSets[block].insert(instIndex, SpillMoveFrom, constMove, inst.origin, imm, tmp);
                                     m_stats[bank].numRematerializeConst++;
                                     dataLogLnIf(verbose(), "Rematerialized (FP) BB", *block, " ", originalTmp, ": ", tmp);
                                     return true;
@@ -2920,7 +2927,7 @@ private:
                         };
 
                         if (!tryRematerialize()) {
-                            m_insertionSets[block].insert(instIndex, SpillLoad, move, inst.origin, arg, tmp);
+                            m_insertionSets[block].insert(instIndex, SpillMoveFrom, move, inst.origin, arg, tmp);
                             m_stats[bank].numLoadSpill++;
                         }
                     }
@@ -2934,7 +2941,7 @@ private:
                             dataLogLnIf(verbose(), "Rematerialized BB", *block, " removing def inst: ", inst);
                         } else {
                             ASSERT(!doKillInst);
-                            m_insertionSets[block].insert(instIndex + 1, SpillStore, move, inst.origin, tmp, arg);
+                            m_insertionSets[block].insert(instIndex + 1, SpillMoveTo, move, inst.origin, tmp, arg);
                             m_stats[bank].numStoreSpill++;
                         }
                     }
@@ -2989,8 +2996,8 @@ private:
                 if (spilled)
                     arg = Arg::stack(spilled);
                 Opcode move = moveOpcode(gapTmp);
-                m_insertionSets[block].insert(instIndex, SplitMoveFrom, move, inst.origin, metadata.originalTmp, arg);
-                m_insertionSets[block].insert(instIndex + 1, SplitMoveTo, move, inst.origin, arg, metadata.originalTmp);
+                m_insertionSets[block].insert(instIndex, ClobberMoveFrom, move, inst.origin, metadata.originalTmp, arg);
+                m_insertionSets[block].insert(instIndex + 1, ClobberMoveTo, move, inst.origin, arg, metadata.originalTmp);
                 dataLogLnIf(verbose(), "Inserted Moves around clobber tmp=", metadata.originalTmp, " gapTmp=", gapTmp, " gapReg = ", assignedReg(gapTmp), " block=", *block, " index=", instIndex, " inst = ", inst);
             }
         }
@@ -3015,16 +3022,17 @@ private:
             }
 
             LiveRange& clusterRange = m_map[clusterTmp].liveRange;
-            ASSERT(clusterRange.intervals().size() == 1);
-            const Interval& clusterInterval = clusterRange.intervals().first();
+            // Cluster tmp may have multiple intervals if it was also split around clobbers,
+            // but the first interval will still coincide with the beginning of the cluster.
+            Point clusterBegin = clusterRange.intervals().first().begin();
 
-            BasicBlock* block = findBlockContainingPoint(clusterInterval.begin());
+            BasicBlock* block = findBlockContainingPoint(clusterBegin);
             Point positionOfHead = this->positionOfHead(block);
 
             // trySplitIntraBlock includes the Pre point in the cluster interval iff the original Tmp is live into the cluster.
-            if (pointAtOffset(clusterInterval.begin(), PointOffsets::Pre) == clusterInterval.begin()) {
-                unsigned instIndex = this->instIndex(positionOfHead, clusterInterval.begin());
-                m_insertionSets[block].insert(instIndex, SplitMoveFrom, move, block->at(instIndex).origin, Arg::stack(spilled), clusterTmp);
+            if (pointAtOffset(clusterBegin, PointOffsets::Pre) == clusterBegin) {
+                unsigned instIndex = this->instIndex(positionOfHead, clusterBegin);
+                m_insertionSets[block].insert(instIndex, IntraBlockMoveFrom, move, block->at(instIndex).origin, Arg::stack(spilled), clusterTmp);
                 m_stats[bank].numSplitIntraBlockLoad++;
             } else
                 ASSERT(split.lastDefPoint);
@@ -3032,7 +3040,7 @@ private:
             // Need to store back into the original Tmp's spill slot only if the cluster def'ed the Tmp
             if (split.lastDefPoint) {
                 unsigned instIndex = this->instIndex(positionOfHead, split.lastDefPoint);
-                m_insertionSets[block].insert(instIndex + 1, SplitMoveTo, move, block->at(instIndex).origin, clusterTmp, Arg::stack(spilled));
+                m_insertionSets[block].insert(instIndex + 1, IntraBlockMoveTo, move, block->at(instIndex).origin, clusterTmp, Arg::stack(spilled));
                 m_stats[bank].numSplitIntraBlockStore++;
             }
         }
