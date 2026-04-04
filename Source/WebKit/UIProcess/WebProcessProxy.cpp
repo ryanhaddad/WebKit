@@ -738,7 +738,7 @@ void WebProcessProxy::shutDown()
     shutDownProcess();
 
 #if ENABLE(WEBASSEMBLY_DEBUGGER) && ENABLE(REMOTE_INSPECTOR)
-    if (JSC::Options::enableWasmDebugger()) [[unlikely]]
+    if (m_wasmDebuggerDebuggable)
         destroyWasmDebuggerTarget();
 #endif
 
