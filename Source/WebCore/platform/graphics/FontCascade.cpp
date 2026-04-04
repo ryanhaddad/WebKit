@@ -128,8 +128,8 @@ bool FontCascade::operator==(const FontCascade& other) const
     if (m_fonts != other.m_fonts)
         return false;
 
-    if (!m_fonts || !other.m_fonts)
-        return false;
+    if (!m_fonts)
+        return true;
 
     if (fontSelector() != other.fontSelector())
         return false;
@@ -1651,12 +1651,6 @@ void FontCascade::drawEmphasisMarks(GraphicsContext& context, const GlyphBuffer&
     markBuffer.add(glyphForMarker(glyphBuffer.size() - 1), *markFontData, 0);
 
     drawGlyphBuffer(context, markBuffer, startPoint, CustomFontNotReadyAction::DoNotPaintIfFontNotReady);
-}
-
-float FontCascade::widthForCharacterInRun(const TextRun& run, unsigned characterPosition) const
-{
-    auto shortenedRun = run.subRun(characterPosition, 1);
-    return width(codePath(run), shortenedRun);
 }
 
 void FontCascade::adjustSelectionRectForSimpleText(const TextRun& run, LayoutRect& selectionRect, unsigned from, unsigned to) const
