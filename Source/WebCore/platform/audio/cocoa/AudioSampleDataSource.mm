@@ -62,9 +62,7 @@ AudioSampleDataSource::AudioSampleDataSource(size_t maximumSampleCount, LoggerHe
 #endif
 }
 
-AudioSampleDataSource::~AudioSampleDataSource()
-{
-}
+AudioSampleDataSource::~AudioSampleDataSource() = default;
 
 OSStatus AudioSampleDataSource::setupConverter()
 {
