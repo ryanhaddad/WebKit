@@ -1725,6 +1725,11 @@ if (CMAKE_COMPILER_IS_GNUCXX AND GCC_OFFLINEASM_SOURCE_MAP)
         COMPILE_OPTIONS "-fno-lto")
 endif ()
 
+if (COMPILER_IS_GCC_OR_CLANG AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+   # Make IPInt instruction sizes small.
+   set_source_files_properties("llint/LowLevelInterpreter.cpp" PROPERTIES COMPILE_OPTIONS "-O")
+endif ()
+
 # Windows ARM64: Disable unwind tables to work around LLVM bug #47432
 # (alignment directives in inline asm break SEH unwind info calculation)
 if (WIN32 AND WTF_CPU_ARM64)
