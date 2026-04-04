@@ -27,7 +27,9 @@
 
 #include "FloatRect.h"
 #include "ScrollTypes.h"
+#include <wtf/ApproximateTime.h>
 #include <wtf/CheckedRef.h>
+#include <wtf/Markable.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/WeakPtr.h>
 
@@ -80,6 +82,20 @@ public:
     void NODELETE stopSuppressingScrollAnchoring();
 
 private:
+
+    class DisablementHeuristic {
+    public:
+        bool disabledByHeuristic(IntSize adjustment);
+        void reset();
+
+    private:
+        Markable<ApproximateTime> m_nextEnablementTime;
+
+        Markable<ApproximateTime> m_samplingStartTime;
+        float m_accumulatedAdjustment { 0 };
+        unsigned m_samplingAdjustmentCount { 0 };
+    };
+
     static bool isViableStatus(AnchorSearchStatus status)
     {
         return status == AnchorSearchStatus::Constrain || status == AnchorSearchStatus::Choose;
@@ -114,6 +130,8 @@ private:
     CheckedRef<ScrollableArea> m_owningScrollableArea;
     SingleThreadWeakPtr<RenderObject> m_anchorObject;
     FloatPoint m_lastAnchorOffset;
+
+    DisablementHeuristic m_disablementHeuristic;
 
     bool m_isUpdatingScrollPositionForAnchoring { false };
     bool m_isQueuedForScrollPositionUpdate { false };

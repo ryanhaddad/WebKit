@@ -7644,6 +7644,9 @@ imported/w3c/web-platform-tests/css/css-scroll-anchoring/zero-scroll-offset-002.
 webkit.org/b/309421 imported/w3c/web-platform-tests/css/css-scroll-anchoring/vertical-rl-viewport-size-change-000.html [ ImageOnlyFailure ]
 webkit.org/b/309421 imported/w3c/web-platform-tests/css/css-scroll-anchoring/vertical-rl-viewport-size-change-001.html [ ImageOnlyFailure ]
 
+webkit.org/b/311235 fast/scrolling/scroll-anchoring/heuristic-disabled-above-threshold.html [ Pass Failure ]
+webkit.org/b/311235 fast/scrolling/scroll-anchoring/heuristic-renabled-after-delay.html [ Failure ]
+
 # Requires user interaction.
 imported/w3c/web-platform-tests/css/css-scroll-anchoring/fullscreen-crash.html [ Skip ]
 

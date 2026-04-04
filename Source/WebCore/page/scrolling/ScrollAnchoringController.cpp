@@ -119,6 +119,10 @@ void ScrollAnchoringController::scrollPositionDidChange()
         return;
 
     LOG_WITH_STREAM(ScrollAnchoring, stream << "ScrollAnchoringController::scrollPositionChanged() to " << m_owningScrollableArea->scrollPosition() << " - clearing scroll anchor");
+
+    if (m_owningScrollableArea->currentScrollType() == ScrollType::User)
+        m_disablementHeuristic.reset();
+
     clearAnchor();
     updateScrollableAreaRegistration();
 }
@@ -643,8 +647,16 @@ void ScrollAnchoringController::adjustScrollPositionForAnchoring()
     if (roundedAdjustment.isZero())
         return;
 
+    roundedAdjustment = constrainedToBlockDirection(roundedAdjustment, scrollerBox->writingMode());
+
+    if (m_disablementHeuristic.disabledByHeuristic(roundedAdjustment)) {
+        RELEASE_LOG(ScrollAnchoring, "ScrollAnchoringController::adjustScrollPositionForAnchoring() is main frame: %d, is main scroller: %d, adjustment (%.2f, %.2f) disabled by heuristic",  frameView().frame().isMainFrame(), !m_owningScrollableArea->isRenderLayer(), adjustment.width(), adjustment.height());
+        return;
+    }
+
     auto currentPosition = m_owningScrollableArea->scrollPosition();
-    auto newScrollPosition = currentPosition + constrainedToBlockDirection(roundedAdjustment, scrollerBox->writingMode());
+    auto newScrollPosition = currentPosition + roundedAdjustment;
+
     RELEASE_LOG(ScrollAnchoring, "ScrollAnchoringController::adjustScrollPositionForAnchoring() is main frame: %d, is main scroller: %d, adjusting from (%d, %d) to (%d, %d)",  frameView().frame().isMainFrame(), !m_owningScrollableArea->isRenderLayer(), currentPosition.x(), currentPosition.y(), newScrollPosition.x(), newScrollPosition.y());
     LOG_WITH_STREAM(ScrollAnchoring, stream << "ScrollAnchoringController " << this << " adjustScrollPositionForAnchoring() for scroller element: " << ValueOrNull(scrollableAreaBox()) << " anchor: " << *m_anchorObject << " adjusting from " << currentPosition << " to " << newScrollPosition);
 
@@ -680,6 +692,66 @@ void ScrollAnchoringController::stopSuppressingScrollAnchoring()
 {
     ASSERT(m_suppressionCount);
     --m_suppressionCount;
+}
+
+bool ScrollAnchoringController::DisablementHeuristic::disabledByHeuristic(IntSize adjustment)
+{
+    auto now = ApproximateTime::now();
+
+    if (m_nextEnablementTime && now < *m_nextEnablementTime) {
+        LOG_WITH_STREAM(ScrollAnchoring, stream << "ScrollAnchoringController::DisablementHeuristic - currently disabled");
+        return true;
+    }
+
+    auto nonZeroAxis = [](IntSize adjustment) {
+        if (adjustment.height())
+            return adjustment.height();
+        return adjustment.width();
+    };
+
+    if (!m_samplingStartTime) {
+        m_samplingStartTime = now;
+        m_accumulatedAdjustment = nonZeroAxis(adjustment);
+        m_samplingAdjustmentCount = 1;
+        return false;
+    }
+
+    ++m_samplingAdjustmentCount;
+    m_accumulatedAdjustment += nonZeroAxis(adjustment);
+
+    // This is designed to detect feedback between scroll anchoring and content changes that trigger scroll position oscillations,
+    // so look for adjustments that happen within a few frames that have cumulative small delta. Try to re-enable after 3s.
+    static constexpr unsigned maxAdjustments = 10;
+    static constexpr auto samplingDuration = 350_ms;
+    static constexpr auto reenablementDelay = 3_s;
+    static constexpr float meanAdjustmentMax = 2.0f;
+    auto timeSinceSamplingStart = now - *m_samplingStartTime;
+
+    if (timeSinceSamplingStart < samplingDuration) {
+        if (m_samplingAdjustmentCount < maxAdjustments)
+            return false;
+
+        auto meanAdjustment = std::abs(m_accumulatedAdjustment / m_samplingAdjustmentCount);
+        if (meanAdjustment > meanAdjustmentMax)
+            return false;
+
+        LOG_WITH_STREAM(ScrollAnchoring, stream << "ScrollAnchoringController::DisablementHeuristic - suppressing anchoring because " << m_samplingAdjustmentCount << " adjustments in the last " << timeSinceSamplingStart << " with mean adjustment " << meanAdjustment << ". Trying again in " << reenablementDelay);
+        reset();
+        m_nextEnablementTime = now + reenablementDelay;
+        return true;
+    }
+
+    reset();
+    return false;
+}
+
+void ScrollAnchoringController::DisablementHeuristic::reset()
+{
+    LOG_WITH_STREAM(ScrollAnchoring, stream << "ScrollAnchoringController::DisablementHeuristic - reset");
+    m_nextEnablementTime = { };
+    m_samplingStartTime = { };
+    m_accumulatedAdjustment = 0;
+    m_samplingAdjustmentCount = 0;
 }
 
 } // namespace WebCore
