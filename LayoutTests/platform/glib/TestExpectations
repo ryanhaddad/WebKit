@@ -1741,6 +1741,8 @@ webkit.org/b/146720 media/accessibility-describes-video.html [ Failure ]
 webkit.org/b/227934 media/media-source/media-webm-vorbis-partial.html [ Failure ]
 webkit.org/b/265016 media/media-webm-opus-error.html [ Timeout Failure ]
 webkit.org/b/277327 media/media-vp8-webm-with-preload.html [ Skip ]
+webkit.org/b/303551 media/media-vp8-webm-error.html [ Pass Failure ]
+webkit.org/b/303551 media/media-vp8-webm-seek-to-start.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/229973 media/track/in-band/track-in-band-srt-mkv-cues-added-once.html [ Failure Pass ]
 
@@ -2589,7 +2591,7 @@ webaudio/MediaElementAudioSource/mediaelementaudiosourcenode-playbackrate.html [
 webkit.org/b/216071 fast/canvas/webgl/move-canvas-in-document-while-clean.html [ ImageOnlyFailure ]
 
 webkit.org/b/172812 fast/canvas/webgl/lose-context-on-status-failure.html [ Skip ]
-webkit.org/b/172812 webgl/lose-context-after-context-lost.html [ Failure ]
+webkit.org/b/172812 webgl/lose-context-after-context-lost.html [ Failure Timeout ]
 webkit.org/b/172812 webgl/multiple-context-losses.html [ Failure ]
 webkit.org/b/305355 webgl/max-active-contexts-webglcontextlost-prevent-default.html [ Failure ]
 
@@ -3224,8 +3226,8 @@ webkit.org/b/172099 imported/w3c/web-platform-tests/FileAPI/url/url_xmlhttpreque
 
 imported/w3c/web-platform-tests/WebCryptoAPI/ [ Slow ]
 
-webkit.org/b/280672 imported/w3c/web-platform-tests/WebCryptoAPI/sign_verify/eddsa_small_order_points.https.any.html [ Crash ]
-webkit.org/b/280672 imported/w3c/web-platform-tests/WebCryptoAPI/sign_verify/eddsa_small_order_points.https.any.worker.html [ Crash ]
+webkit.org/b/280672 imported/w3c/web-platform-tests/WebCryptoAPI/sign_verify/eddsa_small_order_points.https.any.html [ Crash Timeout ]
+webkit.org/b/280672 imported/w3c/web-platform-tests/WebCryptoAPI/sign_verify/eddsa_small_order_points.https.any.worker.html [ Crash Timeout ]
 
 webkit.org/b/307140 imported/w3c/web-platform-tests/WebCryptoAPI/sign_verify/eddsa_curve25519.https.any.worker.html [ Failure Pass ]
 

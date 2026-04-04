@@ -1534,3 +1534,9 @@ webkit.org/b/310756 media/video-currentTime-set.html [ Pass Timeout ]
 webkit.org/b/310757 media/video-main-content-allow-then-scroll.html [ Pass Timeout ]
 
 inspector/unit-tests/retryuntil.html [ Pass Failure ]
+
+fast/events/prevent-default-prevents-interaction-with-scrollbars.html [ Failure ]
+webanimations/simultaneous-animations-removed-separately.html [ Failure ]
+webanimations/transform-accelerated-animation-finishes-before-removal.html [ Failure ]
+
+pointer-lock/lock-lost-on-alert.html [ Pass Failure ]

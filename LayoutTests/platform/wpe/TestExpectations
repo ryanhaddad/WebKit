@@ -1217,8 +1217,6 @@ webkit.org/b/298727 css3/text-decoration/text-decoration-line-grammar-error-3.ht
 
 webkit.org/b/299944 http/wpt/mediarecorder/record-96KHz-long-mp4.html [ Skip ]
 
-webkit.org/b/303551 media/media-vp8-webm-seek-to-start.html [ Pass Timeout ]
-
 webkit.org/b/304265 fast/events/mouse-click-events.html [ Failure ]
 webkit.org/b/304265 fast/events/mouse-event-buttons.html [ Failure ]
 
