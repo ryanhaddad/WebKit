@@ -53,7 +53,7 @@
 #include "ValidationMessage.h"
 #include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Ref.h>
-#include <wtf/SetForScope.h>
+#include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/Vector.h>
 #include <wtf/text/MakeString.h>
@@ -167,7 +167,9 @@ RefPtr<HTMLElement> ValidatedFormListedElement::focusableValidationAnchorElement
 void ValidatedFormListedElement::focusAndShowValidationMessage(Ref<HTMLElement> validationAnchor)
 {
     Ref protectedThis { *this };
-    SetForScope isFocusingWithValidationMessageScope(m_isFocusingWithValidationMessage, true);
+    bool previousIsFocusingWithValidationMessage = m_isFocusingWithValidationMessage;
+    m_isFocusingWithValidationMessage = true;
+    auto scopeExit = makeScopeExit([&] { m_isFocusingWithValidationMessage = previousIsFocusingWithValidationMessage; });
 
     // Calling focus() will scroll the element into view.
     validationAnchor->focus();
