@@ -131,7 +131,7 @@ void FontCascadeFonts::determinePitch(const FontCascadeDescription& description,
     if (numRanges == 1)
         m_pitch = primaryRanges.fontForFirstRange().pitch();
     else
-        m_pitch = VariablePitch;
+        m_pitch = PitchType::Variable;
 }
 
 void FontCascadeFonts::determineCanTakeFixedPitchFastContentMeasuring(const FontCascadeDescription& description, FontSelector* fontSelector)

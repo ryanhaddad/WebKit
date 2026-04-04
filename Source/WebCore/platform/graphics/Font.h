@@ -68,7 +68,7 @@ struct MultiRepresentationHEICMetrics;
 #endif
 
 enum class FontVariant : uint8_t { Auto, Normal, SmallCaps, EmphasisMark, BrokenIdeograph };
-enum Pitch : uint8_t { UnknownPitch, FixedPitch, VariablePitch };
+enum class PitchType : uint8_t { Unknown, Fixed, Variable };
 enum class IsForPlatformFont : bool { No, Yes };
 
 // Used to create platform fonts.
@@ -206,7 +206,7 @@ public:
     const GlyphPage* glyphPage(unsigned pageNumber) const;
 
     void determinePitch();
-    Pitch pitch() const { return m_treatAsFixedPitch ? FixedPitch : VariablePitch; }
+    PitchType pitch() const { return m_treatAsFixedPitch ? PitchType::Fixed : PitchType::Variable; }
     bool canTakeFixedPitchFastContentMeasuring() const { return m_canTakeFixedPitchFastContentMeasuring; }
 
     Origin origin() const { return m_attributes.origin; }

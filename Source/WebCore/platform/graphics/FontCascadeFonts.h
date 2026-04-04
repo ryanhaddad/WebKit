@@ -194,7 +194,7 @@ private:
     ShapedTextCache m_shapedTextCache;
 
     unsigned short m_generation { 0 };
-    Pitch m_pitch { UnknownPitch };
+    PitchType m_pitch { PitchType::Unknown };
     bool m_isForPlatformFont { false };
     TriState m_canTakeFixedPitchFastContentMeasuring : 2 { TriState::Indeterminate };
 #if ASSERT_ENABLED
@@ -204,9 +204,9 @@ private:
 
 inline bool FontCascadeFonts::isFixedPitch(const FontCascadeDescription& description, FontSelector* fontSelector)
 {
-    if (m_pitch == UnknownPitch)
+    if (m_pitch == PitchType::Unknown)
         determinePitch(description, fontSelector);
-    return m_pitch == FixedPitch;
+    return m_pitch == PitchType::Fixed;
 }
 
 inline bool FontCascadeFonts::canTakeFixedPitchFastContentMeasuring(const FontCascadeDescription& description, FontSelector* fontSelector)
