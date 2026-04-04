@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2026 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -62,7 +62,7 @@ static void buildAndPerformTest(NSEventType buttonEvent, NSEventModifierFlags mo
         auto pme = WebCore::PlatformEventFactory::createPlatformMouseEvent(event, nil, webView.get());
 
         EXPECT_EQ(expectedButton, pme.button());
-        EXPECT_TRUE(!modifierFlags || pme.modifierFlags() & modifierFlags);
+        EXPECT_EQ(WebCore::modifiersForModifierFlags(modifierFlags), pme.modifiers());
         EXPECT_EQ(expectedMenu, pme.menuTypeForEvent());
         if (canCallMenuTypeForEvent())
             EXPECT_EQ(expectedMenu, [NSMenu menuTypeForEvent:event]);
