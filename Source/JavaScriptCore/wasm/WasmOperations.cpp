@@ -1880,7 +1880,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmRefTest, UCPUStrictInt32, (JSWebA
     }
 
     auto& info = instance->module().moduleInformation();
-    bool result = Wasm::refCast(reference, static_cast<bool>(allowNull), info.typeSignatures[heapType]->index(), info.rtts[heapType].ptr());
+    bool result = Wasm::refCast(reference, static_cast<bool>(allowNull), info.typeIndexFromTypeSignatureIndex(ModuleInformation::typeSignatureIndexFromHeapType(heapType)), &info.rtt(ModuleInformation::typeSignatureIndexFromHeapType(heapType)));
     return toUCPUStrictInt32(result ? truth : falsity);
 }
 
@@ -1893,7 +1893,7 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmRefCast, EncodedJSValue, (JSWebAs
     }
 
     auto& info = instance->module().moduleInformation();
-    if (!Wasm::refCast(reference, static_cast<bool>(allowNull), info.typeSignatures[heapType]->index(), info.rtts[heapType].ptr())) [[unlikely]]
+    if (!Wasm::refCast(reference, static_cast<bool>(allowNull), info.typeIndexFromTypeSignatureIndex(ModuleInformation::typeSignatureIndexFromHeapType(heapType)), &info.rtt(ModuleInformation::typeSignatureIndexFromHeapType(heapType)))) [[unlikely]]
         return encodedJSValue();
     return reference;
 }

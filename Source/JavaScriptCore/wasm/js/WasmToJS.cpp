@@ -64,13 +64,13 @@ static Expected<MacroAssemblerCodeRef<WasmEntryPtrTag>, BindingFailure> handleBa
     return FINALIZE_WASM_CODE(linkBuffer, WasmEntryPtrTag, nullptr, "WebAssembly->JavaScript throw exception due to invalid use of restricted type in import[%i]", importIndex);
 }
 
-Expected<MacroAssemblerCodeRef<WasmEntryPtrTag>, BindingFailure> wasmToJS(const Wasm::ModuleInformation& info, TypeIndex typeIndex, unsigned importIndex)
+Expected<MacroAssemblerCodeRef<WasmEntryPtrTag>, BindingFailure> wasmToJS(const Wasm::ModuleInformation& info, unsigned importIndex)
 {
     // FIXME: This function doesn't properly abstract away the calling convention.
     // It'd be super easy to do so: https://bugs.webkit.org/show_bug.cgi?id=169401
     const auto& wasmCC = wasmCallingConvention();
     const auto& jsCC = jsCallingConvention();
-    const TypeDefinition& typeDefinition = TypeInformation::get(typeIndex).expand();
+    const TypeDefinition& typeDefinition = info.expandedTypeSignature(info.importFunctionTypeSignatureIndices[importIndex]);
     const auto& signature = *typeDefinition.as<FunctionSignature>();
     unsigned argCount = signature.argumentCount();
     constexpr GPRReg importJSCellGPRReg = GPRInfo::regT0; // Callee needs to be in regT0 for slow path below.

@@ -755,20 +755,20 @@ public:
     [[nodiscard]] PartialResult addRefI31(ExpressionType value, ExpressionType& result);
     [[nodiscard]] PartialResult addI31GetS(TypedExpression ref, ExpressionType& result);
     [[nodiscard]] PartialResult addI31GetU(TypedExpression ref, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNew(uint32_t index, ExpressionType size, ExpressionType value, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNewDefault(uint32_t index, ExpressionType size, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
-    [[nodiscard]] PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
+    [[nodiscard]] PartialResult addArrayNew(TypeSignatureIndex index, ExpressionType size, ExpressionType value, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewDefault(TypeSignatureIndex index, ExpressionType size, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewFixed(TypeSignatureIndex typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewData(TypeSignatureIndex typeIndex, uint32_t dataIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewElem(TypeSignatureIndex typeIndex, uint32_t elemSegmentIndex, ExpressionType size, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArraySet(TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
     [[nodiscard]] PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayFill(uint32_t, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayCopy(uint32_t, TypedExpression, ExpressionType, uint32_t, TypedExpression, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayInitElem(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayInitData(uint32_t, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
-    [[nodiscard]] PartialResult addStructNewDefault(uint32_t index, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayFill(TypeSignatureIndex, TypedExpression, ExpressionType, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayCopy(TypeSignatureIndex, TypedExpression, ExpressionType, TypeSignatureIndex, TypedExpression, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitElem(TypeSignatureIndex, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitData(TypeSignatureIndex, TypedExpression, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addStructNew(TypeSignatureIndex typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructNewDefault(TypeSignatureIndex index, ExpressionType& result);
     [[nodiscard]] PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structReference, const StructType&, const RTT&, uint32_t fieldIndex, ExpressionType& result);
     [[nodiscard]] PartialResult addStructSet(TypedExpression structReference, const StructType&, const RTT&, uint32_t fieldIndex, ExpressionType value);
     [[nodiscard]] PartialResult addRefTest(TypedExpression reference, bool allowNull, int32_t heapType, bool shouldNegate, ExpressionType& result);
@@ -828,7 +828,7 @@ public:
 
     // Calls
     [[nodiscard]] PartialResult addCall(unsigned, FunctionSpaceIndex functionIndexSpace, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
-    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition&, const RTT&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
     [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList& args, ResultList& results, CallType = CallType::Call);
     [[nodiscard]] PartialResult addUnreachable();
     [[nodiscard]] PartialResult addCrash();
@@ -855,10 +855,10 @@ public:
     {
         TRACE_VALUE(Wasm::Types::Void, get(expr), "pop at height: ", m_parser->expressionStack().size() + 1, " site: [", message, "], ", expr);
     }
-    const Ref<TypeDefinition> NODELETE getTypeDefinition(uint32_t typeIndex) { return m_info.typeSignatures[typeIndex]; }
-    const ArrayType* getArrayTypeDefinition(uint32_t);
-    void getArrayElementType(uint32_t, StorageType&);
-    void getArrayRefType(uint32_t, Type&);
+    const TypeDefinition& NODELETE getTypeDefinition(TypeSignatureIndex typeIndex) { return m_info.typeSignature(typeIndex); }
+    const ArrayType* getArrayTypeDefinition(TypeSignatureIndex);
+    void getArrayElementType(TypeSignatureIndex, StorageType&);
+    void getArrayRefType(TypeSignatureIndex, Type&);
 
     Value* constant(B3::Type, uint64_t bits, std::optional<Origin> = std::nullopt);
     Value* constant(B3::Type, v128_t bits, std::optional<Origin> = std::nullopt);
@@ -929,7 +929,7 @@ private:
     Value* allocatorForWasmGCHeapCellSize(Value* size, BasicBlock* slowPath);
     Value* allocateWasmGCHeapCell(Value* allocator, BasicBlock* slowPath);
     Value* allocateWasmGCObject(Value* allocator, Value* structureID, Value* typeInfo, BasicBlock* slowPath);
-    Value* allocateWasmGCArrayUninitialized(uint32_t typeIndex, Value* size);
+    Value* allocateWasmGCArrayUninitialized(TypeSignatureIndex typeIndex, Value* size);
 
     void mutatorFence();
 
@@ -937,13 +937,13 @@ private:
     Value* emitGetArraySizeWithNullCheck(Type arrayType, Value*);
     void emitNullCheck(Value*, ExceptionType);
     bool emitNullCheckBeforeAccess(Value*, ptrdiff_t offset);
-    void emitArraySetUnchecked(uint32_t, Value*, Value*, Value*);
-    bool emitArraySetUncheckedWithoutWriteBarrier(uint32_t, Value*, Value*, Value*);
+    void emitArraySetUnchecked(TypeSignatureIndex, Value*, Value*, Value*);
+    bool emitArraySetUncheckedWithoutWriteBarrier(TypeSignatureIndex, Value*, Value*, Value*);
     // Returns true if a writeBarrier/mutatorFence is needed.
     [[nodiscard]] bool emitStructSet(bool canTrap, Value*, uint32_t, const StructType&, const RTT&, Value*);
-    [[nodiscard]] Value* allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size);
+    [[nodiscard]] Value* allocateWasmGCArray(TypeSignatureIndex typeIndex, Value* initValue, Value* size);
     using ArraySegmentOperation = EncodedJSValue SYSV_ABI (&)(JSC::JSWebAssemblyInstance*, uint32_t, uint32_t, uint32_t, uint32_t);
-    [[nodiscard]] ExpressionType pushArrayNewFromSegment(ArraySegmentOperation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
+    [[nodiscard]] ExpressionType pushArrayNewFromSegment(ArraySegmentOperation, TypeSignatureIndex typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType);
     void emitRefTestOrCast(CastKind, TypedExpression, bool, int32_t, bool, ExpressionType&);
 
     const B3::AbstractHeap* structFieldHeap(const RTT& rtt, uint32_t fieldIndex)
@@ -1880,8 +1880,8 @@ auto OMGIRGenerator::emitIndirectCall(Value* calleeInstance, Value* calleeCode, 
     m_proc.requestCallArgAreaSizeInBytes(calleeStackSize);
 
     if (isTailCallRootCaller) {
-        const TypeIndex callerTypeIndex = m_info.internalFunctionTypeIndices[m_functionIndex];
-        const TypeDefinition& callerTypeDefinition = TypeInformation::get(callerTypeIndex).expand();
+        const TypeSignatureIndex callerTypeSignatureIndex = m_info.internalFunctionTypeSignatureIndices[m_functionIndex];
+        const TypeDefinition& callerTypeDefinition = m_info.expandedTypeSignature(callerTypeSignatureIndex);
         CallInformation wasmCallerInfoAsCallee = callingConvention.callInformationFor(callerTypeDefinition, CallRole::Callee);
 
         auto [patchpoint, _, prepareForCall] = createTailCallPatchpoint(m_currentBlock, signature, wasmCallerInfoAsCallee, wasmCalleeInfoAsCallee, args, { { calleeCode, ValueRep(GPRInfo::wasmScratchGPR0) } });
@@ -3294,7 +3294,7 @@ auto OMGIRGenerator::addI31GetU(TypedExpression reference, ExpressionType& resul
     return { };
 }
 
-Value* OMGIRGenerator::allocateWasmGCArray(uint32_t typeIndex, Value* initValue, Value* size)
+Value* OMGIRGenerator::allocateWasmGCArray(TypeSignatureIndex typeIndex, Value* initValue, Value* size)
 {
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
@@ -3375,30 +3375,29 @@ Value* OMGIRGenerator::allocateWasmGCArray(uint32_t typeIndex, Value* initValue,
 }
 
 // Given a type index, verify that it's an array type and return its expansion
-const ArrayType* OMGIRGenerator::getArrayTypeDefinition(uint32_t typeIndex)
+const ArrayType* OMGIRGenerator::getArrayTypeDefinition(TypeSignatureIndex typeIndex)
 {
-    Ref<Wasm::TypeDefinition> typeDef = getTypeDefinition(typeIndex);
-    const Wasm::TypeDefinition& arraySignature = typeDef->expand();
+    const Wasm::TypeDefinition& arraySignature = m_info.expandedTypeSignature(typeIndex);
     ASSERT(arraySignature.is<ArrayType>());
     return arraySignature.as<ArrayType>();
 }
 
 // Given a type index for an array signature, look it up, expand it and
 // return the element type
-void OMGIRGenerator::getArrayElementType(uint32_t typeIndex, StorageType& result)
+void OMGIRGenerator::getArrayElementType(TypeSignatureIndex typeIndex, StorageType& result)
 {
     const ArrayType* arrayType = getArrayTypeDefinition(typeIndex);
     result = arrayType->elementType().type;
 }
 
 // Given a type index, verify that it's an array type and return the type (Ref a)
-void OMGIRGenerator::getArrayRefType(uint32_t typeIndex, Type& result)
+void OMGIRGenerator::getArrayRefType(TypeSignatureIndex typeIndex, Type& result)
 {
-    Ref<Wasm::TypeDefinition> typeDef = getTypeDefinition(typeIndex);
-    result = Type { TypeKind::Ref, typeDef->index() };
+    const Wasm::TypeDefinition& typeDef = getTypeDefinition(typeIndex);
+    result = Type { TypeKind::Ref, typeDef.index() };
 }
 
-auto OMGIRGenerator::addArrayNew(uint32_t typeIndex, ExpressionType size, ExpressionType value, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayNew(TypeSignatureIndex typeIndex, ExpressionType size, ExpressionType value, ExpressionType& result) -> PartialResult
 {
 #if ASSERT_ENABLED
     StorageType elementType;
@@ -3413,10 +3412,10 @@ auto OMGIRGenerator::addArrayNew(uint32_t typeIndex, ExpressionType size, Expres
     return { };
 }
 
-auto OMGIRGenerator::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType) -> ExpressionType
+auto OMGIRGenerator::pushArrayNewFromSegment(ArraySegmentOperation operation, TypeSignatureIndex typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType) -> ExpressionType
 {
     Value* resultValue = callWasmOperation(m_currentBlock, toB3Type(Types::Arrayref), operation,
-        instanceValue(), constant(Int32, typeIndex),
+        instanceValue(), constant(Int32, typeIndex.rawIndex()),
         constant(Int32, segmentIndex),
         get(arraySize), get(offset));
 
@@ -3426,7 +3425,7 @@ auto OMGIRGenerator::pushArrayNewFromSegment(ArraySegmentOperation operation, ui
     return push(resultValue);
 }
 
-auto OMGIRGenerator::addArrayNewDefault(uint32_t typeIndex, ExpressionType size, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayNewDefault(TypeSignatureIndex typeIndex, ExpressionType size, ExpressionType& result) -> PartialResult
 {
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
@@ -3447,20 +3446,20 @@ auto OMGIRGenerator::addArrayNewDefault(uint32_t typeIndex, ExpressionType size,
     return { };
 }
 
-auto OMGIRGenerator::addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayNewData(TypeSignatureIndex typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result) -> PartialResult
 {
     result = pushArrayNewFromSegment(operationWasmArrayNewData, typeIndex, dataIndex, arraySize, offset, ExceptionType::BadArrayNewInitData);
 
     return { };
 }
 
-auto OMGIRGenerator::addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayNewElem(TypeSignatureIndex typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result) -> PartialResult
 {
     result = pushArrayNewFromSegment(operationWasmArrayNewElem, typeIndex, elemSegmentIndex, arraySize, offset, ExceptionType::BadArrayNewInitElem);
     return { };
 }
 
-auto OMGIRGenerator::addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayNewFixed(TypeSignatureIndex typeIndex, ArgumentList& args, ExpressionType& result) -> PartialResult
 {
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
@@ -3494,7 +3493,7 @@ Value* OMGIRGenerator::emitGetArraySizeWithNullCheck(Type arrayType, Value* arra
     return arraySize;
 }
 
-auto OMGIRGenerator::addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addArrayGet(ExtGCOpType arrayGetKind, TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result) -> PartialResult
 {
     auto arrayValue = get(arrayref);
     auto indexValue = get(index);
@@ -3636,7 +3635,7 @@ Value* OMGIRGenerator::emitGetArrayPayloadBase(Wasm::StorageType fieldType, Valu
 
 // Does the array set without null check and bounds checks -- can be
 // called directly by addArrayNewFixed()
-bool OMGIRGenerator::emitArraySetUncheckedWithoutWriteBarrier(uint32_t typeIndex, Value* arrayref, Value* indexValue, Value* setValue)
+bool OMGIRGenerator::emitArraySetUncheckedWithoutWriteBarrier(TypeSignatureIndex typeIndex, Value* arrayref, Value* indexValue, Value* setValue)
 {
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
@@ -3704,14 +3703,14 @@ bool OMGIRGenerator::emitArraySetUncheckedWithoutWriteBarrier(uint32_t typeIndex
     return isRefType(elementType.unpacked());
 }
 
-void OMGIRGenerator::emitArraySetUnchecked(uint32_t typeIndex, Value* arrayref, Value* index, Value* setValue)
+void OMGIRGenerator::emitArraySetUnchecked(TypeSignatureIndex typeIndex, Value* arrayref, Value* index, Value* setValue)
 {
     if (emitArraySetUncheckedWithoutWriteBarrier(typeIndex, arrayref, index, setValue))
         emitWriteBarrier(pointerOfWasmRef(arrayref));
 }
 
 
-auto OMGIRGenerator::addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value) -> PartialResult
+auto OMGIRGenerator::addArraySet(TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value) -> PartialResult
 {
 #if ASSERT_ENABLED
     const ArrayType* arrayType = getArrayTypeDefinition(typeIndex);
@@ -3748,7 +3747,7 @@ auto OMGIRGenerator::addArrayLen(TypedExpression arrayref, ExpressionType& resul
     return { };
 }
 
-auto OMGIRGenerator::addArrayFill(uint32_t typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size) -> PartialResult
+auto OMGIRGenerator::addArrayFill(TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size) -> PartialResult
 {
     StorageType elementType;
     getArrayElementType(typeIndex, elementType);
@@ -3787,7 +3786,7 @@ auto OMGIRGenerator::addArrayFill(uint32_t typeIndex, TypedExpression arrayref, 
     return { };
 }
 
-auto OMGIRGenerator::addArrayCopy(uint32_t, TypedExpression dst, ExpressionType dstOffset, uint32_t, TypedExpression src, ExpressionType srcOffset, ExpressionType size) -> PartialResult
+auto OMGIRGenerator::addArrayCopy(TypeSignatureIndex, TypedExpression dst, ExpressionType dstOffset, TypeSignatureIndex, TypedExpression src, ExpressionType srcOffset, ExpressionType size) -> PartialResult
 {
     auto dstValue = get(dst);
     auto dstOffsetValue = get(dstOffset);
@@ -3818,7 +3817,7 @@ auto OMGIRGenerator::addArrayCopy(uint32_t, TypedExpression dst, ExpressionType 
     return { };
 }
 
-auto OMGIRGenerator::addArrayInitElem(uint32_t, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size) -> PartialResult
+auto OMGIRGenerator::addArrayInitElem(TypeSignatureIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size) -> PartialResult
 {
     auto dstValue = get(dst);
     auto dstOffsetValue = get(dstOffset);
@@ -3846,7 +3845,7 @@ auto OMGIRGenerator::addArrayInitElem(uint32_t, TypedExpression dst, ExpressionT
     return { };
 }
 
-auto OMGIRGenerator::addArrayInitData(uint32_t, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size) -> PartialResult
+auto OMGIRGenerator::addArrayInitData(TypeSignatureIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size) -> PartialResult
 {
     auto dstValue = get(dst);
     auto dstOffsetValue = get(dstOffset);
@@ -3874,20 +3873,20 @@ auto OMGIRGenerator::addArrayInitData(uint32_t, TypedExpression dst, ExpressionT
     return { };
 }
 
-auto OMGIRGenerator::addStructNew(uint32_t typeIndex, ArgumentList& args, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addStructNew(TypeSignatureIndex typeIndex, ArgumentList& args, ExpressionType& result) -> PartialResult
 {
-    const auto& structType = *m_info.typeSignatures[typeIndex]->expand().template as<StructType>();
-    const RTT& rtt = m_info.rtts[typeIndex].get();
+    const auto& structType = *m_info.expandedTypeSignature(typeIndex).template as<StructType>();
+    const RTT& rtt = m_info.rtt(typeIndex);
 
-    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex));
+    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex.rawIndex()));
     MemoryValue* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), structureIDOffset);
-    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
+    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex.rawIndex()], structureID);
     structureID->setReadsMutability(B3::Mutability::Immutable);
     structureID->setControlDependent(false);
 
     int32_t allocatorsBaseOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfAllocatorForGCObject(m_info, 0));
 
-    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex, allocatorsBaseOffset, instanceValue(), structureID);
+    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex.rawIndex(), allocatorsBaseOffset, instanceValue(), structureID);
 
     for (uint32_t i = 0; i < args.size(); ++i) {
         bool needsWriteBarrier = emitStructSet(/* canTrap */ false, structNew, i, structType, rtt, get(args[i]));
@@ -3898,20 +3897,20 @@ auto OMGIRGenerator::addStructNew(uint32_t typeIndex, ArgumentList& args, Expres
     return { };
 }
 
-auto OMGIRGenerator::addStructNewDefault(uint32_t typeIndex, ExpressionType& result) -> PartialResult
+auto OMGIRGenerator::addStructNewDefault(TypeSignatureIndex typeIndex, ExpressionType& result) -> PartialResult
 {
-    const auto& structType = *m_info.typeSignatures[typeIndex]->expand().template as<StructType>();
-    const RTT& rtt = m_info.rtts[typeIndex].get();
+    const auto& structType = *m_info.expandedTypeSignature(typeIndex).template as<StructType>();
+    const RTT& rtt = m_info.rtt(typeIndex);
 
-    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex));
+    int32_t structureIDOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex.rawIndex()));
     MemoryValue* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), structureIDOffset);
-    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
+    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex.rawIndex()], structureID);
     structureID->setReadsMutability(B3::Mutability::Immutable);
     structureID->setControlDependent(false);
 
     int32_t allocatorsBaseOffset = safeCast<int32_t>(JSWebAssemblyInstance::offsetOfAllocatorForGCObject(m_info, 0));
 
-    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex, allocatorsBaseOffset, instanceValue(), structureID);
+    auto* structNew = m_currentBlock->appendNew<WasmStructNewValue>(m_proc, origin(), wasmRefType(), Ref { rtt }, &structType, typeIndex.rawIndex(), allocatorsBaseOffset, instanceValue(), structureID);
 
     for (StructFieldCount i = 0; i < structType.fieldCount(); ++i) {
         Value* initValue;
@@ -4007,7 +4006,7 @@ void OMGIRGenerator::emitRefTestOrCast(CastKind castKind, TypedExpression refere
     RefPtr<const Wasm::RTT> targetRTT;
     int32_t originalTypeIndex = toHeapType;
     if (!typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType))) {
-        targetRTT = m_info.rtts[toHeapType].ptr();
+        targetRTT = &m_info.rtt(ModuleInformation::typeSignatureIndexFromHeapType(toHeapType));
         toHeapType = 0;
         ASSERT(!typeIndexIsType(static_cast<Wasm::TypeIndex>(toHeapType)));
     }
@@ -4145,17 +4144,17 @@ Value* OMGIRGenerator::allocateWasmGCObject(Value* allocator, Value* structureID
     return cell;
 }
 
-Value* OMGIRGenerator::allocateWasmGCArrayUninitialized(uint32_t typeIndex, Value* size)
+Value* OMGIRGenerator::allocateWasmGCArrayUninitialized(TypeSignatureIndex typeIndex, Value* size)
 {
     auto* slowPath = m_proc.addBlock();
     auto* continuation = m_proc.addBlock();
 
-    auto* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex)));
-    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex], structureID);
+    auto* structureID = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), instanceValue(), safeCast<int32_t>(JSWebAssemblyInstance::offsetOfGCObjectStructureID(m_info, typeIndex.rawIndex())));
+    m_heaps.decorateMemory(&m_heaps.JSWebAssemblyInstance_gcObjectStructureIDs[typeIndex.rawIndex()], structureID);
     structureID->setReadsMutability(B3::Mutability::Immutable);
     structureID->setControlDependent(false);
 
-    const ArrayType* typeDefinition = m_info.typeSignatures[typeIndex]->expand().template as<ArrayType>();
+    const ArrayType* typeDefinition = m_info.expandedTypeSignature(typeIndex).template as<ArrayType>();
     size_t elementSize = typeDefinition->elementType().type.elementSize();
     auto* extended = pointerOfInt32(size);
     auto* shifted = m_currentBlock->appendNew<Value>(m_proc, Shl, origin(), extended, constant(Int32, getLSBSet(elementSize)));
@@ -4169,7 +4168,7 @@ Value* OMGIRGenerator::allocateWasmGCArrayUninitialized(uint32_t typeIndex, Valu
 
     m_currentBlock = slowPath;
     auto* slowResult = callWasmOperation(m_currentBlock, toB3Type(Types::Arrayref), operationWasmArrayNewEmpty,
-        instanceValue(), constant(Int32, typeIndex), size);
+        instanceValue(), constant(Int32, typeIndex.rawIndex()), size);
     emitNullCheck(slowResult, ExceptionType::BadArrayNew);
     auto* slowValue = m_currentBlock->appendNew<UpsilonValue>(m_proc, origin(), slowResult);
     m_currentBlock->appendNewControlValue(m_proc, Jump, origin(), continuation);
@@ -5984,8 +5983,8 @@ auto OMGIRGenerator::emitDirectCall(unsigned callProfileIndex, FunctionSpaceInde
     Checked<int32_t> calleeStackSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(wasmCalleeInfo.headerAndArgumentStackSizeInBytes);
     if (isTailCallRootCaller)
         calleeStackSize = WTF::roundUpToMultipleOf<stackAlignmentBytes()>(wasmCalleeInfo.headerAndArgumentStackSizeInBytes * 2 + sizeof(Register));
-    const TypeIndex callerTypeIndex = m_info.internalFunctionTypeIndices[m_functionIndex];
-    const TypeDefinition& callerTypeDefinition = TypeInformation::get(callerTypeIndex).expand();
+    const TypeSignatureIndex callerTypeSignatureIndex = m_info.internalFunctionTypeSignatureIndices[m_functionIndex];
+    const TypeDefinition& callerTypeDefinition = m_info.expandedTypeSignature(callerTypeSignatureIndex);
     CallInformation wasmCallerInfoAsCallee = callingConvention.callInformationFor(callerTypeDefinition, CallRole::Callee);
 
     B3::Type returnType = toB3ResultType(&signature);
@@ -6170,16 +6169,16 @@ auto OMGIRGenerator::tryInliningPolymorphicCalls(unsigned callProfileIndex, Valu
 }
 
 
-auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType) -> PartialResult
+auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& expandedSignature, const RTT& rtt, ArgumentList& args, ResultList& results, CallType callType) -> PartialResult
 {
     UNUSED_PARAM(callProfileIndex);
     Value* calleeIndex = get(args.takeLast());
-    const TypeDefinition& signature = originalSignature.expand();
+    const TypeDefinition& signature = expandedSignature;
     const bool isTailCallRootCaller = callType == CallType::TailCall && !m_inlineParent;
     const bool isTailCallInlineCaller = callType == CallType::TailCall && m_inlineParent;
     ASSERT(signature.as<FunctionSignature>()->argumentCount() == args.size());
 
-    TRACE_CF("Call_indirect: entered with table index: ", tableIndex, " ", originalSignature);
+    TRACE_CF("Call_indirect: entered with table index: ", tableIndex, " ", expandedSignature);
 
     // Note: call indirect can call either WebAssemblyFunction or WebAssemblyWrapperFunction. Because
     // WebAssemblyWrapperFunction is like calling into the js, we conservatively assume all call indirects
@@ -6277,11 +6276,9 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
     Value* calleeRTT = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), callableFunction, safeCast<int32_t>(FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfRTT()));
     m_heaps.decorateMemory(&m_heaps.WasmFuncRefTableFunction_rtt, calleeRTT);
 
-    auto signatureRTT = TypeInformation::getCanonicalRTT(originalSignature.index());
+    Value* expectedRTT = constant(pointerType(), std::bit_cast<uintptr_t>(&rtt));
 
-    Value* expectedRTT = constant(pointerType(), std::bit_cast<uintptr_t>(signatureRTT.ptr()));
-
-    if (originalSignature.isFinalType()) {
+    if (rtt.isFinalType()) {
         CheckValue* check = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), calleeRTT, expectedRTT));
         check->setGenerator([=, this, origin = this->origin()](CCallHelpers& jit, const B3::StackmapGenerationParams&) {
             this->emitExceptionCheck(jit, origin, ExceptionType::BadSignature);
@@ -6304,17 +6301,17 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
         auto* rttSize = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, Int32, origin(), calleeRTT, safeCast<int32_t>(RTT::offsetOfDisplaySizeExcludingThis()));
         m_heaps.decorateMemory(&m_heaps.WasmRTT_displaySizeExcludingThis, rttSize);
 
-        CheckValue* checkRTTSize = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), m_currentBlock->appendNew<Value>(m_proc, BelowEqual, origin(), rttSize, constant(Int32, signatureRTT->displaySizeExcludingThis())));
+        CheckValue* checkRTTSize = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), m_currentBlock->appendNew<Value>(m_proc, BelowEqual, origin(), rttSize, constant(Int32, rtt.displaySizeExcludingThis())));
         checkRTTSize->setGenerator([=, this, origin = this->origin()](CCallHelpers& jit, const B3::StackmapGenerationParams&) {
             this->emitExceptionCheck(jit, origin, ExceptionType::BadSignature);
         });
 
-        auto* displayEntry = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), calleeRTT, safeCast<int32_t>(RTT::offsetOfData() + signatureRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)));
-        m_heaps.decorateMemory(&m_heaps.WasmRTT_data[signatureRTT->displaySizeExcludingThis()], displayEntry);
+        auto* displayEntry = m_currentBlock->appendNew<MemoryValue>(m_proc, Load, pointerType(), origin(), calleeRTT, safeCast<int32_t>(RTT::offsetOfData() + rtt.displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)));
+        m_heaps.decorateMemory(&m_heaps.WasmRTT_data[rtt.displaySizeExcludingThis()], displayEntry);
         displayEntry->setReadsMutability(B3::Mutability::Immutable);
         displayEntry->setControlDependent(false);
 
-        CheckValue* checkRTTDisplayEntry = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), displayEntry, constant(pointerType(), std::bit_cast<uintptr_t>(signatureRTT.ptr()))));
+        CheckValue* checkRTTDisplayEntry = m_currentBlock->appendNew<CheckValue>(m_proc, Check, origin(), m_currentBlock->appendNew<Value>(m_proc, NotEqual, origin(), displayEntry, constant(pointerType(), std::bit_cast<uintptr_t>(&rtt))));
         checkRTTDisplayEntry->setGenerator([=, this, origin = this->origin()](CCallHelpers& jit, const B3::StackmapGenerationParams&) {
             this->emitExceptionCheck(jit, origin, ExceptionType::BadSignature);
         });
@@ -6362,13 +6359,13 @@ auto OMGIRGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIn
     return { };
 }
 
-auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType) -> PartialResult
+auto OMGIRGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition& expandedSignature, ArgumentList& args, ResultList& results, CallType callType) -> PartialResult
 {
     UNUSED_PARAM(callProfileIndex);
     TypedExpression calleeArg = args.takeLast();
     Value* callee = get(calleeArg);
-    TRACE_VALUE(Wasm::Types::Void, callee, "call_ref: ", originalSignature);
-    const TypeDefinition& signature = originalSignature.expand();
+    TRACE_VALUE(Wasm::Types::Void, callee, "call_ref: ", expandedSignature);
+    const TypeDefinition& signature = expandedSignature;
     const bool isTailCallRootCaller = callType == CallType::TailCall && !m_inlineParent;
     const bool isTailCallInlineCaller = callType == CallType::TailCall && m_inlineParent;
     ASSERT(signature.as<FunctionSignature>()->argumentCount() == args.size());

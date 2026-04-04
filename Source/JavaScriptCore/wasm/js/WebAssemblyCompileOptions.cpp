@@ -136,11 +136,11 @@ bool WebAssemblyCompileOptions::validateImportForBuiltinSetNames(const Wasm::Imp
     // at `kindIndex`. The wrong import kind is equivalent in spec terms to `match_externtype` returning false in Step 7.
     if (import.kind != Wasm::ExternalKind::Function)
         return false;
-    Wasm::TypeIndex typeIndex = moduleInfo.importFunctionTypeIndices[import.kindIndex];
-    Ref<const Wasm::TypeDefinition> type = Wasm::TypeInformation::get(typeIndex);
-    if (!type->is<Wasm::FunctionSignature>())
+    Wasm::TypeSignatureIndex typeSignatureIndex = moduleInfo.importFunctionTypeSignatureIndices[import.kindIndex];
+    SUPPRESS_UNCOUNTED_LOCAL const Wasm::TypeDefinition& type = moduleInfo.expandedTypeSignature(typeSignatureIndex);
+    if (!type.is<Wasm::FunctionSignature>())
         return false;
-    SUPPRESS_UNCOUNTED_LOCAL auto* importSig = type->as<Wasm::FunctionSignature>();
+    SUPPRESS_UNCOUNTED_LOCAL auto* importSig = type.as<Wasm::FunctionSignature>();
 
     return builtinSig.isValid(*importSig);
 }

@@ -93,8 +93,6 @@ public:
 
     UncheckedKeyHashMap<IPIntPC, IPIntTierUpCounter::OSREntryData>& tierUpCounter() LIFETIME_BOUND { return m_tierUpCounter; }
 
-    const RTT* addSignature(const TypeDefinition&);
-
     void addCallTarget(unsigned callProfileIndex, FunctionSpaceIndex target)
     {
         if (callProfileIndex >= m_callTargets.size())

@@ -659,7 +659,7 @@ BBQJIT::BBQJIT(CompilationContext& compilationContext, const TypeDefinition& sig
     , m_profiledCallee(profiledCallee)
     , m_callee(callee)
     , m_function(function)
-    , m_functionSignature(signature.expand().as<FunctionSignature>())
+    , m_functionSignature(signature.as<FunctionSignature>())
     , m_functionIndex(functionIndex)
     , m_info(info)
     , m_mode(mode)
@@ -713,7 +713,7 @@ BBQJIT::BBQJIT(CompilationContext& compilationContext, const TypeDefinition& sig
         m_disassembler->setStartOfCode(m_jit.label());
     }
 
-    CallInformation callInfo = wasmCallingConvention().callInformationFor(signature.expand(), CallRole::Callee);
+    CallInformation callInfo = wasmCallingConvention().callInformationFor(signature, CallRole::Callee);
 
     // Allocate callee save register spaces.
     for (size_t i = 0, size = RegisterAtOffsetList::bbqCalleeSaveRegisters().registerCount(); i < size; ++i)
@@ -1605,29 +1605,26 @@ FloatingPointRange BBQJIT::lookupTruncationRange(TruncationKind truncationKind)
 
 // GC
 
-const Ref<TypeDefinition> BBQJIT::getTypeDefinition(uint32_t typeIndex) { return m_info.typeSignatures[typeIndex]; }
-
 // Given a type index, verify that it's an array type and return its expansion
-const ArrayType* BBQJIT::getArrayTypeDefinition(uint32_t typeIndex)
+const ArrayType* BBQJIT::getArrayTypeDefinition(TypeSignatureIndex typeIndex)
 {
-    Ref<Wasm::TypeDefinition> typeDef = getTypeDefinition(typeIndex);
-    const Wasm::TypeDefinition& arraySignature = typeDef->expand();
+    const Wasm::TypeDefinition& arraySignature = m_info.expandedTypeSignature(typeIndex);
     return arraySignature.as<ArrayType>();
 }
 
 // Given a type index for an array signature, look it up, expand it and
 // return the element type
-StorageType BBQJIT::getArrayElementType(uint32_t typeIndex)
+StorageType BBQJIT::getArrayElementType(TypeSignatureIndex typeIndex)
 {
     const ArrayType* arrayType = getArrayTypeDefinition(typeIndex);
     return arrayType->elementType().type;
 }
 
-void BBQJIT::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType, ExpressionType& result)
+void BBQJIT::pushArrayNewFromSegment(ArraySegmentOperation operation, TypeSignatureIndex typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType, ExpressionType& result)
 {
     Vector<Value, 8> arguments = {
         instanceValue(),
-        Value::fromI32(typeIndex),
+        Value::fromI32(typeIndex.rawIndex()),
         Value::fromI32(segmentIndex),
         arraySize,
         offset,
@@ -1639,21 +1636,21 @@ void BBQJIT::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t t
     emitThrowOnNullReference(exceptionType, resultLocation);
 }
 
-[[nodiscard]] PartialResult BBQJIT::addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addArrayNewData(TypeSignatureIndex typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result)
 {
     pushArrayNewFromSegment(operationWasmArrayNewData, typeIndex, dataIndex, arraySize, offset, ExceptionType::BadArrayNewInitData, result);
     LOG_INSTRUCTION("ArrayNewData", typeIndex, dataIndex, arraySize, offset, RESULT(result));
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result)
+[[nodiscard]] PartialResult BBQJIT::addArrayNewElem(TypeSignatureIndex typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result)
 {
     pushArrayNewFromSegment(operationWasmArrayNewElem, typeIndex, elemSegmentIndex, arraySize, offset, ExceptionType::BadArrayNewInitElem, result);
     LOG_INSTRUCTION("ArrayNewElem", typeIndex, elemSegmentIndex, arraySize, offset, RESULT(result));
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addArrayCopy(uint32_t dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, uint32_t srcTypeIndex, TypedExpression typedSrc, ExpressionType srcOffset, ExpressionType size)
+[[nodiscard]] PartialResult BBQJIT::addArrayCopy(TypeSignatureIndex dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, TypeSignatureIndex srcTypeIndex, TypedExpression typedSrc, ExpressionType srcOffset, ExpressionType size)
 {
     auto dst = typedDst.value();
     auto src = typedSrc.value();
@@ -1698,7 +1695,7 @@ void BBQJIT::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t t
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addArrayInitElem(uint32_t dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size)
+[[nodiscard]] PartialResult BBQJIT::addArrayInitElem(TypeSignatureIndex dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size)
 {
     auto dst = typedDst.value();
     if (dst.isConst()) {
@@ -1737,7 +1734,7 @@ void BBQJIT::pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t t
     return { };
 }
 
-[[nodiscard]] PartialResult BBQJIT::addArrayInitData(uint32_t dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size)
+[[nodiscard]] PartialResult BBQJIT::addArrayInitData(TypeSignatureIndex dstTypeIndex, TypedExpression typedDst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size)
 {
     auto dst = typedDst.value();
     if (dst.isConst()) {
@@ -4378,8 +4375,8 @@ void BBQJIT::emitTailCall(FunctionSpaceIndex functionIndexSpace, const TypeDefin
     // Do this to ensure we don't write past SP.
     m_maxCalleeStackSize = std::max<int>(calleeStackSize, m_maxCalleeStackSize);
 
-    const TypeIndex callerTypeIndex = m_info.internalFunctionTypeIndices[m_functionIndex];
-    const TypeDefinition& callerTypeDefinition = TypeInformation::get(callerTypeIndex).expand();
+    const TypeSignatureIndex callerTypeSignatureIndex = m_info.internalFunctionTypeSignatureIndices[m_functionIndex];
+    const TypeDefinition& callerTypeDefinition = m_info.expandedTypeSignature(callerTypeSignatureIndex);
     CallInformation wasmCallerInfo = callingConvention.callInformationFor(callerTypeDefinition, CallRole::Callee);
     Checked<int32_t> callerStackSize = WTF::roundUpToMultipleOf(stackAlignmentBytes(), wasmCallerInfo.headerAndArgumentStackSizeInBytes);
     Checked<int32_t> tailCallStackOffsetFromFP = callerStackSize - calleeStackSize;
@@ -4647,8 +4644,8 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
     // Do this to ensure we don't write past SP.
     m_maxCalleeStackSize = std::max<int>(calleeStackSize, m_maxCalleeStackSize);
 
-    const TypeIndex callerTypeIndex = m_info.internalFunctionTypeIndices[m_functionIndex];
-    const TypeDefinition& callerTypeDefinition = TypeInformation::get(callerTypeIndex).expand();
+    const TypeSignatureIndex callerTypeSignatureIndex = m_info.internalFunctionTypeSignatureIndices[m_functionIndex];
+    const TypeDefinition& callerTypeDefinition = m_info.expandedTypeSignature(callerTypeSignatureIndex);
     CallInformation wasmCallerInfo = callingConvention.callInformationFor(callerTypeDefinition, CallRole::Callee);
     Checked<int32_t> callerStackSize = WTF::roundUpToMultipleOf(stackAlignmentBytes(), wasmCallerInfo.headerAndArgumentStackSizeInBytes);
     Checked<int32_t> tailCallStackOffsetFromFP = callerStackSize - calleeStackSize;
@@ -4751,11 +4748,11 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
         consume(value);
 }
 
-[[nodiscard]] PartialResult BBQJIT::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType callType)
+[[nodiscard]] PartialResult BBQJIT::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& expandedSignature, const RTT& rtt, ArgumentList& args, ResultList& results, CallType callType)
 {
     emitIncrementCallProfileCount(callProfileIndex);
     Value calleeIndex = args.takeLast();
-    const TypeDefinition& signature = originalSignature.expand();
+    const TypeDefinition& signature = expandedSignature;
     ASSERT(signature.as<FunctionSignature>()->argumentCount() == args.size());
     ASSERT(m_info.tableCount() > tableIndex);
     ASSERT(m_info.tables[tableIndex].type() == TableElementType::Funcref);
@@ -4842,15 +4839,14 @@ void BBQJIT::emitIndirectTailCall(const char* opcode, const Value& callee, GPRRe
             // We should move just to use a single branch and then figure out what
             // error to use in the exception handler.
 
-            auto targetRTT = TypeInformation::getCanonicalRTT(originalSignature.index());
             m_jit.loadPtr(CCallHelpers::Address(importableFunction, WasmToWasmImportableFunction::offsetOfRTT()), wasmScratchGPR);
-            if (originalSignature.isFinalType())
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, wasmScratchGPR, TrustedImmPtr(targetRTT.ptr())));
+            if (rtt.isFinalType())
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, wasmScratchGPR, TrustedImmPtr(&rtt)));
             else {
-                auto indexEqual = m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, TrustedImmPtr(targetRTT.ptr()));
+                auto indexEqual = m_jit.branchPtr(CCallHelpers::Equal, wasmScratchGPR, TrustedImmPtr(&rtt));
                 recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchTestPtr(ResultCondition::Zero, wasmScratchGPR));
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branch32(CCallHelpers::BelowOrEqual, Address(wasmScratchGPR, RTT::offsetOfDisplaySizeExcludingThis()), TrustedImm32(targetRTT->displaySizeExcludingThis())));
-                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, CCallHelpers::Address(wasmScratchGPR, RTT::offsetOfData() + targetRTT->displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)), TrustedImmPtr(targetRTT.ptr())));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branch32(CCallHelpers::BelowOrEqual, Address(wasmScratchGPR, RTT::offsetOfDisplaySizeExcludingThis()), TrustedImm32(rtt.displaySizeExcludingThis())));
+                recordJumpToThrowException(ExceptionType::BadSignature, m_jit.branchPtr(CCallHelpers::NotEqual, CCallHelpers::Address(wasmScratchGPR, RTT::offsetOfData() + rtt.displaySizeExcludingThis() * sizeof(RefPtr<const RTT>)), TrustedImmPtr(&rtt)));
 
                 indexEqual.link(&m_jit);
             }

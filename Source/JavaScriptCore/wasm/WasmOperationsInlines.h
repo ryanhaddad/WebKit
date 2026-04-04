@@ -295,7 +295,7 @@ inline EncodedJSValue arrayNewElem(JSWebAssemblyInstance* instance, uint32_t typ
 inline void arrayGet(JSWebAssemblyInstance* instance, uint32_t typeIndex, EncodedJSValue arrayValue, uint32_t index, IPInt::IPIntStackEntry* result)
 {
     ASSERT_UNUSED(instance, typeIndex < instance->module().moduleInformation().typeCount());
-    const Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().typeSignatures[typeIndex]->expand();
+    const Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().expandedTypeSignature(Wasm::TypeSignatureIndex(typeIndex));
     ASSERT_UNUSED(arraySignature, arraySignature.is<ArrayType>());
 
     JSValue arrayRef = JSValue::decode(arrayValue);
@@ -311,7 +311,7 @@ inline void arrayGet(JSWebAssemblyInstance* instance, uint32_t typeIndex, Encode
 inline void arraySet(JSWebAssemblyInstance* instance, uint32_t typeIndex, EncodedJSValue arrayValue, uint32_t index, IPInt::IPIntStackEntry* value)
 {
     ASSERT_UNUSED(instance, typeIndex < instance->module().moduleInformation().typeCount());
-    const Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().typeSignatures[typeIndex]->expand();
+    const Wasm::TypeDefinition& arraySignature = instance->module().moduleInformation().expandedTypeSignature(Wasm::TypeSignatureIndex(typeIndex));
     ASSERT(arraySignature.is<ArrayType>());
 
     JSValue arrayRef = JSValue::decode(arrayValue);

@@ -1412,57 +1412,55 @@ public:
 
     [[nodiscard]] PartialResult addI31GetU(TypedExpression value, ExpressionType& result);
 
-    const Ref<TypeDefinition> NODELETE getTypeDefinition(uint32_t typeIndex);
-
     // Given a type index, verify that it's an array type and return its expansion
-    const ArrayType* getArrayTypeDefinition(uint32_t typeIndex);
+    const ArrayType* getArrayTypeDefinition(TypeSignatureIndex typeIndex);
 
     // Given a type index for an array signature, look it up, expand it and
     // return the element type
-    StorageType getArrayElementType(uint32_t typeIndex);
+    StorageType getArrayElementType(TypeSignatureIndex typeIndex);
 
     // This will replace the existing value with a new value. Note that if this is an F32 then the top bits may be garbage but that's ok for our current usage.
     Value marshallToI64(Value value);
 
-    void emitAllocateGCArrayUninitialized(GPRReg result, uint32_t typeIndex, ExpressionType size, GPRReg scratchGPR, GPRReg scratchGPR2);
-    [[nodiscard]] PartialResult addArrayNew(uint32_t typeIndex, ExpressionType size, ExpressionType initValue, ExpressionType& result);
-    [[nodiscard]] PartialResult addArrayNewDefault(uint32_t typeIndex, ExpressionType size, ExpressionType& result);
+    void emitAllocateGCArrayUninitialized(GPRReg result, TypeSignatureIndex typeIndex, ExpressionType size, GPRReg scratchGPR, GPRReg scratchGPR2);
+    [[nodiscard]] PartialResult addArrayNew(TypeSignatureIndex typeIndex, ExpressionType size, ExpressionType initValue, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewDefault(TypeSignatureIndex typeIndex, ExpressionType size, ExpressionType& result);
 
     using ArraySegmentOperation = EncodedJSValue SYSV_ABI (&)(JSC::JSWebAssemblyInstance*, uint32_t, uint32_t, uint32_t, uint32_t);
-    void pushArrayNewFromSegment(ArraySegmentOperation operation, uint32_t typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType exceptionType, ExpressionType& result);
+    void pushArrayNewFromSegment(ArraySegmentOperation, TypeSignatureIndex typeIndex, uint32_t segmentIndex, ExpressionType arraySize, ExpressionType offset, ExceptionType, ExpressionType& result);
 
-    [[nodiscard]] PartialResult addArrayNewData(uint32_t typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewData(TypeSignatureIndex typeIndex, uint32_t dataIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
 
-    [[nodiscard]] PartialResult addArrayNewElem(uint32_t typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewElem(TypeSignatureIndex typeIndex, uint32_t elemSegmentIndex, ExpressionType arraySize, ExpressionType offset, ExpressionType& result);
 
     void emitArrayStoreElementUnchecked(StorageType elementType, GPRReg payloadGPR, Location index, Value value, bool preserveIndex = false);
     void emitArrayStoreElementUnchecked(StorageType elementType, GPRReg payloadGPR, Value index, Value value);
-    void emitArraySetUnchecked(uint32_t typeIndex, Value arrayref, Value index, Value value);
+    void emitArraySetUnchecked(TypeSignatureIndex typeIndex, Value arrayref, Value index, Value value);
 
-    [[nodiscard]] PartialResult addArrayNewFixed(uint32_t typeIndex, ArgumentList& args, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayNewFixed(TypeSignatureIndex typeIndex, ArgumentList& args, ExpressionType& result);
 
     void emitArrayGetPayload(StorageType, GPRReg arrayGPR, GPRReg payloadGPR);
 
-    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
+    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType arrayGetKind, TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType& result);
 
-    [[nodiscard]] PartialResult addArraySet(uint32_t typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
+    [[nodiscard]] PartialResult addArraySet(TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType index, ExpressionType value);
 
     [[nodiscard]] PartialResult addArrayLen(TypedExpression arrayref, ExpressionType& result);
 
-    [[nodiscard]] PartialResult addArrayFill(uint32_t typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayFill(TypeSignatureIndex typeIndex, TypedExpression arrayref, ExpressionType offset, ExpressionType value, ExpressionType size);
 
-    [[nodiscard]] PartialResult addArrayCopy(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcTypeIndex, TypedExpression src, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayCopy(TypeSignatureIndex dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, TypeSignatureIndex srcTypeIndex, TypedExpression src, ExpressionType srcOffset, ExpressionType size);
 
-    [[nodiscard]] PartialResult addArrayInitElem(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayInitElem(TypeSignatureIndex dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcElementIndex, ExpressionType srcOffset, ExpressionType size);
 
-    [[nodiscard]] PartialResult addArrayInitData(uint32_t dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size);
+    [[nodiscard]] PartialResult addArrayInitData(TypeSignatureIndex dstTypeIndex, TypedExpression dst, ExpressionType dstOffset, uint32_t srcDataIndex, ExpressionType srcOffset, ExpressionType size);
 
     // Returns true if a writeBarrier/mutatorFence is needed.
     [[nodiscard]] bool emitStructSet(GPRReg structGPR, const StructType& structType, uint32_t fieldIndex, Value value);
 
-    void emitAllocateGCStructUninitialized(GPRReg resultGPR, uint32_t typeIndex, GPRReg scratchGPR, GPRReg scratchGPR2);
-    [[nodiscard]] PartialResult addStructNewDefault(uint32_t typeIndex, ExpressionType& result);
-    [[nodiscard]] PartialResult addStructNew(uint32_t typeIndex, ArgumentList& args, Value& result);
+    void emitAllocateGCStructUninitialized(GPRReg resultGPR, TypeSignatureIndex typeIndex, GPRReg scratchGPR, GPRReg scratchGPR2);
+    [[nodiscard]] PartialResult addStructNewDefault(TypeSignatureIndex typeIndex, ExpressionType& result);
+    [[nodiscard]] PartialResult addStructNew(TypeSignatureIndex typeIndex, ArgumentList& args, Value& result);
 
     [[nodiscard]] PartialResult addStructGet(ExtGCOpType structGetKind, TypedExpression structValue, const StructType& structType, const RTT&, uint32_t fieldIndex, Value& result);
 
@@ -2069,9 +2067,9 @@ public:
     void emitIndirectCall(const char* opcode, unsigned callProfileIndex, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments, ResultList& results);
     void emitIndirectTailCall(const char* opcode, const Value& callee, GPRReg importableFunction, const TypeDefinition& signature, ArgumentList& arguments);
 
-    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned tableIndex, const TypeDefinition& expandedSignature, const RTT& rtt, ArgumentList& args, ResultList& results, CallType = CallType::Call);
 
-    [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition& originalSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition& expandedSignature, ArgumentList& args, ResultList& results, CallType = CallType::Call);
 
     [[nodiscard]] PartialResult addUnreachable();
 

@@ -1005,7 +1005,7 @@ WASM_IPINT_EXTERN_CPP_DECL(ref_test, int32_t heapType, bool allowNull, EncodedJS
     }
 
     auto& info = instance->module().moduleInformation();
-    bool result = Wasm::refCast(value, allowNull, info.typeSignatures[heapType]->index(), info.rtts[heapType].ptr());
+    SUPPRESS_UNCOUNTED_ARG bool result = Wasm::refCast(value, allowNull, info.typeIndexFromTypeSignatureIndex(Wasm::ModuleInformation::typeSignatureIndexFromHeapType(heapType)), &info.rtt(Wasm::ModuleInformation::typeSignatureIndexFromHeapType(heapType)));
     IPINT_RETURN(static_cast<uint64_t>(result));
 }
 
@@ -1018,7 +1018,7 @@ WASM_IPINT_EXTERN_CPP_DECL(ref_cast, int32_t heapType, bool allowNull, EncodedJS
     }
 
     auto& info = instance->module().moduleInformation();
-    if (!Wasm::refCast(value, allowNull, info.typeSignatures[heapType]->index(), info.rtts[heapType].ptr())) [[unlikely]] {
+    SUPPRESS_UNCOUNTED_ARG if (!Wasm::refCast(value, allowNull, info.typeIndexFromTypeSignatureIndex(Wasm::ModuleInformation::typeSignatureIndexFromHeapType(heapType)), &info.rtt(Wasm::ModuleInformation::typeSignatureIndexFromHeapType(heapType)))) [[unlikely]] {
         if (!allowNull && JSValue::decode(value).isNull())
             IPINT_THROW(Wasm::ExceptionType::NullAccess);
         IPINT_THROW(Wasm::ExceptionType::CastFailure);

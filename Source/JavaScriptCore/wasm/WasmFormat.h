@@ -893,6 +893,22 @@ private:
     uint32_t m_index { UINT_MAX };
 };
 
+// An index into the type section of a module (typeSignatures / expandedTypeSignatures vectors).
+// NOT interchangeable with TypeIndex, which is a global canonical identity.
+class TRIVIAL_ABI TypeSignatureIndex {
+public:
+    TypeSignatureIndex() = default;
+    explicit constexpr TypeSignatureIndex(uint32_t index)
+        : m_index(index)
+    { }
+
+    uint32_t rawIndex() const { return m_index; }
+    void dump(PrintStream& out) const { out.print(m_index); }
+
+private:
+    uint32_t m_index { UINT_MAX };
+};
+
 struct UnlinkedWasmToWasmCall {
     WTF_DEPRECATED_MAKE_STRUCT_FAST_ALLOCATED(UnlinkedWasmToWasmCall);
     CodeLocationNearCall<WasmEntryPtrTag> callLocation;

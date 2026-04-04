@@ -302,7 +302,7 @@ void EntryPlan::generateStubsIfNecessary()
 
 bool EntryPlan::generateWasmToWasmStubs()
 {
-    m_wasmToWasmExitStubs.resize(m_moduleInformation->importFunctionTypeIndices.size());
+    m_wasmToWasmExitStubs.resize(m_moduleInformation->importFunctionTypeSignatureIndices.size());
     unsigned importFunctionIndex = 0;
     for (unsigned importIndex = 0; importIndex < m_moduleInformation->imports.size(); ++importIndex) {
         Import* import = &m_moduleInformation->imports[importIndex];
@@ -333,9 +333,8 @@ bool EntryPlan::generateWasmToJSStubs()
     m_wasmToJSExitStubs.resize(importFunctionCount);
     for (unsigned importIndex = 0; importIndex < importFunctionCount; ++importIndex) {
 #if ENABLE(JIT)
-        Wasm::TypeIndex typeIndex = m_moduleInformation->importFunctionTypeIndices.at(importIndex);
         if (Options::useJIT()) {
-            auto binding = wasmToJS(m_moduleInformation, typeIndex, importIndex);
+            auto binding = wasmToJS(m_moduleInformation, importIndex);
             if (!binding) [[unlikely]]
                 return false;
             m_wasmToJSExitStubs[importIndex] = binding.value();

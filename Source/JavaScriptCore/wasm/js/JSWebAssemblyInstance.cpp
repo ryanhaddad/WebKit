@@ -146,11 +146,13 @@ void JSWebAssemblyInstance::finishCreation(VM& vm)
 
     // FIXME: We should only generate these structures if the module uses GC objects.
     for (unsigned i = 0; i < m_moduleInformation->typeCount(); ++i) {
-        Ref rtt = m_moduleInformation->rtts[i];
+        Wasm::TypeSignatureIndex typeSignatureIndex(i);
+        Ref rtt = m_moduleInformation->rtt(typeSignatureIndex);
+        Ref type = m_moduleInformation->typeSignature(typeSignatureIndex);
         if (rtt->kind() == RTTKind::Array)
-            gcObjectStructureID(i).set(vm, this, JSWebAssemblyArray::createStructure(vm, m_moduleInformation->typeSignatures[i], WTF::move(rtt)));
+            gcObjectStructureID(i).set(vm, this, JSWebAssemblyArray::createStructure(vm, WTF::move(type), WTF::move(rtt)));
         else if (rtt->kind() == RTTKind::Struct)
-            gcObjectStructureID(i).set(vm, this, JSWebAssemblyStruct::createStructure(vm, m_moduleInformation->typeSignatures[i], WTF::move(rtt)));
+            gcObjectStructureID(i).set(vm, this, JSWebAssemblyStruct::createStructure(vm, WTF::move(type), WTF::move(rtt)));
     }
 
     m_vm->traps().registerMirror(m_stackMirror);

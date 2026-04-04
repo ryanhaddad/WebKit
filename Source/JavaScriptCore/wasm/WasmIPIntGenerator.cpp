@@ -333,20 +333,20 @@ public:
     [[nodiscard]] PartialResult addRefI31(ExpressionType, ExpressionType&);
     [[nodiscard]] PartialResult addI31GetS(ExpressionType, ExpressionType&);
     [[nodiscard]] PartialResult addI31GetU(ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayNew(uint32_t, ExpressionType, ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayNewDefault(uint32_t, ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayNewData(uint32_t, uint32_t, ExpressionType, ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayNewElem(uint32_t, uint32_t, ExpressionType, ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayNewFixed(uint32_t, ArgumentList&, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType, uint32_t, ExpressionType, ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArraySet(uint32_t, ExpressionType, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayNew(TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayNewDefault(TypeSignatureIndex, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayNewData(TypeSignatureIndex, uint32_t, ExpressionType, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayNewElem(TypeSignatureIndex, uint32_t, ExpressionType, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayNewFixed(TypeSignatureIndex, ArgumentList&, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayGet(ExtGCOpType, TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType&);
+    [[nodiscard]] PartialResult addArraySet(TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType);
     [[nodiscard]] PartialResult addArrayLen(ExpressionType, ExpressionType&);
-    [[nodiscard]] PartialResult addArrayFill(uint32_t, ExpressionType, ExpressionType, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayCopy(uint32_t, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayInitElem(uint32_t, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addArrayInitData(uint32_t, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType);
-    [[nodiscard]] PartialResult addStructNew(uint32_t, ArgumentList&, ExpressionType&);
-    [[nodiscard]] PartialResult addStructNewDefault(uint32_t, ExpressionType&);
+    [[nodiscard]] PartialResult addArrayFill(TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayCopy(TypeSignatureIndex, ExpressionType, ExpressionType, TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitElem(TypeSignatureIndex, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addArrayInitData(TypeSignatureIndex, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType);
+    [[nodiscard]] PartialResult addStructNew(TypeSignatureIndex, ArgumentList&, ExpressionType&);
+    [[nodiscard]] PartialResult addStructNewDefault(TypeSignatureIndex, ExpressionType&);
     [[nodiscard]] PartialResult addStructGet(ExtGCOpType, ExpressionType, const StructType&, const RTT&, uint32_t, ExpressionType&);
     [[nodiscard]] PartialResult addStructSet(ExpressionType, const StructType&, const RTT&, uint32_t, ExpressionType);
     [[nodiscard]] PartialResult addRefTest(ExpressionType, bool, int32_t, bool, ExpressionType&);
@@ -527,7 +527,7 @@ public:
     // Calls
 
     [[nodiscard]] PartialResult addCall(unsigned, FunctionSpaceIndex, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call);
-    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call);
+    [[nodiscard]] PartialResult addCallIndirect(unsigned, unsigned, const TypeDefinition&, const RTT&, ArgumentList&, ResultList&, CallType = CallType::Call);
     [[nodiscard]] PartialResult addCallRef(unsigned, const TypeDefinition&, ArgumentList&, ResultList&, CallType = CallType::Call);
     [[nodiscard]] PartialResult addUnreachable();
     [[nodiscard]] PartialResult addCrash();
@@ -1219,20 +1219,20 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayNew(uint32_t index, ExpressionType, ExpressionType, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayNew(TypeSignatureIndex index, ExpressionType, ExpressionType, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayNewMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
     changeStackSize(-1);
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayNewData(uint32_t index, uint32_t dataSegmentIndex, ExpressionType, ExpressionType, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayNewData(TypeSignatureIndex index, uint32_t dataSegmentIndex, ExpressionType, ExpressionType, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayNewDataMetadata>({
-        index,
+        index.rawIndex(),
         dataSegmentIndex,
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
@@ -1240,10 +1240,10 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayNewElem(uint32_t index, uint32_t elemSegmentIndex, ExpressionType, ExpressionType, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayNewElem(TypeSignatureIndex index, uint32_t elemSegmentIndex, ExpressionType, ExpressionType, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayNewElemMetadata>({
-        index,
+        index.rawIndex(),
         elemSegmentIndex,
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
@@ -1251,10 +1251,10 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayNewFixed(uint32_t index, ArgumentList& args, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayNewFixed(TypeSignatureIndex index, ArgumentList& args, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayNewFixedMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint32_t>(args.size()),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
@@ -1262,29 +1262,29 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayNewDefault(uint32_t index, ExpressionType, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayNewDefault(TypeSignatureIndex index, ExpressionType, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayNewMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayGet(ExtGCOpType, uint32_t index, ExpressionType, ExpressionType, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayGet(ExtGCOpType, TypeSignatureIndex index, ExpressionType, ExpressionType, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::ArrayGetSetMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
     changeStackSize(-1);
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArraySet(uint32_t index, ExpressionType, ExpressionType, ExpressionType)
+[[nodiscard]] PartialResult IPIntGenerator::addArraySet(TypeSignatureIndex index, ExpressionType, ExpressionType, ExpressionType)
 {
     m_metadata->appendMetadata<IPInt::ArrayGetSetMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
     changeStackSize(-3);
@@ -1297,21 +1297,21 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayFill(uint32_t, ExpressionType, ExpressionType, ExpressionType, ExpressionType)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayFill(TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType, ExpressionType)
 {
     changeStackSize(-4);
     m_metadata->addLength(getCurrentInstructionLength());
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayCopy(uint32_t, ExpressionType, ExpressionType, uint32_t, ExpressionType, ExpressionType, ExpressionType)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayCopy(TypeSignatureIndex, ExpressionType, ExpressionType, TypeSignatureIndex, ExpressionType, ExpressionType, ExpressionType)
 {
     changeStackSize(-5);
     m_metadata->addLength(getCurrentInstructionLength());
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayInitElem(uint32_t, ExpressionType, ExpressionType, uint32_t elemSegmentIndex, ExpressionType, ExpressionType)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayInitElem(TypeSignatureIndex, ExpressionType, ExpressionType, uint32_t elemSegmentIndex, ExpressionType, ExpressionType)
 {
     changeStackSize(-4);
     m_metadata->appendMetadata<IPInt::ArrayInitDataMetadata>({
@@ -1321,7 +1321,7 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addArrayInitData(uint32_t, ExpressionType, ExpressionType, uint32_t dataSegmentIndex, ExpressionType, ExpressionType)
+[[nodiscard]] PartialResult IPIntGenerator::addArrayInitData(TypeSignatureIndex, ExpressionType, ExpressionType, uint32_t dataSegmentIndex, ExpressionType, ExpressionType)
 {
     changeStackSize(-4);
     m_metadata->appendMetadata<IPInt::ArrayInitDataMetadata>({
@@ -1331,11 +1331,11 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addStructNew(uint32_t index, ArgumentList&, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addStructNew(TypeSignatureIndex index, ArgumentList&, ExpressionType&)
 {
-    const StructType& type = *m_info.typeSignatures[index]->expand().as<StructType>();
+    const StructType& type = *m_info.expandedTypeSignature(index).as<StructType>();
     m_metadata->appendMetadata<IPInt::StructNewMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint16_t>(type.fieldCount()),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
@@ -1343,10 +1343,10 @@ IPIntGenerator::ExpressionType IPIntGenerator::addSIMDConstant(v128_t)
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addStructNewDefault(uint32_t index, ExpressionType&)
+[[nodiscard]] PartialResult IPIntGenerator::addStructNewDefault(TypeSignatureIndex index, ExpressionType&)
 {
     m_metadata->appendMetadata<IPInt::StructNewDefaultMetadata>({
-        index,
+        index.rawIndex(),
         static_cast<uint8_t>(getCurrentInstructionLength())
     });
     changeStackSize(1);
@@ -3076,9 +3076,9 @@ void IPIntGenerator::addTailCallCommonData(const FunctionSignature&, const CallI
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
+[[nodiscard]] PartialResult IPIntGenerator::addCallIndirect(unsigned callProfileIndex, unsigned tableIndex, const TypeDefinition& expandedSignature, const RTT& rtt, ArgumentList&, ResultList& results, CallType callType)
 {
-    const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
+    const FunctionSignature& signature = *expandedSignature.as<FunctionSignature>();
     const CallInformation& callConvention = cachedCallInformationFor(signature);
     m_metadata->addCallTarget(callProfileIndex, { });
 
@@ -3095,7 +3095,7 @@ void IPIntGenerator::addTailCallCommonData(const FunctionSignature&, const CallI
             .length = safeCast<uint8_t>(getCurrentInstructionLength()),
             .callProfileIndex = callProfileIndex,
             .tableIndex = tableIndex,
-            .rtt = m_metadata->addSignature(originalSignature),
+            .rtt = &rtt,
             .callerStackArgSize = static_cast<int32_t>(m_argumentAndResultsStackSize),
             .argumentBytecode = { }
         };
@@ -3113,7 +3113,7 @@ void IPIntGenerator::addTailCallCommonData(const FunctionSignature&, const CallI
         .length = safeCast<uint8_t>(getCurrentInstructionLength()),
         .callProfileIndex = callProfileIndex,
         .tableIndex = tableIndex,
-        .rtt = m_metadata->addSignature(originalSignature),
+        .rtt = &rtt,
         .signature = {
             frameSize,
             static_cast<uint16_t>(signature.returnCount() > signature.argumentCount() ? signature.returnCount() - signature.argumentCount() : 0),
@@ -3127,9 +3127,9 @@ void IPIntGenerator::addTailCallCommonData(const FunctionSignature&, const CallI
     return { };
 }
 
-[[nodiscard]] PartialResult IPIntGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition& originalSignature, ArgumentList&, ResultList& results, CallType callType)
+[[nodiscard]] PartialResult IPIntGenerator::addCallRef(unsigned callProfileIndex, const TypeDefinition& expandedSignature, ArgumentList&, ResultList& results, CallType callType)
 {
-    const FunctionSignature& signature = *originalSignature.expand().as<FunctionSignature>();
+    const FunctionSignature& signature = *expandedSignature.as<FunctionSignature>();
     const CallInformation& callConvention = cachedCallInformationFor(signature);
     m_metadata->addCallTarget(callProfileIndex, { });
 
