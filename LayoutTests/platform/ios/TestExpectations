@@ -7651,7 +7651,7 @@ webkit.org/b/311235 fast/scrolling/scroll-anchoring/heuristic-renabled-after-del
 # Requires user interaction.
 imported/w3c/web-platform-tests/css/css-scroll-anchoring/fullscreen-crash.html [ Skip ]
 
-webkit.org/b/307861 fast/scrolling/scroll-anchoring-with-page-scale.html [ Failure ]
+webkit.org/b/307861 fast/scrolling/scroll-anchoring/scroll-anchoring-with-page-scale.html [ Failure ]
 
 # rdar://124971386 (css-box/margin-trim/computed-margin-values layout tests failing in recursive cases)
 imported/w3c/web-platform-tests/css/css-box/margin-trim/computed-margin-values/block-container-block-start-child-with-border.html [ Pass Failure ]
