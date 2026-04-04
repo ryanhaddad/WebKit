@@ -1719,7 +1719,7 @@ webkit.org/b/254514 media/media-source/media-source-current-time.html [ Failure 
 # MSE failures
 webkit.org/b/167108 imported/w3c/web-platform-tests/media-source/URL-createObjectURL-revoke.html [ Failure ]
 
-webkit.org/b/224767 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Crash Pass ]
+webkit.org/b/224767 imported/w3c/web-platform-tests/media-source/mediasource-changetype-play-implicit.html [ Failure Pass ]
 
 # See also bug #175578.
 webkit.org/b/167108 imported/w3c/web-platform-tests/media-source/mediasource-avtracks.html [ Failure ]
@@ -1734,7 +1734,7 @@ webkit.org/b/226804 imported/w3c/web-platform-tests/media-source/mediasource-cha
 webkit.org/b/167108 imported/w3c/web-platform-tests/media-source/mediasource-trackdefaultlist.html [ Failure ]
 webkit.org/b/210341 media/media-source/media-mp4-h264-sequence-mode.html [ Failure ]
 webkit.org/b/210342 imported/w3c/web-platform-tests/media-source/mediasource-sourcebuffer-trackdefaults.html [ Failure ]
-webkit.org/b/167108 imported/w3c/web-platform-tests/media-source/mediasource-trackdefault.html [ Failure ]
+webkit.org/b/210342 imported/w3c/web-platform-tests/media-source/mediasource-trackdefault.html [ Failure ]
 
 webkit.org/b/146720 media/accessibility-describes-video.html [ Failure ]
 

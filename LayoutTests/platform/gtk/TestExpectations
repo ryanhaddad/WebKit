@@ -717,7 +717,7 @@ imported/w3c/web-platform-tests/html/dom/render-blocking/remove-element-unblocks
 # Flaky tests detected from 29Jan2023 to 23Feb2023
 webkit.org/b/252878 fast/frames/exponential-frames.html [ Pass Timeout ]
 webkit.org/b/252878 fast/frames/lots-of-objects.html [ Pass Timeout ]
-webkit.org/b/252878 http/wpt/mediarecorder/MediaRecorder-video-h264-profiles.html [ Crash Pass Timeout ]
+webkit.org/b/252878 http/wpt/mediarecorder/MediaRecorder-video-h264-profiles.html [ Pass Failure ]
 webkit.org/b/252878 imported/w3c/web-platform-tests/css/css-transforms/huge-length-tiny-scale.html [ Pass Timeout ]
 webkit.org/b/252878 imported/w3c/web-platform-tests/css/css-writing-modes/forms/text-input-vertical-overflow-no-scroll.html [ Failure Pass Timeout ]
 webkit.org/b/252878 imported/w3c/web-platform-tests/encoding/legacy-mb-japanese/euc-jp/eucjp-encode-form-errors-han.html?13001-14000 [ Failure Pass ]
@@ -1459,13 +1459,6 @@ fast/images/async-image-body-background-image.html [ Timeout Pass ]
 webkit.org/b/304269 [ Debug ] fast/images/png-suite/test.html [ Crash Pass Timeout ]
 
 webkit.org/b/304271 [ Debug ] fullscreen/full-screen-enter-while-exiting-fully-mid-completion-handler.html [ Crash Pass ]
-
-# Flaky NetworkProcess related crash in allowsFirstPartyForCookies
-webkit.org/b/286063 [ Debug ] fast/forms/appearance-base/appearance-base-checkable-checkmark-dynamic.html [ Crash Pass ]
-webkit.org/b/286063 [ Debug ] fast/mediastream/RTCPeerConnection-page-cache.html [ Crash Pass ]
-webkit.org/b/286063 [ Debug ] media/audio-only-video-intrinsic-size.html [ Crash Pass ]
-webkit.org/b/286063 [ Debug ] storage/indexeddb/cursor-properties.html [ Crash Pass ]
-webkit.org/b/286063 [ Debug ] storage/indexeddb/modern/idbobjectstore-delete-failures-private.html [ Crash Pass ]
 
 webkit.org/b/304278 inspector/worker/debugger-pause-subworker.html [ Skip ]
 
