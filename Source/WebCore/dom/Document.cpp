@@ -4058,7 +4058,6 @@ ExceptionOr<void> Document::open(Document* entryDocument)
         if (entryDocument != this)
             newCookieURL.removeFragmentIdentifier();
         setCookieURL(newCookieURL);
-        setSecurityOriginPolicy(entryDocument->securityOriginPolicy());
     }
 
     implicitOpen();
