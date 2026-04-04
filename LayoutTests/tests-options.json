@@ -5582,6 +5582,9 @@
     "imported/w3c/web-platform-tests/selection/extend-40.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/selection/onselectstart-on-key-in-contenteditable.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/selection/selectAllChildren.html": [
         "slow"
     ],
