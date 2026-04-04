@@ -37,10 +37,10 @@ namespace JSC {
 // chunks. If we happened to fall into the system's normal byte copy loop, we may see a torn JSValue in the
 // concurrent collector.
 
-constexpr size_t smallCutoff = 30 * 8;
+constexpr size_t smallCutoff = 8 * 8;
 constexpr size_t mediumCutoff = 4 * 1024;
 
-// This is a forwards loop so gcSafeMemmove can rely on the direction. 
+// This is a forwards loop so gcSafeMemmove can rely on the direction.
 template <typename T>
 ALWAYS_INLINE void gcSafeMemcpy(T* dst, const T* src, size_t bytes)
 {
@@ -63,7 +63,7 @@ ALWAYS_INLINE void gcSafeMemcpy(T* dst, const T* src, size_t bytes)
         size_t alignedBytes = (bytes / 64) * 64;
         size_t tmp;
         size_t offset = 0;
-        asm volatile(
+        __asm__ volatile(
             ".balign 32\t\n"
             "1:\t\n"
             "cmpq %q[offset], %q[alignedBytes]\t\n"
@@ -97,19 +97,22 @@ ALWAYS_INLINE void gcSafeMemcpy(T* dst, const T* src, size_t bytes)
         // On Windows ARM64, LLVM has a bug (llvm/llvm-project#47432) that causes a
         // fatal error "Failed to evaluate function length in SEH unwind info" when
         // inline assembly contains alignment directives. Fall back to scalar code.
-        uint64_t alignedBytes = (static_cast<uint64_t>(bytes) / 32) * 32;
+        uint64_t alignedBytes = (static_cast<uint64_t>(bytes) / 64) * 64;
 
         uint64_t dstPtr = static_cast<uint64_t>(std::bit_cast<uintptr_t>(dst));
         uint64_t srcPtr = static_cast<uint64_t>(std::bit_cast<uintptr_t>(src));
         uint64_t end = dstPtr + bytes;
         uint64_t alignedEnd = dstPtr + alignedBytes;
 
-        asm volatile(
+        __asm__ volatile(
             "1:\t\n"
             "cmp %x[dstPtr], %x[alignedEnd]\t\n"
             "b.eq 2f\t\n"
+
             "ldp q0, q1, [%x[srcPtr]], #0x20\t\n"
+            "ldp q2, q3, [%x[srcPtr]], #0x20\t\n"
             "stp q0, q1, [%x[dstPtr]], #0x20\t\n"
+            "stp q2, q3, [%x[dstPtr]], #0x20\t\n"
             "b 1b\t\n"
 
             "2:\t\n"
@@ -120,17 +123,16 @@ ALWAYS_INLINE void gcSafeMemcpy(T* dst, const T* src, size_t bytes)
             "b 2b\t\n"
 
             "3:\t\n"
-
             : [end] "+r" (end), [alignedEnd] "+r" (alignedEnd), [dstPtr] "+r" (dstPtr), [srcPtr] "+r" (srcPtr)
             :
-            : "d0", "d1", "memory", "cc"
+            : "d0", "d1", "d2", "d3", "memory", "cc"
         );
 #endif // CPU(X86_64)
     } else {
         RELEASE_ASSERT(isX86_64());
 #if CPU(X86_64)
         size_t count = bytes / 8;
-        asm volatile(
+        __asm__ volatile(
             ".balign 16\t\n"
             "cld\t\n"
             "rep movsq\t\n"
@@ -179,7 +181,7 @@ ALWAYS_INLINE void gcSafeMemmove(T* dst, const T* src, size_t bytes)
 
         size_t tail = alignedBytes;
         size_t tmp;
-        asm volatile(
+        __asm__ volatile(
             "2:\t\n"
             "cmpq %q[tail], %q[bytes]\t\n"
             "je 1f\t\n"
@@ -213,32 +215,37 @@ ALWAYS_INLINE void gcSafeMemmove(T* dst, const T* src, size_t bytes)
             : "xmm0", "xmm1", "xmm2", "xmm3", "memory", "cc"
         );
 #elif CPU(ARM64) && !OS(WINDOWS)
-        uint64_t alignedBytes = (static_cast<uint64_t>(bytes) / 32) * 32;
+        uint64_t alignedBytes = (static_cast<uint64_t>(bytes) / 64) * 64;
+
         uint64_t dstPtr = static_cast<uint64_t>(std::bit_cast<uintptr_t>(dst) + static_cast<uint64_t>(bytes));
         uint64_t srcPtr = static_cast<uint64_t>(std::bit_cast<uintptr_t>(src) + static_cast<uint64_t>(bytes));
-        uint64_t alignedEnd = std::bit_cast<uintptr_t>(dst) + alignedBytes;
-        uint64_t end = std::bit_cast<uintptr_t>(dst);
 
-        asm volatile(
+        uint64_t alignedStart = std::bit_cast<uintptr_t>(dst) + (static_cast<uint64_t>(bytes) - alignedBytes);
+        uint64_t start = std::bit_cast<uintptr_t>(dst);
+
+        __asm__ volatile(
             "1:\t\n"
-            "cmp %x[dstPtr], %x[alignedEnd]\t\n"
+            "cmp %x[dstPtr], %x[alignedStart]\t\n"
             "b.eq 2f\t\n"
-            "ldr d0, [%x[srcPtr], #-0x8]!\t\n"
-            "str d0, [%x[dstPtr], #-0x8]!\t\n"
+
+            "ldp q2, q3, [%x[srcPtr], #-0x20]!\t\n"
+            "ldp q0, q1, [%x[srcPtr], #-0x20]!\t\n"
+            "stp q2, q3, [%x[dstPtr], #-0x20]!\t\n"
+            "stp q0, q1, [%x[dstPtr], #-0x20]!\t\n"
             "b 1b\t\n"
 
             "2:\t\n"
-            "cmp %x[dstPtr], %x[end]\t\n"
+            "cmp %x[dstPtr], %x[start]\t\n"
             "b.eq 3f\t\n"
-            "ldp q0, q1, [%x[srcPtr], #-0x20]!\t\n"
-            "stp q0, q1, [%x[dstPtr], #-0x20]!\t\n"
+            "ldr d0, [%x[srcPtr], #-0x8]!\t\n"
+            "str d0, [%x[dstPtr], #-0x8]!\t\n"
             "b 2b\t\n"
 
             "3:\t\n"
 
-            : [alignedEnd] "+r" (alignedEnd), [end] "+r" (end), [dstPtr] "+r" (dstPtr), [srcPtr] "+r" (srcPtr)
+            : [alignedStart] "+r" (alignedStart), [start] "+r" (start), [dstPtr] "+r" (dstPtr), [srcPtr] "+r" (srcPtr)
             :
-            : "d0", "d1", "memory", "cc"
+            : "d0", "d1", "d2", "d3", "memory", "cc"
         );
 #endif // CPU(X86_64)
     }
@@ -259,7 +266,7 @@ ALWAYS_INLINE void gcSafeZeroMemory(T* dst, size_t bytes)
 #if CPU(X86_64)
     uint64_t zero = 0;
     size_t count = bytes / 8;
-    asm volatile (
+    __asm__ volatile (
         "rep stosq\n\t"
         : "+D"(dst), "+c"(count)
         : "a"(zero)
@@ -273,30 +280,32 @@ ALWAYS_INLINE void gcSafeZeroMemory(T* dst, size_t bytes)
     uint64_t dstPtr = static_cast<uint64_t>(std::bit_cast<uintptr_t>(dst));
     uint64_t end = dstPtr + bytes;
     uint64_t alignedEnd = dstPtr + alignedBytes;
-    asm volatile(
-        "movi d0, #0\t\n"
-        "movi d1, #0\t\n"
+
+    __asm__ volatile(
+        "movi v0.16b, #0\t\n"
 
         ".p2align 4\t\n"
-        "2:\t\n"
+        "1:\t\n"
         "cmp %x[dstPtr], %x[alignedEnd]\t\n"
-        "b.eq 4f\t\n"
+        "b.eq 2f\t\n"
+
         "stnp q0, q0, [%x[dstPtr]]\t\n"
         "stnp q0, q0, [%x[dstPtr], #0x20]\t\n"
         "add %x[dstPtr], %x[dstPtr], #0x40\t\n"
+        "b 1b\t\n"
+
+        "2:\t\n"
+        "cmp %x[dstPtr], %x[end]\t\n"
+        "b.eq 3f\t\n"
+
+        "str d0, [%x[dstPtr]], #0x8\t\n"
         "b 2b\t\n"
 
-        "4:\t\n"
-        "cmp %x[dstPtr], %x[end]\t\n"
-        "b.eq 5f\t\n"
-        "str d0, [%x[dstPtr]], #0x8\t\n"
-        "b 4b\t\n"
+        "3:\t\n"
 
-        "5:\t\n"
-
-        : [alignedBytes] "+r" (alignedBytes), [bytes] "+r" (bytes), [dstPtr] "+r" (dstPtr), [end] "+r" (end), [alignedEnd] "+r" (alignedEnd)
-        :
-        : "d0", "d1", "memory", "cc"
+        : [dstPtr] "+r" (dstPtr)
+        : [end] "r" (end), [alignedEnd] "r" (alignedEnd)
+        : "v0", "memory", "cc"
     );
 #else
     size_t count = bytes / 8;
