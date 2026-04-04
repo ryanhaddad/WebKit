@@ -3749,7 +3749,7 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error, LoadWill
     // FIXME: Don't want to do this if an entirely new load is going, so should check
     // that both data sources on the frame are either this or nil.
     stop();
-    if (m_client->shouldFallBack(error)) {
+    if (loadWillContinueInAnotherProcess == LoadWillContinueInAnotherProcess::No && m_client->shouldFallBack(error)) {
         if (RefPtr owner = dynamicDowncast<HTMLObjectElement>(frame->ownerElement()))
             owner->renderFallbackContent();
     }
@@ -3772,7 +3772,12 @@ void FrameLoader::receivedMainResourceError(const ResourceError& error, LoadWill
             clientRedirectCancelledOrFinished(NewLoadInProgress::No);
     }
 
-    checkCompleted();
+    if (frame->isMainFrame() || loadWillContinueInAnotherProcess == LoadWillContinueInAnotherProcess::No)
+        checkCompleted();
+    else if (loadWillContinueInAnotherProcess == LoadWillContinueInAnotherProcess::Yes) {
+        ASSERT(frame->settings().siteIsolationEnabled());
+        m_provisionalLoadHappeningInAnotherProcess = true;
+    }
     if (frame->page())
         checkLoadComplete(loadWillContinueInAnotherProcess);
 }

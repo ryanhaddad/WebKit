@@ -238,8 +238,6 @@ http/tests/security/contentSecurityPolicy/iframe-redirect-allowed-by-child-src.h
 http/tests/security/contentSecurityPolicy/iframe-redirect-allowed-by-child-src2.html [ Failure ]
 http/tests/security/contentSecurityPolicy/iframe-redirect-allowed-by-frame-src.html [ Failure ]
 http/tests/security/contentSecurityPolicy/iframe-redirect-allowed-by-frame-src2.html [ Failure ]
-http/tests/security/contentSecurityPolicy/object-redirect-allowed.html [ Failure ]
-http/tests/security/contentSecurityPolicy/object-redirect-allowed2.html [ Failure ]
 http/tests/security/contentSecurityPolicy/upgrade-insecure-requests/proper-nested-upgrades.html [ Failure ]
 http/tests/security/cross-origin-local-storage.html [ Failure ]
 http/tests/security/video-poster-cross-origin-crash2.html [ Failure ]

@@ -2379,7 +2379,7 @@ void DocumentLoader::cancelMainResourceLoad(const ResourceError& resourceError, 
 
     clearMainResource();
 
-    mainReceivedError(error);
+    mainReceivedError(error, loadWillContinueInAnotherProcess);
 }
 
 void DocumentLoader::willContinueMainResourceLoadAfterRedirect(const ResourceRequest& newRequest)
