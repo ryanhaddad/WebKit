@@ -85,6 +85,7 @@ public:
 
     char16_t characterAt(unsigned index) const;
     char16_t operator[](unsigned index) const;
+    char32_t characterStartingAt(unsigned index) const;
 
     class CodeUnits;
     CodeUnits codeUnits() const;
@@ -609,6 +610,19 @@ inline char16_t StringView::characterAt(unsigned index) const
 inline char16_t StringView::operator[](unsigned index) const
 {
     return characterAt(index);
+}
+
+inline char32_t StringView::characterStartingAt(unsigned index) const
+{
+    ASSERT(index < length());
+    if (m_is8Bit)
+        return span8()[index];
+    auto characters = span16();
+    if (U16_IS_SINGLE(characters[index]))
+        return characters[index];
+    if (index + 1 < length() && U16_IS_LEAD(characters[index]) && U16_IS_TRAIL(characters[index + 1]))
+        return U16_GET_SUPPLEMENTARY(characters[index], characters[index + 1]);
+    return characters[index];
 }
 
 inline bool StringView::contains(char16_t character) const

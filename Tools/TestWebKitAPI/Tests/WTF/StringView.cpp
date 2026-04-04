@@ -1033,4 +1033,51 @@ TEST(WTF, StringViewUpconvert)
     }
 }
 
+TEST(WTF, StringViewCharacterStartingAtASCII)
+{
+    StringView string("Hello"_s);
+    ASSERT_EQ(string.characterStartingAt(0), static_cast<char32_t>('H'));
+    ASSERT_EQ(string.characterStartingAt(4), static_cast<char32_t>('o'));
+}
+
+TEST(WTF, StringViewCharacterStartingAtBMP)
+{
+    auto string = String::fromUTF8("caf\xC3\xA9");
+    ASSERT_FALSE(StringView(string).is8Bit());
+    ASSERT_EQ(StringView(string).characterStartingAt(0), static_cast<char32_t>('c'));
+    ASSERT_EQ(StringView(string).characterStartingAt(3), 0x00E9u);
+}
+
+TEST(WTF, StringViewCharacterStartingAtSupplementary)
+{
+    auto string = String::fromUTF8("A\xF0\x9F\x98\x80Z");
+    StringView view(string);
+    ASSERT_FALSE(view.is8Bit());
+    ASSERT_EQ(view.length(), 4u);
+    ASSERT_EQ(view.characterStartingAt(0), static_cast<char32_t>('A'));
+    ASSERT_EQ(view.characterStartingAt(1), 0x1F600u);
+    ASSERT_EQ(view.characterStartingAt(3), static_cast<char32_t>('Z'));
+}
+
+TEST(WTF, StringViewCharacterStartingAtLoneSurrogate)
+{
+    std::array<char16_t, 5> data { 0xD800, u'A', 0xDC00, u'B', 0xD83D };
+    StringView view(std::span<const UChar> { data });
+    ASSERT_EQ(view.length(), 5u);
+
+    ASSERT_EQ(view.characterStartingAt(0), 0xD800u);
+    ASSERT_EQ(view.characterStartingAt(1), static_cast<char32_t>('A'));
+    ASSERT_EQ(view.characterStartingAt(2), 0xDC00u);
+    ASSERT_EQ(view.characterStartingAt(3), static_cast<char32_t>('B'));
+    ASSERT_EQ(view.characterStartingAt(4), 0xD83Du);
+}
+
+TEST(WTF, StringViewCharacterStartingAtNUL)
+{
+    std::array<char16_t, 2> data { 0x0000, 0xD800 };
+    StringView view(std::span<const UChar> { data });
+    ASSERT_EQ(view.characterStartingAt(0), 0u);
+    ASSERT_EQ(view.characterStartingAt(1), 0xD800u);
+}
+
 } // namespace TestWebKitAPI

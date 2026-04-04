@@ -81,10 +81,6 @@ void serializeIdentifier(const String& identifier, StringBuilder& appendTo, bool
     unsigned index = 0;
     while (index < identifier.length()) {
         char32_t c = identifier.characterStartingAt(index);
-        if (!c) {
-            // Check for lone surrogate which characterStartingAt does not return.
-            c = identifier[index];
-        }
 
         index += U16_LENGTH(c);
 
