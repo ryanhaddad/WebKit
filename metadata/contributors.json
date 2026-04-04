@@ -7657,6 +7657,17 @@
    },
    {
       "emails" : [
+         "sean_patterson@apple.com",
+         "spatterson@apple.com"
+      ],
+      "github" : "swpatters",
+      "name" : "Sean Patterson",
+      "nicks" : [
+         "spatters"
+      ]
+   },
+   {
+      "emails" : [
          "slomo@coaxion.net",
          "sebastian@centricular.com",
          "sebastian.droege@collabora.co.uk",
