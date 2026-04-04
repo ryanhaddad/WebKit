@@ -10680,7 +10680,10 @@ static BOOL shouldEnableDragInteractionForPolicy(_WKDragInteractionPolicy policy
 #if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
     if (!self.shouldUseAsyncInteractions) {
         [_dragInteraction _setLiftDelay:self.dragLiftDelay];
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+        // FIXME: rdar://174059449 ('_setAllowsPointerDragBeforeLiftDelay:' is deprecated)
         [_dragInteraction _setAllowsPointerDragBeforeLiftDelay:NO];
+ALLOW_DEPRECATED_DECLARATIONS_END
     }
 #endif
 
