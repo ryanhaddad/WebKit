@@ -43,9 +43,7 @@ UserMediaPermissionRequestProxyCocoa::UserMediaPermissionRequestProxyCocoa(UserM
 {
 }
 
-UserMediaPermissionRequestProxyCocoa::~UserMediaPermissionRequestProxyCocoa()
-{
-}
+UserMediaPermissionRequestProxyCocoa::~UserMediaPermissionRequestProxyCocoa() = default;
 
 void UserMediaPermissionRequestProxyCocoa::invalidate()
 {

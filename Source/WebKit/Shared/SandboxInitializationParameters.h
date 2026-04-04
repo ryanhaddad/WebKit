@@ -107,9 +107,7 @@ SandboxInitializationParameters::SandboxInitializationParameters()
 {
 }
 
-SandboxInitializationParameters::~SandboxInitializationParameters()
-{
-}
+SandboxInitializationParameters::~SandboxInitializationParameters() = default;
 #endif
 
 } // namespace WebKit

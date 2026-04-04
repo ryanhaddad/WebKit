@@ -164,9 +164,7 @@ DisplayCaptureSessionManager::DisplayCaptureSessionManager()
 {
 }
 
-DisplayCaptureSessionManager::~DisplayCaptureSessionManager()
-{
-}
+DisplayCaptureSessionManager::~DisplayCaptureSessionManager() = default;
 
 bool DisplayCaptureSessionManager::canRequestDisplayCapturePermission()
 {

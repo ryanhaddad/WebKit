@@ -198,9 +198,7 @@ WebHitTestResultData::WebHitTestResultData(const String& absoluteImageURL, const
         imageSharedMemory = WebCore::SharedMemory::map(WTF::move(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly);
 }
 
-WebHitTestResultData::~WebHitTestResultData()
-{
-}
+WebHitTestResultData::~WebHitTestResultData() = default;
 
 IntRect WebHitTestResultData::elementBoundingBoxInWindowCoordinates(const WebCore::HitTestResult& hitTestResult)
 {

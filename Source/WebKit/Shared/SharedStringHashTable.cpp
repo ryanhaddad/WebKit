@@ -37,9 +37,7 @@ SharedStringHashTable::SharedStringHashTable()
 {
 }
 
-SharedStringHashTable::~SharedStringHashTable()
-{
-}
+SharedStringHashTable::~SharedStringHashTable() = default;
 
 bool SharedStringHashTable::add(SharedStringHash sharedStringHash)
 {

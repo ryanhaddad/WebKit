@@ -41,9 +41,7 @@ WebCacheStorageConnection::WebCacheStorageConnection()
 {
 }
 
-WebCacheStorageConnection::~WebCacheStorageConnection()
-{
-}
+WebCacheStorageConnection::~WebCacheStorageConnection() = default;
 
 Ref<IPC::Connection> WebCacheStorageConnection::connection()
 {

@@ -35,9 +35,7 @@ MessageReceiverMap::MessageReceiverMap()
 {
 }
 
-MessageReceiverMap::~MessageReceiverMap()
-{
-}
+MessageReceiverMap::~MessageReceiverMap() = default;
 
 void MessageReceiverMap::addMessageReceiver(ReceiverName messageReceiverName, MessageReceiver& messageReceiver)
 {

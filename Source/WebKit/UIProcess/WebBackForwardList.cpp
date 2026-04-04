@@ -815,9 +815,7 @@ WebBackForwardListWrapper::WebBackForwardListWrapper(WebPageProxy& webPageProxy)
 {
 }
 
-WebBackForwardListWrapper::~WebBackForwardListWrapper()
-{
-}
+WebBackForwardListWrapper::~WebBackForwardListWrapper() = default;
 
 WebBackForwardListItem* WebBackForwardListWrapper::currentItem() const
 {

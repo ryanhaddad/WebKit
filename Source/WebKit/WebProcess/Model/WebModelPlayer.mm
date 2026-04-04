@@ -141,9 +141,7 @@ WebModelPlayer::WebModelPlayer(WebCore::Page& page, WebCore::ModelPlayerClient& 
 {
 }
 
-WebModelPlayer::~WebModelPlayer()
-{
-}
+WebModelPlayer::~WebModelPlayer() = default;
 
 void WebModelPlayer::ensureOnMainThreadWithProtectedThis(Function<void(Ref<WebModelPlayer>)>&& task)
 {

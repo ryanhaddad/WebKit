@@ -118,9 +118,7 @@ PageClientImpl::PageClientImpl(WKContentView *contentView, WKWebView *webView)
 {
 }
 
-PageClientImpl::~PageClientImpl()
-{
-}
+PageClientImpl::~PageClientImpl() = default;
 
 Ref<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy(WebProcessProxy& webProcessProxy)
 {

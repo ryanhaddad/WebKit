@@ -98,9 +98,7 @@ GPUProcess::GPUProcess()
 #endif
 }
 
-GPUProcess::~GPUProcess()
-{
-}
+GPUProcess::~GPUProcess() = default;
 
 GPUProcess& GPUProcess::singleton()
 {
