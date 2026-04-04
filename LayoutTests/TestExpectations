@@ -6257,6 +6257,12 @@ fast/repaint/absolute-position-changed.html [ Pass ImageOnlyFailure ]
 webkit.org/b/307272 fast/events/no-scroll-on-input-text-selection.html [ Failure ]
 webkit.org/b/307519 imported/w3c/web-platform-tests/css/css-anchor-position/position-area-scrolling-004.tentative.html [ ImageOnlyFailure ]
 
+webkit.org/b/311464 fast/events/prevent-default-prevents-interaction-with-scrollbars.html [ Failure Pass ]
+
+webkit.org/b/311465 webanimations/simultaneous-animations-removed-separately.html [ Failure Pass ]
+
+webkit.org/b/311466 webanimations/transform-accelerated-animation-finishes-before-removal.html [ Failure Pass ]
+
 # affected by scroll anchoring.
 http/tests/site-isolation/mouse-events/scrolled-mainframe.html [ Skip ]
 

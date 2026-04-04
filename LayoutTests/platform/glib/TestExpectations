@@ -1649,7 +1649,7 @@ webkit.org/b/307144 media/video-restricted-invisible-autoplay-not-allowed.html [
 webkit.org/b/254520 media/video-ended-event-negative-playback.html [ Failure Timeout Pass ]
 webkit.org/b/254519 media/media-continues-playing-after-replace-source.html [ Failure Pass ]
 webkit.org/b/254521 imported/w3c/web-platform-tests/media-source/mediasource-getvideoplaybackquality.html [ Pass Failure ]
-webkit.org/b/254521 imported/w3c/web-platform-tests/media-source/mediasource-config-change-mp4-av-framesize.html [ Pass Failure Timeout ]
+webkit.org/b/311462 imported/w3c/web-platform-tests/media-source/mediasource-config-change-mp4-av-framesize.html [ Pass Failure Timeout Crash ]
 webkit.org/b/308601 [ Release ] imported/w3c/web-platform-tests/media-source/SourceBuffer-abort-updating.html [ Failure Pass ]
 webkit.org/b/254522 media/video-volume.html [ Pass Failure ]
 webkit.org/b/254525 http/tests/media/video-throttled-load-metadata.html [ Pass Failure ]

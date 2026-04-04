@@ -179,7 +179,6 @@ webkit.org/b/298588 fast/media/mq-pointer-styling.html [ Skip ]
 webkit.org/b/298588 fast/media/mq-pointer.html [ Skip ]
 
 # Pending to create bug.
-[ Release ] fast/events/prevent-default-prevents-interaction-with-scrollbars.html [ Failure Pass ]
 media/video-background-tab-playback.html [ Failure ]
 svg/hixie/viewbox/002.xml [ Failure ]
 
