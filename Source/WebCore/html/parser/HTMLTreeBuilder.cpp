@@ -344,10 +344,16 @@ void HTMLTreeBuilder::constructTree(AtomHTMLToken&& token)
     else
         processToken(WTF::move(token));
 
-    bool inForeignContent = !m_tree.isEmpty()
-        && !isInHTMLNamespace(adjustedCurrentStackItem())
-        && !HTMLElementStack::isHTMLIntegrationPoint(m_tree.currentStackItem())
-        && !HTMLElementStack::isMathMLTextIntegrationPoint(m_tree.currentStackItem());
+    // Use the adjusted current node for all checks, matching shouldProcessTokenInForeignContent().
+    // When fragment-parsing with only one element on the stack, the adjusted current node is the
+    // context element, not the DocumentFragment.
+    bool inForeignContent = false;
+    if (!m_tree.isEmpty()) {
+        auto& adjustedCurrentNode = adjustedCurrentStackItem();
+        inForeignContent = !isInHTMLNamespace(adjustedCurrentNode)
+            && !HTMLElementStack::isHTMLIntegrationPoint(adjustedCurrentNode)
+            && !HTMLElementStack::isMathMLTextIntegrationPoint(adjustedCurrentNode);
+    }
 
     m_parser->tokenizer().setForceNullCharacterReplacement(m_insertionMode == InsertionMode::Text || inForeignContent);
     m_parser->tokenizer().setShouldAllowCDATA(inForeignContent);
