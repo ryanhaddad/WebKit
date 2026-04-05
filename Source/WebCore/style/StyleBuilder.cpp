@@ -232,18 +232,11 @@ void Builder::applyCustomPropertyImpl(const AtomString& name, const PropertyCasc
 
     Ref customPropertyValue = downcast<CSSCustomPropertyValue>(*property.cssValue[SelectorChecker::MatchDefault]);
 
-    bool inCycle = !m_state->m_inProgressCustomProperties.add(name).isNewEntry;
-    if (inCycle) {
-        auto isNewCycle = m_state->m_inCycleCustomProperties.add(name).isNewEntry;
-        if (isNewCycle) {
-            // Continue resolving dependencies so we detect cycles for them as well.
-            resolveCustomPropertyValue(customPropertyValue.get());
-        }
-        return;
-    }
+    // https://drafts.csswg.org/css-values-5/#guarded
+    auto guard = m_state->guardSubstitutionContext({ SubstitutionContext::Type::Property, name });
 
-    // There may be multiple cycles through the same property. Avoid interference from any previously detected cycles.
-    auto savedInCycleProperties = std::exchange(m_state->m_inCycleCustomProperties, { });
+    if (guard.isCyclicContext())
+        return;
 
     auto createInvalidOrUnset = [&] -> Variant<Ref<const Style::CustomProperty>, CSSWideKeyword> {
         // https://drafts.csswg.org/css-variables-2/#invalid-variables
@@ -263,14 +256,13 @@ void Builder::applyCustomPropertyImpl(const AtomString& name, const PropertyCasc
 
     auto resolvedValue = resolveCustomPropertyValue(customPropertyValue.get());
 
-    if (!resolvedValue || m_state->m_inCycleCustomProperties.contains(name))
+    // If the context became cyclic during resolution, the value is invalid.
+    if (!resolvedValue || guard.isCyclicContext())
         resolvedValue = createInvalidOrUnset();
 
     applyCustomProperty(name, WTF::move(*resolvedValue));
 
-    AtomString takenName = m_state->m_inProgressCustomProperties.take(name);
-    m_state->m_appliedCustomProperties.add(WTF::move(takenName));
-    m_state->m_inCycleCustomProperties.addAll(WTF::move(savedInCycleProperties));
+    m_state->m_appliedCustomProperties.add(name);
 }
 
 inline void Builder::applyCascadeProperty(const PropertyCascade::Property& property)
