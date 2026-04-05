@@ -251,7 +251,8 @@ private:
 
 inline bool HTMLTreeBuilder::isParsingTemplateContents() const
 {
-    return m_tree.openElements().hasTemplateInHTMLScope();
+    return m_tree.openElements().containsTemplateElement()
+        && m_tree.openElements().hasTemplateInHTMLScope();
 }
 
 inline bool HTMLTreeBuilder::isParsingFragmentOrTemplateContents() const
