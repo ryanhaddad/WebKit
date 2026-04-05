@@ -1346,9 +1346,19 @@ void RenderTableSection::paintObject(PaintInfo& paintInfo, const LayoutPoint& pa
             row->paintOutlineForRowIfNeeded(paintInfo, paintOffset);
     };
 
+    auto paintRowShadow = [&](unsigned rowIndex, PaintPhase phase) {
+        if (phase != PaintPhase::BlockBackground && phase != PaintPhase::ChildBlockBackground)
+            return;
+
+        auto* row = m_grid[rowIndex].rowRenderer;
+        if (row && !row->hasSelfPaintingLayer() && !row->style().boxShadow().isNone())
+            row->paintShadowForRowIfNeeded(paintInfo, paintOffset);
+    };
+
     auto paintContiguousCells = [&]() {
         // Draw the dirty cells in the order that they appear.
         for (unsigned r = dirtiedRows.start; r < dirtiedRows.end; r++) {
+            paintRowShadow(r , paintInfo.phase);
             paintRowOutline(r, paintInfo.phase);
 
             for (unsigned c = dirtiedColumns.start; c < dirtiedColumns.end; c++) {

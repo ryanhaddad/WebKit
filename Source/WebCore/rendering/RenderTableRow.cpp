@@ -244,6 +244,19 @@ void RenderTableRow::paintOutlineForRowIfNeeded(PaintInfo& paintInfo, const Layo
     }
 }
 
+void RenderTableRow::paintShadowForRowIfNeeded(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
+{
+    if (paintInfo.phase != PaintPhase::BlockBackground && paintInfo.phase != PaintPhase::ChildBlockBackground)
+        return;
+
+    auto adjustedPaintOffset = paintOffset + location();
+    LayoutRect rect(adjustedPaintOffset, size());
+    adjustBorderBoxRectForPainting(rect);
+
+    BackgroundPainter backgroundPainter { *this, paintInfo };
+    backgroundPainter.paintBoxShadow(rect, style(), Style::ShadowStyle::Normal);
+}
+
 void RenderTableRow::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
     ASSERT(hasSelfPaintingLayer());
