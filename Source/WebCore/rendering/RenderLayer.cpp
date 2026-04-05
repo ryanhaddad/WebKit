@@ -1180,7 +1180,7 @@ bool RenderLayer::ancestorLayerPositionStateChanged(OptionSet<UpdateLayerPositio
         || m_hasFixedAncestor != flags.contains(SeenFixedLayer)
         || m_hasPaginatedAncestor != flags.contains(UpdatePagination)
         || m_hasCompositedScrollingAncestor != flags.contains(SeenCompositedScrollingLayer)
-        || m_hasPaginatedAncestor != flags.contains(UpdatePagination);
+        || m_hasStickyAncestor != flags.contains(SeenStickyLayer);
 }
 
 #define LAYER_POSITIONS_ASSERT_ENABLED ASSERT_ENABLED || ENABLE(CONJECTURE_ASSERT)
