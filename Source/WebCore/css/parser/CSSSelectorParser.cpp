@@ -814,9 +814,9 @@ static AtomString consumePickerArgument(CSSParserTokenRange& block)
     auto& ident = block.consumeIncludingWhitespace();
     if (ident.type() != IdentToken || !block.atEnd())
         return nullAtom();
-    if (ident.value() != "select"_s)
+    if (!equalLettersIgnoringASCIICase(ident.value(), "select"_s))
         return nullAtom();
-    return ident.value().toAtomString();
+    return ident.value().convertToASCIILowercaseAtom();
 }
 
 std::unique_ptr<MutableCSSSelector> CSSSelectorParser::consumePseudo(CSSParserTokenRange& range)
