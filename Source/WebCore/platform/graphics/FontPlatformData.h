@@ -357,7 +357,6 @@ public:
     WEBCORE_EXPORT ~FontPlatformData();
 
     static FontPlatformData cloneWithOrientation(const FontPlatformData&, FontOrientation);
-    static FontPlatformData cloneWithSyntheticOblique(const FontPlatformData&, bool);
 
     static FontPlatformData cloneWithSize(const FontPlatformData&, float);
     void updateSizeWithFontSizeAdjust(const FontSizeAdjust&, float);

@@ -65,13 +65,6 @@ FontPlatformData FontPlatformData::cloneWithOrientation(const FontPlatformData& 
     copy.m_orientation = orientation;
     return copy;
 }
-
-FontPlatformData FontPlatformData::cloneWithSyntheticOblique(const FontPlatformData& source, bool syntheticOblique)
-{
-    FontPlatformData copy(source);
-    copy.m_syntheticOblique = syntheticOblique;
-    return copy;
-}
 #endif
 
 #if !USE(FREETYPE) && !PLATFORM(COCOA)
