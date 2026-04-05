@@ -36,7 +36,6 @@
 #include "CSSTokenizerInputStream.h"
 #include <wtf/NeverDestroyed.h>
 #include <wtf/text/StringBuilder.h>
-#include <wtf/text/StringToIntegerConversion.h>
 #include <wtf/unicode/CharacterNames.h>
 
 namespace WebCore {
@@ -807,16 +806,14 @@ char32_t CSSTokenizer::consumeEscape()
     char16_t cc = consume();
     ASSERT(!isNewline(cc));
     if (isASCIIHexDigit(cc)) {
+        uint32_t codePoint = toASCIIHexValue(cc);
         unsigned consumedHexDigits = 1;
-        StringBuilder hexChars;
-        hexChars.append(cc);
         while (consumedHexDigits < 6 && isASCIIHexDigit(m_input.peek(0))) {
             cc = consume();
-            hexChars.append(cc);
+            codePoint = codePoint * 16 + toASCIIHexValue(cc);
             consumedHexDigits++;
-        };
+        }
         consumeSingleWhitespaceIfNext();
-        auto codePoint = parseInteger<uint32_t>(hexChars, 16).value();
         if (!codePoint || U_IS_SURROGATE(codePoint) || codePoint > UCHAR_MAX_VALUE)
             return replacementCharacter;
         return codePoint;
