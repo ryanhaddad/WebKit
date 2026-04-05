@@ -747,10 +747,9 @@ void HTMLInputElement::initializeInputTypeAfterParsingOrCloning()
 
     m_hasType = true;
     m_inputType = InputType::createIfDifferent(*this, type);
-    updateWillValidateAndValidity();
     registerForSuspensionCallbackIfNeeded();
     runPostTypeUpdateTasks();
-    updateValidity();
+    updateWillValidateAndValidity();
 }
 
 void HTMLInputElement::attributeChanged(const QualifiedName& name, const AtomString& oldValue, const AtomString& newValue, AttributeModificationReason attributeModificationReason)
