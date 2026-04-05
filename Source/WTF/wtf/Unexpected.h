@@ -23,76 +23,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// Implementation of Library Fundamentals v3's std::expected, as described here: http://wg21.link/p0323r4
-
 #pragma once
 
-/*
-    unexpected synopsis
-
-namespace std {
-namespace experimental {
-inline namespace fundamentals_v3 {
-    // ?.?.3, Unexpected object type
-    template <class E>
-      class unexpected;
-
-    // ?.?.4, Unexpected relational operators
-    template <class E>
-        constexpr bool
-        operator==(const unexpected<E>&, const unexpected<E>&);
-    template <class E>
-        constexpr bool
-        operator!=(const unexpected<E>&, const unexpected<E>&);
-
-    template <class E>
-    class unexpected {
-    public:
-        unexpected() = delete;
-        template <class U = E>
-          constexpr explicit unexpected(E&&);
-        constexpr const E& value() const &;
-        constexpr E& value() &;
-        constexpr E&& value() &&;
-        constexpr E const&& value() const&&;
-    private:
-        E val; // exposition only
-    };
-
-}}}
-
-*/
-
-#include <cstdlib>
+#include <expected>
+#include <type_traits>
 #include <utility>
-#include <wtf/FastMalloc.h>
-#include <wtf/StdLibExtras.h>
 
-namespace std {
-namespace experimental {
-inline namespace fundamentals_v3 {
-
-template<class E>
-class unexpected {
-    WTF_DEPRECATED_MAKE_FAST_ALLOCATED(unexpected);
-public:
-    unexpected() = delete;
-    template <class U = E>
-    constexpr explicit unexpected(U&& u) : val(std::forward<U>(u)) { }
-    constexpr const E& error() const & { return val; }
-    constexpr E& error() & { return val; }
-    constexpr E&& error() && { return WTF::move(val); }
-    constexpr const E&& error() const && { return WTF::move(val); }
-
-private:
-    E val;
-};
-
-template<class E> constexpr bool operator==(const unexpected<E>& lhs, const unexpected<E>& rhs) { return lhs.error() == rhs.error(); }
-
-}}} // namespace std::experimental::fundamentals_v3
-
-template<class E> using Unexpected = std::experimental::unexpected<E>;
-
-// Not in the std::expected spec, but useful to work around lack of C++17 deduction guides.
+template<class E> using Unexpected = std::unexpected<E>;
 template<class E> constexpr Unexpected<std::decay_t<E>> makeUnexpected(E&& v) { return Unexpected<typename std::decay<E>::type>(std::forward<E>(v)); }

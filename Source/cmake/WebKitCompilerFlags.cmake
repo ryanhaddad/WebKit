@@ -197,6 +197,12 @@ if (COMPILER_IS_GCC_OR_CLANG)
     # FIXME: Remove once Clang 18 does no longer need to be supported for the GTK and WPE ports
     if ((CMAKE_CXX_COMPILER_ID STREQUAL Clang) AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19))
         WEBKIT_PREPEND_GLOBAL_CXX_FLAGS(-frelaxed-template-template-args)
+        # libstdc++'s <expected> is guarded behind __cpp_concepts >= 202002, even though
+        # Clang 18 is C++23 compliant. <https://webkit.org/b/311435>
+        add_compile_options(
+            $<$<COMPILE_LANGUAGE:CXX>:-D__cpp_concepts=202002>
+            $<$<COMPILE_LANGUAGE:CXX>:-Wno-builtin-macro-redefined>
+        )
     endif ()
 
     # GCC < 12.0 gives false warnings for mismatched-new-delete <https://webkit.org/b/241516>
