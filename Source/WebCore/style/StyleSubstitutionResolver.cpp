@@ -344,9 +344,8 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
         return substituteFailure();
 
     if (isInCycle) {
-        // Mark as in-cycle within attr() type() context for transitive detection.
-        if (m_isInAttrTypeSyntax)
-            m_styleBuilder.state().m_inCycleAttrAttributes.add(attributeName);
+        // Mark as in-cycle for transitive detection.
+        m_styleBuilder.state().m_inCycleAttrAttributes.add(attributeName);
         if (parsedAttrType)
             return false;
         return substituteFailure();
@@ -411,8 +410,6 @@ bool SubstitutionResolver::substituteAttrFunction(CSSParserTokenRange argumentsR
     case AttrType::Syntax: {
         CSSTokenizer tokenizer(attributeValue.string());
         m_intermediateTokenStrings.appendVector(tokenizer.escapedStringsForAdoption());
-
-        SetForScope isInAttrTypeSyntax(m_isInAttrTypeSyntax, true);
 
         auto substitutedTokens = substituteTokenRange(tokenizer.tokenRange(), context);
         if (!substitutedTokens)

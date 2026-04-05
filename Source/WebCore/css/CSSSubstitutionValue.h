@@ -64,7 +64,6 @@ public:
 private:
     friend class Style::SubstitutionResolver;
 
-    explicit CSSSubstitutionValue(Ref<CSSVariableData>&&);
     CSSSubstitutionValue(Ref<CSSVariableData>&&, const CSSNamespacePrefixMap&);
 
     void cacheSimpleReference();

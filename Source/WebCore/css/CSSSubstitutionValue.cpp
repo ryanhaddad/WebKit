@@ -34,13 +34,6 @@
 
 namespace WebCore {
 
-CSSSubstitutionValue::CSSSubstitutionValue(Ref<CSSVariableData>&& data)
-    : CSSValue(ClassType::Substitution)
-    , m_data(WTF::move(data))
-{
-    cacheSimpleReference();
-}
-
 CSSSubstitutionValue::CSSSubstitutionValue(Ref<CSSVariableData>&& data, const CSSNamespacePrefixMap& namespacePrefixMap)
     : CSSValue(ClassType::Substitution)
     , m_data(WTF::move(data))
@@ -56,7 +49,7 @@ Ref<CSSSubstitutionValue> CSSSubstitutionValue::create(const CSSParserTokenRange
 
 Ref<CSSSubstitutionValue> CSSSubstitutionValue::create(Ref<CSSVariableData>&& data)
 {
-    return adoptRef(*new CSSSubstitutionValue(WTF::move(data)));
+    return adoptRef(*new CSSSubstitutionValue(WTF::move(data), CSSNamespacePrefixMap { }));
 }
 
 bool CSSSubstitutionValue::equals(const CSSSubstitutionValue& other) const
