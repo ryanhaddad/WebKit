@@ -524,12 +524,15 @@ LocalDOMWindow::~LocalDOMWindow()
 
 RefPtr<MediaQueryList> LocalDOMWindow::matchMedia(const String& media)
 {
-    return document() ? document()->mediaQueryMatcher().matchMedia(media) : nullptr;
+    if (RefPtr document = this->document())
+        return document->mediaQueryMatcher().matchMedia(media);
+    return nullptr;
 }
 
 Page* LocalDOMWindow::page() const
 {
-    return frame() ? frame()->page() : nullptr;
+    auto* frame = this->frame();
+    return frame ? frame->page() : nullptr;
 }
 
 void LocalDOMWindow::frameDestroyed()
@@ -1618,12 +1621,13 @@ std::optional<LocalDOMWindow::ClickEventData> LocalDOMWindow::consumeLastUserCli
 void LocalDOMWindow::notifyActivated(MonotonicTime activationTime)
 {
     setLastActivationTimestamp(activationTime);
-    if (!frame())
+    RefPtr frame = this->frame();
+    if (!frame)
         return;
-    if (frame()->settings().closeWatcherEnabled())
+    if (frame->settings().closeWatcherEnabled())
         closeWatcherManager().notifyAboutUserActivation();
 
-    for (auto* ancestor = frame() ? frame()->tree().parent() : nullptr; ancestor; ancestor = ancestor->tree().parent()) {
+    for (auto* ancestor = frame->tree().parent(); ancestor; ancestor = ancestor->tree().parent()) {
         auto* localAncestor = dynamicDowncast<LocalFrame>(ancestor);
         if (!localAncestor)
             continue;
@@ -1635,8 +1639,8 @@ void LocalDOMWindow::notifyActivated(MonotonicTime activationTime)
     if (!securityOrigin)
         return;
 
-    RefPtr<Frame> descendant = frame();
-    while ((descendant = descendant->tree().traverseNext(frame()))) {
+    RefPtr<Frame> descendant = frame;
+    while ((descendant = descendant->tree().traverseNext(frame))) {
         RefPtr localDescendant = dynamicDowncast<LocalFrame>(descendant.get());
         if (!localDescendant)
             continue;
@@ -2456,8 +2460,8 @@ void LocalDOMWindow::removeAllEventListeners()
     EventTarget::removeAllEventListeners();
 
 #if ENABLE(DEVICE_ORIENTATION)
-        stopListeningForDeviceOrientationIfNecessary();
-        stopListeningForDeviceMotionIfNecessary();
+    stopListeningForDeviceOrientationIfNecessary();
+    stopListeningForDeviceMotionIfNecessary();
 #endif
 
 #if PLATFORM(IOS_FAMILY)
