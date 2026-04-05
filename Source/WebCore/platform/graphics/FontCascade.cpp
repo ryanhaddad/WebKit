@@ -100,8 +100,8 @@ FontCascade::FontCascade(const FontCascade& other)
     , m_fontSelector(other.m_fontSelector)
     , m_generation(other.m_generation)
     , m_useBackslashAsYenSymbol(other.m_useBackslashAsYenSymbol)
-    , m_enableKerning(computeEnableKerning())
-    , m_requiresShaping(computeRequiresShaping())
+    , m_enableKerning(other.m_enableKerning)
+    , m_requiresShaping(other.m_requiresShaping)
 {
 }
 
