@@ -61,7 +61,7 @@ String CSSCounterValue::customCSSText(const CSS::SerializationContext&) const
         return makeString("counter("_s, m_identifier, styleSeparator, styleLiteral, ')');
     StringBuilder result;
     result.append("counters("_s, m_identifier, ", "_s);
-    serializeString(m_separator, result);
+    serializeString(result, m_separator);
     result.append(styleSeparator, styleLiteral, ')');
     return result.toString();
 }

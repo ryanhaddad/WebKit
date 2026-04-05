@@ -418,9 +418,9 @@ static void appendPseudoClassFunctionTail(StringBuilder& builder, const CSSSelec
 static void appendPossiblyQuotedIdentifier(StringBuilder& builder, const PossiblyQuotedIdentifier& identifier)
 {
     if (!identifier.wasQuoted)
-        serializeIdentifier(identifier.identifier, builder);
+        serializeIdentifier(builder, identifier.identifier);
     else
-        serializeString(identifier.identifier, builder);
+        serializeString(builder, identifier.identifier);
 }
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, PossiblyQuotedIdentifier identifier)
@@ -477,7 +477,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
         if (identifier == starAtom())
             builder.append('*');
         else
-            serializeIdentifier(identifier, builder);
+            serializeIdentifier(builder, identifier);
     };
 
     StringBuilder builder;
@@ -499,12 +499,12 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
         }
         if (selector->match() == Match::Id) {
             builder.append('#');
-            serializeIdentifier(selector->serializingValue(), builder);
+            serializeIdentifier(builder, selector->serializingValue());
         } else if (selector->match() == Match::NestingParent) {
             builder.append('&');
         } else if (selector->match() == Match::Class) {
             builder.append('.');
-            serializeIdentifier(selector->serializingValue(), builder);
+            serializeIdentifier(builder, selector->serializingValue());
         } else if (selector->match() == Match::ForgivingUnknown || selector->match() == Match::ForgivingUnknownNestContaining) {
             builder.append(selector->value());
         } else if (selector->match() == Match::HasScope) {
@@ -556,7 +556,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
             }
             case PseudoClass::State:
                 builder.append('(');
-                serializeIdentifier(selector->argument(), builder);
+                serializeIdentifier(builder, selector->argument());
                 builder.append(')');
                 break;
             case PseudoClass::Heading:
@@ -573,7 +573,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
 
                 builder.append("("_s,
                     interleave(*selector->stringList(), [&](auto& builder, auto& partName) {
-                        serializeIdentifier(partName, builder);
+                        serializeIdentifier(builder, partName);
                     }, ", "_s),
                 ')');
                 break;
@@ -607,7 +607,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
 
                 builder.append("::part("_s,
                     interleave(*selector->stringList(), [&](auto& builder, auto& partName) {
-                        serializeIdentifier(partName, builder);
+                        serializeIdentifier(builder, partName);
                     }, ' '),
                 ')');
                 break;
@@ -629,7 +629,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
             default:
                 ASSERT(!pseudoElementMayHaveArgument(selector->pseudoElement()), "Missing serialization for pseudo-element argument");
                 builder.append("::"_s);
-                serializeIdentifier(selector->serializingValue(), builder);
+                serializeIdentifier(builder, selector->serializingValue());
                 break;
             }
         } else if (selector->isAttributeSelector()) {
@@ -666,7 +666,7 @@ String CSSSelector::selectorText(StringView separator, StringView rightSide) con
                 break;
             }
             if (selector->match() != Match::Set) {
-                serializeString(selector->serializingValue(), builder);
+                serializeString(builder, selector->serializingValue());
                 if (selector->attributeValueMatchingIsCaseInsensitive())
                     builder.append(" i]"_s);
                 else

@@ -415,7 +415,7 @@ void serializeMathFunctionArguments(StringBuilder& builder, const IndirectNode<R
 void serializeMathFunctionArguments(StringBuilder& builder, const IndirectNode<Anchor>& anchor, SerializationState& state)
 {
     if (!anchor->elementName.isNull()) {
-        serializeIdentifier(anchor->elementName, builder);
+        serializeIdentifier(builder, anchor->elementName);
         builder.append(' ');
     }
 
@@ -464,7 +464,7 @@ void serializeMathFunctionArguments(StringBuilder& builder, const IndirectNode<A
     bool hasElementName = !anchorSize->elementName.isNull();
 
     if (hasElementName)
-        serializeIdentifier(anchorSize->elementName, builder);
+        serializeIdentifier(builder, anchorSize->elementName);
 
     if (anchorSize->dimension) {
         if (hasElementName)
@@ -494,7 +494,7 @@ template<typename Op> void serializeMathFunctionArguments(StringBuilder& builder
         [&](const AtomString& root) {
             if (!root.isNull()) {
                 builder.append(std::exchange(separator, ", "_s));
-                serializeIdentifier(root, builder);
+                serializeIdentifier(builder, root);
             }
         },
         [&](const auto& root) {

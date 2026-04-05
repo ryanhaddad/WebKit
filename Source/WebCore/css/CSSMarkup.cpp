@@ -53,7 +53,7 @@ static inline bool NODELETE isCSSTokenizerIdentifier(std::span<const CharacterTy
 }
 
 // "ident" from the CSS tokenizer, minus backslash-escape sequences
-static bool NODELETE isCSSTokenizerIdentifier(const String& string)
+static bool NODELETE isCSSTokenizerIdentifier(StringView string)
 {
     if (string.isEmpty())
         return false;
@@ -63,19 +63,19 @@ static bool NODELETE isCSSTokenizerIdentifier(const String& string)
     return isCSSTokenizerIdentifier(string.span16());
 }
 
-static void serializeCharacter(char32_t c, StringBuilder& appendTo)
+static void serializeCharacter(StringBuilder& appendTo, char32_t c)
 {
     appendTo.append('\\', c);
 }
 
-static void serializeCharacterAsCodePoint(char32_t c, StringBuilder& appendTo)
+static void serializeCharacterAsCodePoint(StringBuilder& appendTo, char32_t c)
 {
     appendTo.append('\\', hex(c, Lowercase), ' ');
 }
 
-void serializeIdentifier(const String& identifier, StringBuilder& appendTo, bool skipStartChecks)
+void serializeIdentifier(StringBuilder& appendTo, StringView identifier, ShouldSkipStartChecks skipStartChecks)
 {
-    bool isFirst = !skipStartChecks;
+    bool isFirst = skipStartChecks == ShouldSkipStartChecks::No;
     bool isSecond = false;
     bool isFirstCharHyphen = false;
     unsigned index = 0;
@@ -87,13 +87,13 @@ void serializeIdentifier(const String& identifier, StringBuilder& appendTo, bool
         if (!c)
             appendTo.append(replacementCharacter);
         else if (c <= 0x1f || c == deleteCharacter || (0x30 <= c && c <= 0x39 && (isFirst || (isSecond && isFirstCharHyphen))))
-            serializeCharacterAsCodePoint(c, appendTo);
+            serializeCharacterAsCodePoint(appendTo, c);
         else if (c == hyphenMinus && isFirst && index == identifier.length())
-            serializeCharacter(c, appendTo);
+            serializeCharacter(appendTo, c);
         else if (0x80 <= c || c == hyphenMinus || c == lowLine || (0x30 <= c && c <= 0x39) || (0x41 <= c && c <= 0x5a) || (0x61 <= c && c <= 0x7a))
             appendTo.append(c);
         else
-            serializeCharacter(c, appendTo);
+            serializeCharacter(appendTo, c);
 
         if (isFirst) {
             isFirst = false;
@@ -104,7 +104,7 @@ void serializeIdentifier(const String& identifier, StringBuilder& appendTo, bool
     }
 }
 
-void serializeString(const String& string, StringBuilder& appendTo)
+void serializeString(StringBuilder& appendTo, StringView string)
 {
     appendTo.append('"');
 
@@ -114,9 +114,9 @@ void serializeString(const String& string, StringBuilder& appendTo)
         index += U16_LENGTH(c);
 
         if (c <= 0x1f || c == deleteCharacter)
-            serializeCharacterAsCodePoint(c, appendTo);
+            serializeCharacterAsCodePoint(appendTo, c);
         else if (c == quotationMark || c == reverseSolidus)
-            serializeCharacter(c, appendTo);
+            serializeCharacter(appendTo, c);
         else
             appendTo.append(c);
     }
@@ -124,18 +124,18 @@ void serializeString(const String& string, StringBuilder& appendTo)
     appendTo.append('"');
 }
 
-String serializeString(const String& string)
+String serializeString(StringView string)
 {
     StringBuilder builder;
-    serializeString(string, builder);
+    serializeString(builder, string);
     return builder.toString();
 }
 
-String serializeURL(const String& string)
+String serializeURL(StringView string)
 {
     StringBuilder builder;
     builder.append("url("_s);
-    serializeString(string, builder);
+    serializeString(builder, string);
     builder.append(')');
     return builder.toString();
 }

@@ -387,9 +387,9 @@ String CSSCounterStyleDescriptors::Symbol::cssText() const
 {
     StringBuilder builder;
     if (isCustomIdent)
-        serializeIdentifier(text, builder);
+        serializeIdentifier(builder, text);
     else
-        serializeString(text, builder);
+        serializeString(builder, text);
     return builder.toString();
 }
 

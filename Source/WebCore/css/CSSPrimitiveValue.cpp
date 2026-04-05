@@ -1025,7 +1025,7 @@ ALWAYS_INLINE String CSSPrimitiveValue::serializeInternal(const CSS::Serializati
         return serializeString(m_value.string);
     case CSSUnitType::CustomIdent: {
         StringBuilder builder;
-        serializeIdentifier(m_value.string, builder);
+        serializeIdentifier(builder, m_value.string);
         return builder.toString();
     }
 

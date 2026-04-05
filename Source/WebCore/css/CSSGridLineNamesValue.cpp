@@ -44,7 +44,7 @@ String CSSGridLineNamesValue::customCSSText(const CSS::SerializationContext&) co
     for (auto& name : m_names) {
         if (!std::exchange(first, false))
             result.append(' ');
-        serializeIdentifier(name, result);
+        serializeIdentifier(result, name);
     }
     result.append(']');
     return result.toString();
