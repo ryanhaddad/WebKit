@@ -2549,8 +2549,8 @@ void RenderElement::adjustComputedFontSizesOnBlocks(float size, float visibleWid
     // (nesting depth is greater than some const) inside of a parent block
     // which has fixed height but its content overflows intentionally.
     for (CheckedPtr descendant = traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth); descendant; descendant = descendant->traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth)) {
-        while (depthStack.size() > 0 && currentDepth <= depthStack[depthStack.size() - 1])
-            depthStack.removeAt(depthStack.size() - 1);
+        while (!depthStack.isEmpty() && currentDepth <= depthStack.last())
+            depthStack.removeLast();
         if (newFixedDepth)
             depthStack.append(newFixedDepth);
 
@@ -2579,8 +2579,8 @@ void RenderElement::resetTextAutosizing()
     int newFixedDepth = 0;
 
     for (CheckedPtr descendant = traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth); descendant; descendant = descendant->traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth)) {
-        while (depthStack.size() > 0 && currentDepth <= depthStack[depthStack.size() - 1])
-            depthStack.removeAt(depthStack.size() - 1);
+        while (!depthStack.isEmpty() && currentDepth <= depthStack.last())
+            depthStack.removeLast();
         if (newFixedDepth)
             depthStack.append(newFixedDepth);
 
