@@ -1715,9 +1715,9 @@ void RenderLayer::updateTransform()
     bool hasTransform = isTransformed();
     bool had3DTransform = has3DTransform();
 
-    std::unique_ptr<TransformationMatrix> oldTransform;
+    std::optional<TransformationMatrix> oldTransform;
     if (m_transform && hasTransform)
-        oldTransform = makeUnique<TransformationMatrix>(*m_transform);
+        oldTransform = *m_transform;
     if (hasTransform != !!m_transform) {
         if (hasTransform)
             m_transform = makeUnique<TransformationMatrix>();
