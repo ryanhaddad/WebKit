@@ -159,6 +159,7 @@
 #include "TransformationMatrix.h"
 #include "ViewTransition.h"
 #include "WheelEventTestMonitor.h"
+#include <ranges>
 #include <stdio.h>
 #include <wtf/HexNumber.h>
 #include <wtf/MonotonicTime.h>
@@ -4947,8 +4948,7 @@ bool RenderLayer::hitTestContentsForFragments(const LayerFragments& layerFragmen
     if (layerFragments.isEmpty())
         return false;
 
-    for (int i = layerFragments.size() - 1; i >= 0; --i) {
-        const auto& fragment = layerFragments.at(i);
+    for (auto& fragment : std::views::reverse(layerFragments)) {
         if ((hitTestFilter == HitTestSelf && !fragment.dirtyBackgroundRect().intersects(hitTestLocation))
             || (hitTestFilter == HitTestDescendants && !fragment.dirtyForegroundRect().intersects(hitTestLocation)))
             continue;
@@ -4970,8 +4970,7 @@ RenderLayer::HitLayer RenderLayer::hitTestTransformedLayerInFragments(RenderLaye
     paginatedLayer->collectFragments(enclosingPaginationFragments, rootLayer, hitTestRect, IncludeCompositedPaginatedLayers,
         RootRelativeClipRects, { ClipRectsOption::RespectOverflowClip }, offsetOfPaginationLayerFromRoot, &transformedExtent);
 
-    for (int i = enclosingPaginationFragments.size() - 1; i >= 0; --i) {
-        const LayerFragment& fragment = enclosingPaginationFragments.at(i);
+    for (auto& fragment : std::views::reverse(enclosingPaginationFragments)) {
         
         // Apply the page/column clip for this fragment, as well as any clips established by layers in between us and
         // the enclosing pagination layer.

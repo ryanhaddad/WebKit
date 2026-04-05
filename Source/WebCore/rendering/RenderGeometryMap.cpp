@@ -56,7 +56,7 @@ void RenderGeometryMap::mapToContainer(TransformState& transformState, const Ren
     bool foundContainer = !container || (m_mapping.size() && m_mapping[0].m_renderer == container);
 #endif
 
-    for (int i = m_mapping.size() - 1; i >= 0; --i) {
+    for (auto i = m_mapping.size(); i--;) {
         const RenderGeometryMapStep& currentStep = m_mapping[i];
 
         // If container is the RenderView (step 0) we want to apply its scroll offset.

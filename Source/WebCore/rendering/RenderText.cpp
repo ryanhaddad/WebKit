@@ -1027,12 +1027,11 @@ unsigned RenderText::lastCharacterIndexStrippingSpaces() const
     if (!style().collapseWhiteSpace())
         return text().length() - 1;
     
-    int i = text().length() - 1;
-    for ( ; i  >= 0; --i) {
+    for (auto i = text().length(); i--;) {
         if (text()[i] != ' ' && (text()[i] != '\n' || style().preserveNewline()) && text()[i] != '\t')
-            break;
+            return i;
     }
-    return i;
+    return 0;
 }
 
 RenderText::Widths RenderText::trimmedPreferredWidths(float leadWidth, bool& stripFrontSpaces)
