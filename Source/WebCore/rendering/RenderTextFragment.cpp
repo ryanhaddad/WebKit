@@ -91,8 +91,8 @@ char32_t RenderTextFragment::previousCharacter() const
 {
     if (start()) {
         String original = textNode() ? textNode()->data() : contentString();
-        if (!original.isNull() && start() <= original.length())
-            return original[start() - 1];
+        if (start() <= original.length())
+            return StringView(original).codePointBefore(start());
     }
     return RenderText::previousCharacter();
 }

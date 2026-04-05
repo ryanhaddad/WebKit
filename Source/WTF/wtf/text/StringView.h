@@ -86,6 +86,7 @@ public:
     char16_t characterAt(unsigned index) const;
     char16_t operator[](unsigned index) const;
     char32_t characterStartingAt(unsigned index) const;
+    char32_t codePointBefore(unsigned index) const;
 
     class CodeUnits;
     CodeUnits codeUnits() const;
@@ -623,6 +624,15 @@ inline char32_t StringView::characterStartingAt(unsigned index) const
     if (index + 1 < length() && U16_IS_LEAD(characters[index]) && U16_IS_TRAIL(characters[index + 1]))
         return U16_GET_SUPPLEMENTARY(characters[index], characters[index + 1]);
     return characters[index];
+}
+
+inline char32_t StringView::codePointBefore(unsigned index) const
+{
+    ASSERT(index > 0 && index <= length());
+    unsigned offset = index;
+    char32_t codePoint;
+    U16_PREV(*this, 0, offset, codePoint);
+    return codePoint;
 }
 
 inline bool StringView::contains(char16_t character) const
