@@ -74,11 +74,11 @@ std::strong_ordering codePointCompare(const String& a, const String& b)
     return codePointCompare(a.impl(), b.impl());
 }
 
-char32_t String::characterStartingAt(unsigned i) const
+char32_t String::codePointAt(unsigned i) const
 {
     if (!m_impl || i >= m_impl->length())
         return 0;
-    SUPPRESS_UNCOUNTED_ARG return m_impl->characterStartingAt(i);
+    SUPPRESS_UNCOUNTED_ARG return m_impl->codePointAt(i);
 }
 
 String makeStringByJoining(std::span<const String> strings, const String& separator)

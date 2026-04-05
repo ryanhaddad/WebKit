@@ -80,7 +80,7 @@ void serializeIdentifier(const String& identifier, StringBuilder& appendTo, bool
     bool isFirstCharHyphen = false;
     unsigned index = 0;
     while (index < identifier.length()) {
-        char32_t c = identifier.characterStartingAt(index);
+        char32_t c = identifier.codePointAt(index);
 
         index += U16_LENGTH(c);
 
@@ -110,7 +110,7 @@ void serializeString(const String& string, StringBuilder& appendTo)
 
     unsigned index = 0;
     while (index < string.length()) {
-        char32_t c = string.characterStartingAt(index);
+        char32_t c = string.codePointAt(index);
         index += U16_LENGTH(c);
 
         if (c <= 0x1f || c == deleteCharacter)

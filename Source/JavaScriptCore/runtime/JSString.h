@@ -942,7 +942,7 @@ inline JSString* jsString(VM& vm, const String& s)
     if (!size)
         return vm.smallStrings.emptyString();
     if (size == 1) {
-        if (auto c = s.characterAt(0); c <= maxSingleCharacterString)
+        if (auto c = s.codeUnitAt(0); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     }
     return JSString::create(vm, *s.impl());
@@ -954,7 +954,7 @@ inline JSString* jsString(VM& vm, String&& s)
     if (!size)
         return vm.smallStrings.emptyString();
     if (size == 1) {
-        if (auto c = s.characterAt(0); c <= maxSingleCharacterString)
+        if (auto c = s.codeUnitAt(0); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     }
     return JSString::create(vm, s.releaseImpl().releaseNonNull());
@@ -976,7 +976,7 @@ inline JSString* jsString(VM& vm, StringView s)
     if (!size)
         return vm.smallStrings.emptyString();
     if (size == 1) {
-        if (auto c = s.characterAt(0); c <= maxSingleCharacterString)
+        if (auto c = s.codeUnitAt(0); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     }
     auto impl = s.is8Bit() ? StringImpl::create(s.span8()) : StringImpl::create(s.span16());
@@ -1094,7 +1094,7 @@ inline JSString* jsSubstring(VM& vm, const String& s, unsigned offset, unsigned 
     if (!length)
         return vm.smallStrings.emptyString();
     if (length == 1) {
-        if (auto c = s.characterAt(offset); c <= maxSingleCharacterString)
+        if (auto c = s.codeUnitAt(offset); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     }
     auto impl = StringImpl::createSubstringSharingImpl(*s.impl(), offset, length);
@@ -1109,7 +1109,7 @@ inline JSString* jsOwnedString(VM& vm, const String& s)
     if (!size)
         return vm.smallStrings.emptyString();
     if (size == 1) {
-        if (auto c = s.characterAt(0); c <= maxSingleCharacterString)
+        if (auto c = s.codeUnitAt(0); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     }
     return JSString::createHasOtherOwner(vm, *s.impl());

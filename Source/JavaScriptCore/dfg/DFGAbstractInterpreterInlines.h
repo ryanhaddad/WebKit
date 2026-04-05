@@ -2735,7 +2735,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
                 int32_t index = node->child2()->asInt32();
                 if (index >= 0 && static_cast<unsigned>(index) < string.length()) {
                     if (node->op() == StringCharCodeAt)
-                        setConstant(node, jsNumber(string.characterAt(static_cast<unsigned>(index))));
+                        setConstant(node, jsNumber(string.codeUnitAt(static_cast<unsigned>(index))));
                     else
                         setConstant(node, jsNumber(codePointAt(string, static_cast<unsigned>(index), string.length())));
                     break;

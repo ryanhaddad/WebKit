@@ -11625,7 +11625,7 @@ IGNORE_CLANG_WARNINGS_END
         String searchString = m_node->child2()->tryGetString(m_graph);
         if (!!searchString) {
             if (searchString.length() == 1)
-                character = searchString.characterAt(0);
+                character = searchString.codeUnitAt(0);
         }
 
         LValue base = lowString(m_node->child1());

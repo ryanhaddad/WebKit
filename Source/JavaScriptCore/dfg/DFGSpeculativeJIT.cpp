@@ -17549,7 +17549,7 @@ void SpeculativeJIT::compileStringIndexOf(Node* node)
     String searchString = node->child2()->tryGetString(m_graph);
     if (!!searchString) {
         if (searchString.length() == 1)
-            character = searchString.characterAt(0);
+            character = searchString.codeUnitAt(0);
     }
 
     if (node->child3()) {

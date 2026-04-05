@@ -333,7 +333,7 @@ public:
             auto data = buffer->read(0, 7);
             StringView dataString(byteCast<Latin1Character>(data.span()));
             if (dataString.endsWith(":Type:"_s)) {
-                m_type.emplace(static_cast<WebCore::MediaKeyMessageType>(dataString.characterAt(0) - '0'));
+                m_type.emplace(static_cast<WebCore::MediaKeyMessageType>(dataString.codeUnitAt(0) - '0'));
                 offset = 7;
             }
         }

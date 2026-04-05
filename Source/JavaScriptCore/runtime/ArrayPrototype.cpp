@@ -890,7 +890,7 @@ static unsigned sortBucketSort(std::span<EncodedJSValue> sorted, unsigned dst, S
             continue;
         }
 
-        char16_t character = std::get<1>(entry).characterAt(depth);
+        char16_t character = std::get<1>(entry).codeUnitAt(depth);
         buckets.insert(std::pair { character, SortEntryVector { } }).first->second.append(entry);
     }
 

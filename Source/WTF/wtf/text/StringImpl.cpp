@@ -382,7 +382,7 @@ Ref<StringImpl> StringImpl::substring(unsigned start, unsigned length)
     return create(span16().subspan(start, length));
 }
 
-char32_t NODELETE StringImpl::characterStartingAt(unsigned i)
+char32_t NODELETE StringImpl::codePointAt(unsigned i)
 {
     if (is8Bit())
         return span8()[i];

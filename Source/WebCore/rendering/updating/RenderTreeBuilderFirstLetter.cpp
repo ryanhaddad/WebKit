@@ -243,7 +243,7 @@ void RenderTreeBuilder::FirstLetter::createRenderers(RenderText& currentTextChil
         unsigned length = 0;
 
         // Account for leading spaces and punctuation.
-        while (length < oldText.length() && shouldSkipForFirstLetter(oldText.characterStartingAt(length)))
+        while (length < oldText.length() && shouldSkipForFirstLetter(oldText.codePointAt(length)))
             length += numCodeUnitsInGraphemeClusters(StringView(oldText).substring(length), 1);
 
         // Account for first grapheme cluster.
@@ -253,7 +253,7 @@ void RenderTreeBuilder::FirstLetter::createRenderers(RenderText& currentTextChil
         // accumulating just whitespace into the :first-letter.
         unsigned numCodeUnits = 0;
         for (unsigned scanLength = length; scanLength < oldText.length(); scanLength += numCodeUnits) {
-            char32_t c = oldText.characterStartingAt(scanLength);
+            char32_t c = oldText.codePointAt(scanLength);
 
             if (!shouldSkipForFirstLetter(c))
                 break;

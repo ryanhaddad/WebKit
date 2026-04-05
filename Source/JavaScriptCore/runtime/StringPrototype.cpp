@@ -812,7 +812,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSplitFast, (JSGlobalObject* globalObject
             for (unsigned i = 0; i < resultSize; ++i) {
                 unsigned end = result[i];
                 JSString* string = nullptr;
-                const bool isPotentiallyIdentifier = start < end && isASCIIIdentifierStart(view->characterAt(start));
+                const bool isPotentiallyIdentifier = start < end && isASCIIIdentifierStart(view->codeUnitAt(start));
                 if (makeAtomStringsArray && isPotentiallyIdentifier) {
                     auto subView = view->substring(start, end - start);
                     auto identifier = subView.is8Bit() ? Identifier::fromString(vm, subView.span8()) : Identifier::fromString(vm, subView.span16());

@@ -1134,7 +1134,7 @@ ExceptionOr<void> InspectorStyleSheet::setRuleHeaderText(const InspectorCSSId& i
 
     if (!cssStyleRule
         && sourceData->ruleHeaderRange.start
-        && sheetText.characterAt(sourceData->ruleHeaderRange.start - 1) != ' '
+        && sheetText.codeUnitAt(sourceData->ruleHeaderRange.start - 1) != ' '
         && !correctedHeaderText.startsWith('(')) {
         // @ rules do not include the `@whatever` part of the declaration in their header text range, nor do they
         // include the space between the `@whatever` and the query/name/etc.. However, not all rules must contain a

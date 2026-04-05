@@ -878,34 +878,34 @@ TEST(WTF, CreateSubstringSharingImpl)
     ASSERT_TRUE(equal(small16Bit.ptr(), String::fromUTF8("日本語").impl()));
 }
 
-TEST(WTF, StringImplCharacterStartingAtASCII)
+TEST(WTF, StringImplCodePointAtASCII)
 {
     auto string = StringImpl::create("Hello"_s);
-    ASSERT_EQ(string->characterStartingAt(0), static_cast<char32_t>('H'));
-    ASSERT_EQ(string->characterStartingAt(4), static_cast<char32_t>('o'));
+    ASSERT_EQ(string->codePointAt(0), static_cast<char32_t>('H'));
+    ASSERT_EQ(string->codePointAt(4), static_cast<char32_t>('o'));
 }
 
-TEST(WTF, StringImplCharacterStartingAtBMP)
+TEST(WTF, StringImplCodePointAtBMP)
 {
     // U+00E9 (LATIN SMALL LETTER E WITH ACUTE) - single 16-bit code unit.
     auto string = String::fromUTF8("caf\xC3\xA9");
     ASSERT_FALSE(string.impl()->is8Bit());
-    ASSERT_EQ(string.impl()->characterStartingAt(0), static_cast<char32_t>('c'));
-    ASSERT_EQ(string.impl()->characterStartingAt(3), 0x00E9u);
+    ASSERT_EQ(string.impl()->codePointAt(0), static_cast<char32_t>('c'));
+    ASSERT_EQ(string.impl()->codePointAt(3), 0x00E9u);
 }
 
-TEST(WTF, StringImplCharacterStartingAtSupplementary)
+TEST(WTF, StringImplCodePointAtSupplementary)
 {
     // U+1F600 (GRINNING FACE) is encoded as a surrogate pair: D83D DE00.
     auto string = String::fromUTF8("A\xF0\x9F\x98\x80Z");
     ASSERT_FALSE(string.impl()->is8Bit());
     ASSERT_EQ(string.impl()->length(), 4u); // 'A' + surrogate pair + 'Z'
-    ASSERT_EQ(string.impl()->characterStartingAt(0), static_cast<char32_t>('A'));
-    ASSERT_EQ(string.impl()->characterStartingAt(1), 0x1F600u);
-    ASSERT_EQ(string.impl()->characterStartingAt(3), static_cast<char32_t>('Z'));
+    ASSERT_EQ(string.impl()->codePointAt(0), static_cast<char32_t>('A'));
+    ASSERT_EQ(string.impl()->codePointAt(1), 0x1F600u);
+    ASSERT_EQ(string.impl()->codePointAt(3), static_cast<char32_t>('Z'));
 }
 
-TEST(WTF, StringImplCharacterStartingAtLoneSurrogate)
+TEST(WTF, StringImplCodePointAtLoneSurrogate)
 {
     // Construct a string with lone surrogates directly via 16-bit code units.
     std::array<char16_t, 5> data { 0xD800, u'A', 0xDC00, u'B', 0xD83D };
@@ -913,28 +913,28 @@ TEST(WTF, StringImplCharacterStartingAtLoneSurrogate)
     ASSERT_EQ(string->length(), 5u);
 
     // Lone lead surrogate at index 0 (not followed by a trail).
-    ASSERT_EQ(string->characterStartingAt(0), 0xD800u);
+    ASSERT_EQ(string->codePointAt(0), 0xD800u);
 
     // Regular character.
-    ASSERT_EQ(string->characterStartingAt(1), static_cast<char32_t>('A'));
+    ASSERT_EQ(string->codePointAt(1), static_cast<char32_t>('A'));
 
     // Lone trail surrogate at index 2 (not preceded by a lead in terms of this API).
-    ASSERT_EQ(string->characterStartingAt(2), 0xDC00u);
+    ASSERT_EQ(string->codePointAt(2), 0xDC00u);
 
     // Regular character.
-    ASSERT_EQ(string->characterStartingAt(3), static_cast<char32_t>('B'));
+    ASSERT_EQ(string->codePointAt(3), static_cast<char32_t>('B'));
 
     // Lone lead surrogate at end of string.
-    ASSERT_EQ(string->characterStartingAt(4), 0xD83Du);
+    ASSERT_EQ(string->codePointAt(4), 0xD83Du);
 }
 
-TEST(WTF, StringImplCharacterStartingAtNUL)
+TEST(WTF, StringImplCodePointAtNUL)
 {
     // Ensure actual NUL character is distinguishable from lone surrogates.
     std::array<char16_t, 2> data { 0x0000, 0xD800 };
     auto string = StringImpl::create(std::span<const char16_t> { data });
-    ASSERT_EQ(string->characterStartingAt(0), 0u);
-    ASSERT_EQ(string->characterStartingAt(1), 0xD800u);
+    ASSERT_EQ(string->codePointAt(0), 0u);
+    ASSERT_EQ(string->codePointAt(1), 0xD800u);
 }
 
 } // namespace TestWebKitAPI

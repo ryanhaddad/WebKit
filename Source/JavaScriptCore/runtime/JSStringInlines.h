@@ -730,11 +730,11 @@ inline JSString* jsSubstringOfResolved(VM& vm, GCDeferralContext* deferralContex
         return s;
 
     if (length == 1) {
-        if (auto c = base.characterAt(offset); c <= maxSingleCharacterString)
+        if (auto c = base.codeUnitAt(offset); c <= maxSingleCharacterString)
             return vm.smallStrings.singleCharacterString(c);
     } else if (length == 2) {
-        char16_t first = base.characterAt(offset);
-        char16_t second = base.characterAt(offset + 1);
+        char16_t first = base.codeUnitAt(offset);
+        char16_t second = base.codeUnitAt(offset + 1);
         if ((first | second) < 0x80) {
             auto createFromSubstring = [&](VM& vm, auto& buffer) {
                 auto impl = AtomStringImpl::add(buffer);

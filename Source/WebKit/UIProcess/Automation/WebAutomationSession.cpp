@@ -1407,7 +1407,7 @@ void WebAutomationSession::handleRunOpenPanel(const WebPageProxy& page, const We
     for (RefPtr type : acceptFileExtensions->elementsOfType<API::String>()) {
         // WebCore vends extensions with leading periods. Strip these to simplify matching later.
         String extension = type->string();
-        ASSERT(extension.characterAt(0) == '.');
+        ASSERT(extension.codeUnitAt(0) == '.');
         allowedFileExtensions.add(extension.substring(1));
     }
 
@@ -2675,10 +2675,10 @@ static std::optional<char32_t> pressedCharKey(const String& pressedCharKeyString
 {
     switch (pressedCharKeyString.length()) {
     case 1:
-        return pressedCharKeyString.characterAt(0);
+        return pressedCharKeyString.codeUnitAt(0);
     case 2: {
-        auto lead = pressedCharKeyString.characterAt(0);
-        auto trail = pressedCharKeyString.characterAt(1);
+        auto lead = pressedCharKeyString.codeUnitAt(0);
+        auto trail = pressedCharKeyString.codeUnitAt(1);
         if (U16_IS_LEAD(lead) && U16_IS_TRAIL(trail))
             return U16_GET_SUPPLEMENTARY(lead, trail);
     }

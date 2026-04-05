@@ -232,7 +232,7 @@ private:
             return true;
         const auto& text = textRun.textAsString();
         for (unsigned index = 0; index < text.length(); ++index) {
-            if (TextSpacing::isIdeograph(text.characterAt(index))) {
+            if (TextSpacing::isIdeograph(text.codeUnitAt(index))) {
                 m_hasSeenIdeograph = true;
                 clear();
                 return true;

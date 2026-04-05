@@ -1200,7 +1200,7 @@ static void addPartsForText(const TextExtraction::TextItemData& textItem, Vector
             } else {
                 size_t endIndex = filteredText.length() - 1;
                 for (size_t i = filteredText.length(); i > 0; --i) {
-                    if (!isASCIIWhitespace(filteredText.characterAt(i - 1))) {
+                    if (!isASCIIWhitespace(filteredText.codeUnitAt(i - 1))) {
                         endIndex = i - 1;
                         break;
                     }

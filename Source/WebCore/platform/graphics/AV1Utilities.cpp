@@ -238,7 +238,7 @@ std::optional<AV1CodecConfigurationRecord> parseAV1CodecParameters(StringView co
 
     // The tier parameter value SHALL be equal to M when the first seq_tier
     // value in the Sequence Header OBU is equal to 0, and H when it is equal to 1.
-    auto tierCharacter = tierView.characterAt(0);
+    auto tierCharacter = tierView.codeUnitAt(0);
     if (tierCharacter == 'M')
         configuration.tier = AV1ConfigurationTier::Main;
     else if (tierCharacter == 'H')

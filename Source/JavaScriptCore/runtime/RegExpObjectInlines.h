@@ -295,7 +295,7 @@ ALWAYS_INLINE JSValue collectGlobalAtomMatches(JSGlobalObject* globalObject, JSS
         } else {
             if (pattern.length() == 1) {
                 oneCharacterMatch = true;
-                numberOfMatches = WTF::countMatchedCharacters(input->span16(), pattern.characterAt(0));
+                numberOfMatches = WTF::countMatchedCharacters(input->span16(), pattern.codeUnitAt(0));
             } else {
                 size_t startIndex = 0;
                 lastResult = genericMatches(vm, input->span16(), pattern.span8(), numberOfMatches, startIndex);
@@ -308,7 +308,7 @@ ALWAYS_INLINE JSValue collectGlobalAtomMatches(JSGlobalObject* globalObject, JSS
         } else {
             if (pattern.length() == 1) {
                 oneCharacterMatch = true;
-                numberOfMatches = WTF::countMatchedCharacters(input->span16(), pattern.characterAt(0));
+                numberOfMatches = WTF::countMatchedCharacters(input->span16(), pattern.codeUnitAt(0));
             } else {
                 size_t startIndex = 0;
                 lastResult = genericMatches(vm, input->span16(), pattern.span16(), numberOfMatches, startIndex);

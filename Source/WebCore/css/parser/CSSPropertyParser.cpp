@@ -191,7 +191,7 @@ CSSValueID cssValueKeywordID(StringView string)
 
 bool isCustomPropertyName(StringView propertyName)
 {
-    return propertyName.length() > 2 && propertyName.characterAt(0) == '-' && propertyName.characterAt(1) == '-';
+    return propertyName.length() > 2 && propertyName.codeUnitAt(0) == '-' && propertyName.codeUnitAt(1) == '-';
 }
 
 // MARK: - CSS-wide keyword value consumer

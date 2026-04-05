@@ -83,9 +83,10 @@ public:
     explicit operator bool() const;
     bool isNull() const;
 
-    char16_t characterAt(unsigned index) const;
+    char16_t codeUnitAt(unsigned index) const;
     char16_t operator[](unsigned index) const;
     char32_t characterStartingAt(unsigned index) const;
+    char32_t codePointAt(unsigned index) const;
     char32_t codePointBefore(unsigned index) const;
 
     class CodeUnits;
@@ -601,7 +602,7 @@ inline StringView StringView::substring(unsigned start, unsigned length) const
     return result;
 }
 
-inline char16_t StringView::characterAt(unsigned index) const
+inline char16_t StringView::codeUnitAt(unsigned index) const
 {
     if (is8Bit())
         return span8()[index];
@@ -610,10 +611,10 @@ inline char16_t StringView::characterAt(unsigned index) const
 
 inline char16_t StringView::operator[](unsigned index) const
 {
-    return characterAt(index);
+    return codeUnitAt(index);
 }
 
-inline char32_t StringView::characterStartingAt(unsigned index) const
+inline char32_t StringView::codePointAt(unsigned index) const
 {
     ASSERT(index < length());
     if (m_is8Bit)
@@ -1108,7 +1109,7 @@ inline auto StringView::CodeUnits::Iterator::operator++() -> Iterator&
 
 inline char16_t StringView::CodeUnits::Iterator::operator*() const
 {
-    return m_stringView.characterAt(m_index);
+    return m_stringView.codeUnitAt(m_index);
 }
 
 inline bool StringView::CodeUnits::Iterator::operator==(const Iterator& other) const
