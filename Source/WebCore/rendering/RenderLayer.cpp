@@ -1435,9 +1435,9 @@ void RenderLayer::setRepaintStatus(RepaintStatus status)
 void RenderLayer::setAncestorChainHasSelfPaintingLayerDescendant()
 {
     for (RenderLayer* layer = this; layer; layer = layer->parent()) {
-        if (renderer().shouldApplyPaintContainment()) {
-            m_hasSelfPaintingLayerDescendant = true;
-            m_hasSelfPaintingLayerDescendantDirty = false;
+        if (layer->renderer().shouldApplyPaintContainment()) {
+            layer->m_hasSelfPaintingLayerDescendant = true;
+            layer->m_hasSelfPaintingLayerDescendantDirty = false;
             break;
         }
         if (!layer->m_hasSelfPaintingLayerDescendantDirty && layer->hasSelfPaintingLayerDescendant())
