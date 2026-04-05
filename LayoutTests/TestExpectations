@@ -534,6 +534,8 @@ imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioworklet-interfac
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioparam-interface/k-rate-stereo-panner.html [ Pass Failure ]
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-mediaelementaudiosourcenode-interface/cors-check.https.html [ Pass Failure ]
 
+webkit.org/b/311498 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-convolvernode-interface/convolution-mono-mono.html [ Pass Failure ]
+
 # This test is passing but the printed SNR value differs from machine to machine.
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audiobuffersourcenode-interface/sub-sample-buffer-stitching.html [ Pass Failure ]
 
@@ -545,6 +547,8 @@ webaudio/AudioBufferSource/audiobuffersource-playbackrate-modulation.html [ Pass
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-analysernode-interface/test-analyser-output.html [ Pass Failure ]
 
 webkit.org/b/176929 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/ready-states/autoplay-with-slow-text-tracks.html [ Pass Failure ]
+
+webkit.org/b/311501 imported/w3c/web-platform-tests/mediasession/media-session-artwork-fetch.https.html [ Pass Failure ]
 
 # Requires additional test infrastructure.
 imported/w3c/web-platform-tests/service-workers/service-worker/update-after-oneday.https.html [ Skip ]

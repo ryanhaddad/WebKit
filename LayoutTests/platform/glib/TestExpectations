@@ -2406,6 +2406,8 @@ webkit.org/b/100984 http/tests/media/progress-events-generated-correctly.html [ 
 
 webkit.org/b/122042 media/media-controller-playback.html [ Pass Timeout ]
 
+webkit.org/b/283410 media/media-vp8-webm-with-poster.html [ Pass ImageOnlyFailure ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Media-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
