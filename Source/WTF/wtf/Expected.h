@@ -186,7 +186,6 @@ inline namespace fundamentals_v3 {
 #include <wtf/Compiler.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/StdLibExtras.h>
-#include <wtf/Unexpected.h>
 #include <wtf/Variant.h>
 
 namespace std {

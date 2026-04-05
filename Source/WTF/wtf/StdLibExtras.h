@@ -33,6 +33,7 @@
 #include <concepts>
 #include <cstring>
 #include <errno.h>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -1573,6 +1574,8 @@ static constexpr auto dereferenceView = std::views::transform([](auto&& x) -> de
 
 }
 
+template<class E> constexpr std::unexpected<std::decay_t<E>> makeUnexpected(E&& v) { return std::unexpected<typename std::decay<E>::type>(std::forward<E>(v)); }
+
 } // namespace WTF
 
 namespace WTF {
@@ -1616,6 +1619,7 @@ using WTF::isCompilationThread;
 using WTF::isPointerAligned;
 using WTF::isStatelessLambda;
 using WTF::lazyInitialize;
+using WTF::makeUnexpected;
 using WTF::makeUnique;
 using WTF::makeUniqueWithoutFastMallocCheck;
 using WTF::makeUniqueWithoutRefCountedCheck;

@@ -174,7 +174,7 @@ TestAPI::ScriptResult TestAPI::evaluateScript(const char* script, JSObjectRef th
 
     JSValueRef result = JSEvaluateScript(context, scriptAPIString, thisObject, nullptr, 0, &exception);
     if (exception)
-        return Unexpected<JSValueRef>(exception);
+        return std::unexpected<JSValueRef>(exception);
     return ScriptResult(result);
 }
 
@@ -198,7 +198,7 @@ TestAPI::ScriptResult TestAPI::callFunction(const char* functionSource, Argument
     }
 
     RELEASE_ASSERT(exception);
-    return Unexpected<JSValueRef>(exception);
+    return std::unexpected<JSValueRef>(exception);
 }
 
 template<typename... ArgumentTypes>

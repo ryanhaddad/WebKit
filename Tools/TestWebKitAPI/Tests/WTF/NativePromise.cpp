@@ -1245,7 +1245,7 @@ TEST(NativePromise, ExpectedWithString)
             EXPECT_TRUE(val.value().value().isSafeToSendToAnotherThread());
         });
 
-    Expected<String, String> error = Unexpected<String>("error"_s);
+    Expected<String, String> error = std::unexpected<String>("error"_s);
     MyPromise::createAndResolve(WTF::move(error))->whenSettled(queue,
         [queue](MyPromise::Result&& val) {
             EXPECT_TRUE(val.has_value());

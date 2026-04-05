@@ -137,7 +137,7 @@ void StreamingCompiler::didComplete()
     auto makeValidationResult = [](EntryPlan& plan) -> Module::ValidationResult {
         ASSERT(!plan.hasWork());
         if (plan.failed())
-            return Unexpected<String>(plan.errorMessage());
+            return std::unexpected<String>(plan.errorMessage());
         return JSC::Wasm::Module::ValidationResult(Module::create(static_cast<IPIntPlan&>(plan)));
     };
 

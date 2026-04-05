@@ -114,7 +114,7 @@ namespace JSC { namespace Wasm {
 
 using ErrorType = String;
 using PartialResult = Expected<void, ErrorType>;
-using UnexpectedResult = Unexpected<ErrorType>;
+using UnexpectedResult = std::unexpected<ErrorType>;
 struct Value { };
 
 // ControlBlock

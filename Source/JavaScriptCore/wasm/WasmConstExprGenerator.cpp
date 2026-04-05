@@ -48,7 +48,7 @@ class ConstExprGenerator {
 public:
     using ErrorType = String;
     using PartialResult = Expected<void, ErrorType>;
-    using UnexpectedResult = Unexpected<ErrorType>;
+    using UnexpectedResult = std::unexpected<ErrorType>;
     using CallType = CallLinkInfo::CallType;
 
     enum InvalidTag { InvalidConstExpr };

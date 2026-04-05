@@ -382,7 +382,6 @@ set(WTF_PUBLIC_HEADERS
     URLParser.h
     UUID.h
     UnalignedAccess.h
-    Unexpected.h
     UniStdExtras.h
     UnionFind.h
     UniqueArray.h

@@ -60,7 +60,7 @@ inline String makeString(const T& failure) { return WTF::toString(failure); }
 class ParserBase {
 public:
     typedef String ErrorType;
-    typedef Unexpected<ErrorType> UnexpectedResult;
+    typedef std::unexpected<ErrorType> UnexpectedResult;
     typedef Expected<void, ErrorType> PartialResult;
 
     std::span<const uint8_t> source() const { return m_source; }

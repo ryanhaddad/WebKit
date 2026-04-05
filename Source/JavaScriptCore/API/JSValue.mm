@@ -405,7 +405,7 @@ inline Expected<Result, JSValueRef> performPropertyOperation(NSStringFunction st
     JSValueRef exception = nullptr;
     JSObjectRef object = JSValueToObject([context JSGlobalContextRef], [value JSValueRef], &exception);
     if (exception)
-        return Unexpected<JSValueRef>(exception);
+        return std::unexpected<JSValueRef>(exception);
 
     Result result;
     // If it's a NSString already, reduce indirection and just pass the NSString.

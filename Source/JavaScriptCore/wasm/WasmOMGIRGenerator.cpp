@@ -418,7 +418,7 @@ public:
     static_assert(std::is_same_v<ResultList, FunctionParser<OMGIRGenerator>::ResultList>);
 
     typedef String ErrorType;
-    typedef Unexpected<ErrorType> UnexpectedResult;
+    typedef std::unexpected<ErrorType> UnexpectedResult;
     typedef Expected<std::unique_ptr<InternalFunction>, ErrorType> Result;
     typedef Expected<void, ErrorType> PartialResult;
 

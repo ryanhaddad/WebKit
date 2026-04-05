@@ -40,7 +40,6 @@
 #include <wtf/OptionSet.h>
 #include <wtf/SHA1.h>
 #include <wtf/StdLibExtras.h>
-#include <wtf/Unexpected.h>
 #include <wtf/Variant.h>
 #include <wtf/WallTime.h>
 

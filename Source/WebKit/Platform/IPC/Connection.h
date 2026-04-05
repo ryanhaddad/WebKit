@@ -66,7 +66,6 @@
 #include <wtf/ThreadSafeWeakPtr.h>
 #include <wtf/ThreadSafetyAnalysis.h>
 #include <wtf/Threading.h>
-#include <wtf/Unexpected.h>
 #include <wtf/UniqueRef.h>
 #include <wtf/WorkQueue.h>
 #include <wtf/text/ASCIILiteral.h>

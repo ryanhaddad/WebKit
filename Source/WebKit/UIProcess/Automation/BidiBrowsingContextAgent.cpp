@@ -43,7 +43,6 @@
 #include <limits>
 #include <wtf/Ref.h>
 #include <wtf/URL.h>
-#include <wtf/Unexpected.h>
 #include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
