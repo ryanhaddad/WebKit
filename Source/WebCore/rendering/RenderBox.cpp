@@ -5200,12 +5200,13 @@ std::pair<LayoutUnit, LayoutUnit> RenderBox::computeMinMaxLogicalHeightFromAspec
 
 bool RenderBox::hasRelativeDimensions() const
 {
-    return style().height().isPercentOrCalculated() || style().width().isPercentOrCalculated()
-        || style().maxHeight().isPercentOrCalculated() || style().maxWidth().isPercentOrCalculated()
-        || style().minHeight().isPercentOrCalculated() || style().minWidth().isPercentOrCalculated()
-        || style().height().isStretch() || style().width().isStretch()
-        || style().maxHeight().isStretch() || style().maxWidth().isStretch()
-        || style().minHeight().isStretch() || style().minWidth().isStretch();
+    auto& style = this->style();
+    return style.height().isPercentOrCalculated() || style.width().isPercentOrCalculated()
+        || style.maxHeight().isPercentOrCalculated() || style.maxWidth().isPercentOrCalculated()
+        || style.minHeight().isPercentOrCalculated() || style.minWidth().isPercentOrCalculated()
+        || style.height().isStretch() || style.width().isStretch()
+        || style.maxHeight().isStretch() || style.maxWidth().isStretch()
+        || style.minHeight().isStretch() || style.minWidth().isStretch();
 }
 
 bool RenderBox::hasRelativeLogicalHeight() const
