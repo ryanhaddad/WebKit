@@ -62,6 +62,7 @@ public:
     UnixFileDescriptor(UnixFileDescriptor&& o)
     {
         m_value = o.release();
+        m_shouldClose = o.m_shouldClose;
     }
 
     UnixFileDescriptor& operator=(UnixFileDescriptor&& o)
@@ -87,6 +88,11 @@ public:
     UnixFileDescriptor duplicate() const
     {
         return UnixFileDescriptor { m_value, Duplicate };
+    }
+
+    UnixFileDescriptor borrow() const
+    {
+        return UnixFileDescriptor { m_value, Borrow };
     }
 
     [[nodiscard]] int release() { return std::exchange(m_value, -1); }

@@ -176,7 +176,7 @@ std::unique_ptr<CoordinatedPlatformLayerBuffer> CoordinatedPlatformLayerBufferDM
     for (unsigned i = 0; i < planeInfo.size(); ++i) {
         const auto& plane = planeInfo[i];
         IntSize adjustedSize { attributes.size.width() / plane.subsampling.width(), attributes.size.height() / plane.subsampling.height() };
-        auto planeFds = Vector<UnixFileDescriptor>::from(UnixFileDescriptor { attributes.fds[i].value(), UnixFileDescriptor::Borrow });
+        auto planeFds = Vector<UnixFileDescriptor>::from(attributes.fds[i].borrow());
         DMABufBuffer::Attributes planeAttributes { adjustedSize, plane.fourcc, WTF::move(planeFds), { attributes.offsets[i] }, { attributes.strides[i] }, attributes.modifier };
         auto texture = importToTexture(attributes.size, planeAttributes, textureFlags);
         if (!texture)
