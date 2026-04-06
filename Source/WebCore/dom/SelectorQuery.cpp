@@ -700,14 +700,10 @@ SelectorQuery* SelectorQueryCache::add(const String& selectors, const Document& 
 {
     ASSERT(!selectors.isEmpty());
 
-    constexpr auto maximumSelectorQueryCacheSize = 512;
-    if (m_entries.size() == maximumSelectorQueryCacheSize)
-        m_entries.remove(m_entries.random());
-
     auto context = CSSSelectorParserContext { document };
     auto key = Key { selectors, context, document.securityOrigin().data() };
 
-    return m_entries.ensure(key, [&]() -> std::unique_ptr<SelectorQuery> {
+    auto result = m_entries.ensure(key, [&] -> std::unique_ptr<SelectorQuery> {
         auto tokenizer = CSSTokenizer { selectors };
         auto selectorList = parseCSSSelectorList(tokenizer.tokenRange(), context);
 
@@ -718,7 +714,17 @@ SelectorQuery* SelectorQueryCache::add(const String& selectors, const Document& 
             selectorList = CSSSelectorParser::resolveNestingParent(WTF::move(*selectorList), nullptr);
 
         return makeUnique<SelectorQuery>(WTF::move(*selectorList));
-    }).iterator->value.get();
+    });
+
+    auto* query = result.iterator->value.get();
+    constexpr auto maximumSelectorQueryCacheSize = 512;
+    while (m_entries.size() > maximumSelectorQueryCacheSize) {
+        auto it = m_entries.random();
+        if (it->key != result.iterator->key)
+            m_entries.remove(it);
+    }
+
+    return query;
 }
 
 void SelectorQueryCache::clear()
