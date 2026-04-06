@@ -181,19 +181,6 @@ inline bool SelectorDataList::selectorMatches(const SelectorData& selectorData, 
     return selectorChecker.match(selectorData.selector, element, selectorCheckingContext);
 }
 
-inline Element* SelectorDataList::selectorClosest(const SelectorData& selectorData, Element& element, const ContainerNode& rootNode, Style::SelectorMatchingState* selectorMatchingState) const
-{
-    SelectorChecker selectorChecker(element.document());
-    SelectorChecker::CheckingContext selectorCheckingContext(SelectorChecker::Mode::QueryingRules);
-    selectorCheckingContext.scope = rootNode.isDocumentNode() ? nullptr : &rootNode;
-    // Providing SelectorMatchingState allows cross-element optimizations like caching for :has() matches.
-    selectorCheckingContext.selectorMatchingState = selectorMatchingState;
-
-    if (!selectorChecker.match(selectorData.selector, element, selectorCheckingContext))
-        return nullptr;
-    return &element;
-}
-
 bool SelectorDataList::matches(Element& targetElement) const
 {
     for (auto& selector : m_selectors) {
@@ -203,14 +190,14 @@ bool SelectorDataList::matches(Element& targetElement) const
     return false;
 }
 
-Element* SelectorDataList::closest(Element& targetElement) const
+RefPtr<Element> SelectorDataList::closest(Element& targetElement) const
 {
     Style::SelectorMatchingState selectorMatchingState;
 
     for (Ref currentElement : lineageOfType<Element>(targetElement)) {
         for (auto& selector : m_selectors) {
-            if (auto* candidateElement = selectorClosest(selector, currentElement, targetElement, &selectorMatchingState))
-                return candidateElement;
+            if (selectorMatches(selector, currentElement, targetElement, &selectorMatchingState))
+                return currentElement;
         }
     }
     return nullptr;

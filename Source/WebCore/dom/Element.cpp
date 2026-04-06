@@ -5023,7 +5023,7 @@ ExceptionOr<bool> Element::matches(const String& selector)
     return query.releaseReturnValue().matches(*this);
 }
 
-ExceptionOr<Element*> Element::closest(const String& selector)
+ExceptionOr<RefPtr<Element>> Element::closest(const String& selector)
 {
     auto query = document().selectorQueryForString(selector);
     if (query.hasException())
