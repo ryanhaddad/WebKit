@@ -947,18 +947,25 @@ private:
 class StringView::CodePoints::Iterator {
     WTF_DEPRECATED_MAKE_FAST_ALLOCATED(Iterator);
 public:
-    using iterator_category = std::forward_iterator_tag;
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = char32_t;
+    using difference_type = ptrdiff_t;
+    Iterator() = default;
     Iterator(StringView view LIFETIME_BOUND, unsigned index);
 
     char32_t operator*() const;
     Iterator& operator++();
+    Iterator operator++(int);
+    Iterator& operator--();
+    Iterator operator--(int);
 
     bool operator==(const Iterator&) const;
 
 private:
-    const void* m_current;
-    const void* m_end;
-    bool m_is8Bit;
+    const void* m_begin { nullptr };
+    const void* m_current { nullptr };
+    const void* m_end { nullptr };
+    bool m_is8Bit { true };
 #if CHECK_STRINGVIEW_LIFETIME
     StringView m_stringView;
 #endif
@@ -1022,10 +1029,12 @@ inline StringView::CodePoints::Iterator::Iterator(StringView stringView LIFETIME
 {
     if (m_is8Bit) {
         auto characters = stringView.span8();
+        m_begin = std::to_address(characters.begin());
         m_current = characters.subspan(index).data();
         m_end = std::to_address(characters.end());
     } else {
         auto characters = stringView.span16();
+        m_begin = std::to_address(characters.begin());
         m_current = characters.subspan(index).data();
         m_end = std::to_address(characters.end());
     }
@@ -1047,6 +1056,38 @@ inline auto StringView::CodePoints::Iterator::operator++() -> Iterator&
         m_current = static_cast<const char16_t*>(m_current) + i;
     }
     return *this;
+}
+
+inline auto StringView::CodePoints::Iterator::operator++(int) -> Iterator
+{
+    auto result = *this;
+    ++*this;
+    return result;
+}
+
+inline auto StringView::CodePoints::Iterator::operator--() -> Iterator&
+{
+#if CHECK_STRINGVIEW_LIFETIME
+    ASSERT(m_stringView.underlyingStringIsValid());
+#endif
+    ASSERT(m_current > m_begin);
+    if (m_is8Bit)
+        m_current = static_cast<const Latin1Character*>(m_current) - 1;
+    else {
+        auto* begin = static_cast<const char16_t*>(m_begin);
+        auto* current = static_cast<const char16_t*>(m_current);
+        unsigned i = current - begin;
+        U16_BACK_1(begin, 0, i);
+        m_current = begin + i;
+    }
+    return *this;
+}
+
+inline auto StringView::CodePoints::Iterator::operator--(int) -> Iterator
+{
+    auto result = *this;
+    --*this;
+    return result;
 }
 
 inline char32_t StringView::CodePoints::Iterator::operator*() const

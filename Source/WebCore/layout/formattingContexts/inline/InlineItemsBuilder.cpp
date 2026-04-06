@@ -215,7 +215,7 @@ void InlineItemsBuilder::computeInlineBoxBoundaryTextSpacings(const InlineItemLi
         size_t boundaryIndex = inlineBoxStartIndexesOnInlineItemsList[inlineBoxStartOnBoundaryIndex];
         CheckedRef boundaryOwnerStyle = inlineItemList[boundaryIndex].layoutBox().parent().style();
         auto boundaryTextAutospace = boundaryOwnerStyle->textAutospace();
-        if (!boundaryTextAutospace.isNoAutospace() && boundaryTextAutospace.shouldApplySpacing(inlineTextBox->content().codeUnitAt(start), lastCharacterFromPreviousRun))
+        if (!boundaryTextAutospace.isNoAutospace() && boundaryTextAutospace.shouldApplySpacing(inlineTextBox->content().codePointAt(start), lastCharacterFromPreviousRun))
             spacings.add(boundaryIndex, TextAutospace::textAutospaceSize(protect(boundaryOwnerStyle->fontCascade().primaryFont())));
 
         lastCharacterFromPreviousRun = TextUtil::lastBaseCharacterFromText(content);
@@ -789,7 +789,7 @@ static void handleTextSpacing(TextSpacing::SpacingState& spacingState, Trimmable
     auto autospace = inlineTextItem.style().textAutospace();
     if (!autospace.isNoAutospace()) {
         // We need to store information about spacing added between inline text items since it needs to be trimmed during line breaking if the consecutive items are placed on different lines
-        auto characterClass = TextSpacing::characterClass(inlineTextItem.content().codeUnitAt(0));
+        auto characterClass = TextSpacing::characterClass(inlineTextItem.content().codePointAt(0));
         if (autospace.shouldApplySpacing(spacingState.lastCharacterClassFromPreviousRun, characterClass))
             trimmableTextSpacings.add(inlineItemIndex, TextAutospace::textAutospaceSize(protect(inlineTextItem.style().fontCascade().primaryFont())));
 

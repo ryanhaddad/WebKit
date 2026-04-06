@@ -5473,6 +5473,9 @@ webkit.org/b/197473 imported/w3c/web-platform-tests/speculation-rules/prefetch/n
 
 webkit.org/b/278719 fast/events/touch/inserted-fragment-touch-target.html [ Timeout ]
 
+# This test has been failing on glib ports since its creation.
+imported/w3c/web-platform-tests/css/css-text/text-autospace/text-autospace-supplementary-ideograph.html [ ImageOnlyFailure ]
+
 
 # End: Common failures between GTK and WPE.
 

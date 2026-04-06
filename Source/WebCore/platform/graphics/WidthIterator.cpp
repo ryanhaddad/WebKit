@@ -642,7 +642,7 @@ TextSpacing::CharacterClass WidthIterator::applyTextAutospaceIfNeededAndGetChara
     if (textAutospace.isNoAutospace())
         return TextSpacing::CharacterClass::Undefined;
 
-    auto currentCharacterClass = TextSpacing::characterClass(m_run.get()[characterIndex]);
+    auto currentCharacterClass = TextSpacing::characterClass(m_run->text().codePointAt(characterIndex));
     if (textAutospace.shouldApplySpacing(currentCharacterClass, previousCharacterClass)) {
         auto textAutospaceSpacing = TextAutospace::textAutospaceSize(protect(glyphBuffer.fontAt(glyphIndexRange.leadingGlyphIndex)));
         glyphBuffer.expandAdvanceToLogicalRight(glyphIndexRange.leadingGlyphIndex, textAutospaceSpacing);
