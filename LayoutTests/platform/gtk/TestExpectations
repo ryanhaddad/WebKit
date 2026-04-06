@@ -144,7 +144,7 @@ webkit.org/b/308373 webrtc/encoded-streams-quirks.html [ Pass Timeout ]
 webkit.org/b/308362 [ Debug ] webrtc/processIceTransportStateChange-gc.html [ Pass Crash ]
 
 webkit.org/b/305553 fast/selectors/selection-window-inactive-stroke-color.html [ ImageOnlyFailure ]
-webkit.org/b/305553 fast/selectors/selection-window-inactive.html [ ImageOnlyFailure ]
+webkit.org/b/305553 fast/selectors/selection-window-inactive.html [ ImageOnlyFailure Pass ]
 
 # This test constantly fails in EWS but passes in post-commit bots, so skip it.
 fast/selectors/selection-window-inactive-text-shadow.html [ Skip ]
@@ -548,7 +548,7 @@ webkit.org/b/120839 animations/cross-fade-background-image.html [ ImageOnlyFailu
 webkit.org/b/286132 [ Debug ] inspector/debugger/breakpoints/resolved-dump-all-inline-script-pause-locations.html [ Crash ]
 webkit.org/b/286132 [ Release ] inspector/debugger/breakpoints/resolved-dump-all-inline-script-pause-locations.html [ Pass Crash ]
 
-webkit.org/b/299482 inspector/dom-debugger/event-animation-frame-breakpoints.html [ Pass Crash ]
+webkit.org/b/299482 inspector/dom-debugger/event-animation-frame-breakpoints.html [ Pass Crash Timeout ]
 
 webkit.org/b/304644 [ Debug ] inspector/unit-tests/editing-support.html [ Crash Timeout ]
 webkit.org/b/304644 [ Release ] inspector/unit-tests/editing-support.html [ Pass Crash Timeout ]
@@ -1488,7 +1488,6 @@ webkit.org/b/310757 media/video-main-content-allow-then-scroll.html [ Pass Timeo
 
 inspector/unit-tests/retryuntil.html [ Pass Failure ]
 
-fast/events/prevent-default-prevents-interaction-with-scrollbars.html [ Failure ]
 webanimations/simultaneous-animations-removed-separately.html [ Failure ]
 webanimations/transform-accelerated-animation-finishes-before-removal.html [ Failure ]
 
