@@ -460,6 +460,7 @@ bool MediaPlayerPrivateGStreamer::isPipelineWaitingPreroll() const
 
 void MediaPlayerPrivateGStreamer::play()
 {
+    GST_DEBUG_OBJECT(pipeline(), "Processing playback request");
     if (isMediaStreamPlayer()) {
         m_pausedTime.reset();
         if (m_startTime.isInvalid())
@@ -1129,16 +1130,16 @@ MediaPlayerPrivateGStreamer::ChangePipelineStateResult MediaPlayerPrivateGStream
         return ChangePipelineStateResult::Rejected;
     }
 
-    GST_DEBUG_OBJECT(pipeline(), "Changing state change to %s from %s with %s pending", gst_state_get_name(newState),
-        gst_state_get_name(currentState), gst_state_get_name(pending));
+    GST_DEBUG_OBJECT(pipeline(), "Changing state from %s to %s with %s pending", gst_state_get_name(currentState),
+        gst_state_get_name(newState), gst_state_get_name(pending));
 
     change = gst_element_set_state(m_pipeline.get(), newState);
     GST_DEBUG_OBJECT(pipeline(), "Changing state returned %s", gst_state_change_return_get_name(change));
 
     GstState pausedOrPlaying = newState == GST_STATE_PLAYING ? GST_STATE_PAUSED : GST_STATE_PLAYING;
     if (currentState != pausedOrPlaying && change == GST_STATE_CHANGE_FAILURE) {
-        GST_WARNING_OBJECT(pipeline(), "Changing state to %s from %s with %s pending failed", gst_state_get_name(newState),
-            gst_state_get_name(currentState), gst_state_get_name(pending));
+        GST_WARNING_OBJECT(pipeline(), "Changing state from %s to %s with %s pending failed", gst_state_get_name(currentState),
+            gst_state_get_name(newState), gst_state_get_name(pending));
         return ChangePipelineStateResult::Failed;
     }
 
@@ -1849,7 +1850,7 @@ void MediaPlayerPrivateGStreamer::updateTracks([[maybe_unused]] const GRefPtr<Gs
         auto type = gst_stream_get_stream_type(stream);
         auto caps = adoptGRef(gst_stream_get_caps(stream));
 
-        GST_DEBUG_OBJECT(pipeline(), "#%u %s track with ID %" PRIu64 " and caps %" GST_PTR_FORMAT, i, gst_stream_type_get_name(type), streamId, caps.get());
+        GST_DEBUG_OBJECT(pipeline(), "#%u %s track with ID %" PRIu64 ": %" GST_PTR_FORMAT, i, gst_stream_type_get_name(type), streamId, stream);
 
         if (type & GST_STREAM_TYPE_AUDIO) {
             CREATE_OR_SELECT_TRACK(audio, Audio);
@@ -2924,7 +2925,7 @@ void MediaPlayerPrivateGStreamer::updateStates()
             break;
         case GST_STATE_READY:
             if (m_isEndReached && eosState == GST_STATE_READY) {
-                m_readyState = MediaPlayer::ReadyState::HaveEnoughData;
+                m_readyState = isMediaStreamPlayer() ? MediaPlayer::ReadyState::HaveCurrentData : MediaPlayer::ReadyState::HaveEnoughData;
                 m_networkState = MediaPlayer::NetworkState::Loaded;
             } else {
                 m_readyState = MediaPlayer::ReadyState::HaveMetadata;
@@ -3207,10 +3208,6 @@ bool MediaPlayerPrivateGStreamer::loadNextLocation()
 
 bool MediaPlayerPrivateGStreamer::ended() const
 {
-#if ENABLE(MEDIA_STREAM)
-    if (isMediaStreamPlayer())
-        return !m_streamPrivate->active();
-#endif
     return m_isEndReached;
 }
 
