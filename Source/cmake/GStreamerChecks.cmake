@@ -16,10 +16,6 @@ if (USE_GSTREAMER)
               list(APPEND GSTREAMER_COMPONENTS audio fft)
           endif ()
 
-          if (ENABLE_MEDIA_RECORDER)
-              list(APPEND GSTREAMER_COMPONENTS transcoder)
-          endif ()
-
           if (USE_GSTREAMER_WEBRTC)
               list(APPEND GSTREAMER_COMPONENTS webrtc)
           endif ()
