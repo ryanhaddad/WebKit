@@ -85,7 +85,6 @@ public:
 
     char16_t codeUnitAt(unsigned index) const;
     char16_t operator[](unsigned index) const;
-    char32_t characterStartingAt(unsigned index) const;
     char32_t codePointAt(unsigned index) const;
     char32_t codePointBefore(unsigned index) const;
 
