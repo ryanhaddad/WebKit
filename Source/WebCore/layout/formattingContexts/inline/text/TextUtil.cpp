@@ -115,8 +115,7 @@ InlineLayoutUnit TextUtil::width(const InlineTextItem& inlineTextItem, const Fon
 
     if (inlineTextItem.isWhitespace()) {
         CheckedRef inlineTextBox = inlineTextItem.inlineTextBox();
-        auto singleWhiteSpace = from - to == 1 || !TextUtil::shouldPreserveSpacesAndTabs(inlineTextBox);
-        if (singleWhiteSpace)
+        if (!TextUtil::shouldPreserveSpacesAndTabs(inlineTextBox) || (to - from == 1 && inlineTextBox->content()[from] == space))
             return std::max(0.f, singleSpaceWidth(fontCascade, inlineTextBox->canUseSimplifiedContentMeasuring()));
     }
     return width(protect(inlineTextItem.inlineTextBox()), fontCascade, from, to, contentLogicalLeft, useTrailingWhitespaceMeasuringOptimization, spacingState, glyphOverflow);
