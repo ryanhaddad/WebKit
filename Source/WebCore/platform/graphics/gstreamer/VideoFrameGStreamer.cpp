@@ -591,9 +591,9 @@ void VideoFrame::copyTo(std::span<uint8_t> destination, VideoPixelFormat pixelFo
 #if USE(GBM)
     case VideoFrameGStreamer::MemoryType::DMABuf:
 #endif
-#endif
         inputSample = self.downloadSample();
         break;
+#endif
     }
 
     if (!inputSample) {
