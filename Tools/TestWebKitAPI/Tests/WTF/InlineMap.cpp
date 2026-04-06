@@ -28,7 +28,7 @@
 
 #include "MoveOnly.h"
 #include "RefLogger.h"
-#include "Test.h"
+#include "Helpers/Test.h"
 #include <wtf/HashSet.h>
 #include <wtf/PackedRefPtr.h>
 #include <wtf/Ref.h>

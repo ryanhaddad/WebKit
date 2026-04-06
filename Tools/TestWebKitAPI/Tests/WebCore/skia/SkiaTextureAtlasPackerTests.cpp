@@ -24,7 +24,7 @@
  */
 
 #include "config.h"
-#include "Test.h"
+#include "Helpers/Test.h"
 #include <WebCore/SkiaTextureAtlasPacker.h>
 
 namespace TestWebKitAPI {
