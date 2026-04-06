@@ -64,7 +64,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(HTMLOptionElement);
 using namespace HTMLNames;
 
 HTMLOptionElement::HTMLOptionElement(const QualifiedName& tagName, Document& document)
-    : HTMLElement(tagName, document, TypeFlag::HasCustomStyleResolveCallbacks)
+    : HTMLElement(tagName, document)
 {
     ASSERT(hasTagName(optionTag));
 }
@@ -494,16 +494,6 @@ String HTMLOptionElement::displayLabel() const
     if (document().inQuirksMode())
         return collectOptionInnerTextCollapsingWhitespace();
     return label();
-}
-
-void HTMLOptionElement::willResetComputedStyle()
-{
-    // FIXME: This is nasty, we ask our owner select to repaint even if the new
-    // style is exactly the same.
-    if (RefPtr select = ownerSelectElement()) {
-        if (CheckedPtr renderer = select->renderer())
-            renderer->repaint();
-    }
 }
 
 String HTMLOptionElement::textIndentedToRespectGroupLabel() const

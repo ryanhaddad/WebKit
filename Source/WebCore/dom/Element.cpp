@@ -5785,16 +5785,11 @@ void Element::resetComputedStyle()
     if (!hasRareData() || !elementRareData()->computedStyle())
         return;
 
-    auto reset = [](Element& element) {
-        if (element.hasCustomStyleResolveCallbacks())
-            element.willResetComputedStyle();
-        element.elementRareData()->setComputedStyle(nullptr);
-    };
-    reset(*this);
+    elementRareData()->setComputedStyle(nullptr);
     for (Ref child : descendantsOfType<Element>(*this)) {
         if (!child->hasRareData() || !child->elementRareData()->computedStyle() || child->hasDisplayContents() || child->hasDisplayNone())
             continue;
-        reset(child);
+        child->elementRareData()->setComputedStyle(nullptr);
     }
 }
 
@@ -5845,11 +5840,6 @@ void Element::willRecalcStyle(OptionSet<Style::Change>)
 }
 
 void Element::didRecalcStyle(OptionSet<Style::Change>)
-{
-    ASSERT(hasCustomStyleResolveCallbacks());
-}
-
-void Element::willResetComputedStyle()
 {
     ASSERT(hasCustomStyleResolveCallbacks());
 }

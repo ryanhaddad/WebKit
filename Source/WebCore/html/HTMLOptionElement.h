@@ -96,8 +96,6 @@ private:
 
     void childrenChanged(const ChildChange&) final;
 
-    void willResetComputedStyle() final;
-
     String collectOptionInnerText() const;
     String collectOptionInnerTextCollapsingWhitespace() const;
 

@@ -786,7 +786,6 @@ public:
 
     virtual void willRecalcStyle(OptionSet<Style::Change>);
     virtual void didRecalcStyle(OptionSet<Style::Change>);
-    virtual void willResetComputedStyle();
     virtual void willAttachRenderers();
     virtual void didAttachRenderers();
     virtual void willDetachRenderers();
