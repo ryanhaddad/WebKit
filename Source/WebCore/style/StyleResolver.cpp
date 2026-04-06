@@ -756,7 +756,7 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
     // High priority properties may affect resolution of other properties (they are mostly font related).
     builder.applyHighPriorityProperties();
 
-    if (cacheResult && !cacheResult->entry.isUsableAfterHighPriorityProperties(style)) {
+    if (hasUsableEntry && !cacheResult->entry.isUsableAfterHighPriorityProperties(style)) {
         // High-priority properties may affect resolution of other properties. Kick out the existing cache entry and try again.
         m_matchedDeclarationsCache.remove(cacheHash);
         applyMatchedProperties(state, matchResult, PropertyCascade::normalProperties());
