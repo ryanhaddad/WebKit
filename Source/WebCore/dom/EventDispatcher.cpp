@@ -226,8 +226,15 @@ void EventDispatcher::dispatchEvent(Node& node, Event& event)
     }
 
     if (hasNoEventListenerOrDefaultEventHandler) {
-        if (shouldClearTargetsAfterDispatch)
-            resetAfterDispatchInShadowTree(event);
+        event.resetBeforeDispatch();
+        // Use the retargeted target from the outermost event path context,
+        // since the EventPath applies retargeting across shadow boundaries.
+        // The path may be empty if adjustForDisabledFormControl() truncated it.
+        if (!eventPath.isEmpty()) {
+            event.setTarget(RefPtr { eventPath.last().target() });
+            if (shouldClearTargetsAfterDispatch)
+                resetAfterDispatchInShadowTree(event);
+        }
         return;
     }
 
