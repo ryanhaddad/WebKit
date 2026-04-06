@@ -213,6 +213,10 @@ fast/forms/switch/zoom-approximates-transform-vertical-rl.html [ Pass ]
 fast/forms/switch/zoom-approximates-transform.html [ Pass ]
 fast/forms/switch/zoom-computed-style.html [ Pass ]
 
+# Vertical <select> support needs some further changes.
+fast/forms/vertical-writing-mode/select-menulist-sideways-lr.html [ Skip ]
+fast/forms/vertical-writing-mode/select-menulist.html [ Skip ]
+
 # Some Apple ports don't support RTL scrollbars.
 fast/scrolling/rtl-scrollbars-alternate-body-dir-attr-does-not-update-scrollbar-placement.html [ Pass ]
 fast/scrolling/rtl-scrollbars-elementFromPoint-static.html [ Pass ]

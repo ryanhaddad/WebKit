@@ -1694,7 +1694,19 @@ void RenderTheme::adjustSwitchStyle(RenderStyle& style, const Element*) const
     style.setLogicalHeight(Style::PreferredSize { controlSize.height() });
 }
 
-Style::PaddingBox RenderTheme::popupInternalPaddingBox(const RenderStyle&) const
+Style::PaddingBox RenderTheme::popupInternalPaddingBox(const RenderStyle& style) const
+{
+    auto padding = platformPopupInternalPaddingBox(style);
+    if (!style.writingMode().isHorizontal()) {
+        if (style.writingMode().computedWritingMode() == StyleWritingMode::SidewaysLr)
+            padding = { padding.right(), padding.bottom(), padding.left(), padding.top() };
+        else
+            padding = { padding.left(), padding.top(), padding.right(), padding.bottom() };
+    }
+    return padding;
+}
+
+Style::PaddingBox RenderTheme::platformPopupInternalPaddingBox(const RenderStyle&) const
 {
     return Style::PaddingBox { 0_css_px };
 }

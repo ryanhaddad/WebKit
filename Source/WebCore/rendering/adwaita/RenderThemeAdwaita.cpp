@@ -352,7 +352,7 @@ void RenderThemeAdwaita::adjustMenuListButtonStyle(RenderStyle& style, const Ele
     adjustMenuListStyle(style, element);
 }
 
-Style::PaddingBox RenderThemeAdwaita::popupInternalPaddingBox(const RenderStyle& style) const
+Style::PaddingBox RenderThemeAdwaita::platformPopupInternalPaddingBox(const RenderStyle& style) const
 {
     if (style.usedAppearance() == StyleAppearance::None || style.usedAppearance() == StyleAppearance::Base)
         return { 0_css_px };

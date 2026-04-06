@@ -1,0 +1,24 @@
+Test that vertical writing mode selects have swapped dimensions compared to a horizontal one
+
+On success, you will see a series of "PASS" messages, followed by "TEST COMPLETE".
+
+
+vertical-rl
+PASS verticalRL.offsetWidth is horizontal.offsetHeight
+PASS verticalRL.offsetHeight is horizontal.offsetWidth
+
+vertical-lr
+PASS verticalLR.offsetWidth is horizontal.offsetHeight
+PASS verticalLR.offsetHeight is horizontal.offsetWidth
+
+sideways-rl
+PASS sidewaysRL.offsetWidth is horizontal.offsetHeight
+PASS sidewaysRL.offsetHeight is horizontal.offsetWidth
+
+sideways-lr
+PASS sidewaysLR.offsetWidth is horizontal.offsetHeight
+PASS sidewaysLR.offsetHeight is horizontal.offsetWidth
+PASS successfullyParsed is true
+
+TEST COMPLETE
+

@@ -76,7 +76,7 @@ public:
     IntSize NODELETE sliderTickSize() const final;
     int NODELETE sliderTickOffsetFromTrackCenter() const final;
 
-    Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const final;
+    Style::PaddingBox platformPopupInternalPaddingBox(const RenderStyle&) const final;
     PopupMenuStyle::Size popupMenuSize(const RenderStyle&, IntRect&) const final;
 
     std::optional<FontCascadeDescription> controlFont(StyleAppearance, const FontCascade&, float zoomFactor) const final;

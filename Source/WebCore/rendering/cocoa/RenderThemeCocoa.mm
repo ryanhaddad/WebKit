@@ -3466,7 +3466,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     const auto logicalRect = isHorizontalWritingMode ? rect : rect.transposedRect();
 
     FloatPoint glyphOrigin;
-    glyphOrigin.setY(logicalRect.center().y() - glyphSize.height() / 2.0f);
+    auto glyphInlineSize = isHorizontalWritingMode ? glyphSize.width() : glyphSize.height();
+    auto glyphBlockSize = isHorizontalWritingMode ? glyphSize.height() : glyphSize.width();
+    glyphOrigin.setY(logicalRect.center().y() - glyphBlockSize / 2.0f);
 
     auto glyphPaddingEnd = logicalRect.width();
     auto usedZoom = style->usedZoomForLength();
@@ -3481,7 +3483,7 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     }
 
     if (!style->writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) - glyphPaddingEnd);
+        glyphOrigin.setX(logicalRect.maxX() - glyphInlineSize - Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) - glyphPaddingEnd);
     else
         glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) + glyphPaddingEnd);
 

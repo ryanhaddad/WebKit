@@ -219,7 +219,7 @@ public:
 
     virtual void adjustSliderThumbSize(RenderStyle&, const Element*) const { }
 
-    virtual Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const;
+    Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const;
     virtual PopupMenuStyle::Size popupMenuSize(const RenderStyle&, IntRect&) const { return PopupMenuStyle::Size::Normal; }
 
     virtual ScrollbarWidth scrollbarWidthStyleForPart(StyleAppearance) { return ScrollbarWidth::Auto; }
@@ -411,6 +411,8 @@ protected:
 
     // The font description result should have a zoomed font size.
     virtual std::optional<FontCascadeDescription> controlFont(StyleAppearance, const FontCascade&, float) const;
+
+    virtual Style::PaddingBox platformPopupInternalPaddingBox(const RenderStyle&) const;
 
     virtual Style::PaddingBox controlPadding(StyleAppearance, const Style::PaddingBox&, float zoomFactor) const;
 

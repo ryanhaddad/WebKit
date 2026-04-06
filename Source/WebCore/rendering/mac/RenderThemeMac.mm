@@ -1360,7 +1360,7 @@ static Style::PaddingEdge NODELETE toTruncatedPaddingEdge(auto value)
     return Style::PaddingEdge::Fixed { static_cast<float>(std::trunc(value)) };
 }
 
-Style::PaddingBox RenderThemeMac::popupInternalPaddingBox(const RenderStyle& style) const
+Style::PaddingBox RenderThemeMac::platformPopupInternalPaddingBox(const RenderStyle& style) const
 {
     if (style.usedAppearance() == StyleAppearance::Menulist) {
         auto padding = popupButtonPadding(controlSizeForFont(style), style.writingMode().isBidiRTL());

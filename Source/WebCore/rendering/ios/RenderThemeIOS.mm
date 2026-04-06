@@ -379,7 +379,7 @@ static Style::PaddingEdge toTruncatedPaddingEdge(auto value)
     return Style::PaddingEdge::Fixed { static_cast<float>(std::trunc(value)) };
 }
 
-Style::PaddingBox RenderThemeIOS::popupInternalPaddingBox(const RenderStyle& style) const
+Style::PaddingBox RenderThemeIOS::platformPopupInternalPaddingBox(const RenderStyle& style) const
 {
     const auto padding = Style::emToPx<float>(1, style);
 
@@ -620,10 +620,13 @@ void RenderThemeIOS::paintMenuListButtonDecorations(const RenderBox& box, const 
     bool isHorizontalWritingMode = style.writingMode().isHorizontal();
     auto logicalRect = isHorizontalWritingMode ? rect : rect.transposedRect();
 
+    auto glyphInlineSize = isHorizontalWritingMode ? glyphSize.width() : glyphSize.height();
+    auto glyphBlockSize = isHorizontalWritingMode ? glyphSize.height() : glyphSize.width();
+
     FloatPoint glyphOrigin;
-    glyphOrigin.setY(logicalRect.center().y() - glyphSize.height() / 2.0f);
+    glyphOrigin.setY(logicalRect.center().y() - glyphBlockSize / 2.0f);
     if (!style.writingMode().isInlineFlipped())
-        glyphOrigin.setX(logicalRect.maxX() - glyphSize.width() - Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) - Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
+        glyphOrigin.setX(logicalRect.maxX() - glyphInlineSize - Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) - Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
     else
         glyphOrigin.setX(logicalRect.x() + Style::evaluate<float>(box.style().usedBorderWidthEnd(), Style::ZoomNeeded { }) + Style::evaluate<float>(box.style().paddingEnd(), logicalRect.width(), box.style().usedZoomForLength()));
 

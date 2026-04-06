@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="../../../resources/js-test.js"></script>
+</head>
+<body>
+<select id="horizontal"><option>Option 1</option></select>
+<select id="verticalRL" style="writing-mode: vertical-rl"><option>Option 1</option></select>
+<select id="verticalLR" style="writing-mode: vertical-lr"><option>Option 1</option></select>
+<select id="sidewaysRL" style="writing-mode: sideways-rl"><option>Option 1</option></select>
+<select id="sidewaysLR" style="writing-mode: sideways-lr"><option>Option 1</option></select>
+</body>
+<script>
+
+description("Test that vertical writing mode selects have swapped dimensions compared to a horizontal one");
+
+var horizontal = document.getElementById("horizontal");
+
+debug("vertical-rl");
+shouldBe("verticalRL.offsetWidth", "horizontal.offsetHeight");
+shouldBe("verticalRL.offsetHeight", "horizontal.offsetWidth");
+debug("");
+
+debug("vertical-lr");
+shouldBe("verticalLR.offsetWidth", "horizontal.offsetHeight");
+shouldBe("verticalLR.offsetHeight", "horizontal.offsetWidth");
+debug("");
+
+debug("sideways-rl");
+shouldBe("sidewaysRL.offsetWidth", "horizontal.offsetHeight");
+shouldBe("sidewaysRL.offsetHeight", "horizontal.offsetWidth");
+debug("");
+
+debug("sideways-lr");
+shouldBe("sidewaysLR.offsetWidth", "horizontal.offsetHeight");
+shouldBe("sidewaysLR.offsetHeight", "horizontal.offsetWidth");
+
+</script>
+</html>
