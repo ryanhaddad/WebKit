@@ -130,11 +130,15 @@ Ref<SharedBuffer> FragmentedSharedBuffer::makeContiguous() const
 
 auto FragmentedSharedBuffer::toIPCData() const -> IPCData
 {
-    if (useUnixDomainSockets || size() < minimumPageSize) {
+    auto segmentSpans = [&] {
         return WTF::map(m_segments, [](auto& segment) {
             return segment.segment->span();
         });
-    }
+    };
+
+    if (useUnixDomainSockets || size() < minimumPageSize)
+        return segmentSpans();
+
 #if PLATFORM(COCOA)
     if (m_segments.size() == 1) {
         Ref segment = m_segments[0].segment;
@@ -142,8 +146,9 @@ auto FragmentedSharedBuffer::toIPCData() const -> IPCData
             return SharedMemoryHandle::createVMShare(segment->span(), SharedMemory::Protection::ReadOnly);
     }
 #endif
-    RefPtr sharedMemoryBuffer = SharedMemory::copyBuffer(*this);
-    return sharedMemoryBuffer->createHandle(SharedMemory::Protection::ReadOnly);
+    if (RefPtr<SharedMemory> sharedMemoryBuffer = SharedMemory::copyBuffer(*this))
+        return sharedMemoryBuffer->createHandle(SharedMemory::Protection::ReadOnly);
+    return segmentSpans();
 }
 
 Vector<uint8_t> FragmentedSharedBuffer::copyData() const
