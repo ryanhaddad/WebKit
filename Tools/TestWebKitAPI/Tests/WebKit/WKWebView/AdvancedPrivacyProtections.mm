@@ -1444,7 +1444,7 @@ TEST(AdvancedPrivacyProtections, VerifyHashFromNoisyCanvas2DAPI)
 }
 
 // FIXME when webkit.org/b/311210 is resolved.
-#if PLATFORM(iOS) && defined(NDEBUG)
+#if PLATFORM(IOS) && defined(NDEBUG)
 TEST(AdvancedPrivacyProtections, DISABLED_VerifyPixelsFromNoisyCanvas2DAPI)
 #else
 TEST(AdvancedPrivacyProtections, VerifyPixelsFromNoisyCanvas2DAPI)
