@@ -654,7 +654,7 @@ void CSSParserToken::serialize(StringBuilder& builder, const CSSParserToken* nex
         break;
     case UrlToken:
         builder.append("url("_s);
-        serializeIdentifier(builder, value());
+        serializeURLTokenValue(builder, value());
         builder.append(')');
         break;
     case DelimiterToken:

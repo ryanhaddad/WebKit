@@ -13,7 +13,7 @@ Rules from the stylesheet:
 #j { content: attr(-k); }
 #l { content: attr(0m); }
 #n { content: attr(-0p); }
-#q { content: attr(url(http\:\/\/webkit\.org)); }
+#q { content: attr(url(http://webkit.org)); }
 #r { content: attr(U/**/+0020); }
 #s { content: attr(U/**/+0020/**/-00FF); }
 #t { content: attr(#123456); }
@@ -31,7 +31,7 @@ Expected result:
 #j { content: attr(-k); }
 #l { content: attr(0m); }
 #n { content: attr(-0p); }
-#q { content: attr(url(http\:\/\/webkit\.org)); }
+#q { content: attr(url(http://webkit.org)); }
 #r { content: attr(U/**/+0020); }
 #s { content: attr(U/**/+0020/**/-00FF); }
 #t { content: attr(#123456); }

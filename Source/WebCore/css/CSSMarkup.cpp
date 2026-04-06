@@ -63,12 +63,18 @@ static bool NODELETE isCSSTokenizerIdentifier(StringView string)
     return isCSSTokenizerIdentifier(string.span16());
 }
 
+// https://drafts.csswg.org/css-syntax-3/#non-printable-code-point
+static bool isNonPrintableCodePoint(char32_t c)
+{
+    return c <= 0x08 || c == 0x0b || (c >= 0x0e && c <= 0x1f) || c == deleteCharacter;
+}
+
 static void serializeCharacter(StringBuilder& appendTo, char32_t c)
 {
     appendTo.append('\\', c);
 }
 
-static void serializeCharacterAsCodePoint(StringBuilder& appendTo, char32_t c)
+static void serializeCharacterAsEscapeSequence(StringBuilder& appendTo, char32_t c)
 {
     appendTo.append('\\', hex(c, Lowercase), ' ');
 }
@@ -87,7 +93,7 @@ void serializeIdentifier(StringBuilder& appendTo, StringView identifier, ShouldS
         if (!c)
             appendTo.append(replacementCharacter);
         else if (c <= 0x1f || c == deleteCharacter || (0x30 <= c && c <= 0x39 && (isFirst || (isSecond && isFirstCharHyphen))))
-            serializeCharacterAsCodePoint(appendTo, c);
+            serializeCharacterAsEscapeSequence(appendTo, c);
         else if (c == hyphenMinus && isFirst && index == identifier.length())
             serializeCharacter(appendTo, c);
         else if (0x80 <= c || c == hyphenMinus || c == lowLine || (0x30 <= c && c <= 0x39) || (0x41 <= c && c <= 0x5a) || (0x61 <= c && c <= 0x7a))
@@ -114,7 +120,7 @@ void serializeString(StringBuilder& appendTo, StringView string)
         index += U16_LENGTH(c);
 
         if (c <= 0x1f || c == deleteCharacter)
-            serializeCharacterAsCodePoint(appendTo, c);
+            serializeCharacterAsEscapeSequence(appendTo, c);
         else if (c == quotationMark || c == reverseSolidus)
             serializeCharacter(appendTo, c);
         else
@@ -124,19 +130,25 @@ void serializeString(StringBuilder& appendTo, StringView string)
     appendTo.append('"');
 }
 
+// https://drafts.csswg.org/css-syntax-3/#consume-url-token
+void serializeURLTokenValue(StringBuilder& appendTo, StringView string)
+{
+    for (auto c : string.codePoints()) {
+        if (!c)
+            appendTo.append(replacementCharacter);
+        else if (isNonPrintableCodePoint(c) || isCSSNewline(c))
+            serializeCharacterAsEscapeSequence(appendTo, c);
+        else if (c == '"' || c == '\'' || c == '(' || c == ')' || c == reverseSolidus || isASCIIWhitespace(c))
+            serializeCharacter(appendTo, c);
+        else
+            appendTo.append(c);
+    }
+}
+
 String serializeString(StringView string)
 {
     StringBuilder builder;
     serializeString(builder, string);
-    return builder.toString();
-}
-
-String serializeURL(StringView string)
-{
-    StringBuilder builder;
-    builder.append("url("_s);
-    serializeString(builder, string);
-    builder.append(')');
     return builder.toString();
 }
 

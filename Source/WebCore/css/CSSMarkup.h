@@ -34,7 +34,7 @@ enum class ShouldSkipStartChecks : bool { No, Yes };
 void serializeIdentifier(StringBuilder& appendTo, StringView identifier, ShouldSkipStartChecks = ShouldSkipStartChecks::No);
 void serializeString(StringBuilder& appendTo, StringView);
 String serializeString(StringView);
-String serializeURL(StringView);
+void serializeURLTokenValue(StringBuilder& appendTo, StringView);
 String serializeFontFamily(const String&);
 
 } // namespace WebCore

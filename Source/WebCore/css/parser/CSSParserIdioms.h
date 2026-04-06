@@ -47,6 +47,13 @@ inline bool isCSSSpace(CharacterType c)
     return c == ' ' || c == '\t' || c == '\n';
 }
 
+// https://drafts.csswg.org/css-syntax-3/#newline
+template<typename CharacterType>
+inline bool isCSSNewline(CharacterType c)
+{
+    return c == '\n' || c == '\r' || c == '\f';
+}
+
 // http://dev.w3.org/csswg/css-syntax/#name-start-code-point
 template <typename CharacterType>
 bool isNameStartCodePoint(CharacterType c)
