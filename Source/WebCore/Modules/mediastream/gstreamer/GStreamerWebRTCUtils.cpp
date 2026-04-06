@@ -785,6 +785,16 @@ void SDPStringBuilder::appendAttribute(const GstSDPAttribute* attribute)
             return;
     }
 
+    if (key == "rtpmap"_s) {
+        auto tokens = value.split(' ');
+        if (tokens.size() < 2) [[unlikely]]
+            return;
+
+        // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/work_items/2511
+        if (startsWith(tokens[1], "OPUS"_s))
+            value = makeStringByReplacingAll(value, "OPUS"_s, "opus"_s);
+    }
+
     m_stringBuilder.append("a="_s, key);
     if (!value.isEmpty())
         m_stringBuilder.append(':', value);

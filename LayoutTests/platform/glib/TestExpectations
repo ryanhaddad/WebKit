@@ -2759,16 +2759,6 @@ webkit.org/b/264803 fast/mediastream/mediastreamtrack-video-resize-event.html [ 
 
 http/tests/media/video-play-stall-seek.html [ Timeout Pass ]
 
-webkit.org/b/265865 imported/w3c/web-platform-tests/webrtc-stats/rtp-stats-creation.html [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html?interop-2026 [ Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html?rest [ Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/candidate-exchange.https.html?interop-2026 [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/h264-profile-levels.https.html?rest [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/rtp-payloadtypes.html?interop-2026 [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/protocol/rtp-payloadtypes.html?rest [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/simulcast/negotiation-encodings.https.html?interop-2026 [ Pass Failure ]
-imported/w3c/web-platform-tests/webrtc/simulcast/negotiation-encodings.https.html?rest [ Pass Failure ]
-
 # Missing support for RTP header encryption support:
 # https://gitlab.freedesktop.org/gstreamer/gstreamer/-/issues/4625
 webrtc/encrypted-rtp-header-extensions.html [ Failure ]
@@ -2779,6 +2769,8 @@ webrtc/video-maxBitrate-vp8.html [ Failure ]
 
 # Times out waiting for DTLS transport setup. Some bug related with data-channel, pending investigation.
 webkit.org/b/265860 imported/w3c/web-platform-tests/webrtc-stats/supported-stats.https.html [ Skip ]
+
+webkit.org/b/265865 imported/w3c/web-platform-tests/webrtc-stats/rtp-stats-creation.html [ Skip ] # Timeout
 
 fast/mediastream/video-rotation2.html [ Failure Pass Timeout ]
 
@@ -2872,8 +2864,6 @@ imported/w3c/web-platform-tests/webrtc/protocol/transceiver-mline-recycling.html
 
 webrtc/RTCConfiguration-targetLatency.html [ Failure ]
 
-webkit.org/b/308371 imported/w3c/web-platform-tests/webrtc/simulcast/basic.https.html [ Pass Failure ]
-
 # Specific to LibWebRTC:
 webkit.org/b/235885 webrtc/disable-encryption.html [ Skip ]
 webkit.org/b/235885 webrtc/libwebrtc/ [ Skip ]
@@ -2893,6 +2883,7 @@ webkit.org/b/235885 webrtc/video.html [ Skip ]
 webkit.org/b/235885 webrtc/candidate-stats.html [ Failure ]
 webkit.org/b/262989 imported/w3c/web-platform-tests/webrtc-stats/getStats-remote-candidate-address.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/candidate-exchange.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/candidate-exchange.https.html?interop-2026 [ Failure ]
 imported/w3c/web-platform-tests/webrtc/RTCIceTransport.html [ Skip ]
 
 # Pending investigation.
@@ -3076,6 +3067,8 @@ imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-transactionId.html [ Fai
 
 imported/w3c/web-platform-tests/webrtc/protocol/ [ Pass ]
 imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html?interop-2026 [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/bundle.https.html?rest [ Failure ]
 webkit.org/b/308364 imported/w3c/web-platform-tests/webrtc/protocol/dtls-fingerprint-validation.html [ Failure Crash ]
 imported/w3c/web-platform-tests/webrtc/protocol/dtls-setup.https.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/rtp-payloadtypes.html [ Failure ]
@@ -3087,6 +3080,7 @@ imported/w3c/web-platform-tests/webrtc/protocol/crypto-suite.https.html [ Failur
 # Our video encoder is not enforcing video resolution capping based on the configured H.264 level.
 # See also: https://en.wikipedia.org/wiki/Advanced_Video_Coding#Levels
 webkit.org/b/301687 imported/w3c/web-platform-tests/webrtc/protocol/h264-profile-levels.https.html [ Failure ]
+webkit.org/b/301687 imported/w3c/web-platform-tests/webrtc/protocol/h264-profile-levels.https.html?rest [ Failure ]
 
 # offerPc doesn't receive a datachannel event for the "second back" channel created by
 # answerPcSecond, leading to the test timing out.
@@ -3129,6 +3123,9 @@ imported/w3c/web-platform-tests/webrtc/simulcast/vp9-scalability-mode.https.html
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/protocol/simulcast-answer.html [ Skip ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/protocol/simulcast-offer.html [ Skip ]
 webkit.org/b/306018 imported/w3c/web-platform-tests/webrtc/simulcast/av1.https.html [ Pass Failure ]
+webkit.org/b/308371 imported/w3c/web-platform-tests/webrtc/simulcast/basic.https.html [ Pass Failure ]
+imported/w3c/web-platform-tests/webrtc/simulcast/negotiation-encodings.https.html?interop-2026 [ Failure ]
+imported/w3c/web-platform-tests/webrtc/simulcast/negotiation-encodings.https.html?rest [ Failure ]
 
 # RTP sender de-activation is not working as expected due to internal queues in rtpbin. The valve we
 # use in our RTPPacketizer is not sufficient, we would need it to be further downstream.
