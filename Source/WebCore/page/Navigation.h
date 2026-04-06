@@ -245,6 +245,8 @@ private:
     Result performTraversal(JSC::JSGlobalObject&, const String& key, Navigation::Options, Ref<DeferredPromise>&& committed, Ref<DeferredPromise>&& finished);
     ExceptionOr<RefPtr<SerializedScriptValue>> serializeState(JSC::JSValue state);
     DispatchResult innerDispatchNavigateEvent(NavigationNavigationType, Ref<NavigationDestination>&&, const String& downloadRequestFilename, FormState* = nullptr, SerializedScriptValue* classicHistoryAPIState = nullptr, Element* sourceElement = nullptr);
+    void setupInterceptionState(NavigateEvent&, NavigationNavigationType, NavigationDestination&, Document&, SerializedScriptValue* classicHistoryAPIState);
+    std::optional<DispatchResult> handleSameDocumentNavigation(NavigateEvent&, NavigationNavigationType, NavigationAPIMethodTracker*, AbortController&, Document&);
 
     void setActivation(HistoryItem* previousItem, std::optional<NavigationNavigationType>);
 

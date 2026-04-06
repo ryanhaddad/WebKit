@@ -1014,6 +1014,134 @@ static void waitForAllPromises(Document& document, const Vector<Ref<DOMPromise>>
     }
 }
 
+// https://html.spec.whatwg.org/multipage/nav-history-apis.html#inner-navigate-event-firing-algorithm Step 32
+void Navigation::setupInterceptionState(NavigateEvent& event, NavigationNavigationType navigationType, NavigationDestination& destination, Document& document, SerializedScriptValue* classicHistoryAPIState)
+{
+    ASSERT(event.wasIntercepted());
+
+    event.setInterceptionState(InterceptionState::Committed);
+
+    RefPtr fromNavigationHistoryEntry = currentEntry();
+    ASSERT(fromNavigationHistoryEntry);
+    if (!fromNavigationHistoryEntry) {
+        abortOngoingNavigation(event);
+        return;
+    }
+
+    {
+        auto& domGlobalObject = *jsCast<JSDOMGlobalObject*>(document.globalObject());
+        JSC::JSLockHolder locker(domGlobalObject.vm());
+        m_transition = NavigationTransition::create(navigationType, *fromNavigationHistoryEntry, DeferredPromise::create(domGlobalObject, DeferredPromise::Mode::RetainPromiseOnResolve).releaseNonNull());
+    }
+
+    if (navigationType == NavigationNavigationType::Traverse) {
+        m_suppressNormalScrollRestorationDuringOngoingNavigation = true;
+        // For intercepted traverse navigations, update the Navigation API state and fire currententrychange.
+        // This must happen AFTER the navigate event but BEFORE intercept handlers run.
+        // For committed promise timing:
+        // - If there are NO handlers (just intercept() called), fulfill committed now (before currententrychange)
+        // - If there ARE handlers (intercept({ handler() {...} })), fulfill committed after handlers are invoked
+        if (destination.sameDocument()) {
+            RefPtr entry = findEntryByKey(destination.key());
+            if (entry) {
+                document.updateURLForPushOrReplaceState(destination.url());
+
+                // Only notify committed now if there are no handlers to wait for
+                auto shouldNotifyCommited = event.handlers().isEmpty() ? ShouldNotifyCommitted::Yes : ShouldNotifyCommitted::No;
+                updateForNavigation(entry->associatedHistoryItem(), navigationType, ShouldCopyStateObjectFromCurrentEntry::No, shouldNotifyCommited);
+            }
+        }
+    } else if (navigationType == NavigationNavigationType::Reload) {
+        // Not in specification but matches chromium implementation and tests.
+        updateForNavigation(currentEntry()->associatedHistoryItem(), navigationType);
+    } else if (navigationType == NavigationNavigationType::Push || navigationType == NavigationNavigationType::Replace) {
+        auto historyHandling = navigationType == NavigationNavigationType::Replace ? NavigationHistoryBehavior::Replace : NavigationHistoryBehavior::Push;
+        frame()->loader().updateURLAndHistory(destination.url(), classicHistoryAPIState, historyHandling);
+    }
+}
+
+std::optional<Navigation::DispatchResult> Navigation::handleSameDocumentNavigation(NavigateEvent& event, NavigationNavigationType navigationType, NavigationAPIMethodTracker* apiMethodTracker, AbortController& abortController, Document& document)
+{
+    Vector<Ref<DOMPromise>> promiseList;
+
+    for (auto& handler : event.handlers()) {
+        auto callbackResult = handler->invoke();
+        if (callbackResult.type() != CallbackResultType::UnableToExecute) {
+            Ref promise = callbackResult.releaseReturnValue();
+            // Because rejection is reported as `navigateerror` event, we can mark this as handled.
+            if (!promise->isSuspended())
+                promise->markAsHandled();
+            promiseList.append(WTF::move(promise));
+        }
+    }
+
+    // For intercepted traverse navigations, notify committed after handlers have been invoked but before
+    // they complete. This ensures the correct event ordering.
+    if (navigationType == NavigationNavigationType::Traverse && event.wasIntercepted() && apiMethodTracker && !apiMethodTracker->committedToEntry)
+        notifyCommittedToEntry(apiMethodTracker, protect(currentEntry()).get(), navigationType);
+
+    // FIXME: this emulates the behavior of a Promise wrapped around waitForAll, but we may want the real
+    // thing if the ordering-and-transition tests show timing related issues related to this.
+    RefPtr scriptExecutionContext = this->scriptExecutionContext();
+    protect(scriptExecutionContext->eventLoop())->queueTask(TaskSource::DOMManipulation, [weakThis = WeakPtr { this }, promiseList, abortController = Ref { abortController }, document = Ref { document }, apiMethodTracker = RefPtr { apiMethodTracker }]() {
+        waitForAllPromises(document.get(), promiseList, [abortController, document, apiMethodTracker, weakThis]() mutable {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis || abortController->signal().aborted() || !document->isFullyActive() || !protectedThis->m_ongoingNavigateEvent)
+                return;
+
+            auto focusChanged = std::exchange(protectedThis->m_focusChangedDuringOngoingNavigation, FocusDidChange::No);
+            protect(protectedThis->ongoingNavigateEvent())->finish(document.get(), InterceptionHandlersDidFulfill::Yes, focusChanged);
+            protectedThis->m_ongoingNavigateEvent = nullptr;
+
+            protectedThis->dispatchEvent(Event::create(eventNames().navigatesuccessEvent, { }));
+
+            if (apiMethodTracker)
+                protectedThis->resolveFinishedPromise(apiMethodTracker.get());
+
+            if (RefPtr transition = std::exchange(protectedThis->m_transition, nullptr))
+                transition->resolvePromise();
+
+            protectedThis->m_ongoingNavigateEvent = nullptr;
+
+        }, [abortController, document, apiMethodTracker, weakThis](JSC::JSValue result) mutable {
+            RefPtr protectedThis = weakThis.get();
+            if (!protectedThis || abortController->signal().aborted() || !document->isFullyActive() || !protectedThis->m_ongoingNavigateEvent)
+                return;
+
+            auto focusChanged = std::exchange(protectedThis->m_focusChangedDuringOngoingNavigation, FocusDidChange::No);
+            protect(protectedThis->ongoingNavigateEvent())->finish(document.get(), InterceptionHandlersDidFulfill::No, focusChanged);
+
+            abortController->signal().signalAbort(result);
+
+            protectedThis->m_ongoingNavigateEvent = nullptr;
+
+            ErrorInformation errorInformation;
+            String errorMessage;
+            if (auto* errorInstance = jsDynamicCast<JSC::ErrorInstance*>(result)) {
+                if (auto result = extractErrorInformationFromErrorInstance(protect(protectedThis->scriptExecutionContext())->globalObject(), *errorInstance)) {
+                    errorInformation = WTF::move(*result);
+                    errorMessage = makeString("Uncaught "_s, errorInformation.errorTypeString, ": "_s, errorInformation.message);
+                }
+            }
+
+            auto* navGlobalObject = protect(protectedThis->scriptExecutionContext())->globalObject();
+            protectedThis->dispatchEvent(ErrorEvent::create(*navGlobalObject, eventNames().navigateerrorEvent, errorMessage, errorInformation.sourceURL, errorInformation.line, errorInformation.column, { navGlobalObject->vm(), result }));
+
+            if (apiMethodTracker)
+                Ref { apiMethodTracker->finishedPromise }->reject<IDLAny>(result, RejectAsHandled::Yes);
+
+            if (RefPtr transition = std::exchange(protectedThis->m_transition, nullptr))
+                transition->rejectPromise(result);
+        });
+    });
+
+    // If a new event has been dispatched in our event handler then we were aborted above.
+    if (m_ongoingNavigateEvent != &event)
+        return DispatchResult::Aborted;
+
+    return std::nullopt;
+}
+
 // https://html.spec.whatwg.org/multipage/nav-history-apis.html#inner-navigate-event-firing-algorithm
 Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavigationType navigationType, Ref<NavigationDestination>&& destination, const String& downloadRequestFilename, FormState* formState, SerializedScriptValue* classicHistoryAPIState, Element* sourceElement)
 {
@@ -1144,125 +1272,12 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
     // FIXME: Prepare to run script given navigation's relevant settings object.
 
     // Step 32:
-    if (event->wasIntercepted()) {
-        event->setInterceptionState(InterceptionState::Committed);
-
-        RefPtr fromNavigationHistoryEntry = currentEntry();
-        ASSERT(fromNavigationHistoryEntry);
-        if (!fromNavigationHistoryEntry) {
-            abortOngoingNavigation(event);
-            return DispatchResult::Aborted;
-        }
-
-        {
-            auto& domGlobalObject = *jsCast<JSDOMGlobalObject*>(scriptExecutionContext->globalObject());
-            JSC::JSLockHolder locker(domGlobalObject.vm());
-            m_transition = NavigationTransition::create(navigationType, *fromNavigationHistoryEntry, DeferredPromise::create(domGlobalObject, DeferredPromise::Mode::RetainPromiseOnResolve).releaseNonNull());
-        }
-
-        if (navigationType == NavigationNavigationType::Traverse) {
-            m_suppressNormalScrollRestorationDuringOngoingNavigation = true;
-            // For intercepted traverse navigations, update the Navigation API state and fire currententrychange.
-            // This must happen AFTER the navigate event but BEFORE intercept handlers run.
-            // For committed promise timing:
-            // - If there are NO handlers (just intercept() called), fulfill committed now (before currententrychange)
-            // - If there ARE handlers (intercept({ handler() {...} })), fulfill committed after handlers are invoked
-            if (destination->sameDocument()) {
-                RefPtr entry = findEntryByKey(destination->key());
-                if (entry) {
-                    document->updateURLForPushOrReplaceState(destination->url());
-
-                    // Only notify committed now if there are no handlers to wait for
-                    auto shouldNotifyCommited = event->handlers().isEmpty() ? ShouldNotifyCommitted::Yes : ShouldNotifyCommitted::No;
-                    updateForNavigation(entry->associatedHistoryItem(), navigationType, ShouldCopyStateObjectFromCurrentEntry::No, shouldNotifyCommited);
-                }
-            }
-        } else if (navigationType == NavigationNavigationType::Reload) {
-            // Not in specification but matches chromium implementation and tests.
-            updateForNavigation(currentEntry()->associatedHistoryItem(), navigationType);
-        } else if (navigationType == NavigationNavigationType::Push || navigationType == NavigationNavigationType::Replace) {
-            auto historyHandling = navigationType == NavigationNavigationType::Replace ? NavigationHistoryBehavior::Replace : NavigationHistoryBehavior::Push;
-            frame()->loader().updateURLAndHistory(destination->url(), classicHistoryAPIState, historyHandling);
-        }
-    }
+    if (event->wasIntercepted())
+        setupInterceptionState(event.get(), navigationType, destination.get(), *document, classicHistoryAPIState);
 
     if (endResultIsSameDocument) {
-        Vector<Ref<DOMPromise>> promiseList;
-
-        for (auto& handler : event->handlers()) {
-            auto callbackResult = handler->invoke();
-            if (callbackResult.type() != CallbackResultType::UnableToExecute) {
-                Ref promise = callbackResult.releaseReturnValue();
-                // Because rejection is reported as `navigateerror` event, we can mark this as handled.
-                if (!promise->isSuspended())
-                    promise->markAsHandled();
-                promiseList.append(WTF::move(promise));
-            }
-        }
-
-        // For intercepted traverse navigations, notify committed after handlers have been invoked but before
-        // they complete. This ensures the correct event ordering.
-        if (navigationType == NavigationNavigationType::Traverse && event->wasIntercepted() && apiMethodTracker && !apiMethodTracker->committedToEntry)
-            notifyCommittedToEntry(apiMethodTracker.get(), protect(currentEntry()).get(), navigationType);
-
-        // FIXME: this emulates the behavior of a Promise wrapped around waitForAll, but we may want the real
-        // thing if the ordering-and-transition tests show timing related issues related to this.
-        protect(scriptExecutionContext->eventLoop())->queueTask(TaskSource::DOMManipulation, [weakThis = WeakPtr { this }, promiseList, abortController, document, apiMethodTracker]() {
-            waitForAllPromises(*document, promiseList, [abortController, document, apiMethodTracker, weakThis]() mutable {
-                RefPtr protectedThis = weakThis.get();
-                if (!protectedThis || abortController->signal().aborted() || !document->isFullyActive() || !protectedThis->m_ongoingNavigateEvent)
-                    return;
-
-                auto focusChanged = std::exchange(protectedThis->m_focusChangedDuringOngoingNavigation, FocusDidChange::No);
-                protect(protectedThis->ongoingNavigateEvent())->finish(*document, InterceptionHandlersDidFulfill::Yes, focusChanged);
-                protectedThis->m_ongoingNavigateEvent = nullptr;
-
-                protectedThis->dispatchEvent(Event::create(eventNames().navigatesuccessEvent, { }));
-
-                if (apiMethodTracker)
-                    protectedThis->resolveFinishedPromise(apiMethodTracker.get());
-
-                if (RefPtr transition = std::exchange(protectedThis->m_transition, nullptr))
-                    transition->resolvePromise();
-
-                protectedThis->m_ongoingNavigateEvent = nullptr;
-
-            }, [abortController, document, apiMethodTracker, weakThis](JSC::JSValue result) mutable {
-                RefPtr protectedThis = weakThis.get();
-                if (!protectedThis || abortController->signal().aborted() || !document->isFullyActive() || !protectedThis->m_ongoingNavigateEvent)
-                    return;
-
-                auto focusChanged = std::exchange(protectedThis->m_focusChangedDuringOngoingNavigation, FocusDidChange::No);
-                protect(protectedThis->ongoingNavigateEvent())->finish(*document, InterceptionHandlersDidFulfill::No, focusChanged);
-
-                if (abortController)
-                    abortController->signal().signalAbort(result);
-
-                protectedThis->m_ongoingNavigateEvent = nullptr;
-
-                ErrorInformation errorInformation;
-                String errorMessage;
-                if (auto* errorInstance = jsDynamicCast<JSC::ErrorInstance*>(result)) {
-                    if (auto result = extractErrorInformationFromErrorInstance(protect(protectedThis->scriptExecutionContext())->globalObject(), *errorInstance)) {
-                        errorInformation = WTF::move(*result);
-                        errorMessage = makeString("Uncaught "_s, errorInformation.errorTypeString, ": "_s, errorInformation.message);
-                    }
-                }
-
-                auto* navGlobalObject = protect(protectedThis->scriptExecutionContext())->globalObject();
-                protectedThis->dispatchEvent(ErrorEvent::create(*navGlobalObject, eventNames().navigateerrorEvent, errorMessage, errorInformation.sourceURL, errorInformation.line, errorInformation.column, { navGlobalObject->vm(), result }));
-
-                if (apiMethodTracker)
-                    Ref { apiMethodTracker->finishedPromise }->reject<IDLAny>(result, RejectAsHandled::Yes);
-
-                if (RefPtr transition = std::exchange(protectedThis->m_transition, nullptr))
-                    transition->rejectPromise(result);
-            });
-        });
-
-        // If a new event has been dispatched in our event handler then we were aborted above.
-        if (m_ongoingNavigateEvent != event.ptr())
-            return DispatchResult::Aborted;
+        if (auto result = handleSameDocumentNavigation(event.get(), navigationType, apiMethodTracker.get(), *abortController, *document))
+            return *result;
     } else if (apiMethodTracker) {
         // For cross-document navigations, don't cleanup the tracker immediately.
         // It should remain ongoing until the navigation completes, fails, or gets interrupted.
