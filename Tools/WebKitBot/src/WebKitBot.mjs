@@ -29,8 +29,7 @@ import util from "util";
 import which from "which";
 import {execFile, spawn} from "child_process";
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import LogLevel from "@slack/rtm-api";
-import SlackRTMAPI from "@slack/rtm-api";
+import { SocketModeClient, LogLevel } from "@slack/socket-mode";
 import AsyncTaskQueue from "./AsyncTaskQueue.mjs";
 import {dataLogLn, escapeForSlackText, isASCII, rootDirectoryOfWebKit} from "./Utility.mjs";
 
@@ -240,15 +239,15 @@ e.g. \`dry-revert 260220 Ensure it is working after refactoring\`
         });
 
         const proxy = new HttpsProxyAgent(process.env.http_proxy);
-        this._rtm = new SlackRTMAPI.RTMClient(process.env.SLACK_TOKEN, { agent: proxy, logLevel: LogLevel.DEBUG });
-        this._rtm.on("message", async (event) => {
-            if (event.type !== "message")
-                return;
-
-            // If message has subtype, this is not an usual message.
-            if (event.subtype)
-                return;
-
+        this._socketMode = new SocketModeClient({
+            appToken: process.env.SLACK_SOCKET_TOKEN,
+            logLevel: LogLevel.DEBUG,
+            clientOptions: {
+                agent: proxy,  // Required for corporate proxy
+            },
+        });
+        this._socketMode.on("app_mention", async ({ event, ack }) => {
+            await ack();
             let text = extractTextIfMentioned(event.text, this._auth.user_id);
             if (text) {
                 let {command, args} = extractCommandAndArgs(text);
@@ -782,7 +781,7 @@ Type \`help COMMAND\` for help on my individual commands.`,
     static async create(webClient, auth)
     {
         let bot = new WebKitBot(webClient, auth);
-        await bot._rtm.start();
+        await bot._socketMode.start();
         return bot;
     }
 
