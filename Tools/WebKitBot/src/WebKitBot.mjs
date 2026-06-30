@@ -29,7 +29,8 @@ import util from "util";
 import which from "which";
 import {execFile, spawn} from "child_process";
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { SocketModeClient, LogLevel } from "@slack/socket-mode";
+import slackSocketMode from "@slack/socket-mode";
+const { SocketModeClient } = slackSocketMode;
 import AsyncTaskQueue from "./AsyncTaskQueue.mjs";
 import {dataLogLn, escapeForSlackText, isASCII, rootDirectoryOfWebKit} from "./Utility.mjs";
 
@@ -241,7 +242,6 @@ e.g. \`dry-revert 260220 Ensure it is working after refactoring\`
         const proxy = new HttpsProxyAgent(process.env.http_proxy);
         this._socketMode = new SocketModeClient({
             appToken: process.env.SLACK_SOCKET_TOKEN,
-            logLevel: LogLevel.DEBUG,
             clientOptions: {
                 agent: proxy,  // Required for corporate proxy
             },
